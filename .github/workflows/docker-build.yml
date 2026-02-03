@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - develop
-      - Nafs_v1
+      - Docker-Config
     tags:
       - 'v*.*.*'
   pull_request:
