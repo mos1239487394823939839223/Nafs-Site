@@ -1,0 +1,169 @@
+name: Build and Push Docker Image
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - Nafs_v1
+    tags:
+      - 'v*.*.*'
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  DOCKER_USERNAME: islam12476794
+  IMAGE_NAME: islam12476794/nafs-frontend
+  WEBHOOK_URL: ${{ secrets.GOOGLE_CHAT_WEBHOOK }}
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set build start time and generate tag
+        id: setup
+        run: |
+          BUILD_START=$(date +%s)
+          TAG=$(date +'%Y.%m.%d.%H%M')
+          echo "BUILD_START_TIME=$BUILD_START" >> $GITHUB_ENV
+          echo "IMAGE_TAG=$TAG" >> $GITHUB_ENV
+          echo "build_start_time=$BUILD_START" >> $GITHUB_OUTPUT
+          echo "image_tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Notify Google Chat on build start
+        if: env.WEBHOOK_URL != ''
+        env:
+          WEBHOOK_URL: ${{ env.WEBHOOK_URL }}
+        run: |
+          PR_INFO=""
+          if [[ "${{ github.event_name }}" == "pull_request" || "${{ github.event.head_commit.message }}" == *"Merge pull request"* ]]; then
+            PR_NUMBER=$(echo "${{ github.event.head_commit.message }}" | grep -o '#[0-9]\+' | grep -o '[0-9]\+')
+            if [ ! -z "$PR_NUMBER" ]; then
+              PR_INFO="\n📌 PR: #${PR_NUMBER} (${{ github.server_url }}/${{ github.repository }}/pull/${PR_NUMBER})"
+            fi
+          fi
+          COMMIT_INFO="\n🔗 Commit: <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${GITHUB_SHA:0:7}>"
+          BRANCH_INFO="\n🌿 Branch: ${{ github.ref_name }}"
+          DOCKER_REPO="\n📦 Repository: ${{ env.IMAGE_NAME }}"
+          ACTIONS_URL="\n📋 Actions: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -X POST -H "Content-Type: application/json" \
+          -d "{\"text\": \"🚀 Build Started: ${{ env.IMAGE_NAME }}\n\n👤 Triggered by: ${{ github.actor }}${PR_INFO}${BRANCH_INFO}${COMMIT_INFO}${DOCKER_REPO}${ACTIONS_URL}\"}" \
+          $WEBHOOK_URL
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Extract metadata (tags, labels)
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=semver,pattern={{major}}
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=raw,value={{date 'YYYY.MM.DD.HHmm'}},enable={{is_default_branch}}
+
+      - name: Build and push Docker image
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.IMAGE_NAME }}:buildcache,mode=max
+          platforms: linux/amd64
+
+      - name: Format tags for notification
+        id: format-tags
+        run: |
+          TAGS="${{ steps.meta.outputs.tags }}"
+          # Convert newline-separated tags to bullet list
+          FORMATTED_TAGS=$(echo "$TAGS" | sed 's/^/  • /' | tr '\n' '|')
+          # Remove trailing |
+          FORMATTED_TAGS="${FORMATTED_TAGS%|}"
+          echo "formatted_tags=$FORMATTED_TAGS" >> $GITHUB_OUTPUT
+          
+      - name: Image digest
+        run: echo ${{ steps.build.outputs.digest }}
+
+      - name: Calculate build duration
+        if: always()
+        id: duration
+        run: |
+          END_TIME=$(date +%s)
+          DURATION=$((END_TIME - ${{ steps.setup.outputs.build_start_time }}))
+          MINUTES=$((DURATION / 60))
+          SECONDS=$((DURATION % 60))
+          BUILD_DURATION_STR="${MINUTES}m ${SECONDS}s"
+          echo "BUILD_DURATION=$BUILD_DURATION_STR" >> $GITHUB_ENV
+          echo "duration=$BUILD_DURATION_STR" >> $GITHUB_OUTPUT
+
+      - name: Notify Google Chat on build success
+        if: success() && env.WEBHOOK_URL != ''
+        env:
+          WEBHOOK_URL: ${{ env.WEBHOOK_URL }}
+        run: |
+          PR_INFO=""
+          if [[ "${{ github.event_name }}" == "pull_request" || "${{ github.event.head_commit.message }}" == *"Merge pull request"* ]]; then
+            PR_NUMBER=$(echo "${{ github.event.head_commit.message }}" | grep -o '#[0-9]\+' | grep -o '[0-9]\+')
+            if [ ! -z "$PR_NUMBER" ]; then
+              PR_INFO="\n📌 PR: #${PR_NUMBER} (${{ github.server_url }}/${{ github.repository }}/pull/${PR_NUMBER})"
+            fi
+          fi
+          
+          # Format tags for display
+          TAGS_RAW="${{ steps.meta.outputs.tags }}"
+          TAGS_FORMATTED=$(echo "$TAGS_RAW" | sed 's/^/  • /')
+          
+          COMMIT_INFO="\n🔗 Commit: <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${GITHUB_SHA:0:7}>"
+          BRANCH_INFO="\n🌿 Branch: ${{ github.ref_name }}"
+          DOCKER_TAGS="\n\n🏷️ Pushed Tags:\n${TAGS_FORMATTED}"
+          BUILD_TIME="\n\n⏱️ Duration: ${{ steps.duration.outputs.duration }}"
+          ACTIONS_URL="\n📋 Actions: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          DOCKER_HUB_URL="\n🐳 Docker Hub: https://hub.docker.com/r/${{ env.IMAGE_NAME }}"
+          
+          curl -X POST -H "Content-Type: application/json" \
+          -d "{\"text\": \"✅ Build Success: ${{ env.IMAGE_NAME }}\n\n👤 Built by: ${{ github.actor }}${PR_INFO}${BRANCH_INFO}${COMMIT_INFO}${DOCKER_TAGS}${BUILD_TIME}${ACTIONS_URL}${DOCKER_HUB_URL}\"}" \
+          $WEBHOOK_URL
+
+      - name: Notify Google Chat on build failure
+        if: failure() && env.WEBHOOK_URL != ''
+        env:
+          WEBHOOK_URL: ${{ env.WEBHOOK_URL }}
+        run: |
+          ERROR_INFO="\n\n💥 Build failed - Check the Actions log for detailed error information"
+          PR_INFO=""
+          if [[ "${{ github.event_name }}" == "pull_request" || "${{ github.event.head_commit.message }}" == *"Merge pull request"* ]]; then
+            PR_NUMBER=$(echo "${{ github.event.head_commit.message }}" | grep -o '#[0-9]\+' | grep -o '[0-9]\+')
+            if [ ! -z "$PR_NUMBER" ]; then
+              PR_INFO="\n📌 PR: #${PR_NUMBER} (${{ github.server_url }}/${{ github.repository }}/pull/${PR_NUMBER})"
+            fi
+          fi
+          COMMIT_INFO="\n🔗 Commit: <${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}|${GITHUB_SHA:0:7}>"
+          BRANCH_INFO="\n🌿 Branch: ${{ github.ref_name }}"
+          DOCKER_REPO="\n📦 Repository: ${{ env.IMAGE_NAME }}"
+          BUILD_TIME="\n⏱️ Duration: ${{ steps.duration.outputs.duration }}"
+          ACTIONS_URL="\n📋 Actions: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          curl -X POST -H "Content-Type: application/json" \
+          -d "{\"text\": \"❌ Build Failed: ${{ env.IMAGE_NAME }}\n\n👤 Triggered by: ${{ github.actor }}${PR_INFO}${BRANCH_INFO}${COMMIT_INFO}${DOCKER_REPO}${BUILD_TIME}${ACTIONS_URL}${ERROR_INFO}\"}" \
+          $WEBHOOK_URL
