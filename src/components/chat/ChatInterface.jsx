@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import ConsultationsList from './ConsultationsList'
 import ChatWindow from './ChatWindow'
 import { Menu, X } from 'lucide-react'
 
 export default function ChatInterface({ consultations, currentUserId }) {
+  const navigate = useNavigate()
   const [activeConsultationId, setActiveConsultationId] = useState(consultations[0]?.id || null)
   const [showConsultationsList, setShowConsultationsList] = useState(false)
 
@@ -69,6 +71,7 @@ export default function ChatInterface({ consultations, currentUserId }) {
           <ChatWindow
             conversation={activeConsultation}
             onSendMessage={handleSendMessage}
+            onBack={() => navigate(-1)}
           />
         </div>
       </div>

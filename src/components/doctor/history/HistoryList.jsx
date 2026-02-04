@@ -53,7 +53,6 @@ export default function HistoryList({ sessions }) {
                                 </div>
                                 <div>
                                     <p className="text-sm font-medium text-text">{session.patientName}</p>
-                                    <p className="text-xs text-text-light">ID: #{session.patientId}</p>
                                 </div>
                             </div>
                         </td>

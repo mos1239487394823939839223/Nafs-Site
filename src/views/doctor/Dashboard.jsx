@@ -1,13 +1,13 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
+import Modal from '../../components/ui/Modal'
 import { 
   Calendar as CalendarIcon, 
   Clock, 
   Users, 
-  Video,
-  Phone,
   MessageSquare,
   FileText,
   CheckCircle,
@@ -16,7 +16,10 @@ import {
 import DailyAgenda from '../../components/doctor/DailyAgenda'
 
 export default function DoctorDashboard() {
+  const navigate = useNavigate()
   const [selectedDate, setSelectedDate] = useState(new Date())
+  const [selectedPatient, setSelectedPatient] = useState(null)
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
 
   // Mock data
   const todayStats = {
@@ -68,37 +71,43 @@ export default function DoctorDashboard() {
   return (
     <div className="space-y-6">
       {/* Stats Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-br from-primary to-primary-dark text-white">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="border-2 border-[#ecf3f9] bg-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/80 text-sm">Total Sessions</p>
-              <p className="text-3xl font-bold mt-1">{todayStats.totalSessions}</p>
-              <p className="text-white/60 text-xs mt-1">Today</p>
+              <p className="text-text-light text-sm">Total Sessions</p>
+              <p className="text-3xl font-bold mt-1 text-primary">{todayStats.totalSessions}</p>
+              <p className="text-text-light text-xs mt-1">Today</p>
             </div>
-            <Users className="w-12 h-12 text-white/30" />
+            <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
+              <Users className="w-7 h-7 text-primary" />
+            </div>
           </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-primary to-primary-dark text-white">
+        <Card className="border-2 border-[#dcfce7] bg-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/80 text-sm">Completed</p>
-              <p className="text-3xl font-bold mt-1">{todayStats.completed}</p>
-              <p className="text-white/60 text-xs mt-1">Sessions</p>
+              <p className="text-text-light text-sm">Completed</p>
+              <p className="text-3xl font-bold mt-1 text-green-600">{todayStats.completed}</p>
+              <p className="text-text-light text-xs mt-1">Sessions</p>
             </div>
-            <CheckCircle className="w-12 h-12 text-white/30" />
+            <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
+              <CheckCircle className="w-7 h-7 text-green-500" />
+            </div>
           </div>
         </Card>
 
-        <Card className="bg-gradient-to-br from-secondary to-secondary-dark text-white">
+        <Card className="border-2 border-[#ecf3f9] bg-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/80 text-sm">Upcoming</p>
-              <p className="text-3xl font-bold mt-1">{todayStats.upcoming}</p>
-              <p className="text-white/60 text-xs mt-1">Sessions</p>
+              <p className="text-text-light text-sm">Upcoming</p>
+              <p className="text-3xl font-bold mt-1 text-secondary">{todayStats.upcoming}</p>
+              <p className="text-text-light text-xs mt-1">Sessions</p>
             </div>
-            <Clock className="w-12 h-12 text-white/30" />
+            <div className="w-14 h-14 rounded-full bg-secondary/10 flex items-center justify-center">
+              <Clock className="w-7 h-7 text-secondary" />
+            </div>
           </div>
         </Card>
 
@@ -127,13 +136,20 @@ export default function DoctorDashboard() {
                           <Clock className="w-4 h-4" />
                           <span>{patient.time}</span>
                         </div>
-                        <div className="flex items-center gap-1">
-                          {patient.type === 'Video' ? <Video className="w-4 h-4" /> : <Phone className="w-4 h-4" />}
-                          <span>{patient.type}</span>
-                        </div>
                       </div>
                     </div>
-                    <Button size="sm" variant={patient.status === 'waiting' ? 'primary' : 'outline'}>
+                    <Button 
+                      size="sm" 
+                      variant={patient.status === 'waiting' ? 'primary' : 'outline'}
+                      onClick={() => {
+                        if (patient.status === 'waiting') {
+                          navigate('/dashboard/doctor/messages')
+                        } else {
+                          setSelectedPatient(patient)
+                          setIsDetailsModalOpen(true)
+                        }
+                      }}
+                    >
                       {patient.status === 'waiting' ? 'Join Now' : 'View Details'}
                     </Button>
                   </div>
@@ -183,6 +199,72 @@ export default function DoctorDashboard() {
           </div>
         </Card>
       </div>
+
+      {/* Patient Details Modal */}
+      <Modal 
+        isOpen={isDetailsModalOpen} 
+        onClose={() => setIsDetailsModalOpen(false)}
+        title="Patient Details"
+        size="md"
+      >
+        {selectedPatient && (
+          <div className="space-y-6">
+            {/* Patient Header */}
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                <span className="text-2xl font-bold text-primary">
+                  {selectedPatient.name.charAt(0)}
+                </span>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold text-text">{selectedPatient.name}</h3>
+                <Badge variant={selectedPatient.status === 'waiting' ? 'warning' : 'primary'}>
+                  {selectedPatient.status}
+                </Badge>
+              </div>
+            </div>
+
+            {/* Appointment Info */}
+            <div className="bg-background p-4 rounded-xl space-y-3">
+              <div className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-primary" />
+                <span className="font-medium text-text">Appointment Time:</span>
+                <span className="text-text-light">{selectedPatient.time}</span>
+              </div>
+              <div>
+                <span className="font-medium text-text">Reason:</span>
+                <p className="text-text-light mt-1">{selectedPatient.reason}</p>
+              </div>
+              <div>
+                <span className="font-medium text-text">History:</span>
+                <p className="text-text-light mt-1">{selectedPatient.history}</p>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 pt-4 border-t border-border">
+              <Button 
+                variant="primary" 
+                className="flex-1"
+                onClick={() => {
+                  setIsDetailsModalOpen(false)
+                  navigate('/dashboard/doctor/messages')
+                }}
+              >
+                <MessageSquare className="w-4 h-4 mr-2" />
+                Start Chat
+              </Button>
+              <Button 
+                variant="outline" 
+                className="flex-1"
+                onClick={() => setIsDetailsModalOpen(false)}
+              >
+                Close
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
     </div>
   )
 }

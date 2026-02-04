@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { Clock, MoreVertical, Play, XCircle, FileText } from 'lucide-react'
+import { Clock, Play, XCircle } from 'lucide-react'
 import Button from '../../ui/Button'
 
 export default function QueueItem({ patient, onAction }) {
@@ -29,7 +29,6 @@ export default function QueueItem({ patient, onAction }) {
                 </span>
             </div>
             <div className="flex items-center gap-4 text-sm text-text-light mt-1">
-                <span>ID: #{patient.id.slice(-4)}</span>
                 <span className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     Waited: {patient.waitTime} mins
@@ -65,17 +64,13 @@ export default function QueueItem({ patient, onAction }) {
         {patient.status === 'in-progress' && (
             <Button 
                 size="sm" 
-                className="bg-green-600 hover:bg-green-700 text-white"
+                className="bg-[#dcfce7] hover:bg-[#bbf7d0] text-green-700 border border-green-300"
                 onClick={() => onAction('complete', patient.id)}
             >
                 <CheckCircle className="w-4 h-4 mr-1" />
                 Complete Session
             </Button>
         )}
-
-        <button className="p-2 hover:bg-gray-100 rounded-lg text-text-light transition-colors">
-            <MoreVertical className="w-5 h-5" />
-        </button>
       </div>
     </motion.div>
   )
