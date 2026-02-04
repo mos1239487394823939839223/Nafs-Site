@@ -32,17 +32,15 @@ const navigationConfig = {
     { name: 'Prescriptions', path: '/dashboard/patient/prescriptions', icon: Pill },
     { name: 'Medical Records', path: '/dashboard/patient/records', icon: FolderOpen },
     { name: 'Messages', path: '/dashboard/patient/messages', icon: MessageSquare },
-    { name: 'Settings', path: '/dashboard/patient/settings', icon: Settings },
+    { name: 'Profile', path: '/dashboard/patient/settings', icon: Settings },
   ],
   [Roles.DOCTOR]: [
     { name: 'Dashboard', path: '/dashboard/doctor', icon: Home },
     { name: 'Patient Queue', path: '/dashboard/doctor/queue', icon: Users },
     { name: 'My Schedule', path: '/dashboard/doctor/schedule', icon: Calendar },
     { name: 'Session History', path: '/dashboard/doctor/history', icon: Activity },
-    { name: 'Earnings', path: '/dashboard/doctor/earnings', icon: DollarSign },
-    { name: 'Medical Notes', path: '/dashboard/doctor/notes', icon: FileText },
     { name: 'Messages', path: '/dashboard/doctor/messages', icon: MessageSquare },
-    { name: 'Settings', path: '/dashboard/doctor/settings', icon: Settings },
+    { name: 'Profile', path: '/dashboard/doctor/settings', icon: Settings },
   ],
   [Roles.ADMIN]: [
     { name: 'Dashboard', path: '/admin', icon: Home },
@@ -124,6 +122,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                   <li key={item.path}>
                     <NavLink
                       to={item.path}
+                      end
                       onClick={() => {
                         if (onClose && window.innerWidth < 1024) onClose()
                       }}

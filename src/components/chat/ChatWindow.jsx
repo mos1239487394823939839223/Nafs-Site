@@ -1,13 +1,16 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Paperclip, Smile, Phone, Video, X } from 'lucide-react'
+import { Send, Paperclip, Smile, ArrowLeft, X } from 'lucide-react'
+import EmojiPicker from 'emoji-picker-react'
 import MessageBubble from './MessageBubble'
 
-export default function ChatWindow({ conversation, onSendMessage }) {
+export default function ChatWindow({ conversation, onSendMessage, onBack }) {
   const [messageInput, setMessageInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [attachments, setAttachments] = useState([])
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const messagesEndRef = useRef(null)
   const fileInputRef = useRef(null)
+  const emojiPickerRef = useRef(null)
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -16,6 +19,21 @@ export default function ChatWindow({ conversation, onSendMessage }) {
   useEffect(() => {
     scrollToBottom()
   }, [conversation?.messages])
+
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const onEmojiClick = (emojiData) => {
+    setMessageInput(prev => prev + emojiData.emoji)
+  }
 
   const handleSend = () => {
     if (messageInput.trim() || attachments.length > 0) {
@@ -68,45 +86,41 @@ export default function ChatWindow({ conversation, onSendMessage }) {
     <div className="h-full flex flex-col bg-white">
       {/* Header */}
       <div className="px-4 md:px-6 py-4 border-b border-border bg-white">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* Avatar */}
-            <div className="relative">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
-                {conversation.participant.avatar ? (
-                  <img 
-                    src={conversation.participant.avatar} 
-                    alt={conversation.participant.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-primary font-semibold">
-                    {conversation.participant.name.charAt(0)}
-                  </span>
-                )}
-              </div>
-              {conversation.participant.online && (
-                <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+        <div className="flex items-center gap-3">
+          {/* Back Button */}
+          <button 
+            onClick={onBack}
+            className="p-2 hover:bg-background-gray rounded-xl transition-colors"
+          >
+            <ArrowLeft className="w-5 h-5 text-text" />
+          </button>
+
+          {/* Avatar */}
+          <div className="relative">
+            <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+              {conversation.participant.avatar ? (
+                <img 
+                  src={conversation.participant.avatar} 
+                  alt={conversation.participant.name}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <span className="text-primary font-semibold">
+                  {conversation.participant.name.charAt(0)}
+                </span>
               )}
             </div>
-
-            {/* Info */}
-            <div>
-              <h3 className="font-semibold text-text">{conversation.participant.name}</h3>
-              <p className="text-xs text-text-light">
-                {conversation.participant.online ? 'Online' : 'Offline'}
-              </p>
-            </div>
+            {conversation.participant.online && (
+              <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+            )}
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2">
-            <button className="p-2 hover:bg-background-gray rounded-xl transition-colors hidden md:block">
-              <Phone className="w-5 h-5 text-text" />
-            </button>
-            <button className="p-2 hover:bg-background-gray rounded-xl transition-colors hidden md:block">
-              <Video className="w-5 h-5 text-text" />
-            </button>
+          {/* Info */}
+          <div>
+            <h3 className="font-semibold text-text">{conversation.participant.name}</h3>
+            <p className="text-xs text-text-light">
+              {conversation.participant.online ? 'Online' : 'Offline'}
+            </p>
           </div>
         </div>
       </div>
@@ -199,9 +213,23 @@ export default function ChatWindow({ conversation, onSendMessage }) {
               rows="1"
               className="w-full px-4 py-3 pr-12 border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary resize-none max-h-32"
             />
-            <button className="absolute right-3 bottom-3 text-text-light hover:text-text">
+            <button 
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              className="absolute right-3 bottom-3 text-text-light hover:text-text"
+            >
               <Smile className="w-5 h-5" />
             </button>
+
+            {/* Emoji Picker */}
+            {showEmojiPicker && (
+              <div ref={emojiPickerRef} className="absolute bottom-14 right-0 z-50">
+                <EmojiPicker 
+                  onEmojiClick={onEmojiClick}
+                  width={320}
+                  height={400}
+                />
+              </div>
+            )}
           </div>
 
           {/* Send Button */}

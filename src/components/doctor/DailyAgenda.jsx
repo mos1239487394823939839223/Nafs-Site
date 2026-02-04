@@ -1,8 +1,27 @@
-import { Clock, Video, Phone, FileText, Calendar, AlertCircle } from 'lucide-react'
+import { useState, useRef } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { Clock, FileText, Calendar, AlertCircle } from 'lucide-react'
 import Button from '../ui/Button'
 import Badge from '../ui/Badge'
 
 export default function DailyAgenda() {
+  const navigate = useNavigate()
+  const [selectedDate, setSelectedDate] = useState(new Date())
+  const dateInputRef = useRef(null)
+  
+  const formatDate = (date) => {
+    return date.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })
+  }
+
+  const handleDateChange = (e) => {
+    setSelectedDate(new Date(e.target.value))
+  }
+
   const timeSlots = [
     { hour: '08:00', period: 'AM', type: 'available' },
     { hour: '09:00', period: 'AM', type: 'available' },
@@ -68,12 +87,25 @@ export default function DailyAgenda() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-text">Daily Agenda</h2>
-          <p className="text-sm text-text-light mt-1">Today, January 28, 2026</p>
+          <p className="text-sm text-text-light mt-1">{formatDate(selectedDate)}</p>
         </div>
-        <Button size="sm" variant="outline">
-          <Calendar className="w-4 h-4 mr-2" />
-          Change Date
-        </Button>
+        <div className="relative inline-block">
+          <input
+            ref={dateInputRef}
+            type="date"
+            value={selectedDate.toISOString().split('T')[0]}
+            onChange={handleDateChange}
+            className="absolute top-full right-0 mt-2 opacity-0 w-0 h-0"
+          />
+          <Button 
+            size="sm" 
+            variant="outline"
+            onClick={() => dateInputRef.current?.showPicker()}
+          >
+            <Calendar className="w-4 h-4 mr-2" />
+            Change Date
+          </Button>
+        </div>
       </div>
 
       <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
@@ -124,24 +156,6 @@ export default function DailyAgenda() {
                       )}
                     </div>
                     <p className="text-sm text-text-light mb-2">{slot.reason}</p>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-1 text-xs text-text-light">
-                        {slot.sessionType === 'video' ? (
-                          <>
-                            <Video className="w-3 h-3 text-primary" />
-                            <span>Video Call</span>
-                          </>
-                        ) : (
-                          <>
-                            <Phone className="w-3 h-3 text-secondary" />
-                            <span>Audio Call</span>
-                          </>
-                        )}
-                      </div>
-                      <button className="text-xs text-primary hover:text-primary-dark font-medium transition-colors">
-                        View Notes
-                      </button>
-                    </div>
                   </div>
                 )}
               </div>
@@ -149,7 +163,11 @@ export default function DailyAgenda() {
               {/* Actions */}
               {slot.type === 'appointment' && (
                 <div className="flex-shrink-0">
-                  <Button size="sm" variant={slot.priority === 'urgent' ? 'primary' : 'outline'}>
+                  <Button 
+                    size="sm" 
+                    variant={slot.priority === 'urgent' ? 'primary' : 'outline'}
+                    onClick={() => navigate('/dashboard/doctor/messages')}
+                  >
                     Join
                   </Button>
                 </div>
