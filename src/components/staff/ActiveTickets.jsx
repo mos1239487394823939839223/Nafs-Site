@@ -6,12 +6,12 @@ export default function ActiveTickets() {
   const [filter, setFilter] = useState('all')
 
   const tickets = [
-    { id: 1, patient: 'Sarah Mohamed', issue: 'Payment issue', category: 'payment', priority: 'high', status: 'open', time: '5 min ago', assignee: 'John Doe' },
-    { id: 2, patient: 'Ahmed Ali', issue: 'Appointment rescheduling', category: 'appointment', priority: 'medium', status: 'in-progress', time: '15 min ago', assignee: 'Jane Smith' },
-    { id: 3, patient: 'Fatima Hassan', issue: 'Technical support', category: 'technical', priority: 'low', status: 'in-progress', time: '1 hour ago', assignee: 'John Doe' },
-    { id: 4, patient: 'Omar Khalil', issue: 'Prescription refill', category: 'general', priority: 'medium', status: 'open', time: '2 hours ago', assignee: null },
-    { id: 5, patient: 'Layla Ibrahim', issue: 'Video call not working', category: 'technical', priority: 'high', status: 'open', time: '3 hours ago', assignee: null },
-    { id: 6, patient: 'Mohamed Saad', issue: 'Insurance verification', category: 'payment', priority: 'low', status: 'resolved', time: '5 hours ago', assignee: 'Jane Smith' },
+    { id: 1, user: 'Sarah Mohamed', role: 'patient', issue: 'Payment issue', category: 'payment', priority: 'high', status: 'open', time: '5 min ago', assignee: 'John Doe' },
+    { id: 2, user: 'Dr. Ahmed Ali', role: 'doctor', issue: 'Schedule synchronization error', category: 'technical', priority: 'medium', status: 'in-progress', time: '15 min ago', assignee: 'Jane Smith' },
+    { id: 3, user: 'Fatima Hassan', role: 'patient', issue: 'Technical difficulty with session', category: 'technical', priority: 'urgent', status: 'in-progress', time: '1 hour ago', assignee: 'John Doe' },
+    { id: 4, user: 'Dr. Omar Khalil', role: 'doctor', issue: 'Verify my new certifications', category: 'general', priority: 'medium', status: 'open', time: '2 hours ago', assignee: null },
+    { id: 5, user: 'Layla Ibrahim', role: 'patient', issue: 'Video call not working', category: 'technical', priority: 'high', status: 'open', time: '3 hours ago', assignee: null },
+    { id: 6, user: 'Dr. Mohamed Saad', role: 'doctor', issue: 'Refund requested for patient', category: 'payment', priority: 'low', status: 'resolved', time: '5 hours ago', assignee: 'Jane Smith' },
   ]
 
   const categories = [
@@ -65,8 +65,8 @@ export default function ActiveTickets() {
             onClick={() => setFilter(cat.value)}
             className={`
               px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap
-              ${filter === cat.value 
-                ? 'bg-primary text-white shadow-sm' 
+              ${filter === cat.value
+                ? 'bg-primary text-white shadow-sm'
                 : 'bg-background text-text-light hover:bg-primary/10'
               }
             `}
@@ -91,7 +91,10 @@ export default function ActiveTickets() {
             {groupedByStatus.open.map((ticket) => (
               <div key={ticket.id} className="bg-white rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm">
                 <div className="flex items-start justify-between mb-2">
-                  <h4 className="font-semibold text-sm text-text">{ticket.patient}</h4>
+                  <div className="flex flex-col">
+                    <h4 className="font-semibold text-sm text-text">{ticket.user}</h4>
+                    <span className="text-[10px] uppercase font-bold text-primary/60">{ticket.role}</span>
+                  </div>
                   <Badge variant={getPriorityColor(ticket.priority)} size="sm">
                     {ticket.priority}
                   </Badge>
@@ -129,7 +132,10 @@ export default function ActiveTickets() {
             {groupedByStatus['in-progress'].map((ticket) => (
               <div key={ticket.id} className="bg-white rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm">
                 <div className="flex items-start justify-between mb-2">
-                  <h4 className="font-semibold text-sm text-text">{ticket.patient}</h4>
+                  <div className="flex flex-col">
+                    <h4 className="font-semibold text-sm text-text">{ticket.user}</h4>
+                    <span className="text-[10px] uppercase font-bold text-primary/60">{ticket.role}</span>
+                  </div>
                   <Badge variant={getPriorityColor(ticket.priority)} size="sm">
                     {ticket.priority}
                   </Badge>
@@ -163,7 +169,10 @@ export default function ActiveTickets() {
             {groupedByStatus.resolved.map((ticket) => (
               <div key={ticket.id} className="bg-white rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm opacity-75">
                 <div className="flex items-start justify-between mb-2">
-                  <h4 className="font-semibold text-sm text-text">{ticket.patient}</h4>
+                  <div className="flex flex-col">
+                    <h4 className="font-semibold text-sm text-text">{ticket.user}</h4>
+                    <span className="text-[10px] uppercase font-bold text-primary/60">{ticket.role}</span>
+                  </div>
                   <Badge variant={getPriorityColor(ticket.priority)} size="sm">
                     {ticket.priority}
                   </Badge>

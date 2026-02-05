@@ -6,15 +6,18 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 
 import Layout from './components/layout/Layout'
 
-import PatientDashboard from './views/patient/Dashboard'
+import PatientSettings from './views/patient/Settings'
+import PatientMessages from './views/patient/PatientMessages'
+import ReserveAppointment from './views/patient/ReserveAppointment'
 import DoctorDashboard from './views/doctor/Dashboard'
 import Schedule from './views/doctor/Schedule'
 import PatientQueue from './views/doctor/PatientQueue'
 import SessionHistory from './views/doctor/SessionHistory'
 import Settings from './views/doctor/Settings'
-import PatientSettings from './views/patient/Settings'
-import AdminDashboard from './views/admin/Dashboard'
+import UserManagement from './views/admin/UserManagement'
+import AdminProfile from './views/admin/Profile'
 import CustomerServiceDashboard from './views/customer-service/Dashboard'
+import StaffProfile from './views/customer-service/Profile'
 
 import Login from './views/auth/Login'
 import RoleSelection from './views/auth/RoleSelection'
@@ -28,11 +31,11 @@ import MessagesPage from './views/shared/MessagesPage'
 
 function RootRedirect() {
   const { isAuthenticated, getDashboardRoute } = useAuth()
-  
+
   if (isAuthenticated) {
     return <Navigate to={getDashboardRoute()} replace />
   }
-  
+
   return <Navigate to="/auth/login" replace />
 }
 
@@ -58,8 +61,16 @@ function AppRoutes() {
           path="/dashboard/patient"
           element={
             <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
+              <Navigate to="/dashboard/patient/reserve" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/patient/reserve"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
               <Layout>
-                <PatientDashboard />
+                <ReserveAppointment />
               </Layout>
             </ProtectedRoute>
           }
@@ -68,7 +79,19 @@ function AppRoutes() {
           path="/dashboard/patient/messages"
           element={
             <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
-              <MessagesPage />
+              <Layout>
+                <PatientMessages />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/patient/profile"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
+              <Layout>
+                <PatientSettings />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -144,24 +167,51 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
-        {/* Protected Admin Routes */}
         <Route
-          path="/admin"
+          path="/dashboard/staff/messages"
           element={
-            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+            <ProtectedRoute allowedRoles={[Roles.STAFF]}>
               <Layout>
-                <AdminDashboard />
+                <MessagesPage />
               </Layout>
             </ProtectedRoute>
           }
         />
         <Route
-          path="/admin/invite-staff"
+          path="/dashboard/staff/profile"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.STAFF]}>
+              <Layout>
+                <StaffProfile />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+              <Navigate to="/admin/users" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
           element={
             <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
               <Layout>
-                <InviteStaff />
+                <UserManagement />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/profile"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+              <Layout>
+                <AdminProfile />
               </Layout>
             </ProtectedRoute>
           }

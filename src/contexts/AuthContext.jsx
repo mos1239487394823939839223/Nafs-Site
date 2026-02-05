@@ -20,7 +20,7 @@ export const RoleNames = {
 export const RoleDashboards = {
   [Roles.PATIENT]: '/dashboard/patient',
   [Roles.DOCTOR]: '/dashboard/doctor',
-  [Roles.ADMIN]: '/admin',
+  [Roles.ADMIN]: '/admin/users',
   [Roles.STAFF]: '/dashboard/staff',
 }
 
@@ -62,7 +62,7 @@ export const AuthProvider = ({ children }) => {
     setUser(userData)
     setRole(userRole)
     setIsAuthenticated(true)
-    
+
     // Persist to localStorage
     localStorage.setItem('auth', JSON.stringify({ user: userData, role: userRole }))
   }

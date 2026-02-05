@@ -26,13 +26,9 @@ import {
 // Navigation items for each role
 const navigationConfig = {
   [Roles.PATIENT]: [
-    { name: 'Dashboard', path: '/dashboard/patient', icon: Home },
-    { name: 'My Appointments', path: '/dashboard/patient/appointments', icon: Calendar },
-    { name: 'My Tests & Results', path: '/dashboard/patient/tests', icon: TestTube },
-    { name: 'Prescriptions', path: '/dashboard/patient/prescriptions', icon: Pill },
-    { name: 'Medical Records', path: '/dashboard/patient/records', icon: FolderOpen },
+    { name: 'Reserve Appointment', path: '/dashboard/patient/reserve', icon: Calendar },
     { name: 'Messages', path: '/dashboard/patient/messages', icon: MessageSquare },
-    { name: 'Profile', path: '/dashboard/patient/settings', icon: Settings },
+    { name: 'Profile', path: '/dashboard/patient/profile', icon: Settings },
   ],
   [Roles.DOCTOR]: [
     { name: 'Dashboard', path: '/dashboard/doctor', icon: Home },
@@ -43,21 +39,13 @@ const navigationConfig = {
     { name: 'Profile', path: '/dashboard/doctor/settings', icon: Settings },
   ],
   [Roles.ADMIN]: [
-    { name: 'Dashboard', path: '/admin', icon: Home },
-    { name: 'Manage Doctors', path: '/admin/doctors', icon: Users },
-    { name: 'Manage Patients', path: '/admin/patients', icon: Activity },
-    { name: 'Revenue Reports', path: '/admin/revenue', icon: DollarSign },
-    { name: 'Analytics', path: '/admin/analytics', icon: BarChart3 },
-    { name: 'Invite Staff', path: '/admin/invite-staff', icon: UserPlus },
-    { name: 'System Settings', path: '/admin/settings', icon: Settings },
+    { name: 'User Management', path: '/admin/users', icon: Users },
+    { name: 'Profile', path: '/admin/profile', icon: Settings },
   ],
   [Roles.STAFF]: [
     { name: 'Dashboard', path: '/dashboard/staff', icon: Home },
-    { name: 'Support Tickets', path: '/dashboard/staff/tickets', icon: TicketIcon },
-    { name: 'Live Chat', path: '/dashboard/staff/chat', icon: MessageSquare },
-    { name: 'Call Center', path: '/dashboard/staff/calls', icon: Phone },
-    { name: 'Performance Metrics', path: '/dashboard/staff/metrics', icon: TrendingUp },
-    { name: 'Settings', path: '/dashboard/staff/settings', icon: Settings },
+    { name: 'Messages', path: '/dashboard/staff/messages', icon: MessageSquare },
+    { name: 'Profile', path: '/dashboard/staff/profile', icon: Settings },
   ],
 }
 
@@ -128,10 +116,9 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                       }}
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
-                        ${
-                          isActive
-                            ? 'bg-primary/10 text-primary border-l-4 border-primary'
-                            : 'text-text hover:bg-background-gray hover:text-primary'
+                        ${isActive
+                          ? 'bg-primary/10 text-primary border-l-4 border-primary'
+                          : 'text-text hover:bg-background-gray hover:text-primary'
                         }`
                       }
                     >
