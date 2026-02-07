@@ -33,6 +33,7 @@ const navigationConfig = {
   [Roles.DOCTOR]: [
     { name: 'Dashboard', path: '/dashboard/doctor', icon: Home },
     { name: 'Patient Queue', path: '/dashboard/doctor/queue', icon: Users },
+    { name: 'Medical History', path: '/dashboard/doctor/medical-history', icon: FileText },
     { name: 'My Schedule', path: '/dashboard/doctor/schedule', icon: Calendar },
     { name: 'Session History', path: '/dashboard/doctor/history', icon: Activity },
     { name: 'Messages', path: '/dashboard/doctor/messages', icon: MessageSquare },
@@ -40,6 +41,7 @@ const navigationConfig = {
   ],
   [Roles.ADMIN]: [
     { name: 'User Management', path: '/admin/users', icon: Users },
+    { name: 'Messages', path: '/admin/messages', icon: MessageSquare },
     { name: 'Profile', path: '/admin/profile', icon: Settings },
   ],
   [Roles.STAFF]: [

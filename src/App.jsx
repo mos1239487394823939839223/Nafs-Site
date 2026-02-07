@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth, Roles } from './contexts/AuthContext'
 import { ToastProvider } from './components/ui/Toast'
 import ProtectedRoute from './components/auth/ProtectedRoute'
+import { ClinicProvider, useClinic } from './contexts/ClinicContext'
 
 import Layout from './components/layout/Layout'
 
@@ -13,6 +14,7 @@ import DoctorDashboard from './views/doctor/Dashboard'
 import Schedule from './views/doctor/Schedule'
 import PatientQueue from './views/doctor/PatientQueue'
 import SessionHistory from './views/doctor/SessionHistory'
+import MedicalHistory from './views/doctor/MedicalHistory'
 import Settings from './views/doctor/Settings'
 import UserManagement from './views/admin/UserManagement'
 import AdminProfile from './views/admin/Profile'
@@ -26,7 +28,7 @@ import DoctorRegistration from './views/auth/doctor/DoctorRegistration'
 import PendingApproval from './views/auth/PendingApproval'
 
 import InviteStaff from './views/admin/InviteStaff'
-
+import AdminMessages from './views/admin/Messages'
 import MessagesPage from './views/shared/MessagesPage'
 
 function RootRedirect() {
@@ -41,10 +43,7 @@ function RootRedirect() {
 
 function AppRoutes() {
   const [isRTL, setIsRTL] = useState(false)
-  const [notifications, setNotifications] = useState([
-    { id: 1, type: 'appointment', message: 'Upcoming appointment with Dr. Ahmed in 2 hours', time: '2 hours' },
-    { id: 2, type: 'reminder', message: 'Complete your pre-session health quiz', time: '1 day' },
-  ])
+  const { notifications } = useClinic()
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen bg-background">
@@ -128,7 +127,18 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/dashboard/doctor/medical-history"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
+              <Layout>
+                <MedicalHistory />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/dashboard/doctor/history"
+
           element={
             <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
               <Layout>
@@ -151,7 +161,9 @@ function AppRoutes() {
           path="/dashboard/doctor/messages"
           element={
             <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
-              <MessagesPage />
+              <Layout>
+                <MessagesPage />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -207,7 +219,18 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/admin/messages"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+              <Layout>
+                <AdminMessages />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/admin/profile"
+
           element={
             <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
               <Layout>
@@ -237,13 +260,16 @@ function AppRoutes() {
   )
 }
 
+
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ToastProvider>
-          <AppRoutes />
-        </ToastProvider>
+        <ClinicProvider>
+          <ToastProvider>
+            <AppRoutes />
+          </ToastProvider>
+        </ClinicProvider>
       </AuthProvider>
     </BrowserRouter>
   )

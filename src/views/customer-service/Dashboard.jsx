@@ -18,27 +18,23 @@ import {
   ShieldAlert
 } from 'lucide-react'
 import ActiveTickets from '../../components/staff/ActiveTickets'
+import { useClinic } from '../../contexts/ClinicContext'
 
 export default function CustomerServiceDashboard() {
   const [activeTab, setActiveTab] = useState('overview') // overview, patients, doctors, emergency
 
+  const { tickets, updateTicketStatus, appointments } = useClinic()
+
   const stats = [
-    { label: 'Patient Inquiries', value: '42', icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
-    { label: 'Doctor Requests', value: '15', icon: Stethoscope, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'Live Sessions', value: '8', icon: Calendar, color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Urgent Cases', value: '3', icon: ShieldAlert, color: 'text-red-600', bg: 'bg-red-50' },
+    { label: 'Patient Inquiries', value: tickets.filter(t => t.role === 'patient').length, icon: Users, color: 'text-blue-600', bg: 'bg-blue-50' },
+    { label: 'Doctor Requests', value: tickets.filter(t => t.role === 'doctor').length, icon: Stethoscope, color: 'text-purple-600', bg: 'bg-purple-50' },
+    { label: 'Live Sessions', value: appointments.filter(a => a.status === 'in-progress').length, icon: Calendar, color: 'text-green-600', bg: 'bg-green-50' },
+    { label: 'Urgent Cases', value: tickets.filter(t => t.priority === 'urgent').length, icon: ShieldAlert, color: 'text-red-600', bg: 'bg-red-50' },
   ]
 
-  const patientInquiries = [
-    { id: 1, user: 'Sarah Ahmed', subject: 'Session Payment issue', priority: 'high', status: 'pending', time: '5m' },
-    { id: 2, user: 'John Doe', subject: 'Technical difficulty joining call', priority: 'urgent', status: 'active', time: '12m' },
-    { id: 3, user: 'Fatima Ali', subject: 'Reschedule my appointment', priority: 'medium', status: 'pending', time: '45m' },
-  ]
+  const patientInquiries = tickets.filter(t => t.role === 'patient')
+  const doctorRequests = tickets.filter(t => t.role === 'doctor')
 
-  const doctorRequests = [
-    { id: 101, user: 'Dr. Ahmed Hassan', subject: 'Schedule update request', priority: 'medium', status: 'pending', time: '1h' },
-    { id: 102, user: 'Dr. Fatima Ali', specialty: 'Approve new slots', priority: 'high', status: 'pending', time: '2h' },
-  ]
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">

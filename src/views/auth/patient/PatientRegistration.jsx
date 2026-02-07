@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useMultiStepForm } from '../../../hooks/useMultiStepForm'
 import { useAuth, Roles } from '../../../contexts/AuthContext'
+import { useClinic } from '../../../contexts/ClinicContext'
 import { useToast } from '../../../components/ui/Toast'
 import ProgressStepper from '../../../components/forms/ProgressStepper'
 import Button from '../../../components/ui/Button'
@@ -13,6 +14,7 @@ import { ArrowLeft, ArrowRight, CheckCircle, User, Heart, Shield } from 'lucide-
 export default function PatientRegistration() {
   const navigate = useNavigate()
   const { login } = useAuth()
+  const { registerUser } = useClinic()
   const toast = useToast()
   const [loading, setLoading] = useState(false)
 
@@ -170,29 +172,21 @@ export default function PatientRegistration() {
     // Simulate API call
     setTimeout(() => {
       setLoading(false)
-      
-      // Create new user object
+
+      const fullName = `${formData.firstName} ${formData.lastName}`
       const newUser = {
-        id: Date.now().toString(),
+        name: fullName,
         email: tempRegData.email,
         password: tempRegData.password,
         role: Roles.PATIENT,
         ...formData
       }
-      
-      // Save to "Database" (localStorage)
-      const users = JSON.parse(localStorage.getItem('users') || '[]')
-      users.push(newUser)
-      localStorage.setItem('users', JSON.stringify(users))
-      
-      // Clear temp data
+
+      registerUser(newUser)
       sessionStorage.removeItem('temp_reg_data')
 
       // Auto-login
-      login(
-        { ...newUser, name: `${formData.firstName} ${formData.lastName}` },
-        Roles.PATIENT
-      )
+      login(newUser, Roles.PATIENT)
 
       toast.success('Registration successful! Welcome to Clinc!')
       navigate('/dashboard/patient')
@@ -439,9 +433,8 @@ export default function PatientRegistration() {
                         maxLength={6}
                         value={formData.otp}
                         onChange={(e) => handleFieldChange('otp', e.target.value.replace(/\D/g, ''))}
-                        className={`w-full px-4 py-3 text-center text-2xl font-mono tracking-widest border rounded-lg focus:outline-none focus:ring-2 focus:ring-medical-blue ${
-                          errors.otp ? 'border-red-500' : 'border-gray-300'
-                        }`}
+                        className={`w-full px-4 py-3 text-center text-2xl font-mono tracking-widest border rounded-lg focus:outline-none focus:ring-2 focus:ring-medical-blue ${errors.otp ? 'border-red-500' : 'border-gray-300'
+                          }`}
                         placeholder="000000"
                       />
                       {errors.otp && (

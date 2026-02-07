@@ -3,16 +3,17 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import ProfileSettings from '../../components/doctor/settings/ProfileSettings'
 
+import { useClinic } from '../../contexts/ClinicContext'
+
 export default function StaffProfile() {
-    const { user } = useAuth()
+    const { user, updateProfile } = useAuth()
+    const { updateUser } = useClinic()
     const toast = useToast()
 
     const handleSave = (data) => {
-        console.log('Saving staff profile:', data)
-        // Simulate API call
-        setTimeout(() => {
-            toast.success('Information updated successfully')
-        }, 800)
+        updateUser(user.email, data)
+        updateProfile(data)
+        toast.success('Information updated successfully')
     }
 
     return (

@@ -90,6 +90,12 @@ export const AuthProvider = ({ children }) => {
     return requiredRoles.includes(role)
   }
 
+  const updateProfile = (updatedData) => {
+    const newUser = { ...user, ...updatedData }
+    setUser(newUser)
+    localStorage.setItem('auth', JSON.stringify({ user: newUser, role }))
+  }
+
   const value = {
     isAuthenticated,
     user,
@@ -97,6 +103,7 @@ export const AuthProvider = ({ children }) => {
     loading,
     login,
     logout,
+    updateProfile,
     getDashboardRoute,
     hasRole,
     hasAnyRole,

@@ -4,19 +4,14 @@ import Button from '../ui/Button'
 import Input, { Select } from '../ui/Input'
 import Badge from '../ui/Badge'
 import { Search, Calendar, Clock, Star } from 'lucide-react'
+import { useClinic } from '../../contexts/ClinicContext'
 
 export default function BookingModal({ isOpen, onClose }) {
+  const { doctors } = useClinic()
   const [step, setStep] = useState(1) // 1: Select Doctor, 2: Select Time, 3: Confirm
   const [selectedDoctor, setSelectedDoctor] = useState(null)
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
-
-  const doctors = [
-    { id: 1, name: 'Dr. Ahmed Hassan', specialty: 'Cardiology', rating: 4.9, experience: '15 years', price: 500 },
-    { id: 2, name: 'Dr. Fatima Ali', specialty: 'General Medicine', rating: 4.8, experience: '10 years', price: 300 },
-    { id: 3, name: 'Dr. Mohamed Saad', specialty: 'Dermatology', rating: 4.7, experience: '12 years', price: 400 },
-    { id: 4, name: 'Dr. Layla Ibrahim', specialty: 'Pediatrics', rating: 4.9, experience: '8 years', price: 350 },
-  ]
 
   const timeSlots = [
     '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
@@ -76,11 +71,10 @@ export default function BookingModal({ isOpen, onClose }) {
               <div
                 key={doctor.id}
                 onClick={() => setSelectedDoctor(doctor)}
-                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                  selectedDoctor?.id === doctor.id
-                    ? 'border-medical-blue bg-medical-lightBlue'
-                    : 'border-gray-200 hover:border-medical-blue'
-                }`}
+                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${selectedDoctor?.id === doctor.id
+                  ? 'border-medical-blue bg-medical-lightBlue'
+                  : 'border-gray-200 hover:border-medical-blue'
+                  }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
@@ -133,11 +127,10 @@ export default function BookingModal({ isOpen, onClose }) {
                 <button
                   key={time}
                   onClick={() => setSelectedTime(time)}
-                  className={`p-3 border-2 rounded-lg text-sm font-medium transition-all ${
-                    selectedTime === time
-                      ? 'border-medical-blue bg-medical-lightBlue text-medical-blue'
-                      : 'border-gray-200 hover:border-medical-blue'
-                  }`}
+                  className={`p-3 border-2 rounded-lg text-sm font-medium transition-all ${selectedTime === time
+                    ? 'border-medical-blue bg-medical-lightBlue text-medical-blue'
+                    : 'border-gray-200 hover:border-medical-blue'
+                    }`}
                 >
                   {time}
                 </button>

@@ -7,20 +7,24 @@ import ProgressStepper from '../../../components/forms/ProgressStepper'
 import Button from '../../../components/ui/Button'
 import Input, { Select, Textarea } from '../../../components/ui/Input'
 import { validateRequired, validateFileSize, validateFileType } from '../../../lib/validation'
-import { 
-  ArrowLeft, 
-  ArrowRight, 
-  Stethoscope, 
-  Upload, 
-  Calendar, 
+import {
+  ArrowLeft,
+  ArrowRight,
+  Stethoscope,
+  Upload,
+  Calendar,
   FileText,
   X,
   CheckCircle,
   Clock
 } from 'lucide-react'
 
+import { useAuth, Roles } from '../../../contexts/AuthContext'
+import { useClinic } from '../../../contexts/ClinicContext'
+
 export default function DoctorRegistration() {
   const navigate = useNavigate()
+  const { registerUser } = useClinic()
   const toast = useToast()
   const [loading, setLoading] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState({
@@ -162,32 +166,27 @@ export default function DoctorRegistration() {
 
   const handleSubmit = () => {
     setLoading(true)
-    
+
     // Get temporary credentials
     const tempRegData = JSON.parse(sessionStorage.getItem('temp_reg_data') || '{}')
-    
+
     // Simulate API call and Register User
     setTimeout(() => {
       setLoading(false)
-      
-      // Create new user object
+
       const newUser = {
-        id: Date.now().toString(),
+        name: tempRegData.name || tempRegData.email.split('@')[0],
         email: tempRegData.email,
         password: tempRegData.password,
-        role: 'doctor', // Explicitly set role
-        ...formData,
-        status: 'pending' // Doctors need approval
+        role: Roles.DOCTOR,
+        specialty: formData.specialty,
+        bio: formData.bio,
+        status: 'pending'
       }
-      
-      // Save to "Database" (localStorage)
-      const users = JSON.parse(localStorage.getItem('users') || '[]')
-      users.push(newUser)
-      localStorage.setItem('users', JSON.stringify(users))
-      
-      // Clear temp data
-      sessionStorage.removeItem('temp_reg_data')
 
+      registerUser(newUser)
+
+      sessionStorage.removeItem('temp_reg_data')
       navigate('/auth/pending-approval')
     }, 2000)
   }
@@ -207,7 +206,7 @@ export default function DoctorRegistration() {
 
   const handleFileUpload = (e, type) => {
     const files = Array.from(e.target.files)
-    
+
     for (const file of files) {
       if (!validateFileSize(file, 5)) {
         toast.error(`${file.name} is too large. Maximum size is 5MB`)

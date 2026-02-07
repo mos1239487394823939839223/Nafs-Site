@@ -4,16 +4,18 @@ import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Ca
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import Modal from '../../components/ui/Modal'
-import { 
-  Calendar as CalendarIcon, 
-  Clock, 
-  Users, 
+import {
+  Calendar as CalendarIcon,
+  Clock,
+  Users,
   MessageSquare,
   FileText,
   CheckCircle,
   AlertCircle
 } from 'lucide-react'
 import DailyAgenda from '../../components/doctor/DailyAgenda'
+import { useClinic } from '../../contexts/ClinicContext'
+import { useAuth } from '../../contexts/AuthContext'
 
 export default function DoctorDashboard() {
   const navigate = useNavigate()
@@ -21,42 +23,32 @@ export default function DoctorDashboard() {
   const [selectedPatient, setSelectedPatient] = useState(null)
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false)
 
-  // Mock data
+  const { user } = useAuth()
+  const { appointments } = useClinic()
+
+  // Current doctor's appointments
+  const doctorAppointments = appointments.filter(app =>
+    app.doctorId === user?.id ||
+    app.doctorId === user?.email ||
+    app.doctorName === user?.name
+  )
+
   const todayStats = {
-    totalSessions: 12,
-    completed: 8,
-    upcoming: 4
+    totalSessions: doctorAppointments.length,
+    completed: doctorAppointments.filter(a => a.status === 'completed').length,
+    upcoming: doctorAppointments.filter(a => a.status === 'confirmed' || a.status === 'waiting' || a.status === 'scheduled').length
   }
 
-  const patientQueue = [
-    { 
-      id: 1, 
-      name: 'Sarah Mohamed', 
-      time: '10:00 AM', 
-      type: 'Video', 
-      status: 'waiting',
-      reason: 'Follow-up consultation',
-      history: 'Previous visit: Hypertension management'
-    },
-    { 
-      id: 2, 
-      name: 'Ahmed Ali', 
-      time: '11:00 AM', 
-      type: 'Audio', 
-      status: 'scheduled',
-      reason: 'General checkup',
-      history: 'First-time patient'
-    },
-    { 
-      id: 3, 
-      name: 'Fatima Hassan', 
-      time: '2:00 PM', 
-      type: 'Video', 
-      status: 'scheduled',
-      reason: 'Diabetes consultation',
-      history: 'Regular patient - Type 2 Diabetes'
-    },
-  ]
+  const patientQueue = doctorAppointments.map(app => ({
+    id: app.id,
+    name: app.patientName,
+    time: app.time,
+    type: 'Video',
+    status: app.status,
+    reason: app.specialty || 'General Consultation',
+    history: 'Shared clinical history'
+  }))
+
 
   const weekSchedule = [
     { day: 'Mon', slots: 8, booked: 6 },
@@ -138,8 +130,8 @@ export default function DoctorDashboard() {
                         </div>
                       </div>
                     </div>
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant={patient.status === 'waiting' ? 'primary' : 'outline'}
                       onClick={() => {
                         if (patient.status === 'waiting') {
@@ -201,8 +193,8 @@ export default function DoctorDashboard() {
       </div>
 
       {/* Patient Details Modal */}
-      <Modal 
-        isOpen={isDetailsModalOpen} 
+      <Modal
+        isOpen={isDetailsModalOpen}
         onClose={() => setIsDetailsModalOpen(false)}
         title="Patient Details"
         size="md"
@@ -243,8 +235,8 @@ export default function DoctorDashboard() {
 
             {/* Actions */}
             <div className="flex gap-3 pt-4 border-t border-border">
-              <Button 
-                variant="primary" 
+              <Button
+                variant="primary"
                 className="flex-1"
                 onClick={() => {
                   setIsDetailsModalOpen(false)
@@ -254,8 +246,8 @@ export default function DoctorDashboard() {
                 <MessageSquare className="w-4 h-4 mr-2" />
                 Start Chat
               </Button>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="flex-1"
                 onClick={() => setIsDetailsModalOpen(false)}
               >

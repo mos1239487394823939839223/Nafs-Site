@@ -1,4 +1,6 @@
 import { Calendar, TestTube, Pill, FileText, CheckCircle, Clock } from 'lucide-react'
+import { useClinic } from '../../contexts/ClinicContext'
+import { useAuth } from '../../contexts/AuthContext'
 
 const eventTypeConfig = {
   appointment: {
@@ -32,54 +34,20 @@ const eventTypeConfig = {
 }
 
 export default function HealthJourneyTimeline() {
-  const journeyEvents = [
-    {
-      id: 1,
-      date: '2026-01-25',
-      type: 'test',
-      title: 'Blood Test Results',
-      status: 'Normal',
-      details: 'All values within normal range. Cholesterol: 180 mg/dL, Blood Sugar: 95 mg/dL',
-      doctor: 'Dr. Ahmed Hassan'
-    },
-    {
-      id: 2,
-      date: '2026-01-20',
-      type: 'appointment',
-      title: 'Cardiology Checkup',
-      status: 'Completed',
-      details: 'Regular follow-up consultation. Blood pressure stable, no concerns.',
-      doctor: 'Dr. Ahmed Hassan'
-    },
-    {
-      id: 3,
-      date: '2026-01-15',
-      type: 'prescription',
-      title: 'Blood Pressure Medication',
-      status: 'Active',
-      details: 'Amlodipine 5mg - Take once daily in the morning',
-      duration: '30 days',
-      doctor: 'Dr. Ahmed Hassan'
-    },
-    {
-      id: 4,
-      date: '2026-01-10',
-      type: 'test',
-      title: 'ECG Test',
-      status: 'Normal',
-      details: 'Electrocardiogram shows normal heart rhythm and function',
-      doctor: 'Dr. Ahmed Hassan'
-    },
-    {
-      id: 5,
-      date: '2026-01-05',
-      type: 'diagnosis',
-      title: 'Hypertension Management',
-      status: 'Ongoing',
-      details: 'Stage 1 hypertension. Lifestyle modifications recommended along with medication.',
-      doctor: 'Dr. Ahmed Hassan'
-    }
-  ]
+  const { user } = useAuth()
+  const { medicalHistory } = useClinic()
+
+  const journeyEvents = medicalHistory
+    .filter(record => record.patientName === user?.name)
+    .map(record => ({
+      id: record.id,
+      date: record.date,
+      type: record.type || 'diagnosis', // default to diagnosis if missing
+      title: record.summary,
+      status: record.status || 'Ongoing',
+      details: record.details || `Administered by ${record.doctorName}. Medications: ${record.medications?.join(', ') || 'None'}`,
+      doctor: record.doctorName
+    }))
 
   const formatDate = (dateString) => {
     const date = new Date(dateString)
@@ -91,7 +59,7 @@ export default function HealthJourneyTimeline() {
     const date = new Date(dateString)
     const now = new Date()
     const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24))
-    
+
     if (diffDays === 0) return 'Today'
     if (diffDays === 1) return 'Yesterday'
     if (diffDays < 7) return `${diffDays} days ago`

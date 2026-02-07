@@ -18,31 +18,40 @@ import {
     User
 } from 'lucide-react'
 
+import { useClinic } from '../../contexts/ClinicContext'
+
 export default function UserManagement() {
     const toast = useToast()
+    const { users, registerUser } = useClinic()
     const [activeTab, setActiveTab] = useState('doctors')
     const [searchTerm, setSearchTerm] = useState('')
     const [showAddForm, setShowAddForm] = useState(false)
 
-    // Mock Doctors Data
-    const [doctors, setDoctors] = useState([
-        { id: 1, name: 'Dr. Ahmed Hassan', specialty: 'Cardiology', email: 'ahmed.h@clinc.com', status: 'active', sessions: 145 },
-        { id: 2, name: 'Dr. Fatima Ali', specialty: 'General Medicine', email: 'fatima.a@clinc.com', status: 'active', sessions: 132 },
-        { id: 3, name: 'Dr. Mohamed Saad', specialty: 'Dermatology', email: 'm.saad@clinc.com', status: 'inactive', sessions: 98 },
-    ])
+    // Derived Data from Context
+    const doctors = users.filter(u => u.role === 'doctor').map(u => ({
+        id: u.email,
+        name: u.name,
+        specialty: u.specialty || 'General',
+        email: u.email,
+        status: 'active',
+        sessions: Math.floor(Math.random() * 100)
+    }))
 
-    // Mock Patients Data
-    const [patients, setPatients] = useState([
-        { id: 1, name: 'John Doe', email: 'john@example.com', lastVisit: '2026-01-20', status: 'active' },
-        { id: 2, name: 'Jane Smith', email: 'jane@example.com', lastVisit: '2026-01-25', status: 'active' },
-        { id: 3, name: 'Robert Brown', email: 'robert@example.com', lastVisit: '2026-01-27', status: 'inactive' },
-    ])
+    const patients = users.filter(u => u.role === 'patient').map(u => ({
+        id: u.email,
+        name: u.name,
+        email: u.email,
+        lastVisit: '2026-01-20',
+        status: 'active'
+    }))
 
-    // Mock Staff/Invitations Data
-    const [staff, setStaff] = useState([
-        { id: 1, email: 'sarah@clinc.com', role: 'Support Agent', status: 'accepted', date: '2026-01-20' },
-        { id: 2, email: 'ahmed@clinc.com', role: 'Manager', status: 'pending', date: '2026-01-25' },
-    ])
+    const staff = users.filter(u => u.role === 'staff').map(u => ({
+        id: u.email,
+        email: u.email,
+        role: u.name === 'Support Agent' ? 'Support Agent' : 'Manager',
+        status: 'accepted',
+        date: '2026-01-20'
+    }))
 
     const [formData, setFormData] = useState({
         name: '',
@@ -64,29 +73,18 @@ export default function UserManagement() {
 
     const handleAddUser = (e) => {
         e.preventDefault()
-        // Simulate API call
-        toast.success(`${formData.role === 'doctor' ? 'Doctor' : 'Staff'} ${formData.role === 'doctor' ? 'added' : 'invited'} successfully`)
 
-        if (formData.role === 'doctor') {
-            const newDoctor = {
-                id: Date.now(),
-                name: formData.name,
-                specialty: formData.specialty,
-                email: formData.email,
-                status: 'active',
-                sessions: 0
-            }
-            setDoctors(prev => [newDoctor, ...prev])
-        } else {
-            const newStaff = {
-                id: Date.now(),
-                email: formData.email,
-                role: formData.permissions === 'manager' ? 'Manager' : 'Support Agent',
-                status: 'pending',
-                date: new Date().toISOString().split('T')[0]
-            }
-            setStaff(prev => [newStaff, ...prev])
+        const newUser = {
+            name: formData.name || formData.email.split('@')[0],
+            email: formData.email,
+            password: 'password', // Default password for new members
+            role: formData.role,
+            specialty: formData.specialty,
+            permissions: formData.permissions
         }
+
+        registerUser(newUser)
+        toast.success(`${formData.role === 'doctor' ? 'Doctor' : 'Staff Member'} added successfully`)
 
         setShowAddForm(false)
         setFormData({ name: '', email: '', role: 'doctor', specialty: '', permissions: 'support-agent' })

@@ -5,24 +5,11 @@ import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import { Search, Stethoscope, Calendar, Clock, ChevronRight, User, ArrowLeft, CheckCircle, XCircle } from 'lucide-react'
 import CalendarGrid from '../../components/doctor/schedule/CalendarGrid'
-
-// Mock Data
-const specialties = [
-    'Psychiatry',
-    'Clinical Psychology',
-    'Family Counseling',
-    'Child Behavior',
-    'Addiction Recovery'
-]
-
-const doctors = [
-    { id: 1, name: 'Dr. Ahmed Hassan', specialty: 'Psychiatry', rating: 4.9, image: null, bio: 'Expert in clinical psychiatry with 15 years of experience.' },
-    { id: 2, name: 'Dr. Fatima Ali', specialty: 'Clinical Psychology', rating: 4.8, image: null, bio: 'Specializing in CBT and anxiety disorders.' },
-    { id: 3, name: 'Dr. Mohamed Saad', specialty: 'Psychiatry', rating: 4.7, image: null, bio: 'Focuses on depression and mood disorders.' },
-    { id: 4, name: 'Sarah Ahmed', specialty: 'Family Counseling', rating: 4.9, image: null, bio: 'Helping families navigate complex relationship dynamics.' },
-]
+import { useClinic } from '../../contexts/ClinicContext'
+import { useAuth } from '../../contexts/AuthContext'
 
 export default function ReserveAppointment() {
+    const { user: currentUser } = useAuth()
     const [step, setStep] = useState(1) // 1: Specialty, 2: Doctor, 3: Calendar, 4: Success
     const [selectedSpecialty, setSelectedSpecialty] = useState('')
     const [selectedDoctor, setSelectedDoctor] = useState(null)
@@ -31,31 +18,34 @@ export default function ReserveAppointment() {
     const [doctorSearch, setDoctorSearch] = useState('')
     const [mainTab, setMainTab] = useState('reserve') // reserve, status
 
-    // Mock Reservation Status Data
-    const [reservations, setReservations] = useState([
-        { id: 1, doctor: 'Dr. Ahmed Hassan', specialty: 'Psychiatry', date: '2026-02-10', time: '10:00 AM', status: 'confirmed' },
-        { id: 2, doctor: 'Dr. Fatima Ali', specialty: 'Clinical Psychology', date: '2026-02-05', time: '02:00 PM', status: 'cancelled', reason: 'Emergency case' },
-        { id: 3, doctor: 'Dr. Mohamed Saad', specialty: 'Psychiatry', date: '2026-01-25', time: '11:00 AM', status: 'completed' },
-    ])
+    const { appointments, addAppointment, updateAppointmentStatus, doctorAvailability, doctors: doctorsContext } = useClinic()
+
+    const specialties = [...new Set(doctorsContext.map(d => d.specialty))]
+    const doctors = doctorsContext
+
 
     const filteredDoctors = doctors.filter(d =>
         d.specialty === selectedSpecialty &&
         d.name.toLowerCase().includes(doctorSearch.toLowerCase())
     )
 
-    // Mock slots for selected doctor
-    const [slots, setSlots] = useState({
-        [`${new Date().toISOString().split('T')[0]}-10`]: 'available',
-        [`${new Date().toISOString().split('T')[0]}-14`]: 'available',
-        [`${new Date(Date.now() + 86400000).toISOString().split('T')[0]}-11`]: 'available',
-    })
+    // Calculate slots based on selected doctor and date
+    const slots = (() => {
+        if (!selectedDoctor) return {}
+        const docId = selectedDoctor.id || selectedDoctor.email
+        const docAvailability = doctorAvailability[docId] || {}
+        const mapped = {}
+        Object.entries(docAvailability).forEach(([date, hours]) => {
+            hours.forEach(h => {
+                mapped[`${date}-${h}`] = 'available'
+            })
+        })
+        return mapped
+    })()
+
 
     const handleCancelReservation = (id) => {
-        setReservations(prev => prev.map(res =>
-            res.id === id
-                ? { ...res, status: 'cancelled', reason: 'Cancelled by patient' }
-                : res
-        ))
+        updateAppointmentStatus(id, 'cancelled')
     }
 
     const handleSlotClick = (date, hour) => {
@@ -71,13 +61,16 @@ export default function ReserveAppointment() {
         // Add new reservation to list
         const newRes = {
             id: Date.now(),
-            doctor: selectedDoctor.name,
+            doctorId: selectedDoctor.id || selectedDoctor.email,
+            doctorName: selectedDoctor.name,
+            patientName: currentUser?.name || 'Guest User',
+            patientId: currentUser?.id || currentUser?.email,
             specialty: selectedDoctor.specialty,
             date: bookedSlot.date.toISOString().split('T')[0],
             time: bookedSlot.hour > 12 ? `${bookedSlot.hour - 12}:00 PM` : `${bookedSlot.hour}:00 AM`,
             status: 'confirmed'
         }
-        setReservations(prev => [newRes, ...prev])
+        addAppointment(newRes)
     }
 
     return (
@@ -288,8 +281,8 @@ export default function ReserveAppointment() {
                     className="space-y-6"
                 >
                     <div className="grid gap-4">
-                        {reservations.length > 0 ? (
-                            reservations.map((res) => (
+                        {appointments.length > 0 ? (
+                            appointments.map((res) => (
                                 <Card key={res.id} className="p-6">
                                     <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                         <div className="flex items-center gap-4">
@@ -297,7 +290,7 @@ export default function ReserveAppointment() {
                                                 <User className="w-6 h-6 text-primary" />
                                             </div>
                                             <div>
-                                                <h3 className="font-bold text-lg">{res.doctor}</h3>
+                                                <h3 className="font-bold text-lg">{res.doctorName}</h3>
                                                 <p className="text-text-light text-sm">{res.specialty}</p>
                                             </div>
                                         </div>

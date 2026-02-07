@@ -1,18 +1,17 @@
 import { useState } from 'react'
 import Badge from '../ui/Badge'
 import { Clock, User, AlertCircle, CheckCircle, MessageSquare } from 'lucide-react'
+import { useClinic } from '../../contexts/ClinicContext'
 
 export default function ActiveTickets() {
   const [filter, setFilter] = useState('all')
 
-  const tickets = [
-    { id: 1, user: 'Sarah Mohamed', role: 'patient', issue: 'Payment issue', category: 'payment', priority: 'high', status: 'open', time: '5 min ago', assignee: 'John Doe' },
-    { id: 2, user: 'Dr. Ahmed Ali', role: 'doctor', issue: 'Schedule synchronization error', category: 'technical', priority: 'medium', status: 'in-progress', time: '15 min ago', assignee: 'Jane Smith' },
-    { id: 3, user: 'Fatima Hassan', role: 'patient', issue: 'Technical difficulty with session', category: 'technical', priority: 'urgent', status: 'in-progress', time: '1 hour ago', assignee: 'John Doe' },
-    { id: 4, user: 'Dr. Omar Khalil', role: 'doctor', issue: 'Verify my new certifications', category: 'general', priority: 'medium', status: 'open', time: '2 hours ago', assignee: null },
-    { id: 5, user: 'Layla Ibrahim', role: 'patient', issue: 'Video call not working', category: 'technical', priority: 'high', status: 'open', time: '3 hours ago', assignee: null },
-    { id: 6, user: 'Dr. Mohamed Saad', role: 'doctor', issue: 'Refund requested for patient', category: 'payment', priority: 'low', status: 'resolved', time: '5 hours ago', assignee: 'Jane Smith' },
-  ]
+  const { tickets, updateTicketStatus } = useClinic()
+
+  const handleMoveStatus = (id, newStatus) => {
+    updateTicketStatus(id, newStatus)
+  }
+
 
   const categories = [
     { value: 'all', label: 'All Tickets', count: tickets.length },
@@ -100,7 +99,7 @@ export default function ActiveTickets() {
                   </Badge>
                 </div>
                 <p className="text-xs text-text-light mb-2">{ticket.issue}</p>
-                <div className="flex items-center justify-between text-xs text-text-light">
+                <div className="flex items-center justify-between text-xs text-text-light mb-2">
                   <div className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     <span>{ticket.time}</span>
@@ -114,6 +113,12 @@ export default function ActiveTickets() {
                     <span className="text-red-500">Unassigned</span>
                   )}
                 </div>
+                <button
+                  onClick={() => handleMoveStatus(ticket.id, 'in-progress')}
+                  className="w-full mt-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary rounded-lg hover:bg-primary hover:text-white transition-all"
+                >
+                  Start Case
+                </button>
               </div>
             ))}
           </div>
@@ -141,7 +146,7 @@ export default function ActiveTickets() {
                   </Badge>
                 </div>
                 <p className="text-xs text-text-light mb-2">{ticket.issue}</p>
-                <div className="flex items-center justify-between text-xs text-text-light">
+                <div className="flex items-center justify-between text-xs text-text-light mb-2">
                   <div className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     <span>{ticket.time}</span>
@@ -151,6 +156,12 @@ export default function ActiveTickets() {
                     <span>{ticket.assignee}</span>
                   </div>
                 </div>
+                <button
+                  onClick={() => handleMoveStatus(ticket.id, 'resolved')}
+                  className="w-full mt-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-green-100 text-green-700 rounded-lg hover:bg-green-600 hover:text-white transition-all"
+                >
+                  Resolve Ticket
+                </button>
               </div>
             ))}
           </div>

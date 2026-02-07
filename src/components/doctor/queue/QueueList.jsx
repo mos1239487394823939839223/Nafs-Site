@@ -4,6 +4,7 @@ import QueueItem from './QueueItem'
 export default function QueueList({ patients, filter, onAction }) {
   const filteredPatients = patients.filter(p => {
     if (filter === 'all') return true
+    if (filter === 'waiting') return p.status === 'waiting' || p.status === 'confirmed'
     return p.status === filter
   })
 
@@ -15,7 +16,7 @@ export default function QueueList({ patients, filter, onAction }) {
     }
     // Secondary sort by wait time (longer wait first for waiting patients)
     if (a.status === 'waiting' && b.status === 'waiting') {
-        return b.waitTime - a.waitTime
+      return b.waitTime - a.waitTime
     }
     return 0
   })
