@@ -18,12 +18,12 @@ export default function ConsultationsList({ consultations, activeId, onSelect })
   // Filter consultations based on search query
   const filteredConsultations = consultations.filter((consultation) => {
     if (!searchQuery.trim()) return true
-    
+
     const query = searchQuery.toLowerCase()
     const name = consultation.participant.name.toLowerCase()
     const role = consultation.participant.role.toLowerCase()
-    const lastMessage = consultation.lastMessage.toLowerCase()
-    
+    const lastMessage = (consultation.lastMessage || '').toLowerCase()
+
     return name.includes(query) || role.includes(query) || lastMessage.includes(query)
   })
 
@@ -32,7 +32,7 @@ export default function ConsultationsList({ consultations, activeId, onSelect })
       {/* Header */}
       <div className="p-4 border-b border-border">
         <h2 className="text-lg font-semibold text-text mb-3">Active Consultations</h2>
-        
+
         {/* Search */}
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light" />
@@ -55,8 +55,8 @@ export default function ConsultationsList({ consultations, activeId, onSelect })
               onClick={() => onSelect(consultation.id)}
               className={`
                 w-full p-4 border-b border-border-light text-left transition-colors
-                ${activeId === consultation.id 
-                  ? 'bg-primary/5 border-l-4 border-l-primary' 
+                ${activeId === consultation.id
+                  ? 'bg-primary/5 border-l-4 border-l-primary'
                   : 'hover:bg-background-gray'
                 }
               `}
@@ -66,8 +66,8 @@ export default function ConsultationsList({ consultations, activeId, onSelect })
                 <div className="relative flex-shrink-0">
                   <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
                     {consultation.participant.avatar ? (
-                      <img 
-                        src={consultation.participant.avatar} 
+                      <img
+                        src={consultation.participant.avatar}
                         alt={consultation.participant.name}
                         className="w-full h-full object-cover"
                       />
@@ -93,11 +93,11 @@ export default function ConsultationsList({ consultations, activeId, onSelect })
                       {formatTimestamp(consultation.timestamp)}
                     </span>
                   </div>
-                  
+
                   <p className="text-xs text-secondary mb-1">
                     {consultation.participant.role}
                   </p>
-                  
+
                   <div className="flex items-center justify-between">
                     <p className="text-sm text-text-light truncate flex-1">
                       {consultation.lastMessage}

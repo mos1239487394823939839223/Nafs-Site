@@ -4,44 +4,54 @@ import { Users, Filter } from 'lucide-react'
 import { useToast } from '../../components/ui/Toast' // Adjusted import path
 import QueueList from '../../components/doctor/queue/QueueList'
 import QueueStats from '../../components/doctor/queue/QueueStats'
+import { useClinic } from '../../contexts/ClinicContext'
+import { useAuth } from '../../contexts/AuthContext'
 
 export default function PatientQueue() {
   const toast = useToast()
   const [filter, setFilter] = useState('all') // all, waiting, in-progress, completed
 
-  const [patients, setPatients] = useState([
-    { id: 'p-101', name: 'Sarah Connor', status: 'in-progress', waitTime: 0 },
-    { id: 'p-102', name: 'John Doe', status: 'waiting', waitTime: 15 },
-    { id: 'p-103', name: 'Alice Smith', status: 'waiting', waitTime: 45 },
-    { id: 'p-104', name: 'Bob Wilson', status: 'waiting', waitTime: 5 },
-    { id: 'p-105', name: 'Emily Davis', status: 'completed', waitTime: 10 },
-  ])
+  const { user } = useAuth()
+  const { appointments, updateAppointmentStatus } = useClinic()
+
+  // Filter appointments for this doctor
+  const patients = appointments
+    .filter(app => {
+      const isMyId = app.doctorId === user?.id || app.doctorId === user?.email;
+      const isMyName = app.doctorName?.toLowerCase() === user?.name?.toLowerCase();
+      // Special fallback for demo: if user is 'doctor' and app is for 'Dr. Ahmed Hassan'
+      const isDemoMatch = (user?.email === 'doctor@example.com' || user?.name === 'doctor') &&
+        (app.doctorId === 1 || app.doctorName === 'Dr. Ahmed Hassan');
+
+      return isMyId || isMyName || isDemoMatch;
+    })
+    .map(app => ({
+      id: app.id,
+      name: app.patientName,
+      status: app.status,
+      waitTime: Math.floor(Math.random() * 30), // Scenario wait time
+      specialty: app.specialty,
+      time: app.time
+    }))
+
 
   // Stats calculation
   const stats = {
-    waiting: patients.filter(p => p.status === 'waiting').length,
+    waiting: patients.filter(p => p.status === 'waiting' || p.status === 'confirmed').length,
     completed: patients.filter(p => p.status === 'completed').length,
     avgWait: Math.round(patients.reduce((acc, p) => acc + p.waitTime, 0) / patients.length) || 0
   }
 
   const handleAction = (action, id) => {
-    setPatients(prev => prev.map(p => {
-        if (p.id !== id) return p
+    let newStatus = ''
+    if (action === 'start') newStatus = 'in-progress'
+    else if (action === 'complete') newStatus = 'completed'
+    else if (action === 'cancel' || action === 'no-show') newStatus = 'cancelled'
 
-        if (action === 'start') {
-            toast.success(`Session started with ${p.name}`)
-            return { ...p, status: 'in-progress' }
-        }
-        if (action === 'complete') {
-            toast.success(`Session completed for ${p.name}`)
-            return { ...p, status: 'completed' }
-        }
-        if (action === 'no-show') {
-            toast.info(`Marked ${p.name} as No Show`)
-            return { ...p, status: 'cancelled' }
-        }
-        return p
-    }))
+    if (newStatus) {
+      updateAppointmentStatus(id, newStatus)
+      toast.success(`Action updated for patient session`)
+    }
   }
 
   const filters = [
@@ -64,55 +74,54 @@ export default function PatientQueue() {
           <p className="text-text-light">Manage today's consultations in real-time</p>
         </div>
         <div className="p-2 bg-white border border-border rounded-lg shadow-sm">
-            <span className="text-sm font-medium text-text-light flex items-center gap-2">
-                <Users className="w-4 h-4" />
-                Total Patients: {patients.length}
-            </span>
+          <span className="text-sm font-medium text-text-light flex items-center gap-2">
+            <Users className="w-4 h-4" />
+            Total Patients: {patients.length}
+          </span>
         </div>
       </motion.div>
 
       <div className="grid lg:grid-cols-3 gap-8">
         {/* Main Queue List */}
         <div className="lg:col-span-2 space-y-6">
-            {/* Filters */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-2">
-                <Filter className="w-5 h-5 text-text-light mr-2" />
-                {filters.map(f => (
-                    <button
-                        key={f.id}
-                        onClick={() => setFilter(f.id)}
-                        className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
-                            filter === f.id 
-                            ? 'bg-primary text-white shadow-md' 
-                            : 'bg-white text-text-light border border-border hover:bg-gray-50'
-                        }`}
-                    >
-                        {f.label}
-                    </button>
-                ))}
-            </div>
+          {/* Filters */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2">
+            <Filter className="w-5 h-5 text-text-light mr-2" />
+            {filters.map(f => (
+              <button
+                key={f.id}
+                onClick={() => setFilter(f.id)}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${filter === f.id
+                  ? 'bg-primary text-white shadow-md'
+                  : 'bg-white text-text-light border border-border hover:bg-gray-50'
+                  }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
 
-            {/* List */}
-            <div className='min-h-[400px]'>
-                <QueueList 
-                    patients={patients} 
-                    filter={filter} 
-                    onAction={handleAction} 
-                />
-            </div>
+          {/* List */}
+          <div className='min-h-[400px]'>
+            <QueueList
+              patients={patients}
+              filter={filter}
+              onAction={handleAction}
+            />
+          </div>
         </div>
 
         {/* Sidebar / Stats */}
         <div className="space-y-6">
-            <QueueStats stats={stats} />
-            
-            {/* Quick Actions / Notes area could go here */}
-            <div className="bg-sage-light/10 p-6 rounded-2xl border border-sage-light/30">
-                <h3 className="font-semibold text-text mb-2">👨‍⚕️ Doctor's Note</h3>
-                <p className="text-sm text-text-light">
-                    Remember to complete patient notes within 15 minutes of session end.
-                </p>
-            </div>
+          <QueueStats stats={stats} />
+
+          {/* Quick Actions / Notes area could go here */}
+          <div className="bg-sage-light/10 p-6 rounded-2xl border border-sage-light/30">
+            <h3 className="font-semibold text-text mb-2">👨‍⚕️ Doctor's Note</h3>
+            <p className="text-sm text-text-light">
+              Remember to complete patient notes within 15 minutes of session end.
+            </p>
+          </div>
         </div>
       </div>
     </div>

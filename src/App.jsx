@@ -3,18 +3,23 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth, Roles } from './contexts/AuthContext'
 import { ToastProvider } from './components/ui/Toast'
 import ProtectedRoute from './components/auth/ProtectedRoute'
+import { ClinicProvider, useClinic } from './contexts/ClinicContext'
 
 import Layout from './components/layout/Layout'
 
-import PatientDashboard from './views/patient/Dashboard'
+import PatientSettings from './views/patient/Settings'
+import PatientMessages from './views/patient/PatientMessages'
+import ReserveAppointment from './views/patient/ReserveAppointment'
 import DoctorDashboard from './views/doctor/Dashboard'
 import Schedule from './views/doctor/Schedule'
 import PatientQueue from './views/doctor/PatientQueue'
 import SessionHistory from './views/doctor/SessionHistory'
+import MedicalHistory from './views/doctor/MedicalHistory'
 import Settings from './views/doctor/Settings'
-import PatientSettings from './views/patient/Settings'
-import AdminDashboard from './views/admin/Dashboard'
+import UserManagement from './views/admin/UserManagement'
+import AdminProfile from './views/admin/Profile'
 import CustomerServiceDashboard from './views/customer-service/Dashboard'
+import StaffProfile from './views/customer-service/Profile'
 
 import Login from './views/auth/Login'
 import RoleSelection from './views/auth/RoleSelection'
@@ -23,25 +28,22 @@ import DoctorRegistration from './views/auth/doctor/DoctorRegistration'
 import PendingApproval from './views/auth/PendingApproval'
 
 import InviteStaff from './views/admin/InviteStaff'
-
+import AdminMessages from './views/admin/Messages'
 import MessagesPage from './views/shared/MessagesPage'
 
 function RootRedirect() {
   const { isAuthenticated, getDashboardRoute } = useAuth()
-  
+
   if (isAuthenticated) {
     return <Navigate to={getDashboardRoute()} replace />
   }
-  
+
   return <Navigate to="/auth/login" replace />
 }
 
 function AppRoutes() {
   const [isRTL, setIsRTL] = useState(false)
-  const [notifications, setNotifications] = useState([
-    { id: 1, type: 'appointment', message: 'Upcoming appointment with Dr. Ahmed in 2 hours', time: '2 hours' },
-    { id: 2, type: 'reminder', message: 'Complete your pre-session health quiz', time: '1 day' },
-  ])
+  const { notifications } = useClinic()
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen bg-background">
@@ -58,8 +60,16 @@ function AppRoutes() {
           path="/dashboard/patient"
           element={
             <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
+              <Navigate to="/dashboard/patient/reserve" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/patient/reserve"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
               <Layout>
-                <PatientDashboard />
+                <ReserveAppointment />
               </Layout>
             </ProtectedRoute>
           }
@@ -68,7 +78,19 @@ function AppRoutes() {
           path="/dashboard/patient/messages"
           element={
             <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
-              <MessagesPage />
+              <Layout>
+                <PatientMessages />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/patient/profile"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
+              <Layout>
+                <PatientSettings />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -105,7 +127,18 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/dashboard/doctor/medical-history"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
+              <Layout>
+                <MedicalHistory />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/dashboard/doctor/history"
+
           element={
             <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
               <Layout>
@@ -128,7 +161,9 @@ function AppRoutes() {
           path="/dashboard/doctor/messages"
           element={
             <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
-              <MessagesPage />
+              <Layout>
+                <MessagesPage />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -144,24 +179,62 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
-        {/* Protected Admin Routes */}
         <Route
-          path="/admin"
+          path="/dashboard/staff/messages"
           element={
-            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+            <ProtectedRoute allowedRoles={[Roles.STAFF]}>
               <Layout>
-                <AdminDashboard />
+                <MessagesPage />
               </Layout>
             </ProtectedRoute>
           }
         />
         <Route
-          path="/admin/invite-staff"
+          path="/dashboard/staff/profile"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.STAFF]}>
+              <Layout>
+                <StaffProfile />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+              <Navigate to="/admin/users" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
           element={
             <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
               <Layout>
-                <InviteStaff />
+                <UserManagement />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/messages"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+              <Layout>
+                <AdminMessages />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/profile"
+
+          element={
+            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+              <Layout>
+                <AdminProfile />
               </Layout>
             </ProtectedRoute>
           }
@@ -187,13 +260,16 @@ function AppRoutes() {
   )
 }
 
+
 function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ToastProvider>
-          <AppRoutes />
-        </ToastProvider>
+        <ClinicProvider>
+          <ToastProvider>
+            <AppRoutes />
+          </ToastProvider>
+        </ClinicProvider>
       </AuthProvider>
     </BrowserRouter>
   )

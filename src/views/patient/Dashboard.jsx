@@ -3,10 +3,10 @@ import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Ca
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import { Select } from '../../components/ui/Input'
-import { 
-  Activity, 
-  Heart, 
-  Thermometer, 
+import {
+  Activity,
+  Heart,
+  Thermometer,
   TrendingUp,
   Calendar,
   Clock,
@@ -18,8 +18,12 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import AIAssistant from '../../components/shared/AIAssistant'
 import BookingModal from '../../components/modals/BookingModal'
 import HealthJourneyTimeline from '../../components/patient/HealthJourneyTimeline'
+import { useClinic } from '../../contexts/ClinicContext'
+import { useAuth } from '../../contexts/AuthContext'
 
 export default function PatientDashboard() {
+  const { user } = useAuth()
+  const { appointments } = useClinic()
   const [showAI, setShowAI] = useState(false)
   const [showBooking, setShowBooking] = useState(false)
 
@@ -42,10 +46,17 @@ export default function PatientDashboard() {
     { day: 'Sun', bpm: 69 },
   ]
 
-  const upcomingAppointments = [
-    { id: 1, doctor: 'Dr. Ahmed Hassan', specialty: 'Cardiology', date: '2026-01-30', time: '10:00 AM', type: 'Video' },
-    { id: 2, doctor: 'Dr. Fatima Ali', specialty: 'General Medicine', date: '2026-02-05', time: '2:30 PM', type: 'Audio' },
-  ]
+  const upcomingAppointments = appointments
+    .filter(app => (app.patientName === user?.name || app.patientId === user?.id || app.patientId === user?.email) && (app.status === 'confirmed' || app.status === 'waiting' || app.status === 'scheduled'))
+    .map(app => ({
+      id: app.id,
+      doctor: app.doctorName,
+      specialty: app.specialty,
+      date: app.date,
+      time: app.time,
+      type: 'Video'
+    }))
+    .slice(0, 3)
 
   return (
     <div className="space-y-6">

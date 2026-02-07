@@ -1,32 +1,45 @@
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import Table, { TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table'
 import Badge from '../../components/ui/Badge'
-import { 
-  TrendingUp, 
-  Users, 
-  DollarSign, 
+import {
+  TrendingUp,
+  Users,
+  DollarSign,
   Activity,
   Star,
   Calendar
 } from 'lucide-react'
 import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import KPICard from '../../components/admin/KPICard'
+import { useClinic } from '../../contexts/ClinicContext'
 
 export default function AdminDashboard() {
-  // Mock analytics data
+  const { users, doctors, appointments } = useClinic()
+
+  // Real stats from context
   const platformStats = {
-    totalRevenue: 125000,
-    totalDoctors: 45,
-    totalPatients: 1250,
-    activeSessions: 23
+    totalRevenue: appointments.filter(a => a.status === 'completed').length * 500, // Estimated
+    totalDoctors: doctors.length,
+    totalPatients: users.filter(u => u.role === 'patient').length,
+    activeSessions: appointments.filter(a => a.status === 'confirmed' || a.status === 'waiting' || a.status === 'scheduled').length
   }
 
+  const topDoctors = doctors.map(d => ({
+    id: d.id || d.email,
+    name: d.name,
+    specialty: d.specialty || 'General',
+    rating: d.rating || 5.0,
+    sessions: appointments.filter(a => a.doctorId === (d.id || d.email)).length,
+    revenue: appointments.filter(a => a.doctorId === (d.id || d.email) && a.status === 'completed').length * 500,
+    status: 'Active'
+  })).sort((a, b) => b.sessions - a.sessions).slice(0, 5)
+
   const revenueData = [
-    { month: 'Jan', revenue: 18000 },
-    { month: 'Feb', revenue: 22000 },
-    { month: 'Mar', revenue: 25000 },
-    { month: 'Apr', revenue: 28000 },
-    { month: 'May', revenue: 32000 },
+    { month: 'Jan', revenue: appointments.filter(a => a.date.includes('-01-')).length * 500 },
+    { month: 'Feb', revenue: appointments.filter(a => a.date.includes('-02-')).length * 500 },
+    { month: 'Mar', revenue: appointments.filter(a => a.date.includes('-03-')).length * 500 },
+    { month: 'Apr', revenue: appointments.filter(a => a.date.includes('-04-')).length * 500 },
+    { month: 'May', revenue: appointments.filter(a => a.date.includes('-05-')).length * 500 },
   ]
 
   const sessionTypeData = [
@@ -34,15 +47,6 @@ export default function AdminDashboard() {
     { name: 'Audio', value: 25, color: '#93B5C6' },
     { name: 'Chat', value: 10, color: '#D3C5E5' },
   ]
-
-  const topDoctors = [
-    { id: 1, name: 'Dr. Ahmed Hassan', specialty: 'Cardiology', rating: 4.9, sessions: 145, revenue: 72500 },
-    { id: 2, name: 'Dr. Fatima Ali', specialty: 'General Medicine', rating: 4.8, sessions: 132, revenue: 39600 },
-    { id: 3, name: 'Dr. Mohamed Saad', specialty: 'Dermatology', rating: 4.7, sessions: 98, revenue: 39200 },
-    { id: 4, name: 'Dr. Layla Ibrahim', specialty: 'Pediatrics', rating: 4.9, sessions: 120, revenue: 42000 },
-    { id: 5, name: 'Dr. Omar Khalil', specialty: 'Orthopedics', rating: 4.6, sessions: 87, revenue: 43500 },
-  ]
-
   const patientRetention = [
     { month: 'Jan', returning: 65, new: 35 },
     { month: 'Feb', returning: 70, new: 30 },

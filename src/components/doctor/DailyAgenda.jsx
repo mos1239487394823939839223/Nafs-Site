@@ -4,11 +4,17 @@ import { Clock, FileText, Calendar, AlertCircle } from 'lucide-react'
 import Button from '../ui/Button'
 import Badge from '../ui/Badge'
 
+import { useClinic } from '../../contexts/ClinicContext'
+import { useAuth } from '../../contexts/AuthContext'
+
 export default function DailyAgenda() {
   const navigate = useNavigate()
   const [selectedDate, setSelectedDate] = useState(new Date())
   const dateInputRef = useRef(null)
-  
+
+  const { user } = useAuth()
+  const { appointments, doctorAvailability } = useClinic()
+
   const formatDate = (date) => {
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
@@ -22,64 +28,59 @@ export default function DailyAgenda() {
     setSelectedDate(new Date(e.target.value))
   }
 
-  const timeSlots = [
-    { hour: '08:00', period: 'AM', type: 'available' },
-    { hour: '09:00', period: 'AM', type: 'available' },
-    {
-      hour: '10:00',
-      period: 'AM',
-      type: 'appointment',
-      patient: 'Sarah Mohamed',
-      sessionType: 'video',
-      reason: 'Follow-up consultation',
-      priority: 'routine'
-    },
-    {
-      hour: '11:00',
-      period: 'AM',
-      type: 'appointment',
-      patient: 'Ahmed Ali',
-      sessionType: 'audio',
-      reason: 'General checkup',
-      priority: 'routine'
-    },
-    { hour: '12:00', period: 'PM', type: 'break', label: 'Lunch Break' },
-    { hour: '01:00', period: 'PM', type: 'break' },
-    {
-      hour: '02:00',
-      period: 'PM',
-      type: 'appointment',
-      patient: 'Fatima Hassan',
-      sessionType: 'video',
-      reason: 'Diabetes consultation',
-      priority: 'urgent'
-    },
-    { hour: '03:00', period: 'PM', type: 'available' },
-    {
-      hour: '04:00',
-      period: 'PM',
-      type: 'appointment',
-      patient: 'Omar Khalil',
-      sessionType: 'video',
-      reason: 'Post-surgery follow-up',
-      priority: 'routine'
-    },
-    { hour: '05:00', period: 'PM', type: 'available' },
-    { hour: '06:00', period: 'PM', type: 'available' },
-    { hour: '07:00', period: 'PM', type: 'available' },
-  ]
+  // Generate dynamic slots based on context
+  const dateStr = selectedDate.toISOString().split('T')[0]
+  const docId = user?.id || user?.email
+  const availableHours = doctorAvailability[docId]?.[dateStr] || []
+  const dailyApps = appointments.filter(app =>
+    (app.doctorId === docId || app.doctorName === user?.name) && app.date === dateStr
+  )
+
+  const timeSlots = []
+  for (let h = 8; h <= 19; h++) {
+    const period = h >= 12 ? 'PM' : 'AM'
+    const displayHour = h > 12 ? h - 12 : h
+    const timeKey = `${displayHour < 10 ? '0' : ''}${displayHour}:00`
+    const timeFull = `${displayHour}:00 ${period}`
+
+    const app = dailyApps.find(a => a.time.includes(timeFull))
+
+    if (app) {
+      timeSlots.push({
+        hour: timeKey,
+        period,
+        type: 'appointment',
+        patient: app.patientName,
+        sessionType: 'video',
+        reason: app.specialty || 'Consultation',
+        priority: 'routine'
+      })
+    } else if (availableHours.includes(h)) {
+      timeSlots.push({ hour: timeKey, period, type: 'available' })
+    } else if (h === 12) {
+      timeSlots.push({ hour: '12:00', period: 'PM', type: 'break', label: 'Lunch Break' })
+    } else {
+      timeSlots.push({ hour: timeKey, period, type: 'off' })
+    }
+  }
 
   const getSlotColor = (type, priority) => {
-    if (type === 'break') return 'bg-gray-100 border-gray-200'
+    if (type === 'break' || type === 'off') return 'bg-gray-100 border-gray-200 opacity-60'
     if (type === 'available') return 'bg-background border-border'
     if (priority === 'urgent') return 'bg-red-50 border-red-200'
     return 'bg-primary/5 border-primary/20'
   }
 
   const getSlotHoverColor = (type) => {
-    if (type === 'break') return ''
+    if (type === 'break' || type === 'off') return ''
     if (type === 'available') return 'hover:bg-primary/5 hover:border-primary/30'
     return 'hover:border-primary'
+  }
+
+  const stats = {
+    appointments: timeSlots.filter(s => s.type === 'appointment').length,
+    available: timeSlots.filter(s => s.type === 'available').length,
+    urgent: timeSlots.filter(s => s.priority === 'urgent').length
   }
 
   return (
@@ -97,8 +98,8 @@ export default function DailyAgenda() {
             onChange={handleDateChange}
             className="absolute top-full right-0 mt-2 opacity-0 w-0 h-0"
           />
-          <Button 
-            size="sm" 
+          <Button
+            size="sm"
             variant="outline"
             onClick={() => dateInputRef.current?.showPicker()}
           >
@@ -163,8 +164,8 @@ export default function DailyAgenda() {
               {/* Actions */}
               {slot.type === 'appointment' && (
                 <div className="flex-shrink-0">
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant={slot.priority === 'urgent' ? 'primary' : 'outline'}
                     onClick={() => navigate('/dashboard/doctor/messages')}
                   >
@@ -181,15 +182,15 @@ export default function DailyAgenda() {
       <div className="mt-6 pt-6 border-t border-border">
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
-            <div className="text-2xl font-bold text-primary">4</div>
+            <div className="text-2xl font-bold text-primary">{stats.appointments}</div>
             <div className="text-xs text-text-light mt-1">Appointments</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-secondary">6</div>
+            <div className="text-2xl font-bold text-secondary">{stats.available}</div>
             <div className="text-xs text-text-light mt-1">Available Slots</div>
           </div>
           <div>
-            <div className="text-2xl font-bold text-accent-dark">1</div>
+            <div className="text-2xl font-bold text-accent-dark">{stats.urgent}</div>
             <div className="text-xs text-text-light mt-1">Urgent</div>
           </div>
         </div>

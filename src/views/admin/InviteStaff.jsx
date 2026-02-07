@@ -7,6 +7,7 @@ import Badge from '../../components/ui/Badge'
 import { useToast } from '../../components/ui/Toast'
 import { validateEmail } from '../../lib/validation'
 import { Mail, UserPlus, Send, CheckCircle, Clock, XCircle } from 'lucide-react'
+import { useClinic } from '../../contexts/ClinicContext'
 
 export default function InviteStaff() {
   const toast = useToast()
@@ -18,12 +19,17 @@ export default function InviteStaff() {
   })
   const [errors, setErrors] = useState({})
 
-  // Mock invited staff data
-  const [invitations, setInvitations] = useState([
-    { id: 1, email: 'sarah@clinc.com', role: 'Customer Service', permissions: 'Support Agent', status: 'accepted', date: '2026-01-20' },
-    { id: 2, email: 'ahmed@clinc.com', role: 'Customer Service', permissions: 'Manager', status: 'pending', date: '2026-01-25' },
-    { id: 3, email: 'fatima@clinc.com', role: 'Customer Service', permissions: 'View Only', status: 'pending', date: '2026-01-27' },
-  ])
+  const { users, registerUser } = useClinic()
+
+  // Derived staff data from context
+  const invitations = users.filter(u => u.role === 'staff' || u.role === 'customer-service').map(u => ({
+    id: u.email,
+    email: u.email,
+    role: 'Customer Service',
+    permissions: u.permissions || 'Support Agent',
+    status: 'accepted',
+    date: u.dateAdded || '2026-02-01'
+  }))
 
   const permissionLevels = [
     { value: 'view-only', label: 'View Only', description: 'Can view tickets and patient information' },
@@ -67,17 +73,17 @@ export default function InviteStaff() {
     // Simulate API call
     setTimeout(() => {
       setLoading(false)
-      
-      // Add to invitations list
-      const newInvitation = {
-        id: Date.now(),
+
+      const newUser = {
         email: formData.email,
-        role: 'Customer Service',
+        password: 'password',
+        role: 'staff',
         permissions: permissionLevels.find(p => p.value === formData.permissions)?.label || '',
         status: 'pending',
-        date: new Date().toISOString().split('T')[0],
+        dateAdded: new Date().toISOString().split('T')[0],
       }
-      setInvitations(prev => [newInvitation, ...prev])
+
+      registerUser(newUser)
 
       toast.success(`Invitation sent to ${formData.email}`)
       setFormData({ email: '', role: '', permissions: 'support-agent' })
@@ -245,7 +251,7 @@ export default function InviteStaff() {
       {/* Info Box */}
       <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
         <p className="text-sm text-blue-800">
-          <strong>Note:</strong> Invited staff members will receive an email with a unique registration link. 
+          <strong>Note:</strong> Invited staff members will receive an email with a unique registration link.
           The invitation is valid for 7 days.
         </p>
       </div>

@@ -3,15 +3,17 @@ import { useNavigate } from 'react-router-dom'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { useToast } from '../../components/ui/Toast'
-import { useAuth, Roles } from '../../contexts/AuthContext'
+import { useAuth, Roles, RoleDashboards } from '../../contexts/AuthContext'
 import { validateEmail, validatePassword, getPasswordStrength } from '../../lib/validation'
 import { Eye, EyeOff, Mail, Lock, Chrome } from 'lucide-react'
 import { motion } from 'framer-motion'
+import { useClinic } from '../../contexts/ClinicContext'
 
 export default function Login() {
   const navigate = useNavigate()
   const toast = useToast()
-  const { login } = useAuth()
+  const { login: authLogin } = useAuth()
+  const { users, registerUser } = useClinic()
   const [isLogin, setIsLogin] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -78,66 +80,39 @@ export default function Login() {
     setTimeout(() => {
       setLoading(false)
       if (isLogin) {
-        // 1. Check for registered user in localStorage (Simulating Backend)
-        const storedUsers = JSON.parse(localStorage.getItem('users') || '[]')
-        const foundUser = storedUsers.find(u => u.email === formData.email && u.password === formData.password)
+        // Find user in master registry
+        const foundUser = users.find(u => u.email === formData.email && u.password === formData.password)
 
         if (foundUser) {
-          // Login with registered user's role
-          login(
-            { ...foundUser, name: foundUser.name || formData.email.split('@')[0] },
-            foundUser.role
-          )
+          authLogin(foundUser, foundUser.role)
           toast.success('Login successful!')
-          
-          const dashboardRoutes = {
-            [Roles.PATIENT]: '/dashboard/patient',
-            [Roles.DOCTOR]: '/dashboard/doctor',
-            [Roles.ADMIN]: '/admin',
-            [Roles.STAFF]: '/dashboard/staff',
-          }
-          navigate(dashboardRoutes[foundUser.role])
+          navigate(RoleDashboards[foundUser.role])
           return
         }
 
-        // 2. Demo Fallback: Determine role based on email domain for testing
-        // Only if user is not in "database"
+        // Demo Fallback for non-registered emails
         let userRole = Roles.PATIENT
-        if (formData.email.includes('doctor')) {
-          userRole = Roles.DOCTOR
-        } else if (formData.email.includes('admin')) {
-          userRole = Roles.ADMIN
-        } else if (formData.email.includes('staff') || formData.email.includes('support')) {
-          userRole = Roles.STAFF
-        }
+        if (formData.email.includes('doctor')) userRole = Roles.DOCTOR
+        else if (formData.email.includes('admin')) userRole = Roles.ADMIN
+        else if (formData.email.includes('staff')) userRole = Roles.STAFF
 
-        // Login with inferred role
-        login(
-          { name: formData.email.split('@')[0], email: formData.email },
-          userRole
-        )
-
-        toast.success('Login successful!')
-        
-        // Navigate to role-specific dashboard
-        const dashboardRoutes = {
-          [Roles.PATIENT]: '/dashboard/patient',
-          [Roles.DOCTOR]: '/dashboard/doctor',
-          [Roles.ADMIN]: '/admin',
-          [Roles.STAFF]: '/dashboard/staff',
-        }
-        navigate(dashboardRoutes[userRole])
+        authLogin({ name: formData.email.split('@')[0], email: formData.email }, userRole)
+        toast.success('Login successful (Demo Mode)!')
+        navigate(RoleDashboards[userRole])
       } else {
-        // Store credentials temporarily for the next registration steps
-        sessionStorage.setItem('temp_reg_data', JSON.stringify({
+        // Register simulation
+        const newUser = {
           email: formData.email,
-          password: formData.password
-        }))
-        
-        toast.success('Account created! Please select your role.')
-        navigate('/auth/role-selection')
+          password: formData.password,
+          name: formData.email.split('@')[0],
+          role: Roles.PATIENT // Default to patient for quick register
+        }
+        registerUser(newUser)
+        authLogin(newUser, newUser.role)
+        toast.success('Account created and logged in!')
+        navigate('/dashboard/patient')
       }
-    }, 1500)
+    }, 1200)
   }
 
   const handleGoogleSignIn = () => {
@@ -212,9 +187,8 @@ export default function Login() {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`w-full px-4 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-medical-blue focus:border-transparent transition-all ${
-                    errors.password ? 'border-red-500' : 'border-gray-300'
-                  }`}
+                  className={`w-full px-4 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-medical-blue focus:border-transparent transition-all ${errors.password ? 'border-red-500' : 'border-gray-300'
+                    }`}
                   placeholder="••••••••"
                 />
                 <button

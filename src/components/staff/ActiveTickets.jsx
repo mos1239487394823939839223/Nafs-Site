@@ -1,18 +1,17 @@
 import { useState } from 'react'
 import Badge from '../ui/Badge'
 import { Clock, User, AlertCircle, CheckCircle, MessageSquare } from 'lucide-react'
+import { useClinic } from '../../contexts/ClinicContext'
 
 export default function ActiveTickets() {
   const [filter, setFilter] = useState('all')
 
-  const tickets = [
-    { id: 1, patient: 'Sarah Mohamed', issue: 'Payment issue', category: 'payment', priority: 'high', status: 'open', time: '5 min ago', assignee: 'John Doe' },
-    { id: 2, patient: 'Ahmed Ali', issue: 'Appointment rescheduling', category: 'appointment', priority: 'medium', status: 'in-progress', time: '15 min ago', assignee: 'Jane Smith' },
-    { id: 3, patient: 'Fatima Hassan', issue: 'Technical support', category: 'technical', priority: 'low', status: 'in-progress', time: '1 hour ago', assignee: 'John Doe' },
-    { id: 4, patient: 'Omar Khalil', issue: 'Prescription refill', category: 'general', priority: 'medium', status: 'open', time: '2 hours ago', assignee: null },
-    { id: 5, patient: 'Layla Ibrahim', issue: 'Video call not working', category: 'technical', priority: 'high', status: 'open', time: '3 hours ago', assignee: null },
-    { id: 6, patient: 'Mohamed Saad', issue: 'Insurance verification', category: 'payment', priority: 'low', status: 'resolved', time: '5 hours ago', assignee: 'Jane Smith' },
-  ]
+  const { tickets, updateTicketStatus } = useClinic()
+
+  const handleMoveStatus = (id, newStatus) => {
+    updateTicketStatus(id, newStatus)
+  }
+
 
   const categories = [
     { value: 'all', label: 'All Tickets', count: tickets.length },
@@ -65,8 +64,8 @@ export default function ActiveTickets() {
             onClick={() => setFilter(cat.value)}
             className={`
               px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap
-              ${filter === cat.value 
-                ? 'bg-primary text-white shadow-sm' 
+              ${filter === cat.value
+                ? 'bg-primary text-white shadow-sm'
                 : 'bg-background text-text-light hover:bg-primary/10'
               }
             `}
@@ -91,13 +90,16 @@ export default function ActiveTickets() {
             {groupedByStatus.open.map((ticket) => (
               <div key={ticket.id} className="bg-white rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm">
                 <div className="flex items-start justify-between mb-2">
-                  <h4 className="font-semibold text-sm text-text">{ticket.patient}</h4>
+                  <div className="flex flex-col">
+                    <h4 className="font-semibold text-sm text-text">{ticket.user}</h4>
+                    <span className="text-[10px] uppercase font-bold text-primary/60">{ticket.role}</span>
+                  </div>
                   <Badge variant={getPriorityColor(ticket.priority)} size="sm">
                     {ticket.priority}
                   </Badge>
                 </div>
                 <p className="text-xs text-text-light mb-2">{ticket.issue}</p>
-                <div className="flex items-center justify-between text-xs text-text-light">
+                <div className="flex items-center justify-between text-xs text-text-light mb-2">
                   <div className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     <span>{ticket.time}</span>
@@ -111,6 +113,12 @@ export default function ActiveTickets() {
                     <span className="text-red-500">Unassigned</span>
                   )}
                 </div>
+                <button
+                  onClick={() => handleMoveStatus(ticket.id, 'in-progress')}
+                  className="w-full mt-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary rounded-lg hover:bg-primary hover:text-white transition-all"
+                >
+                  Start Case
+                </button>
               </div>
             ))}
           </div>
@@ -129,13 +137,16 @@ export default function ActiveTickets() {
             {groupedByStatus['in-progress'].map((ticket) => (
               <div key={ticket.id} className="bg-white rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm">
                 <div className="flex items-start justify-between mb-2">
-                  <h4 className="font-semibold text-sm text-text">{ticket.patient}</h4>
+                  <div className="flex flex-col">
+                    <h4 className="font-semibold text-sm text-text">{ticket.user}</h4>
+                    <span className="text-[10px] uppercase font-bold text-primary/60">{ticket.role}</span>
+                  </div>
                   <Badge variant={getPriorityColor(ticket.priority)} size="sm">
                     {ticket.priority}
                   </Badge>
                 </div>
                 <p className="text-xs text-text-light mb-2">{ticket.issue}</p>
-                <div className="flex items-center justify-between text-xs text-text-light">
+                <div className="flex items-center justify-between text-xs text-text-light mb-2">
                   <div className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     <span>{ticket.time}</span>
@@ -145,6 +156,12 @@ export default function ActiveTickets() {
                     <span>{ticket.assignee}</span>
                   </div>
                 </div>
+                <button
+                  onClick={() => handleMoveStatus(ticket.id, 'resolved')}
+                  className="w-full mt-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-green-100 text-green-700 rounded-lg hover:bg-green-600 hover:text-white transition-all"
+                >
+                  Resolve Ticket
+                </button>
               </div>
             ))}
           </div>
@@ -163,7 +180,10 @@ export default function ActiveTickets() {
             {groupedByStatus.resolved.map((ticket) => (
               <div key={ticket.id} className="bg-white rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm opacity-75">
                 <div className="flex items-start justify-between mb-2">
-                  <h4 className="font-semibold text-sm text-text">{ticket.patient}</h4>
+                  <div className="flex flex-col">
+                    <h4 className="font-semibold text-sm text-text">{ticket.user}</h4>
+                    <span className="text-[10px] uppercase font-bold text-primary/60">{ticket.role}</span>
+                  </div>
                   <Badge variant={getPriorityColor(ticket.priority)} size="sm">
                     {ticket.priority}
                   </Badge>

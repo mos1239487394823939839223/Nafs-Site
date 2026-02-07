@@ -4,17 +4,19 @@ import { Bell, Search, User } from 'lucide-react'
 import Badge from '../ui/Badge'
 import RoleBadge from '../ui/RoleBadge'
 
+import { useClinic } from '../../contexts/ClinicContext'
+
 export default function Header() {
   const { role, user } = useAuth()
+  const { notifications: sharedNotifications } = useClinic()
   const [showNotifications, setShowNotifications] = useState(false)
+  // Mock notifications split by source for Staff
+  const [activeNotifTab, setActiveNotifTab] = useState('patient')
 
-  // Mock notifications (in production, this would come from API/context)
-  const notifications = [
-    { id: 1, type: 'appointment', message: 'Upcoming appointment in 2 hours', time: '2 hours' },
-    { id: 2, type: 'reminder', message: 'Complete your health quiz', time: '1 day' },
-  ]
-
-
+  // Filter shared notifications
+  const notifications = role === 'staff'
+    ? sharedNotifications.filter(n => n.source === activeNotifTab || n.role === 'staff')
+    : sharedNotifications.filter(n => n.role === role || n.role === 'all')
 
   const roleLabels = {
     patient: 'Patient Portal',
@@ -22,6 +24,12 @@ export default function Header() {
     admin: 'Admin Dashboard',
     staff: 'Customer Service',
   }
+
+  const notifTabs = [
+    { id: 'patient', label: 'Patients' },
+    { id: 'doctor', label: 'Doctors' },
+    { id: 'admin', label: 'Admin' }
+  ]
 
   return (
     <header className="bg-white border-b border-border px-4 md:px-6 py-4">
@@ -56,48 +64,65 @@ export default function Header() {
               className="relative p-2 hover:bg-background-gray rounded-xl transition-colors"
             >
               <Bell className="w-5 h-5 md:w-6 md:h-6 text-text" />
-              {notifications.length > 0 && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-              )}
+              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
             </button>
 
             {/* Notification Dropdown */}
             {showNotifications && (
               <>
-                {/* Backdrop */}
                 <div
                   className="fixed inset-0 z-40"
                   onClick={() => setShowNotifications(false)}
                 />
-                
-                {/* Dropdown */}
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-border z-50">
-                  <div className="p-4 border-b border-border">
-                    <h3 className="font-semibold text-text">Notifications</h3>
+
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-border z-50 overflow-hidden">
+                  <div className="p-4 border-b border-border flex items-center justify-between">
+                    <h3 className="font-bold text-clinical-darkGray font-black italic uppercase tracking-tighter">Notifications</h3>
+                    <Badge variant="outline">{notifications.length}</Badge>
                   </div>
+
+                  {role === 'staff' && (
+                    <div className="flex bg-background border-b border-border">
+                      {notifTabs.map(tab => (
+                        <button
+                          key={tab.id}
+                          onClick={() => setActiveNotifTab(tab.id)}
+                          className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest italic transition-all
+                                    ${activeNotifTab === tab.id ? 'bg-white text-primary' : 'text-clinical-gray hover:bg-white/50'}`}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
                   <div className="max-h-96 overflow-y-auto">
                     {notifications.length > 0 ? (
                       notifications.map((notif) => (
-                        <div key={notif.id} className="p-4 border-b border-border-light hover:bg-background-gray transition-colors">
+                        <div key={notif.id} className="p-4 border-b border-border-light hover:bg-background-gray transition-colors cursor-pointer group">
                           <div className="flex items-start gap-3">
                             <div className="flex-1">
-                              <p className="text-sm text-text">{notif.message}</p>
-                              <p className="text-xs text-text-light mt-1">{notif.time} ago</p>
+                              <p className="text-sm text-clinical-darkGray leading-tight group-hover:text-primary transition-colors">{notif.message}</p>
+                              <p className="text-[10px] font-bold italic text-clinical-gray mt-1 uppercase">{notif.time} ago</p>
                             </div>
-                            <Badge variant="primary">{notif.type}</Badge>
+                            <Badge variant="primary" className="text-[9px] px-1 overflow-hidden">{notif.type}</Badge>
                           </div>
                         </div>
                       ))
                     ) : (
-                      <div className="p-8 text-center text-text-light">
-                        No new notifications
+                      <div className="p-8 text-center text-text-light opacity-50">
+                        No new {activeNotifTab} alerts
                       </div>
                     )}
+                  </div>
+                  <div className="p-3 bg-background border-t border-border text-center">
+                    <button className="text-[10px] font-black uppercase italic text-primary hover:underline">Mark all as read</button>
                   </div>
                 </div>
               </>
             )}
           </div>
+
 
           {/* User Profile */}
           <button className="flex items-center gap-3 p-2 hover:bg-background-gray rounded-xl transition-colors">

@@ -12,10 +12,6 @@ export default function ChatInterface({ consultations, currentUserId }) {
   const activeConsultation = consultations.find(c => c.id === activeConsultationId)
 
   const handleSendMessage = (messageData) => {
-    // In production, this would send to backend/WebSocket
-    console.log('Sending message:', messageData)
-    
-    // Mock: Add message to conversation
     const newMessage = {
       id: Date.now(),
       sender: 'current-user',
@@ -24,13 +20,14 @@ export default function ChatInterface({ consultations, currentUserId }) {
       read: false,
       attachments: messageData.attachments || []
     }
-    
-    // Update conversation (in production, this would be handled by state management)
-    activeConsultation.messages.push(newMessage)
+
+    if (onSendMessage) {
+      onSendMessage(activeConsultationId, newMessage)
+    }
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background">
+    <div className="h-full flex flex-col bg-background">
       {/* Mobile Header */}
       <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-border">
         <button
