@@ -245,7 +245,7 @@ export default function ReserveAppointment() {
                                             Confirm Appointment
                                         </Button>
                                     </Card>
-                                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-100 italic text-sm text-blue-700">
+                                    <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 italic text-sm text-emerald-700">
                                         Note: Appointment availability is managed by the healthcare professional.
                                     </div>
                                 </div>

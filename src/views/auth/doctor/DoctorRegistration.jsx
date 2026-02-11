@@ -471,8 +471,8 @@ export default function DoctorRegistration() {
                   )}
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                  <p className="text-sm text-blue-800">
+                <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-lg">
+                  <p className="text-sm text-emerald-800">
                     <strong>Note:</strong> All documents will be reviewed by our admin team. You'll receive approval within 24-48 hours.
                   </p>
                 </div>

@@ -88,7 +88,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
       <div className="px-4 md:px-6 py-4 border-b border-border bg-white">
         <div className="flex items-center gap-3">
           {/* Back Button */}
-          <button 
+          <button
             onClick={onBack}
             className="p-2 hover:bg-background-gray rounded-xl transition-colors"
           >
@@ -99,8 +99,8 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
           <div className="relative">
             <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
               {conversation.participant.avatar ? (
-                <img 
-                  src={conversation.participant.avatar} 
+                <img
+                  src={conversation.participant.avatar}
                   alt={conversation.participant.name}
                   className="w-full h-full object-cover"
                 />
@@ -134,7 +134,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
             isSent={message.sender === 'current-user'}
           />
         ))}
-        
+
         {/* Typing Indicator */}
         {isTyping && (
           <div className="flex justify-start mb-4">
@@ -147,7 +147,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
@@ -213,7 +213,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
               rows="1"
               className="w-full px-4 py-3 pr-12 border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary resize-none max-h-32"
             />
-            <button 
+            <button
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
               className="absolute right-3 bottom-3 text-text-light hover:text-text"
             >
@@ -223,7 +223,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
             {/* Emoji Picker */}
             {showEmojiPicker && (
               <div ref={emojiPickerRef} className="absolute bottom-14 right-0 z-50">
-                <EmojiPicker 
+                <EmojiPicker
                   onEmojiClick={onEmojiClick}
                   width={320}
                   height={400}

@@ -71,9 +71,9 @@ export default function PendingApproval() {
           </div>
 
           {/* Info Box */}
-          <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-8">
-            <p className="text-sm text-blue-800">
-              <strong>Note:</strong> We'll send you an email notification once your application has been reviewed. 
+          <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-lg mb-8">
+            <p className="text-sm text-emerald-800">
+              <strong>Note:</strong> We'll send you an email notification once your application has been reviewed.
               Please check your inbox regularly.
             </p>
           </div>

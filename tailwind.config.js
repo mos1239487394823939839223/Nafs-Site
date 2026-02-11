@@ -7,59 +7,59 @@ export default {
     theme: {
         extend: {
             colors: {
-                // Primary Brand Color - Deep Navy Blue
+                // Primary Brand Color - Sage Green
                 primary: {
-                    DEFAULT: '#1C4D8D', // Medium Blue
-                    light: '#4988C4', // Lighter Blue
-                    dark: '#0F2854', // Dark Navy
+                    DEFAULT: '#6B9E8A', // Sage Green
+                    light: '#8FBDAA', // Light Sage
+                    dark: '#4A7E6D', // Dark Sage
                 },
-                // Secondary Color - Sky Blue
+                // Secondary Color - Soft Green
                 secondary: {
-                    DEFAULT: '#4988C4', // Lighter Blue
-                    light: '#BDE8F5', // Light Cyan
-                    dark: '#1C4D8D', // Medium Blue
+                    DEFAULT: '#8FBDAA', // Light Sage
+                    light: '#D4EAE0', // Very Light Green
+                    dark: '#6B9E8A', // Sage Green
                 },
                 // Background Colors - Clean & Professional
                 background: {
-                    DEFAULT: '#F8FBFE', // Very Light Blue Tint
+                    DEFAULT: '#F5FAF7', // Very Light Green Tint
                     white: '#FFFFFF', // Pure White
-                    gray: '#F0F5FA', // Light Blue Gray
+                    gray: '#EDF5F0', // Light Green Gray
                 },
                 // Border & Stroke
                 border: {
-                    DEFAULT: '#BDE8F5', // Light Cyan
-                    light: '#E5F4F9',
-                    dark: '#4988C4', // Lighter Blue
+                    DEFAULT: '#C8DFD3', // Light Green Border
+                    light: '#E0EFE7', // Very Light Green Border
+                    dark: '#8FBDAA', // Sage Border
                 },
                 // Text Colors - Professional & Clear
                 text: {
-                    DEFAULT: '#0F2854', // Dark Navy
-                    light: '#1C4D8D', // Medium Blue
-                    dark: '#0A1A35', // Darker Navy
+                    DEFAULT: '#2D3D35', // Dark Green-Gray
+                    light: '#4A7E6D', // Medium Green
+                    dark: '#1A2B23', // Very Dark Green
                 },
-                // Accent Colors - Vibrant Blue
+                // Accent Colors - Sage Green
                 accent: {
-                    DEFAULT: '#4988C4', // Lighter Blue
-                    light: '#BDE8F5', // Light Cyan
-                    dark: '#1C4D8D', // Medium Blue
+                    DEFAULT: '#6B9E8A', // Sage Green
+                    light: '#D4EAE0', // Light Green
+                    dark: '#4A7E6D', // Dark Sage
                 },
-                // Legacy colors (updated to new blue palette for backward compatibility)
+                // Legacy colors (updated to new green palette for backward compatibility)
                 medical: {
-                    blue: '#4988C4', // Lighter Blue
-                    teal: '#1C4D8D', // Medium Blue
-                    lightBlue: '#BDE8F5', // Light Cyan
-                    darkBlue: '#0F2854', // Dark Navy
+                    blue: '#8FBDAA', // Light Sage
+                    teal: '#6B9E8A', // Sage Green
+                    lightBlue: '#D4EAE0', // Very Light Green
+                    darkBlue: '#2D3D35', // Dark Green-Gray
                 },
                 clinical: {
-                    white: '#F8FBFE', // Very Light Blue Tint
-                    gray: '#1C4D8D', // Medium Blue
-                    darkGray: '#0F2854', // Dark Navy
+                    white: '#F5FAF7', // Very Light Green Tint
+                    gray: '#6B9E8A', // Sage Green
+                    darkGray: '#2D3D35', // Dark Green-Gray
                 },
                 // Status Colors
                 sage: {
-                    DEFAULT: '#7DAE9F',
-                    light: '#A3C9BC',
-                    dark: '#5A8A7D',
+                    DEFAULT: '#6B9E8A',
+                    light: '#8FBDAA',
+                    dark: '#4A7E6D',
                 },
             },
             fontFamily: {

@@ -8,8 +8,8 @@
   font-weight: 400;
 
   color-scheme: light;
-  color: #0F2854; /* Dark Navy */
-  background-color: #F8FBFE; /* Very Light Blue Tint */
+  color: #2D3D35; /* Dark Green-Gray */
+  background-color: #F5FAF7; /* Very Light Green Tint */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -49,14 +49,14 @@ body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #F8FBFE; /* Very Light Blue Tint */
+  background: #F5FAF7; /* Very Light Green Tint */
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #4988C4; /* Lighter Blue */
+  background: #8FBDAA; /* Light Sage */
   border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #1C4D8D; /* Medium Blue */
+  background: #6B9E8A; /* Sage Green */
 }
