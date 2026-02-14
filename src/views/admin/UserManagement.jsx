@@ -106,16 +106,19 @@ export default function UserManagement() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-clinical-darkGray">User Management</h2>
                     <p className="text-clinical-gray mt-1">Manage doctors, patients, and staff members</p>
                 </div>
                 {!showAddForm && (activeTab === 'doctors' || activeTab === 'staff') && (
-                    <Button onClick={() => {
-                        setFormData(prev => ({ ...prev, role: activeTab === 'doctors' ? 'doctor' : 'staff' }))
-                        setShowAddForm(true)
-                    }}>
+                    <Button
+                        className="w-full sm:w-auto"
+                        onClick={() => {
+                            setFormData(prev => ({ ...prev, role: activeTab === 'doctors' ? 'doctor' : 'staff' }))
+                            setShowAddForm(true)
+                        }}
+                    >
                         <UserPlus className="w-4 h-4 mr-2" />
                         {activeTab === 'doctors' ? 'Add Doctor' : 'Invite Staff'}
                     </Button>
@@ -123,10 +126,10 @@ export default function UserManagement() {
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-border">
+            <div className="flex border-b border-border overflow-x-auto no-scrollbar">
                 <button
                     onClick={() => handleTabChange('doctors')}
-                    className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'doctors' ? 'text-primary' : 'text-text-light hover:text-text'
+                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${activeTab === 'doctors' ? 'text-primary' : 'text-text-light hover:text-text'
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -137,7 +140,7 @@ export default function UserManagement() {
                 </button>
                 <button
                     onClick={() => handleTabChange('patients')}
-                    className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'patients' ? 'text-primary' : 'text-text-light hover:text-text'
+                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${activeTab === 'patients' ? 'text-primary' : 'text-text-light hover:text-text'
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -148,7 +151,7 @@ export default function UserManagement() {
                 </button>
                 <button
                     onClick={() => handleTabChange('staff')}
-                    className={`px-6 py-3 font-medium transition-colors relative ${activeTab === 'staff' ? 'text-primary' : 'text-text-light hover:text-text'
+                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${activeTab === 'staff' ? 'text-primary' : 'text-text-light hover:text-text'
                         }`}
                 >
                     <div className="flex items-center gap-2">

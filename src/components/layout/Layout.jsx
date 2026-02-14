@@ -12,23 +12,9 @@ export default function Layout({ children }) {
       <DynamicSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden lg:ml-64">
-        {/* Mobile Menu Button */}
-        <div className="lg:hidden fixed top-4 left-4 z-30">
-          <button
-            onClick={() => setSidebarOpen(!sidebarOpen)}
-            className="p-2 bg-white rounded-xl shadow-md border border-border hover:bg-background-gray transition-colors"
-          >
-            {sidebarOpen ? (
-              <X className="w-6 h-6 text-text" />
-            ) : (
-              <Menu className="w-6 h-6 text-text" />
-            )}
-          </button>
-        </div>
-
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0 lg:ml-64">
         {/* Header */}
-        <Header />
+        <Header onMenuClick={() => setSidebarOpen(true)} />
 
         {/* Page Content */}
         <main className="flex-1 overflow-y-auto bg-background p-4 md:p-6">

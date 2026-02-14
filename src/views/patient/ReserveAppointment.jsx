@@ -84,10 +84,10 @@ export default function ReserveAppointment() {
             </div>
 
             {/* Tabs */}
-            <div className="flex border-b border-border mb-8">
+            <div className="flex border-b border-border mb-8 overflow-x-auto no-scrollbar scroll-smooth">
                 <button
                     onClick={() => setMainTab('reserve')}
-                    className={`px-6 py-3 font-medium transition-colors relative ${mainTab === 'reserve' ? 'text-primary' : 'text-text-light hover:text-text'
+                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${mainTab === 'reserve' ? 'text-primary' : 'text-text-light hover:text-text'
                         }`}
                 >
                     Reserve Appointment
@@ -95,7 +95,7 @@ export default function ReserveAppointment() {
                 </button>
                 <button
                     onClick={() => setMainTab('status')}
-                    className={`px-6 py-3 font-medium transition-colors relative ${mainTab === 'status' ? 'text-primary' : 'text-text-light hover:text-text'
+                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${mainTab === 'status' ? 'text-primary' : 'text-text-light hover:text-text'
                         }`}
                 >
                     My Reservation Status

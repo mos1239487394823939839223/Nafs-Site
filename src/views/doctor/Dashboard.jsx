@@ -115,10 +115,10 @@ export default function DoctorDashboard() {
             <div className="space-y-4">
               {patientQueue.map((patient) => (
                 <div key={patient.id} className="p-4 border border-border rounded-2xl hover:border-primary transition-colors shadow-sm">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <h4 className="font-semibold text-clinical-darkGray">{patient.name}</h4>
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center flex-wrap gap-3">
+                        <h4 className="font-semibold text-clinical-darkGray truncate">{patient.name}</h4>
                         <Badge variant={patient.status === 'waiting' ? 'warning' : 'primary'}>
                           {patient.status}
                         </Badge>
@@ -132,6 +132,7 @@ export default function DoctorDashboard() {
                     </div>
                     <Button
                       size="sm"
+                      className="w-full sm:w-auto"
                       variant={patient.status === 'waiting' ? 'primary' : 'outline'}
                       onClick={() => {
                         if (patient.status === 'waiting') {

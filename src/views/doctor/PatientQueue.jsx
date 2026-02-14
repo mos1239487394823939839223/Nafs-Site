@@ -67,13 +67,13 @@ export default function PatientQueue() {
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between mb-8"
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8"
       >
         <div>
-          <h1 className="text-3xl font-bold text-text mb-2">Patient Queue</h1>
+          <h1 className="text-2xl md:text-3xl font-bold text-text mb-2">Patient Queue</h1>
           <p className="text-text-light">Manage today's consultations in real-time</p>
         </div>
-        <div className="p-2 bg-white border border-border rounded-lg shadow-sm">
+        <div className="p-2 px-3 bg-white border border-border rounded-lg shadow-sm self-start sm:self-auto">
           <span className="text-sm font-medium text-text-light flex items-center gap-2">
             <Users className="w-4 h-4" />
             Total Patients: {patients.length}

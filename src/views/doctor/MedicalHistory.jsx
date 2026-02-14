@@ -109,36 +109,34 @@ export default function MedicalHistory() {
                         exit={{ opacity: 0, x: -20 }}
                         className="space-y-6"
                     >
-                        <div className="flex items-center justify-between gap-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                             <div className="flex items-center gap-4">
-                                <Button variant="ghost" onClick={() => setSelectedPatient(null)} className="h-10 w-10 p-0 rounded-full">
+                                <Button variant="ghost" onClick={() => setSelectedPatient(null)} className="h-10 w-10 p-0 rounded-full flex-shrink-0">
                                     <ArrowLeft className="w-5 h-5" />
                                 </Button>
-                                <div>
-                                    <h2 className="text-2xl font-bold text-clinical-darkGray">{selectedPatient.name}</h2>
-                                    <p className="text-clinical-gray text-sm">Clinical history and session notes</p>
+                                <div className="min-w-0">
+                                    <h2 className="text-xl md:text-2xl font-bold text-clinical-darkGray truncate">{selectedPatient.name}</h2>
+                                    <p className="text-clinical-gray text-sm">Clinical history and notes</p>
                                 </div>
                             </div>
-                            <div className="flex gap-2">
-                                <Button variant="outline" className="gap-2" onClick={() => {
-                                    // Start a chat if needed or just navigate
+                            <div className="flex gap-2 w-full sm:w-auto">
+                                <Button variant="outline" className="flex-1 sm:flex-none gap-2" onClick={() => {
                                     window.location.href = '/dashboard/doctor/messages'
                                 }}>
                                     <MessageSquare className="w-4 h-4" /> Message
                                 </Button>
-                                <Button className="gap-2" onClick={() => setIsAddModalOpen(true)}>
+                                <Button className="flex-1 sm:flex-none gap-2" onClick={() => setIsAddModalOpen(true)}>
                                     <Plus className="w-4 h-4" /> Add Note
                                 </Button>
                             </div>
-
                         </div>
 
                         <div className="space-y-6">
                             {patientHistory.length > 0 ? (
                                 patientHistory.map((record) => (
                                     <Card key={record.id} className="overflow-hidden border-border/50">
-                                        <div className="bg-background px-6 py-3 border-b border-border/50 flex items-center justify-between">
-                                            <div className="flex items-center gap-4 text-sm font-medium text-clinical-gray">
+                                        <div className="bg-background px-4 md:px-6 py-3 border-b border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                            <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-clinical-gray">
                                                 <div className="flex items-center gap-1.5 font-bold italic text-clinical-darkGray">
                                                     <Calendar className="w-4 h-4" />
                                                     {record.date}

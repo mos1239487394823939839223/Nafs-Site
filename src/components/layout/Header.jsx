@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
-import { Bell, Search, User } from 'lucide-react'
+import { Bell, Search, User, Menu } from 'lucide-react'
 import Badge from '../ui/Badge'
 import RoleBadge from '../ui/RoleBadge'
 
 import { useClinic } from '../../contexts/ClinicContext'
 
-export default function Header() {
+export default function Header({ onMenuClick }) {
   const { role, user } = useAuth()
   const { notifications: sharedNotifications } = useClinic()
   const [showNotifications, setShowNotifications] = useState(false)
@@ -35,14 +35,21 @@ export default function Header() {
     <header className="bg-white border-b border-border px-4 md:px-6 py-4">
       <div className="flex items-center justify-between">
         {/* Title */}
-        <div>
+        <div className="flex items-center gap-4">
+          <button
+            onClick={onMenuClick}
+            className="lg:hidden p-2 hover:bg-background-gray rounded-xl transition-colors -ml-2"
+          >
+            <Menu className="w-6 h-6 text-text" />
+          </button>
           <div className="flex items-center gap-3">
-            <h2 className="text-xl md:text-2xl font-semibold text-text">
+            <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-text truncate max-w-[120px] sm:max-w-none">
               {roleLabels[role] || 'Dashboard'}
             </h2>
-            <RoleBadge role={role} size="sm" />
+            <div className="hidden sm:block">
+              <RoleBadge role={role} size="sm" />
+            </div>
           </div>
-
         </div>
 
         {/* Actions */}
@@ -75,7 +82,7 @@ export default function Header() {
                   onClick={() => setShowNotifications(false)}
                 />
 
-                <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl shadow-xl border border-border z-50 overflow-hidden">
+                <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 bg-white rounded-2xl shadow-xl border border-border z-50 overflow-hidden">
                   <div className="p-4 border-b border-border flex items-center justify-between">
                     <h3 className="font-bold text-clinical-darkGray font-black italic uppercase tracking-tighter">Notifications</h3>
                     <Badge variant="outline">{notifications.length}</Badge>

@@ -4,7 +4,7 @@ import ConsultationsList from './ConsultationsList'
 import ChatWindow from './ChatWindow'
 import { Menu, X } from 'lucide-react'
 
-export default function ChatInterface({ consultations, currentUserId }) {
+export default function ChatInterface({ consultations, currentUserId, onSendMessage }) {
   const navigate = useNavigate()
   const [activeConsultationId, setActiveConsultationId] = useState(consultations[0]?.id || null)
   const [showConsultationsList, setShowConsultationsList] = useState(false)
@@ -29,28 +29,20 @@ export default function ChatInterface({ consultations, currentUserId }) {
   return (
     <div className="h-full flex flex-col bg-background">
       {/* Mobile Header */}
-      <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-border">
-        <button
-          onClick={() => setShowConsultationsList(!showConsultationsList)}
-          className="p-2 hover:bg-background-gray rounded-xl transition-colors"
-        >
-          {showConsultationsList ? (
-            <X className="w-6 h-6 text-text" />
-          ) : (
-            <Menu className="w-6 h-6 text-text" />
-          )}
-        </button>
-        <h1 className="text-lg font-semibold text-text">Messages</h1>
-        <div className="w-10"></div> {/* Spacer for centering */}
-      </div>
+      {!activeConsultationId || showConsultationsList ? (
+        <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-border">
+          <h1 className="text-lg font-bold text-primary italic uppercase tracking-tighter">Conversations</h1>
+          <div className="w-10"></div>
+        </div>
+      ) : null}
 
       {/* Main Content */}
-      <div className="flex-1 flex overflow-hidden">
-        {/* Consultations List - Mobile Overlay / Desktop Sidebar */}
+      <div className="flex-1 flex overflow-hidden relative">
+        {/* Consultations List */}
         <div
           className={`
-            ${showConsultationsList ? 'fixed inset-0 z-40 bg-white' : 'hidden'}
-            lg:block lg:relative lg:w-80 lg:flex-shrink-0
+            ${showConsultationsList || !activeConsultationId ? 'fixed inset-0 z-40 bg-white' : 'hidden md:block'}
+            lg:block lg:relative lg:w-80 lg:shrink-0
           `}
         >
           <ConsultationsList
@@ -64,11 +56,17 @@ export default function ChatInterface({ consultations, currentUserId }) {
         </div>
 
         {/* Chat Window */}
-        <div className="flex-1">
+        <div className={`flex-1 ${showConsultationsList ? 'hidden lg:block' : 'block'}`}>
           <ChatWindow
             conversation={activeConsultation}
             onSendMessage={handleSendMessage}
-            onBack={() => navigate(-1)}
+            onBack={() => {
+              if (window.innerWidth < 1024) {
+                setShowConsultationsList(true)
+              } else {
+                navigate(-1)
+              }
+            }}
           />
         </div>
       </div>
