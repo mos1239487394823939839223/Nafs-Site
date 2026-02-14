@@ -1,3 +1,4 @@
+import { Input as NextUIInput, Textarea as NextUITextarea } from "@nextui-org/react";
 import { cn } from '../../lib/utils'
 
 export default function Input({
@@ -8,25 +9,22 @@ export default function Input({
   ...props
 }) {
   return (
-    <div className="w-full">
-      {label && (
-        <label className="block text-sm font-medium text-text-muted mb-2">
-          {label}
-        </label>
-      )}
-      <input
-        type={type}
-        className={cn(
-          'w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-background text-text placeholder-text-muted',
-          error ? 'border-red-500' : 'border-border',
-          className
-        )}
-        {...props}
-      />
-      {error && (
-        <p className="mt-1 text-sm text-red-500">{error}</p>
-      )}
-    </div>
+    <NextUIInput
+      type={type}
+      label={label}
+      isInvalid={!!error}
+      errorMessage={error}
+      variant="bordered"
+      radius="lg"
+      labelPlacement="outside"
+      classNames={{
+        inputWrapper: "bg-background-subtle/50 hover:bg-background-subtle focus-within:bg-background shadow-none",
+        input: "text-text",
+        label: "text-text-muted font-medium z-0"
+      }}
+      className={className}
+      {...props}
+    />
   )
 }
 
@@ -40,8 +38,8 @@ export function Select({ label, error, className, children, ...props }) {
       )}
       <select
         className={cn(
-          'w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-background text-text',
-          error ? 'border-red-500' : 'border-border',
+          'w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary transition-all duration-200 bg-background-subtle/50 hover:bg-background-subtle focus:bg-background text-text cursor-pointer appearance-none',
+          error ? 'border-red-500 focus:ring-red-500/10' : 'border-transparent hover:border-border',
           className
         )}
         {...props}
@@ -57,23 +55,20 @@ export function Select({ label, error, className, children, ...props }) {
 
 export function Textarea({ label, error, className, ...props }) {
   return (
-    <div className="w-full">
-      {label && (
-        <label className="block text-sm font-medium text-text-muted mb-2">
-          {label}
-        </label>
-      )}
-      <textarea
-        className={cn(
-          'w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all resize-none bg-background text-text placeholder-text-muted',
-          error ? 'border-red-500' : 'border-border',
-          className
-        )}
-        {...props}
-      />
-      {error && (
-        <p className="mt-1 text-sm text-red-500">{error}</p>
-      )}
-    </div>
+    <NextUITextarea
+      label={label}
+      isInvalid={!!error}
+      errorMessage={error}
+      variant="bordered"
+      radius="lg"
+      labelPlacement="outside"
+      classNames={{
+        inputWrapper: "bg-background-subtle/50 hover:bg-background-subtle focus-within:bg-background shadow-none",
+        input: "text-text",
+        label: "text-text-muted font-medium z-0"
+      }}
+      className={className}
+      {...props}
+    />
   )
 }

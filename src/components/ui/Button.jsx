@@ -1,3 +1,4 @@
+import { Button as NextUIButton } from "@nextui-org/react";
 import { cn } from '../../lib/utils'
 
 export default function Button({
@@ -7,28 +8,38 @@ export default function Button({
   className,
   ...props
 }) {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
+  // Map legacy variants to NextUI props
+  const getVariantProps = () => {
+    switch (variant) {
+      case 'primary':
+        return { color: "primary", variant: "solid" };
+      case 'secondary':
+        return { color: "secondary", variant: "faded" };
+      case 'outline':
+        return { color: "primary", variant: "bordered" };
+      case 'ghost':
+        return { color: "default", variant: "light" };
+      case 'danger':
+        return { color: "danger", variant: "solid" };
+      case 'glass':
+        return { color: "default", variant: "flat", className: "bg-white/10 backdrop-blur-md border border-white/20 text-white" };
+      default:
+        return { color: "primary", variant: "solid" };
+    }
+  };
 
-  const variants = {
-    primary: 'bg-primary text-white hover:bg-primary-dark focus:ring-primary shadow-sm',
-    secondary: 'bg-secondary text-white hover:bg-secondary-dark focus:ring-secondary shadow-sm',
-    outline: 'border border-primary text-primary hover:bg-primary/5 focus:ring-primary',
-    ghost: 'text-text-muted hover:text-text hover:bg-background-subtle focus:ring-border',
-    danger: 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500 shadow-sm',
-  }
-
-  const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
-  }
+  const { color, variant: uiVariant, className: variantClass } = getVariantProps();
 
   return (
-    <button
-      className={cn(baseStyles, variants[variant], sizes[size], className)}
+    <NextUIButton
+      color={color}
+      variant={uiVariant}
+      size={size}
+      radius="full"
+      className={cn(variantClass, className)}
       {...props}
     >
       {children}
-    </button>
+    </NextUIButton>
   )
 }

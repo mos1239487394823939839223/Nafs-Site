@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { NextUIProvider } from "@nextui-org/react";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AuthProvider, useAuth, Roles } from './contexts/AuthContext'
 import { ToastProvider } from './components/ui/Toast'
 import ProtectedRoute from './components/auth/ProtectedRoute'
@@ -266,13 +267,15 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ClinicProvider>
-          <ThemeProvider>
-            <ToastProvider>
-              <AppRoutes />
-            </ToastProvider>
-          </ThemeProvider>
-        </ClinicProvider>
+        <NextUIProvider>
+          <ClinicProvider>
+            <ThemeProvider>
+              <ToastProvider>
+                <AppRoutes />
+              </ToastProvider>
+            </ThemeProvider>
+          </ClinicProvider>
+        </NextUIProvider>
       </AuthProvider>
     </BrowserRouter>
   )
