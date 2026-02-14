@@ -78,8 +78,8 @@ export default function ReserveAppointment() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
                 <div>
-                    <h1 className="text-3xl font-bold text-text">Appointments</h1>
-                    <p className="text-text-light">Manage and book your health sessions</p>
+                    <h1 className="text-3xl font-bold text-text-heading">Appointments</h1>
+                    <p className="text-text-muted">Manage and book your health sessions</p>
                 </div>
             </div>
 
@@ -87,7 +87,7 @@ export default function ReserveAppointment() {
             <div className="flex border-b border-border mb-8 overflow-x-auto no-scrollbar scroll-smooth">
                 <button
                     onClick={() => setMainTab('reserve')}
-                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${mainTab === 'reserve' ? 'text-primary' : 'text-text-light hover:text-text'
+                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${mainTab === 'reserve' ? 'text-primary' : 'text-text-muted hover:text-text-heading'
                         }`}
                 >
                     Reserve Appointment
@@ -95,7 +95,7 @@ export default function ReserveAppointment() {
                 </button>
                 <button
                     onClick={() => setMainTab('status')}
-                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${mainTab === 'status' ? 'text-primary' : 'text-text-light hover:text-text'
+                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${mainTab === 'status' ? 'text-primary' : 'text-text-muted hover:text-text-heading'
                         }`}
                 >
                     My Reservation Status
@@ -135,8 +135,8 @@ export default function ReserveAppointment() {
                                         <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
                                             <Stethoscope className="w-8 h-8 text-primary" />
                                         </div>
-                                        <h3 className="text-xl font-bold text-text">{specialty}</h3>
-                                        <p className="text-text-light text-sm mt-2">View available experts in this field</p>
+                                        <h3 className="text-xl font-bold text-text-heading">{specialty}</h3>
+                                        <p className="text-text-muted text-sm mt-2">View available experts in this field</p>
                                     </Card>
                                 ))}
                             </motion.div>
@@ -162,7 +162,7 @@ export default function ReserveAppointment() {
                                             placeholder="Search doctor name..."
                                             value={doctorSearch}
                                             onChange={(e) => setDoctorSearch(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-2 bg-white border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                                            className="w-full pl-10 pr-4 py-2 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-text"
                                         />
                                     </div>
                                 </div>
@@ -174,9 +174,9 @@ export default function ReserveAppointment() {
                                                     <User className="w-8 h-8 text-secondary" />
                                                 </div>
                                                 <div className="flex-1">
-                                                    <h3 className="text-lg font-bold">{doctor.name}</h3>
+                                                    <h3 className="text-lg font-bold text-text-heading">{doctor.name}</h3>
                                                     <p className="text-primary text-sm font-medium">{doctor.specialty}</p>
-                                                    <p className="text-text-light text-sm mt-2 line-clamp-2">{doctor.bio}</p>
+                                                    <p className="text-text-muted text-sm mt-2 line-clamp-2">{doctor.bio}</p>
                                                     <Button
                                                         className="mt-4 w-full"
                                                         variant="outline"
@@ -229,8 +229,8 @@ export default function ReserveAppointment() {
                                                 <div className="flex items-center gap-3">
                                                     <Calendar className="w-5 h-5 text-primary" />
                                                     <div>
-                                                        <p className="text-xs text-text-light">Selected Time</p>
-                                                        <p className="font-medium">
+                                                        <p className="text-xs text-text-muted">Selected Time</p>
+                                                        <p className="font-medium text-text-heading">
                                                             {bookedSlot.date.toLocaleDateString()} at {bookedSlot.hour > 12 ? `${bookedSlot.hour - 12} PM` : `${bookedSlot.hour} AM`}
                                                         </p>
                                                     </div>
@@ -245,7 +245,7 @@ export default function ReserveAppointment() {
                                             Confirm Appointment
                                         </Button>
                                     </Card>
-                                    <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 italic text-sm text-emerald-700">
+                                    <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20 italic text-sm text-emerald-600 dark:text-emerald-400">
                                         Note: Appointment availability is managed by the healthcare professional.
                                     </div>
                                 </div>
@@ -259,11 +259,11 @@ export default function ReserveAppointment() {
                                 animate={{ opacity: 1, scale: 1 }}
                                 className="max-w-md mx-auto text-center py-12"
                             >
-                                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6 text-green-600">
+                                <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6 text-green-500">
                                     <CheckCircle className="w-12 h-12" />
                                 </div>
-                                <h2 className="text-3xl font-bold text-text mb-4">Booking Confirmed!</h2>
-                                <p className="text-text-light mb-8">
+                                <h2 className="text-3xl font-bold text-text-heading mb-4">Booking Confirmed!</h2>
+                                <p className="text-text-muted mb-8">
                                     Your appointment with {selectedDoctor?.name} has been successfully scheduled.
                                     You will receive a notification before the session starts.
                                 </p>
@@ -297,11 +297,11 @@ export default function ReserveAppointment() {
 
                                         <div className="flex flex-wrap items-center gap-6">
                                             <div className="text-sm">
-                                                <div className="flex items-center gap-2 text-text">
+                                                <div className="flex items-center gap-2 text-text-heading">
                                                     <Calendar className="w-4 h-4 text-primary" />
                                                     <span className="font-medium">{res.date}</span>
                                                 </div>
-                                                <div className="flex items-center gap-2 text-text-light mt-1">
+                                                <div className="flex items-center gap-2 text-text-muted mt-1">
                                                     <Clock className="w-4 h-4" />
                                                     <span>{res.time}</span>
                                                 </div>
@@ -334,17 +334,17 @@ export default function ReserveAppointment() {
                                     </div>
 
                                     {res.status === 'cancelled' && (
-                                        <div className="mt-4 p-3 bg-red-50 border border-red-100 rounded-lg text-sm text-red-700">
+                                        <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 dark:text-red-400">
                                             <span className="font-bold">Reason for cancellation:</span> {res.reason}
                                         </div>
                                     )}
                                 </Card>
                             ))
                         ) : (
-                            <div className="text-center py-20 bg-background-gray/20 rounded-2xl border-2 border-dashed border-border">
-                                <Calendar className="w-16 h-16 text-text-light mx-auto mb-4 opacity-20" />
-                                <h3 className="text-xl font-medium text-text-light">No reservations found</h3>
-                                <p className="text-text-light mt-2">You haven't booked any appointments yet.</p>
+                            <div className="text-center py-20 bg-background-subtle/20 rounded-2xl border-2 border-dashed border-border">
+                                <Calendar className="w-16 h-16 text-text-muted mx-auto mb-4 opacity-20" />
+                                <h3 className="text-xl font-medium text-text-muted">No reservations found</h3>
+                                <p className="text-text-muted mt-2">You haven't booked any appointments yet.</p>
                                 <Button className="mt-6" variant="outline" onClick={() => setMainTab('reserve')}>
                                     Book Now
                                 </Button>

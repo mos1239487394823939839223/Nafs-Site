@@ -30,22 +30,22 @@ export default function BookingModal({ isOpen, onClose }) {
       {/* Step Indicator */}
       <div className="flex items-center justify-center mb-8">
         <div className="flex items-center gap-4">
-          <div className={`flex items-center gap-2 ${step >= 1 ? 'text-medical-blue' : 'text-gray-400'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-medical-blue text-white' : 'bg-gray-200'}`}>
+          <div className={`flex items-center gap-2 ${step >= 1 ? 'text-primary' : 'text-text-muted/50'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 1 ? 'bg-primary text-white' : 'bg-background-subtle text-text-muted'}`}>
               1
             </div>
             <span className="text-sm font-medium">Select Doctor</span>
           </div>
-          <div className="w-12 h-0.5 bg-gray-300"></div>
-          <div className={`flex items-center gap-2 ${step >= 2 ? 'text-medical-blue' : 'text-gray-400'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-medical-blue text-white' : 'bg-gray-200'}`}>
+          <div className="w-12 h-0.5 bg-border/50"></div>
+          <div className={`flex items-center gap-2 ${step >= 2 ? 'text-primary' : 'text-text-muted/50'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 2 ? 'bg-primary text-white' : 'bg-background-subtle text-text-muted'}`}>
               2
             </div>
             <span className="text-sm font-medium">Select Time</span>
           </div>
-          <div className="w-12 h-0.5 bg-gray-300"></div>
-          <div className={`flex items-center gap-2 ${step >= 3 ? 'text-medical-blue' : 'text-gray-400'}`}>
-            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-medical-blue text-white' : 'bg-gray-200'}`}>
+          <div className="w-12 h-0.5 bg-border/50"></div>
+          <div className={`flex items-center gap-2 ${step >= 3 ? 'text-primary' : 'text-text-muted/50'}`}>
+            <div className={`w-8 h-8 rounded-full flex items-center justify-center ${step >= 3 ? 'bg-primary text-white' : 'bg-background-subtle text-text-muted'}`}>
               3
             </div>
             <span className="text-sm font-medium">Confirm</span>
@@ -72,25 +72,25 @@ export default function BookingModal({ isOpen, onClose }) {
                 key={doctor.id}
                 onClick={() => setSelectedDoctor(doctor)}
                 className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${selectedDoctor?.id === doctor.id
-                  ? 'border-medical-blue bg-medical-lightBlue'
-                  : 'border-gray-200 hover:border-medical-blue'
+                  ? 'border-primary bg-primary/5'
+                  : 'border-border hover:border-primary'
                   }`}
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <h4 className="font-semibold text-clinical-darkGray">{doctor.name}</h4>
-                    <p className="text-sm text-clinical-gray mt-1">{doctor.specialty}</p>
+                    <h4 className="font-semibold text-text-heading">{doctor.name}</h4>
+                    <p className="text-sm text-text-muted mt-1">{doctor.specialty}</p>
                     <div className="flex items-center gap-4 mt-2">
                       <div className="flex items-center gap-1">
                         <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                        <span className="text-sm font-medium">{doctor.rating}</span>
+                        <span className="text-sm font-medium text-text-heading">{doctor.rating}</span>
                       </div>
-                      <span className="text-sm text-clinical-gray">{doctor.experience}</span>
+                      <span className="text-sm text-text-muted">{doctor.experience}</span>
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-medical-blue">{doctor.price} EGP</p>
-                    <p className="text-xs text-clinical-gray">per session</p>
+                    <p className="text-2xl font-bold text-primary">{doctor.price} EGP</p>
+                    <p className="text-xs text-text-muted">per session</p>
                   </div>
                 </div>
               </div>
@@ -119,7 +119,7 @@ export default function BookingModal({ isOpen, onClose }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-clinical-darkGray mb-3">
+            <label className="block text-sm font-medium text-text-heading mb-3">
               Available Time Slots
             </label>
             <div className="grid grid-cols-4 gap-3">
@@ -128,8 +128,8 @@ export default function BookingModal({ isOpen, onClose }) {
                   key={time}
                   onClick={() => setSelectedTime(time)}
                   className={`p-3 border-2 rounded-lg text-sm font-medium transition-all ${selectedTime === time
-                    ? 'border-medical-blue bg-medical-lightBlue text-medical-blue'
-                    : 'border-gray-200 hover:border-medical-blue'
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border hover:border-primary text-text-muted hover:text-text'
                     }`}
                 >
                   {time}
@@ -152,28 +152,28 @@ export default function BookingModal({ isOpen, onClose }) {
       {/* Step 3: Confirm */}
       {step === 3 && (
         <div>
-          <div className="bg-medical-lightBlue p-6 rounded-lg mb-6">
-            <h3 className="font-semibold text-clinical-darkGray mb-4">Booking Summary</h3>
+          <div className="bg-background-subtle p-6 rounded-lg mb-6 border border-border">
+            <h3 className="font-semibold text-text-heading mb-4">Booking Summary</h3>
             <div className="space-y-3">
               <div className="flex justify-between">
-                <span className="text-clinical-gray">Doctor:</span>
-                <span className="font-medium text-clinical-darkGray">{selectedDoctor?.name}</span>
+                <span className="text-text-muted">Doctor:</span>
+                <span className="font-medium text-text-heading">{selectedDoctor?.name}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-clinical-gray">Specialty:</span>
-                <span className="font-medium text-clinical-darkGray">{selectedDoctor?.specialty}</span>
+                <span className="text-text-muted">Specialty:</span>
+                <span className="font-medium text-text-heading">{selectedDoctor?.specialty}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-clinical-gray">Date:</span>
-                <span className="font-medium text-clinical-darkGray">{selectedDate}</span>
+                <span className="text-text-muted">Date:</span>
+                <span className="font-medium text-text-heading">{selectedDate}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-clinical-gray">Time:</span>
-                <span className="font-medium text-clinical-darkGray">{selectedTime}</span>
+                <span className="text-text-muted">Time:</span>
+                <span className="font-medium text-text-heading">{selectedTime}</span>
               </div>
-              <div className="flex justify-between pt-3 border-t border-medical-blue/20">
-                <span className="text-clinical-gray">Total:</span>
-                <span className="text-2xl font-bold text-medical-blue">{selectedDoctor?.price} EGP</span>
+              <div className="flex justify-between pt-3 border-t border-border">
+                <span className="text-text-muted">Total:</span>
+                <span className="text-2xl font-bold text-primary">{selectedDoctor?.price} EGP</span>
               </div>
             </div>
           </div>

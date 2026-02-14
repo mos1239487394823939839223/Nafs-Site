@@ -7,16 +7,72 @@
   line-height: 1.5;
   font-weight: 400;
 
+  /* Color System - Light Mode (Default) */
+  --color-primary: #6B9E8A;
+  --color-primary-light: #8FBDAA;
+  --color-primary-dark: #4A7E6D;
+
+  --color-secondary: #8FBDAA;
+  --color-secondary-light: #D4EAE0;
+  --color-secondary-dark: #6B9E8A;
+
+  --color-background: #F5FAF7;
+  --color-background-paper: #FFFFFF;
+  --color-background-subtle: #EDF5F0;
+
+  --color-border: #C8DFD3;
+  --color-border-light: #E0EFE7;
+  --color-border-dark: #8FBDAA;
+
+  --color-text: #2D3D35;
+  --color-text-light: #4A7E6D;
+  --color-text-heading: #1A2B23;
+
+  /* App Defaults */
   color-scheme: light;
-  color: #2D3D35;
-  /* Dark Green-Gray */
-  background-color: #F5FAF7;
-  /* Very Light Green Tint */
+  color: var(--color-text);
+  background-color: var(--color-background);
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Dark Mode Configuration */
+.dark {
+  /* Dark Mode Colors - Deep Forest/Clinical Dark */
+  --color-primary: #6B9E8A;
+  /* Keep primary brand perception */
+  --color-primary-light: #4A7E6D;
+  /* Invert slightly for contrast if needed, or keep */
+  --color-primary-dark: #8FBDAA;
+  /* Lighten for dark bg? or keep logic */
+
+  --color-secondary: #4A7E6D;
+  --color-secondary-light: #2D3D35;
+  --color-secondary-dark: #8FBDAA;
+
+  --color-background: #050a08;
+  /* Very Dark (Almost Black/Green) */
+  --color-background-paper: #0d1612;
+  /* Dark Card Background */
+  --color-background-subtle: #15221d;
+  /* Slightly lighter for inputs/hovers */
+
+  --color-border: #1e332a;
+  /* Dark Green Border */
+  --color-border-light: #15221d;
+  --color-border-dark: #2d4a3e;
+
+  --color-text: #e0efe7;
+  /* Off-white/Mint */
+  --color-text-light: #8fbdaa;
+  /* Muted text */
+  --color-text-heading: #ffffff;
+  /* White headings */
+
+  color-scheme: dark;
 }
 
 html,

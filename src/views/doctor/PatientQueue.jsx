@@ -70,11 +70,11 @@ export default function PatientQueue() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8"
       >
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-text mb-2">Patient Queue</h1>
-          <p className="text-text-light">Manage today's consultations in real-time</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-text-heading mb-2">Patient Queue</h1>
+          <p className="text-text-muted">Manage today's consultations in real-time</p>
         </div>
-        <div className="p-2 px-3 bg-white border border-border rounded-lg shadow-sm self-start sm:self-auto">
-          <span className="text-sm font-medium text-text-light flex items-center gap-2">
+        <div className="p-2 px-3 bg-background-paper border border-border rounded-lg shadow-sm self-start sm:self-auto">
+          <span className="text-sm font-medium text-text-muted flex items-center gap-2">
             <Users className="w-4 h-4" />
             Total Patients: {patients.length}
           </span>
@@ -93,7 +93,7 @@ export default function PatientQueue() {
                 onClick={() => setFilter(f.id)}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${filter === f.id
                   ? 'bg-primary text-white shadow-md'
-                  : 'bg-white text-text-light border border-border hover:bg-gray-50'
+                  : 'bg-background-paper text-text-muted border border-border hover:bg-background-subtle'
                   }`}
               >
                 {f.label}
@@ -116,9 +116,9 @@ export default function PatientQueue() {
           <QueueStats stats={stats} />
 
           {/* Quick Actions / Notes area could go here */}
-          <div className="bg-sage-light/10 p-6 rounded-2xl border border-sage-light/30">
-            <h3 className="font-semibold text-text mb-2">👨‍⚕️ Doctor's Note</h3>
-            <p className="text-sm text-text-light">
+          <div className="bg-primary/10 p-6 rounded-2xl border border-primary/20">
+            <h3 className="font-semibold text-text-heading mb-2">👨‍⚕️ Doctor's Note</h3>
+            <p className="text-sm text-text-muted">
               Remember to complete patient notes within 15 minutes of session end.
             </p>
           </div>

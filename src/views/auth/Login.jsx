@@ -121,7 +121,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-white to-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background-paper to-background flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -138,26 +138,26 @@ export default function Login() {
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-accent/10 border border-accent/30 rounded-2xl p-4 mb-4"
+            className="bg-accent/10 border border-accent/20 rounded-2xl p-4 mb-4"
           >
-            <p className="text-sm font-semibold text-accent-dark mb-2">🎯 Demo Login Guide</p>
+            <p className="text-sm font-semibold text-accent mb-2">🎯 Demo Login Guide</p>
             <div className="text-xs text-text space-y-1">
               <p>• <strong>Patient:</strong> patient@example.com</p>
               <p>• <strong>Doctor:</strong> doctor@example.com</p>
               <p>• <strong>Admin:</strong> admin@example.com</p>
               <p>• <strong>Staff:</strong> staff@example.com</p>
-              <p className="text-text-light mt-2">Password: any password</p>
+              <p className="text-text-muted mt-2">Password: any password</p>
             </div>
           </motion.div>
         )}
 
         {/* Card */}
-        <div className="bg-white rounded-2xl shadow-xl p-8">
+        <div className="bg-background-paper rounded-2xl shadow-xl p-8">
           <div className="text-center mb-6">
             <h2 className="text-2xl font-bold text-text">
               {isLogin ? 'Welcome Back' : 'Create Account'}
             </h2>
-            <p className="text-text-light mt-2">
+            <p className="text-text-muted mt-2">
               {isLogin ? 'Sign in to continue to your account' : 'Join our healthcare platform'}
             </p>
           </div>
@@ -178,7 +178,7 @@ export default function Login() {
 
             {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-clinical-darkGray mb-2">
+              <label className="block text-sm font-medium text-text-muted mb-2">
                 Password
               </label>
               <div className="relative">
@@ -187,14 +187,14 @@ export default function Login() {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`w-full px-4 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-medical-blue focus:border-transparent transition-all ${errors.password ? 'border-red-500' : 'border-gray-300'
+                  className={`w-full px-4 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-background text-text placeholder-text-muted ${errors.password ? 'border-red-500' : 'border-border'
                     }`}
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-clinical-gray hover:text-clinical-darkGray"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
@@ -207,12 +207,12 @@ export default function Login() {
               {!isLogin && formData.password && (
                 <div className="mt-2">
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-clinical-gray">Password Strength:</span>
-                    <span className={`text-xs font-medium text-${passwordStrength.color}-600`}>
+                    <span className="text-xs text-text-muted">Password Strength:</span>
+                    <span className={`text-xs font-medium text-${passwordStrength.color}-500`}>
                       {passwordStrength.strength.toUpperCase()}
                     </span>
                   </div>
-                  <div className="h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-background-subtle rounded-full overflow-hidden">
                     <div
                       className={`h-full bg-${passwordStrength.color}-500 transition-all duration-300`}
                       style={{ width: `${passwordStrength.percentage}%` }}
@@ -229,8 +229,8 @@ export default function Login() {
                       const validation = validatePassword(formData.password)
                       return (
                         <div key={key} className="flex items-center gap-2 text-xs">
-                          <div className={`w-1.5 h-1.5 rounded-full ${validation[key] ? 'bg-green-500' : 'bg-gray-300'}`} />
-                          <span className={validation[key] ? 'text-green-600' : 'text-gray-500'}>{label}</span>
+                          <div className={`w-1.5 h-1.5 rounded-full ${validation[key] ? 'bg-green-500' : 'bg-background-subtle'}`} />
+                          <span className={validation[key] ? 'text-green-600 dark:text-green-400' : 'text-text-muted'}>{label}</span>
                         </div>
                       )
                     })}
@@ -262,15 +262,15 @@ export default function Login() {
                     type="checkbox"
                     checked={agreedToTerms}
                     onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="mt-1 w-4 h-4 text-medical-blue border-gray-300 rounded focus:ring-medical-blue"
+                    className="mt-1 w-4 h-4 text-primary border-border rounded focus:ring-primary bg-background"
                   />
-                  <span className="text-sm text-clinical-gray">
+                  <span className="text-sm text-text-muted">
                     I agree to the{' '}
-                    <a href="#" className="text-medical-blue hover:underline">
+                    <a href="#" className="text-primary hover:underline">
                       Terms and Conditions
                     </a>{' '}
                     and{' '}
-                    <a href="#" className="text-medical-blue hover:underline">
+                    <a href="#" className="text-primary hover:underline">
                       Privacy Policy
                     </a>
                     {' '}regarding medical data handling
@@ -302,10 +302,10 @@ export default function Login() {
           {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-300" />
+              <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-white text-clinical-gray">Or continue with</span>
+              <span className="px-4 bg-background-paper text-text-muted">Or continue with</span>
             </div>
           </div>
 
@@ -322,7 +322,7 @@ export default function Login() {
 
           {/* Toggle Login/Register */}
           <div className="mt-6 text-center">
-            <p className="text-sm text-clinical-gray">
+            <p className="text-sm text-text-muted">
               {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
               <button
                 type="button"
@@ -332,7 +332,7 @@ export default function Login() {
                   setFormData({ email: '', password: '', confirmPassword: '' })
                   setAgreedToTerms(false)
                 }}
-                className="text-medical-blue font-medium hover:underline"
+                className="text-primary font-medium hover:underline"
               >
                 {isLogin ? 'Sign Up' : 'Sign In'}
               </button>

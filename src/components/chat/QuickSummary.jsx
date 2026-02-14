@@ -6,7 +6,7 @@ export default function QuickSummary({ patientData, isOpen, onToggle }) {
   return (
     <div
       className={`
-        bg-white border-l border-border h-full overflow-y-auto
+        bg-background-paper border-l border-border h-full overflow-y-auto
         transition-all duration-300
         ${isOpen ? 'w-80' : 'w-0 overflow-hidden'}
       `}
@@ -17,7 +17,7 @@ export default function QuickSummary({ patientData, isOpen, onToggle }) {
           <h3 className="font-semibold text-text">Quick Summary</h3>
           <button
             onClick={onToggle}
-            className="lg:hidden text-text-light hover:text-text"
+            className="lg:hidden text-text-muted hover:text-text"
           >
             ✕
           </button>
@@ -30,20 +30,20 @@ export default function QuickSummary({ patientData, isOpen, onToggle }) {
             <h4 className="font-medium text-text text-sm">Vital Signs</h4>
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between items-center p-2 bg-background-gray rounded-xl">
-              <span className="text-sm text-text-light">Heart Rate</span>
+            <div className="flex justify-between items-center p-2 bg-background-subtle rounded-xl">
+              <span className="text-sm text-text-muted">Heart Rate</span>
               <span className="text-sm font-semibold text-text">
                 {patientData.vitals?.heartRate} bpm
               </span>
             </div>
-            <div className="flex justify-between items-center p-2 bg-background-gray rounded-xl">
-              <span className="text-sm text-text-light">Blood Pressure</span>
+            <div className="flex justify-between items-center p-2 bg-background-subtle rounded-xl">
+              <span className="text-sm text-text-muted">Blood Pressure</span>
               <span className="text-sm font-semibold text-text">
                 {patientData.vitals?.bloodPressure}
               </span>
             </div>
-            <div className="flex justify-between items-center p-2 bg-background-gray rounded-xl">
-              <span className="text-sm text-text-light">Temperature</span>
+            <div className="flex justify-between items-center p-2 bg-background-subtle rounded-xl">
+              <span className="text-sm text-text-muted">Temperature</span>
               <span className="text-sm font-semibold text-text">
                 {patientData.vitals?.temperature}°F
               </span>
@@ -59,14 +59,14 @@ export default function QuickSummary({ patientData, isOpen, onToggle }) {
           </div>
           <div className="space-y-2">
             {patientData.recentTests?.map((test, index) => (
-              <div key={index} className="p-3 bg-background-gray rounded-xl">
+              <div key={index} className="p-3 bg-background-subtle rounded-xl">
                 <div className="flex justify-between items-start mb-1">
                   <span className="text-sm font-medium text-text">{test.name}</span>
                   <span className={`
                     text-xs px-2 py-0.5 rounded-full
-                    ${test.status === 'Normal' 
-                      ? 'bg-green-100 text-green-700' 
-                      : 'bg-yellow-100 text-yellow-700'
+                    ${test.status === 'Normal'
+                      ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                      : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
                     }
                   `}>
                     {test.status}
@@ -102,8 +102,8 @@ export default function QuickSummary({ patientData, isOpen, onToggle }) {
             </div>
             <div className="space-y-2">
               {patientData.allergies.map((allergy, index) => (
-                <div key={index} className="p-2 bg-red-50 border border-red-200 rounded-xl">
-                  <span className="text-sm text-red-700 font-medium">{allergy}</span>
+                <div key={index} className="p-2 bg-red-500/10 border border-red-500/20 rounded-xl">
+                  <span className="text-sm text-red-600 dark:text-red-400 font-medium">{allergy}</span>
                 </div>
               ))}
             </div>

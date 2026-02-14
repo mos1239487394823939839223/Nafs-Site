@@ -4,18 +4,18 @@ import Button from '../../ui/Button'
 
 export default function QueueItem({ patient, onAction }) {
     const statusColors = {
-        waiting: 'bg-yellow-100 text-yellow-700 border-yellow-200',
-        confirmed: 'bg-green-100 text-green-700 border-green-200',
-        'in-progress': 'bg-emerald-100 text-emerald-700 border-emerald-200',
-        completed: 'bg-green-100 text-green-700 border-green-200',
-        cancelled: 'bg-red-100 text-red-700 border-red-200',
+        waiting: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20',
+        confirmed: 'bg-green-500/10 text-green-500 border-green-500/20',
+        'in-progress': 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
+        completed: 'bg-green-500/10 text-green-500 border-green-500/20',
+        cancelled: 'bg-red-500/10 text-red-500 border-red-500/20',
     }
 
     return (
         <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white p-4 rounded-xl border border-border-light shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
+            className="bg-background-paper p-4 rounded-xl border border-border shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4"
         >
             {/* Patient Info */}
             <div className="flex items-center gap-4">
@@ -24,12 +24,12 @@ export default function QueueItem({ patient, onAction }) {
                 </div>
                 <div>
                     <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-text">{patient.name}</h3>
+                        <h3 className="font-semibold text-text-heading">{patient.name}</h3>
                         <span className={`text-xs px-2 py-0.5 rounded-full border ${statusColors[patient.status]} capitalize`}>
                             {patient.status}
                         </span>
                     </div>
-                    <div className="flex items-center gap-4 text-sm text-text-light mt-1">
+                    <div className="flex items-center gap-4 text-sm text-text-muted mt-1">
                         <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             Waited: {patient.waitTime} mins

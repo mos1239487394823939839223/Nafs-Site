@@ -74,7 +74,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full w-64 bg-white border-r border-border
+          fixed top-0 left-0 h-full w-64 bg-background-paper border-r border-border
           transform transition-transform duration-300 ease-in-out z-50
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}

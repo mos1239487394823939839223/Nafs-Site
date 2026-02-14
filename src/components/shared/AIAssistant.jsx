@@ -37,10 +37,10 @@ export default function AIAssistant({ isOpen, onClose }) {
           initial={{ x: 400, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 400, opacity: 0 }}
-          className="fixed right-0 top-0 h-screen w-96 bg-white shadow-2xl z-50 flex flex-col border-l border-gray-200"
+          className="fixed right-0 top-0 h-screen w-96 bg-background-paper shadow-2xl z-50 flex flex-col border-l border-border"
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-medical-blue to-medical-darkBlue text-white">
+          <div className="flex items-center justify-between p-6 border-b border-border bg-primary text-white">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                 <Bot className="w-6 h-6" />
@@ -63,11 +63,10 @@ export default function AIAssistant({ isOpen, onClose }) {
                 className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
               >
                 <div
-                  className={`max-w-[80%] p-3 rounded-lg ${
-                    message.type === 'user'
-                      ? 'bg-medical-blue text-white'
-                      : 'bg-gray-100 text-clinical-darkGray'
-                  }`}
+                  className={`max-w-[80%] p-3 rounded-lg ${message.type === 'user'
+                      ? 'bg-primary text-white'
+                      : 'bg-background-subtle text-text'
+                    }`}
                 >
                   <p className="text-sm">{message.text}</p>
                 </div>
@@ -76,7 +75,7 @@ export default function AIAssistant({ isOpen, onClose }) {
           </div>
 
           {/* Input */}
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-4 border-t border-border">
             <div className="flex gap-2">
               <input
                 type="text"
@@ -84,7 +83,7 @@ export default function AIAssistant({ isOpen, onClose }) {
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && handleSend()}
                 placeholder="Type your message..."
-                className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-medical-blue"
+                className="flex-1 px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-text"
               />
               <Button onClick={handleSend} size="md">
                 <Send className="w-5 h-5" />

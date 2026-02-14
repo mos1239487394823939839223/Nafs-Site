@@ -17,9 +17,9 @@ export default function ProgressStepper({ steps, currentStep }) {
                 <div
                   className={cn(
                     'w-10 h-10 rounded-full flex items-center justify-center font-semibold transition-all duration-300',
-                    isCompleted && 'bg-medical-blue text-white',
-                    isActive && 'bg-medical-blue text-white ring-4 ring-medical-lightBlue',
-                    !isCompleted && !isActive && 'bg-gray-200 text-gray-500'
+                    isCompleted && 'bg-primary text-white',
+                    isActive && 'bg-primary text-white ring-4 ring-primary/20',
+                    !isCompleted && !isActive && 'bg-background-subtle text-text-muted'
                   )}
                 >
                   {isCompleted ? <Check className="w-5 h-5" /> : stepNumber}
@@ -28,13 +28,13 @@ export default function ProgressStepper({ steps, currentStep }) {
                   <p
                     className={cn(
                       'text-sm font-medium transition-colors',
-                      (isActive || isCompleted) ? 'text-medical-blue' : 'text-gray-500'
+                      (isActive || isCompleted) ? 'text-primary' : 'text-text-muted'
                     )}
                   >
                     {step.title}
                   </p>
                   {step.subtitle && (
-                    <p className="text-xs text-gray-400 mt-0.5">{step.subtitle}</p>
+                    <p className="text-xs text-text-muted/70 mt-0.5">{step.subtitle}</p>
                   )}
                 </div>
               </div>
@@ -45,7 +45,7 @@ export default function ProgressStepper({ steps, currentStep }) {
                   <div
                     className={cn(
                       'h-full transition-all duration-300',
-                      isCompleted ? 'bg-medical-blue' : 'bg-gray-200'
+                      isCompleted ? 'bg-primary' : 'bg-background-subtle'
                     )}
                   />
                 </div>
@@ -56,9 +56,9 @@ export default function ProgressStepper({ steps, currentStep }) {
       </div>
 
       {/* Progress Bar */}
-      <div className="mt-6 w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+      <div className="mt-6 w-full bg-background-subtle rounded-full h-2 overflow-hidden">
         <div
-          className="bg-medical-blue h-full transition-all duration-500 ease-out"
+          className="bg-primary h-full transition-all duration-500 ease-out"
           style={{ width: `${((currentStep - 1) / (steps.length - 1)) * 100}%` }}
         />
       </div>

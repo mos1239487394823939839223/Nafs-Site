@@ -127,11 +127,11 @@ export default function PatientDashboard() {
             <div className="flex items-center justify-center gap-6 mt-4">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-primary rounded-full"></div>
-                <span className="text-sm text-clinical-gray">Systolic</span>
+                <span className="text-sm text-text-muted">Systolic</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-secondary rounded-full"></div>
-                <span className="text-sm text-clinical-gray">Diastolic</span>
+                <span className="text-sm text-text-muted">Diastolic</span>
               </div>
             </div>
           </CardContent>
@@ -174,7 +174,7 @@ export default function PatientDashboard() {
                     <Video className="w-4 h-4 text-primary" />
                     <span className="text-sm font-medium text-text">{appointment.doctor}</span>
                   </div>
-                  <div className="text-xs text-text-light">
+                  <div className="text-xs text-text-muted">
                     <div className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
                       <span>{appointment.date}</span>
@@ -213,16 +213,16 @@ export default function PatientDashboard() {
                     <Video className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-clinical-darkGray">{appointment.doctor}</h4>
-                    <p className="text-sm text-clinical-gray">{appointment.specialty}</p>
+                    <h4 className="font-semibold text-text-heading">{appointment.doctor}</h4>
+                    <p className="text-sm text-text-muted">{appointment.specialty}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="flex items-center gap-2 text-clinical-darkGray">
+                  <div className="flex items-center gap-2 text-text-heading">
                     <Calendar className="w-4 h-4" />
                     <span className="font-medium">{appointment.date}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-clinical-gray mt-1">
+                  <div className="flex items-center gap-2 text-text-muted mt-1">
                     <Clock className="w-4 h-4" />
                     <span className="text-sm">{appointment.time}</span>
                   </div>
@@ -241,8 +241,8 @@ export default function PatientDashboard() {
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
               <Calendar className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="font-semibold text-clinical-darkGray mt-4">Book Appointment</h3>
-            <p className="text-sm text-clinical-gray mt-2">Schedule a session with a doctor</p>
+            <h3 className="font-semibold text-text-heading mt-4">Book Appointment</h3>
+            <p className="text-sm text-text-muted mt-2">Schedule a session with a doctor</p>
           </div>
         </Card>
 
@@ -251,8 +251,8 @@ export default function PatientDashboard() {
             <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto">
               <Video className="w-8 h-8 text-secondary" />
             </div>
-            <h3 className="font-semibold text-clinical-darkGray mt-4">Virtual Clinic</h3>
-            <p className="text-sm text-clinical-gray mt-2">Join video consultation</p>
+            <h3 className="font-semibold text-text-heading mt-4">Virtual Clinic</h3>
+            <p className="text-sm text-text-muted mt-2">Join video consultation</p>
           </div>
         </Card>
 
@@ -261,8 +261,8 @@ export default function PatientDashboard() {
             <div className="w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center mx-auto">
               <Bot className="w-8 h-8 text-accent-dark" />
             </div>
-            <h3 className="font-semibold text-clinical-darkGray mt-4">AI Health Assistant</h3>
-            <p className="text-sm text-clinical-gray mt-2">Get instant health advice</p>
+            <h3 className="font-semibold text-text-heading mt-4">AI Health Assistant</h3>
+            <p className="text-sm text-text-muted mt-2">Get instant health advice</p>
           </div>
         </Card>
       </div>

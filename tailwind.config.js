@@ -1,5 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+    darkMode: 'class',
     content: [
         "./index.html",
         "./src/**/*.{js,ts,jsx,tsx}",
@@ -9,57 +10,61 @@ export default {
             colors: {
                 // Primary Brand Color - Sage Green
                 primary: {
-                    DEFAULT: '#6B9E8A', // Sage Green
-                    light: '#8FBDAA', // Light Sage
-                    dark: '#4A7E6D', // Dark Sage
+                    DEFAULT: 'var(--color-primary)', // Sage Green
+                    light: 'var(--color-primary-light)', // Light Sage
+                    dark: 'var(--color-primary-dark)', // Dark Sage
                 },
                 // Secondary Color - Soft Green
                 secondary: {
-                    DEFAULT: '#8FBDAA', // Light Sage
-                    light: '#D4EAE0', // Very Light Green
-                    dark: '#6B9E8A', // Sage Green
+                    DEFAULT: 'var(--color-secondary)', // Light Sage
+                    light: 'var(--color-secondary-light)', // Very Light Green
+                    dark: 'var(--color-secondary-dark)', // Sage Green
                 },
                 // Background Colors - Clean & Professional
                 background: {
-                    DEFAULT: '#F5FAF7', // Very Light Green Tint
-                    white: '#FFFFFF', // Pure White
-                    gray: '#EDF5F0', // Light Green Gray
+                    DEFAULT: 'var(--color-background)', // Very Light Green Tint / Dark Green
+                    white: 'var(--color-background-paper)', // Pure White / Dark Card
+                    gray: 'var(--color-background-subtle)', // Light Green Gray / Dark Subtle
+                    paper: 'var(--color-background-paper)',
+                    subtle: 'var(--color-background-subtle)',
                 },
                 // Border & Stroke
                 border: {
-                    DEFAULT: '#C8DFD3', // Light Green Border
-                    light: '#E0EFE7', // Very Light Green Border
-                    dark: '#8FBDAA', // Sage Border
+                    DEFAULT: 'var(--color-border)', // Light Green Border / Dark Border
+                    light: 'var(--color-border-light)', // Very Light Green Border
+                    dark: 'var(--color-border-dark)', // Sage Border
                 },
                 // Text Colors - Professional & Clear
                 text: {
-                    DEFAULT: '#2D3D35', // Dark Green-Gray
-                    light: '#4A7E6D', // Medium Green
-                    dark: '#1A2B23', // Very Dark Green
+                    DEFAULT: 'var(--color-text)', // Dark Green-Gray / Off-white
+                    light: 'var(--color-text-light)', // Medium Green / Muted
+                    dark: 'var(--color-text-heading)', // Very Dark Green / White
+                    muted: 'var(--color-text-light)',
+                    heading: 'var(--color-text-heading)',
                 },
                 // Accent Colors - Sage Green
                 accent: {
-                    DEFAULT: '#6B9E8A', // Sage Green
-                    light: '#D4EAE0', // Light Green
-                    dark: '#4A7E6D', // Dark Sage
+                    DEFAULT: 'var(--color-primary)', // Sage Green
+                    light: 'var(--color-secondary-light)', // Light Green
+                    dark: 'var(--color-primary-dark)', // Dark Sage
                 },
                 // Legacy colors (updated to new green palette for backward compatibility)
                 medical: {
-                    blue: '#8FBDAA', // Light Sage
-                    teal: '#6B9E8A', // Sage Green
-                    lightBlue: '#D4EAE0', // Very Light Green
-                    darkBlue: '#2D3D35', // Dark Green-Gray
+                    blue: 'var(--color-primary-light)', // Light Sage
+                    teal: 'var(--color-primary)', // Sage Green
+                    lightBlue: 'var(--color-secondary-light)', // Very Light Green
+                    darkBlue: 'var(--color-text)', // Dark Green-Gray
                 },
                 clinical: {
-                    white: '#F5FAF7', // Very Light Green Tint
-                    gray: '#6B9E8A', // Sage Green
-                    darkGray: '#2D3D35', // Dark Green-Gray
+                    white: 'var(--color-background)', // Very Light Green Tint
+                    gray: 'var(--color-primary)', // Sage Green
+                    darkGray: 'var(--color-text)', // Dark Green-Gray
                 },
                 // Status Colors
                 sage: {
-                    DEFAULT: '#6B9E8A',
-                    light: '#8FBDAA',
-                    dark: '#4A7E6D',
+                    DEFAULT: 'var(--color-primary)',
+                    light: 'var(--color-primary-light)',
+                    dark: 'var(--color-primary-dark)',
                 },
             },
             fontFamily: {

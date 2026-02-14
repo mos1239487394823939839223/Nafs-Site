@@ -5,6 +5,7 @@ import { ToastProvider } from './components/ui/Toast'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import { ClinicProvider, useClinic } from './contexts/ClinicContext'
 
+import { ThemeProvider } from './contexts/ThemeContext'
 import Layout from './components/layout/Layout'
 
 import PatientSettings from './views/patient/Settings'
@@ -266,9 +267,11 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <ClinicProvider>
-          <ToastProvider>
-            <AppRoutes />
-          </ToastProvider>
+          <ThemeProvider>
+            <ToastProvider>
+              <AppRoutes />
+            </ToastProvider>
+          </ThemeProvider>
         </ClinicProvider>
       </AuthProvider>
     </BrowserRouter>

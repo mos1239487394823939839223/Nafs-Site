@@ -7,13 +7,13 @@ export default function PendingApproval() {
   const navigate = useNavigate()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-medical-lightBlue via-white to-clinical-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-2xl"
       >
-        <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center">
+        <div className="bg-background-paper rounded-2xl shadow-xl p-8 md:p-12 text-center border border-border">
           {/* Icon */}
           <motion.div
             initial={{ scale: 0 }}
@@ -25,26 +25,26 @@ export default function PendingApproval() {
           </motion.div>
 
           {/* Title */}
-          <h1 className="text-3xl font-bold text-clinical-darkGray mb-4">
+          <h1 className="text-3xl font-bold text-text-heading mb-4">
             Application Submitted Successfully!
           </h1>
 
           {/* Description */}
-          <p className="text-lg text-clinical-gray mb-8">
+          <p className="text-lg text-text-muted mb-8">
             Thank you for registering as a doctor on our platform. Your application is currently under review by our admin team.
           </p>
 
           {/* Status Timeline */}
-          <div className="bg-medical-lightBlue p-6 rounded-lg mb-8 text-left">
-            <h3 className="font-semibold text-clinical-darkGray mb-4">What happens next?</h3>
+          <div className="bg-background-subtle p-6 rounded-lg mb-8 text-left">
+            <h3 className="font-semibold text-text-heading mb-4">What happens next?</h3>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                   <CheckCircle className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="font-medium text-clinical-darkGray">Application Received</p>
-                  <p className="text-sm text-clinical-gray">Your documents have been successfully submitted</p>
+                  <p className="font-medium text-text-heading">Application Received</p>
+                  <p className="text-sm text-text-muted">Your documents have been successfully submitted</p>
                 </div>
               </div>
 
@@ -53,8 +53,8 @@ export default function PendingApproval() {
                   <Clock className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="font-medium text-clinical-darkGray">Under Review</p>
-                  <p className="text-sm text-clinical-gray">Our team is verifying your credentials (24-48 hours)</p>
+                  <p className="font-medium text-text-heading">Under Review</p>
+                  <p className="text-sm text-text-muted">Our team is verifying your credentials (24-48 hours)</p>
                 </div>
               </div>
 
@@ -63,8 +63,8 @@ export default function PendingApproval() {
                   <Mail className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="font-medium text-clinical-darkGray">Approval Notification</p>
-                  <p className="text-sm text-clinical-gray">You'll receive an email once approved</p>
+                  <p className="font-medium text-text-heading">Approval Notification</p>
+                  <p className="text-sm text-text-muted">You'll receive an email once approved</p>
                 </div>
               </div>
             </div>
@@ -95,9 +95,9 @@ export default function PendingApproval() {
           </div>
 
           {/* Contact */}
-          <p className="text-sm text-clinical-gray mt-8">
+          <p className="text-sm text-text-muted mt-8">
             Have questions? Contact us at{' '}
-            <a href="mailto:support@clinc.com" className="text-medical-blue hover:underline">
+            <a href="mailto:support@clinc.com" className="text-primary hover:underline">
               support@clinc.com
             </a>
           </p>

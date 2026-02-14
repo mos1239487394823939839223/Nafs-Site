@@ -48,11 +48,11 @@ export default function ActiveTickets() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6">
+    <div className="bg-background-paper rounded-2xl shadow-sm p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold text-text">Active Tickets</h2>
-          <p className="text-sm text-text-light mt-1">Manage customer support requests</p>
+          <h2 className="text-xl font-bold text-text-heading">Active Tickets</h2>
+          <p className="text-sm text-text-muted mt-1">Manage customer support requests</p>
         </div>
       </div>
 
@@ -66,7 +66,7 @@ export default function ActiveTickets() {
               px-4 py-2 rounded-xl text-sm font-medium transition-all whitespace-nowrap
               ${filter === cat.value
                 ? 'bg-primary text-white shadow-sm'
-                : 'bg-background text-text-light hover:bg-primary/10'
+                : 'bg-background-subtle text-text-muted hover:bg-primary/10'
               }
             `}
           >
@@ -78,17 +78,17 @@ export default function ActiveTickets() {
       {/* Kanban Board */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Open Column */}
-        <div className="bg-background rounded-2xl p-4">
+        <div className="bg-background-subtle rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-4">
-            <AlertCircle className="w-5 h-5 text-yellow-600" />
-            <h3 className="font-semibold text-text">Open</h3>
-            <span className="ml-auto text-sm text-text-light bg-white px-2 py-1 rounded-full">
+            <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+            <h3 className="font-semibold text-text-heading">Open</h3>
+            <span className="ml-auto text-sm text-text-muted bg-background-paper px-2 py-1 rounded-full">
               {groupedByStatus.open.length}
             </span>
           </div>
           <div className="space-y-3">
             {groupedByStatus.open.map((ticket) => (
-              <div key={ticket.id} className="bg-white rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm">
+              <div key={ticket.id} className="bg-background-paper rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex flex-col">
                     <h4 className="font-semibold text-sm text-text">{ticket.user}</h4>
@@ -98,8 +98,8 @@ export default function ActiveTickets() {
                     {ticket.priority}
                   </Badge>
                 </div>
-                <p className="text-xs text-text-light mb-2">{ticket.issue}</p>
-                <div className="flex items-center justify-between text-xs text-text-light mb-2">
+                <p className="text-xs text-text-muted mb-2">{ticket.issue}</p>
+                <div className="flex items-center justify-between text-xs text-text-muted mb-2">
                   <div className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     <span>{ticket.time}</span>
@@ -125,17 +125,17 @@ export default function ActiveTickets() {
         </div>
 
         {/* In Progress Column */}
-        <div className="bg-background rounded-2xl p-4">
+        <div className="bg-background-subtle rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-4">
             <MessageSquare className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold text-text">In Progress</h3>
-            <span className="ml-auto text-sm text-text-light bg-white px-2 py-1 rounded-full">
+            <h3 className="font-semibold text-text-heading">In Progress</h3>
+            <span className="ml-auto text-sm text-text-muted bg-background-paper px-2 py-1 rounded-full">
               {groupedByStatus['in-progress'].length}
             </span>
           </div>
           <div className="space-y-3">
             {groupedByStatus['in-progress'].map((ticket) => (
-              <div key={ticket.id} className="bg-white rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm">
+              <div key={ticket.id} className="bg-background-paper rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex flex-col">
                     <h4 className="font-semibold text-sm text-text">{ticket.user}</h4>
@@ -145,8 +145,8 @@ export default function ActiveTickets() {
                     {ticket.priority}
                   </Badge>
                 </div>
-                <p className="text-xs text-text-light mb-2">{ticket.issue}</p>
-                <div className="flex items-center justify-between text-xs text-text-light mb-2">
+                <p className="text-xs text-text-muted mb-2">{ticket.issue}</p>
+                <div className="flex items-center justify-between text-xs text-text-muted mb-2">
                   <div className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     <span>{ticket.time}</span>
@@ -158,7 +158,7 @@ export default function ActiveTickets() {
                 </div>
                 <button
                   onClick={() => handleMoveStatus(ticket.id, 'resolved')}
-                  className="w-full mt-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-green-100 text-green-700 rounded-lg hover:bg-green-600 hover:text-white transition-all"
+                  className="w-full mt-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-green-500/10 text-green-700 dark:text-green-400 rounded-lg hover:bg-green-600 hover:text-white transition-all"
                 >
                   Resolve Ticket
                 </button>
@@ -168,17 +168,17 @@ export default function ActiveTickets() {
         </div>
 
         {/* Resolved Column */}
-        <div className="bg-background rounded-2xl p-4">
+        <div className="bg-background-subtle rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-4">
-            <CheckCircle className="w-5 h-5 text-green-600" />
-            <h3 className="font-semibold text-text">Resolved</h3>
-            <span className="ml-auto text-sm text-text-light bg-white px-2 py-1 rounded-full">
+            <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
+            <h3 className="font-semibold text-text-heading">Resolved</h3>
+            <span className="ml-auto text-sm text-text-muted bg-background-paper px-2 py-1 rounded-full">
               {groupedByStatus.resolved.length}
             </span>
           </div>
           <div className="space-y-3">
             {groupedByStatus.resolved.map((ticket) => (
-              <div key={ticket.id} className="bg-white rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm opacity-75">
+              <div key={ticket.id} className="bg-background-paper rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm opacity-75">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex flex-col">
                     <h4 className="font-semibold text-sm text-text">{ticket.user}</h4>
@@ -188,8 +188,8 @@ export default function ActiveTickets() {
                     {ticket.priority}
                   </Badge>
                 </div>
-                <p className="text-xs text-text-light mb-2">{ticket.issue}</p>
-                <div className="flex items-center justify-between text-xs text-text-light">
+                <p className="text-xs text-text-muted mb-2">{ticket.issue}</p>
+                <div className="flex items-center justify-between text-xs text-text-muted">
                   <div className="flex items-center gap-1">
                     <Clock className="w-3 h-3" />
                     <span>{ticket.time}</span>

@@ -30,7 +30,7 @@ export default function ChatInterface({ consultations, currentUserId, onSendMess
     <div className="h-full flex flex-col bg-background">
       {/* Mobile Header */}
       {!activeConsultationId || showConsultationsList ? (
-        <div className="lg:hidden flex items-center justify-between p-4 bg-white border-b border-border">
+        <div className="lg:hidden flex items-center justify-between p-4 bg-background-paper border-b border-border">
           <h1 className="text-lg font-bold text-primary italic uppercase tracking-tighter">Conversations</h1>
           <div className="w-10"></div>
         </div>
@@ -41,7 +41,7 @@ export default function ChatInterface({ consultations, currentUserId, onSendMess
         {/* Consultations List */}
         <div
           className={`
-            ${showConsultationsList || !activeConsultationId ? 'fixed inset-0 z-40 bg-white' : 'hidden md:block'}
+            ${showConsultationsList || !activeConsultationId ? 'fixed inset-0 z-40 bg-background-paper' : 'hidden md:block'}
             lg:block lg:relative lg:w-80 lg:shrink-0
           `}
         >

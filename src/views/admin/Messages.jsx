@@ -34,19 +34,19 @@ export default function AdminMessages() {
             <div className="flex-1 flex gap-6 overflow-hidden">
                 {/* Sidebar */}
                 <div className={`
-                    w-full lg:w-80 flex flex-col bg-white rounded-2xl shadow-sm border border-border overflow-hidden
+                    w-full lg:w-80 flex flex-col bg-background-paper rounded-2xl shadow-sm border border-border overflow-hidden
                     ${activeChat ? 'hidden lg:flex' : 'flex'}
                 `}>
-                    <div className="p-4 border-b border-border bg-white">
-                        <h2 className="text-lg font-bold text-clinical-darkGray mb-3">Communications</h2>
+                    <div className="p-4 border-b border-border bg-background-paper">
+                        <h2 className="text-lg font-bold text-text-heading mb-3">Communications</h2>
                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-clinical-gray" />
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                             <input
                                 type="text"
                                 placeholder="Search staff/doctors..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 bg-background border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                                className="w-full pl-10 pr-4 py-2 bg-background-subtle border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20"
                             />
                         </div>
                     </div>
@@ -58,11 +58,11 @@ export default function AdminMessages() {
                                 onClick={() => setActiveChat(chat)}
                                 className={`
                                     w-full p-4 border-b border-border/50 text-left transition-all
-                                    ${activeChat?.id === chat.id ? 'bg-primary/5 border-l-4 border-l-primary' : 'hover:bg-background'}
+                                    ${activeChat?.id === chat.id ? 'bg-primary/5 border-l-4 border-l-primary' : 'hover:bg-background-subtle'}
                                 `}
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${chat.participant.role === 'staff' ? 'bg-secondary/10' : 'bg-primary-light/50'}`}>
+                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center ${chat.participant.role === 'staff' ? 'bg-secondary/10' : 'bg-primary/10'}`}>
                                         {chat.participant.role === 'staff' ?
                                             <Headphones className="w-6 h-6 text-secondary" /> :
                                             <Stethoscope className="w-6 h-6 text-primary" />
@@ -70,10 +70,10 @@ export default function AdminMessages() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex justify-between items-start">
-                                            <h4 className="font-bold text-clinical-darkGray truncate">{chat.participant.name}</h4>
-                                            <span className="text-[10px] text-clinical-gray uppercase font-black italic">{chat.participant.role}</span>
+                                            <h4 className="font-bold text-text-heading truncate">{chat.participant.name}</h4>
+                                            <span className="text-[10px] text-text-muted uppercase font-black italic">{chat.participant.role}</span>
                                         </div>
-                                        <p className="text-sm text-clinical-gray truncate">{chat.lastMessage || 'No messages yet'}</p>
+                                        <p className="text-sm text-text-muted truncate">{chat.lastMessage || 'No messages yet'}</p>
                                     </div>
                                 </div>
                             </button>
@@ -83,7 +83,7 @@ export default function AdminMessages() {
 
                 {/* Chat Area */}
                 <div className={`
-                    flex-1 bg-white rounded-2xl shadow-sm border border-border overflow-hidden
+                    flex-1 bg-background-paper rounded-2xl shadow-sm border border-border overflow-hidden
                     ${!activeChat ? 'hidden lg:flex lg:items-center lg:justify-center' : 'flex flex-col'}
                 `}>
                     {activeChat ? (
@@ -97,8 +97,8 @@ export default function AdminMessages() {
                             <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <MessageSquare className="w-10 h-10 text-primary" />
                             </div>
-                            <h3 className="text-xl font-bold text-clinical-darkGray mb-2">Internal Messaging</h3>
-                            <p className="text-clinical-gray">Select a contact to start an internal communication.</p>
+                            <h3 className="text-xl font-bold text-text-heading mb-2">Internal Messaging</h3>
+                            <p className="text-text-muted">Select a contact to start an internal communication.</p>
                         </div>
                     )}
                 </div>

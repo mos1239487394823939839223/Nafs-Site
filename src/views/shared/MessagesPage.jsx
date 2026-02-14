@@ -25,7 +25,7 @@ export default function MessagesPage() {
   return (
     <div className="flex flex-col h-full lg:h-[calc(100vh-4rem)]">
       {isStaff && (
-        <div className="bg-white border-b border-border px-6 pt-4 flex gap-4 overflow-x-auto no-scrollbar shrink-0">
+        <div className="bg-background-paper border-b border-border px-6 pt-4 flex gap-4 overflow-x-auto no-scrollbar shrink-0">
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -33,7 +33,7 @@ export default function MessagesPage() {
               className={`pb-3 px-2 text-sm font-bold uppercase tracking-tighter italic transition-all border-b-2 
                 ${activeTab === tab.id
                   ? 'border-primary text-primary'
-                  : 'border-transparent text-clinical-gray hover:text-clinical-darkGray'
+                  : 'border-transparent text-text-muted hover:text-text'
                 }`}
             >
               <div className="flex items-center gap-2">

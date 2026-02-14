@@ -64,12 +64,12 @@ export default function DoctorDashboard() {
     <div className="space-y-6">
       {/* Stats Overview */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card className="border-2 border-[#ecf3f9] bg-white">
+        <Card className="border border-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-text-light text-sm">Total Sessions</p>
+              <p className="text-text-muted text-sm">Total Sessions</p>
               <p className="text-3xl font-bold mt-1 text-primary">{todayStats.totalSessions}</p>
-              <p className="text-text-light text-xs mt-1">Today</p>
+              <p className="text-text-muted text-xs mt-1">Today</p>
             </div>
             <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center">
               <Users className="w-7 h-7 text-primary" />
@@ -77,12 +77,12 @@ export default function DoctorDashboard() {
           </div>
         </Card>
 
-        <Card className="border-2 border-[#dcfce7] bg-white">
+        <Card className="border border-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-text-light text-sm">Completed</p>
+              <p className="text-text-muted text-sm">Completed</p>
               <p className="text-3xl font-bold mt-1 text-green-600">{todayStats.completed}</p>
-              <p className="text-text-light text-xs mt-1">Sessions</p>
+              <p className="text-text-muted text-xs mt-1">Sessions</p>
             </div>
             <div className="w-14 h-14 rounded-full bg-green-100 flex items-center justify-center">
               <CheckCircle className="w-7 h-7 text-green-500" />
@@ -90,12 +90,12 @@ export default function DoctorDashboard() {
           </div>
         </Card>
 
-        <Card className="border-2 border-[#ecf3f9] bg-white">
+        <Card className="border border-border">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-text-light text-sm">Upcoming</p>
+              <p className="text-text-muted text-sm">Upcoming</p>
               <p className="text-3xl font-bold mt-1 text-secondary">{todayStats.upcoming}</p>
-              <p className="text-text-light text-xs mt-1">Sessions</p>
+              <p className="text-text-muted text-xs mt-1">Sessions</p>
             </div>
             <div className="w-14 h-14 rounded-full bg-secondary/10 flex items-center justify-center">
               <Clock className="w-7 h-7 text-secondary" />
@@ -118,12 +118,12 @@ export default function DoctorDashboard() {
                   <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center flex-wrap gap-3">
-                        <h4 className="font-semibold text-clinical-darkGray truncate">{patient.name}</h4>
+                        <h4 className="font-semibold text-text-heading truncate">{patient.name}</h4>
                         <Badge variant={patient.status === 'waiting' ? 'warning' : 'primary'}>
                           {patient.status}
                         </Badge>
                       </div>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-clinical-gray">
+                      <div className="flex items-center gap-4 mt-2 text-sm text-text-muted">
                         <div className="flex items-center gap-1">
                           <Clock className="w-4 h-4" />
                           <span>{patient.time}</span>
@@ -147,8 +147,8 @@ export default function DoctorDashboard() {
                     </Button>
                   </div>
                   <div className="bg-background p-3 rounded-xl text-sm">
-                    <p className="text-clinical-darkGray"><strong>Reason:</strong> {patient.reason}</p>
-                    <p className="text-clinical-gray mt-1"><strong>History:</strong> {patient.history}</p>
+                    <p className="text-text-heading"><strong>Reason:</strong> {patient.reason}</p>
+                    <p className="text-text-muted mt-1"><strong>History:</strong> {patient.history}</p>
                   </div>
                 </div>
               ))}
@@ -167,8 +167,8 @@ export default function DoctorDashboard() {
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
               <CalendarIcon className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="font-semibold text-clinical-darkGray mt-4">Update Schedule</h3>
-            <p className="text-sm text-clinical-gray mt-2">Manage your availability</p>
+            <h3 className="font-semibold text-text-heading mt-4">Update Schedule</h3>
+            <p className="text-sm text-text-muted mt-2">Manage your availability</p>
           </div>
         </Card>
 
@@ -177,8 +177,8 @@ export default function DoctorDashboard() {
             <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto">
               <FileText className="w-8 h-8 text-secondary" />
             </div>
-            <h3 className="font-semibold text-clinical-darkGray mt-4">Medical Records</h3>
-            <p className="text-sm text-clinical-gray mt-2">Access patient files</p>
+            <h3 className="font-semibold text-text-heading mt-4">Medical Records</h3>
+            <p className="text-sm text-text-muted mt-2">Access patient files</p>
           </div>
         </Card>
 
@@ -187,8 +187,8 @@ export default function DoctorDashboard() {
             <div className="w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center mx-auto">
               <MessageSquare className="w-8 h-8 text-accent-dark" />
             </div>
-            <h3 className="font-semibold text-clinical-darkGray mt-4">Messages</h3>
-            <p className="text-sm text-clinical-gray mt-2">Chat with patients</p>
+            <h3 className="font-semibold text-text-heading mt-4">Messages</h3>
+            <p className="text-sm text-text-muted mt-2">Chat with patients</p>
           </div>
         </Card>
       </div>
@@ -221,16 +221,16 @@ export default function DoctorDashboard() {
             <div className="bg-background p-4 rounded-xl space-y-3">
               <div className="flex items-center gap-2">
                 <Clock className="w-5 h-5 text-primary" />
-                <span className="font-medium text-text">Appointment Time:</span>
-                <span className="text-text-light">{selectedPatient.time}</span>
+                <span className="font-medium text-text-heading">Appointment Time:</span>
+                <span className="text-text-muted">{selectedPatient.time}</span>
               </div>
               <div>
-                <span className="font-medium text-text">Reason:</span>
-                <p className="text-text-light mt-1">{selectedPatient.reason}</p>
+                <span className="font-medium text-text-heading">Reason:</span>
+                <p className="text-text-muted mt-1">{selectedPatient.reason}</p>
               </div>
               <div>
-                <span className="font-medium text-text">History:</span>
-                <p className="text-text-light mt-1">{selectedPatient.history}</p>
+                <span className="font-medium text-text-heading">History:</span>
+                <p className="text-text-muted mt-1">{selectedPatient.history}</p>
               </div>
             </div>
 

@@ -12,7 +12,7 @@ export default function Table({ children, className }) {
 
 export function TableHeader({ children, className }) {
   return (
-    <thead className={cn('bg-gray-50 border-b border-gray-200', className)}>
+    <thead className={cn('bg-background-subtle border-b border-border', className)}>
       {children}
     </thead>
   )
@@ -20,7 +20,7 @@ export function TableHeader({ children, className }) {
 
 export function TableBody({ children, className }) {
   return (
-    <tbody className={cn('divide-y divide-gray-200', className)}>
+    <tbody className={cn('divide-y divide-border', className)}>
       {children}
     </tbody>
   )
@@ -28,7 +28,7 @@ export function TableBody({ children, className }) {
 
 export function TableRow({ children, className, hover = true }) {
   return (
-    <tr className={cn(hover && 'hover:bg-gray-50 transition-colors', className)}>
+    <tr className={cn(hover && 'hover:bg-background-subtle transition-colors', className)}>
       {children}
     </tr>
   )
@@ -36,7 +36,7 @@ export function TableRow({ children, className, hover = true }) {
 
 export function TableHead({ children, className }) {
   return (
-    <th className={cn('px-6 py-3 text-left text-xs font-semibold text-clinical-darkGray uppercase tracking-wider', className)}>
+    <th className={cn('px-6 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider', className)}>
       {children}
     </th>
   )
@@ -44,7 +44,7 @@ export function TableHead({ children, className }) {
 
 export function TableCell({ children, className }) {
   return (
-    <td className={cn('px-6 py-4 text-sm text-clinical-gray', className)}>
+    <td className={cn('px-6 py-4 text-sm text-text', className)}>
       {children}
     </td>
   )

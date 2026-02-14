@@ -22,15 +22,15 @@ export default function AdminProfile() {
 
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-text mb-2">Admin Profile</h1>
-                    <p className="text-text-light">Manage your administrative account information.</p>
+                    <h1 className="text-3xl font-bold text-text-heading mb-2">Admin Profile</h1>
+                    <p className="text-text-muted">Manage your administrative account information.</p>
                 </div>
 
                 {/* Main Content Card */}
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="bg-white rounded-2xl shadow-lg border border-border-light overflow-hidden"
+                    className="bg-background-paper rounded-2xl shadow-lg border border-border overflow-hidden"
                 >
                     {/* Decorative Top Bar */}
                     <div className="h-1.5 w-full bg-gradient-to-r from-primary via-secondary to-sage-light" />
@@ -45,13 +45,13 @@ export default function AdminProfile() {
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1 }}
-                    className="mt-8 bg-red-50 rounded-2xl p-8 border border-red-100"
+                    className="mt-8 bg-red-500/10 rounded-2xl p-8 border border-red-500/20"
                 >
-                    <h3 className="text-xl font-bold text-red-900 mb-2">Danger Zone</h3>
-                    <p className="text-red-700 mb-6">Resetting the clinic data will clear all appointments, tickets, and user registrations back to default.</p>
+                    <h3 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">Danger Zone</h3>
+                    <p className="text-red-600/80 dark:text-red-400/80 mb-6">Resetting the clinic data will clear all appointments, tickets, and user registrations back to default.</p>
                     <Button
                         variant="outline"
-                        className="border-red-200 text-red-600 hover:bg-red-600 hover:text-white"
+                        className="border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/10 hover:text-red-700 dark:hover:text-red-300"
                         onClick={() => {
                             if (window.confirm('Are you sure you want to reset all demo data?')) {
                                 resetClinicData()

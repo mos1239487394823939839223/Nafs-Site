@@ -27,8 +27,8 @@ const eventTypeConfig = {
   diagnosis: {
     icon: FileText,
     color: 'text',
-    bgColor: 'bg-gray-100',
-    borderColor: 'border-gray-300',
+    bgColor: 'bg-background-subtle',
+    borderColor: 'border-border',
     textColor: 'text-text'
   }
 }
@@ -68,11 +68,11 @@ export default function HealthJourneyTimeline() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6">
+    <div className="bg-background-paper rounded-2xl shadow-sm p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold text-text">Health Journey</h2>
-          <p className="text-sm text-text-light mt-1">Your medical history timeline</p>
+          <h2 className="text-xl font-bold text-text-heading">Health Journey</h2>
+          <p className="text-sm text-text-muted mt-1">Your medical history timeline</p>
         </div>
         <button className="text-sm text-primary hover:text-primary-dark font-medium transition-colors">
           View All
@@ -92,24 +92,24 @@ export default function HealthJourneyTimeline() {
             return (
               <div key={event.id} className="relative pl-16 group">
                 {/* Timeline dot */}
-                <div className={`absolute left-0 w-12 h-12 ${config.bgColor} rounded-full flex items-center justify-center border-2 ${config.borderColor} bg-white transition-transform group-hover:scale-110`}>
+                <div className={`absolute left-0 w-12 h-12 ${config.bgColor} rounded-full flex items-center justify-center border-2 ${config.borderColor} bg-background-paper transition-transform group-hover:scale-110`}>
                   <Icon className={`w-6 h-6 ${config.textColor}`} />
                 </div>
 
                 {/* Event card */}
-                <div className="bg-background rounded-2xl p-4 border border-border hover:border-primary transition-all duration-200 hover:shadow-md">
+                <div className="bg-background-paper rounded-2xl p-4 border border-border hover:border-primary transition-all duration-200 hover:shadow-md">
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1">
                       <h3 className="font-semibold text-text">{event.title}</h3>
                       <div className="flex items-center gap-3 mt-1">
-                        <span className="text-sm text-text-light">{formatDate(event.date)}</span>
-                        <span className="text-xs text-text-light">•</span>
-                        <span className="text-sm text-text-light">{getRelativeTime(event.date)}</span>
+                        <span className="text-sm text-text-muted">{formatDate(event.date)}</span>
+                        <span className="text-xs text-text-muted">•</span>
+                        <span className="text-sm text-text-muted">{getRelativeTime(event.date)}</span>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       {event.status === 'Normal' || event.status === 'Completed' ? (
-                        <span className="flex items-center gap-1 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full">
+                        <span className="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-1 rounded-full">
                           <CheckCircle className="w-3 h-3" />
                           {event.status}
                         </span>
@@ -119,16 +119,16 @@ export default function HealthJourneyTimeline() {
                           {event.status}
                         </span>
                       ) : (
-                        <span className="text-xs font-medium text-text-light bg-gray-100 px-2 py-1 rounded-full">
+                        <span className="text-xs font-medium text-text-muted bg-background-subtle px-2 py-1 rounded-full">
                           {event.status}
                         </span>
                       )}
                     </div>
                   </div>
 
-                  <p className="text-sm text-text-light mb-2">{event.details}</p>
+                  <p className="text-sm text-text-muted mb-2">{event.details}</p>
 
-                  <div className="flex items-center justify-between text-xs text-text-light">
+                  <div className="flex items-center justify-between text-xs text-text-muted">
                     <span>{event.doctor}</span>
                     {event.duration && (
                       <span className="text-accent-dark font-medium">Duration: {event.duration}</span>

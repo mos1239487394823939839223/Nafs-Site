@@ -97,9 +97,9 @@ export default function PatientMessages() {
                                 <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                                     <Stethoscope className="w-8 h-8 text-primary" />
                                 </div>
-                                <h3 className="text-xl font-bold mb-2">Contact a Doctor</h3>
-                                <p className="text-text-light text-sm">Send a message to a specialized healthcare professional.</p>
-                                <ChevronRight className="w-6 h-6 text-text-light mt-4 group-hover:translate-x-2 transition-transform" />
+                                <h3 className="text-xl font-bold mb-2 text-text-heading">Contact a Doctor</h3>
+                                <p className="text-text-muted text-sm">Send a message to a specialized healthcare professional.</p>
+                                <ChevronRight className="w-6 h-6 text-text-muted mt-4 group-hover:translate-x-2 transition-transform" />
                             </Card>
 
                             <Card
@@ -109,9 +109,9 @@ export default function PatientMessages() {
                                 <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mb-6 group-hover:scale-110 transition-transform">
                                     <Headphones className="w-8 h-8 text-secondary" />
                                 </div>
-                                <h3 className="text-xl font-bold mb-2">Talk to Support</h3>
-                                <p className="text-text-light text-sm">Chat with our support team for platform-related help.</p>
-                                <ChevronRight className="w-6 h-6 text-text-light mt-4 group-hover:translate-x-2 transition-transform" />
+                                <h3 className="text-xl font-bold mb-2 text-text-heading">Talk to Support</h3>
+                                <p className="text-text-muted text-sm">Chat with our support team for platform-related help.</p>
+                                <ChevronRight className="w-6 h-6 text-text-muted mt-4 group-hover:translate-x-2 transition-transform" />
                             </Card>
                         </div>
 
@@ -148,7 +148,7 @@ export default function PatientMessages() {
                                     placeholder="Search doctor name..."
                                     value={doctorSearch}
                                     onChange={(e) => setDoctorSearch(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 bg-white border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm"
+                                    className="w-full pl-10 pr-4 py-2 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-text"
                                 />
                             </div>
                         </div>
@@ -164,8 +164,8 @@ export default function PatientMessages() {
                                                 <div className={`absolute bottom-0 right-0 w-4 h-4 border-2 border-white rounded-full ${doctor.online ? 'bg-green-500' : 'bg-text-light'}`}></div>
                                             </div>
                                             <div>
-                                                <h3 className="font-bold text-lg">{doctor.name}</h3>
-                                                <p className="text-text-light text-sm">{doctor.online ? 'Online' : 'Offline'}</p>
+                                                <h3 className="font-bold text-lg text-text-heading">{doctor.name}</h3>
+                                                <p className="text-text-muted text-sm">{doctor.online ? 'Online' : 'Offline'}</p>
                                             </div>
                                         </div>
                                         <Button variant="outline" onClick={() => startDoctorChat(doctor)}>
@@ -183,7 +183,7 @@ export default function PatientMessages() {
                         key="chat"
                         initial={{ opacity: 0, scale: 0.95 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="flex-1 bg-white rounded-2xl shadow-sm overflow-hidden flex flex-col border border-border"
+                        className="flex-1 bg-background-paper rounded-2xl shadow-sm overflow-hidden flex flex-col border border-border"
                     >
                         <ChatWindow
                             conversation={currentConversation}

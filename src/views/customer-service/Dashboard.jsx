@@ -26,10 +26,10 @@ export default function CustomerServiceDashboard() {
   const { tickets, updateTicketStatus, appointments } = useClinic()
 
   const stats = [
-    { label: 'Patient Inquiries', value: tickets.filter(t => t.role === 'patient').length, icon: Users, color: 'text-emerald-600', bg: 'bg-emerald-50' },
-    { label: 'Doctor Requests', value: tickets.filter(t => t.role === 'doctor').length, icon: Stethoscope, color: 'text-purple-600', bg: 'bg-purple-50' },
-    { label: 'Live Sessions', value: appointments.filter(a => a.status === 'in-progress').length, icon: Calendar, color: 'text-green-600', bg: 'bg-green-50' },
-    { label: 'Urgent Cases', value: tickets.filter(t => t.priority === 'urgent').length, icon: ShieldAlert, color: 'text-red-600', bg: 'bg-red-50' },
+    { label: 'Patient Inquiries', value: tickets.filter(t => t.role === 'patient').length, icon: Users, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
+    { label: 'Doctor Requests', value: tickets.filter(t => t.role === 'doctor').length, icon: Stethoscope, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-500/10' },
+    { label: 'Live Sessions', value: appointments.filter(a => a.status === 'in-progress').length, icon: Calendar, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-500/10' },
+    { label: 'Urgent Cases', value: tickets.filter(t => t.priority === 'urgent').length, icon: ShieldAlert, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-500/10' },
   ]
 
   const patientInquiries = tickets.filter(t => t.role === 'patient')
@@ -41,11 +41,11 @@ export default function CustomerServiceDashboard() {
       {/* Header section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-text">Customer Service Hub</h1>
-          <p className="text-text-light">Bridge between Patients, Doctors, and Support</p>
+          <h1 className="text-3xl font-bold text-text-heading">Customer Service Hub</h1>
+          <p className="text-text-muted">Bridge between Patients, Doctors, and Support</p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="bg-white px-4 py-2 rounded-xl border border-border flex items-center gap-2">
+          <div className="bg-background-paper px-4 py-2 rounded-xl border border-border flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
             <span className="text-sm font-medium">8 Agents Online</span>
           </div>
@@ -64,8 +64,8 @@ export default function CustomerServiceDashboard() {
                 <stat.icon className={`w-6 h-6 ${stat.color}`} />
               </div>
               <div>
-                <p className="text-sm text-text-light font-medium">{stat.label}</p>
-                <p className="text-2xl font-bold text-text">{stat.value}</p>
+                <p className="text-sm text-text-muted font-medium">{stat.label}</p>
+                <p className="text-2xl font-bold text-text-heading">{stat.value}</p>
               </div>
             </div>
           </Card>
@@ -73,7 +73,7 @@ export default function CustomerServiceDashboard() {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex items-center gap-2 bg-slate-100 p-1 rounded-2xl w-fit">
+      <div className="flex items-center gap-2 bg-background-subtle p-1 rounded-2xl w-fit">
         {['overview', 'patients', 'doctors', 'emergency'].map((tab) => (
           <button
             key={tab}
@@ -81,8 +81,8 @@ export default function CustomerServiceDashboard() {
             className={`
                             px-6 py-2.5 rounded-xl text-sm font-bold capitalize transition-all
                             ${activeTab === tab
-                ? 'bg-white text-primary shadow-sm'
-                : 'text-text-light hover:text-text'
+                ? 'bg-background-paper text-primary shadow-sm'
+                : 'text-text-muted hover:text-text'
               }
                         `}
           >
@@ -133,14 +133,14 @@ export default function CustomerServiceDashboard() {
               <CardContent className="p-0">
                 <div className="divide-y divide-border">
                   {(activeTab === 'patients' ? patientInquiries : doctorRequests).map((item) => (
-                    <div key={item.id} className="p-4 hover:bg-background transition-colors flex items-center justify-between">
+                    <div key={item.id} className="p-4 hover:bg-background-subtle transition-colors flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center">
-                          <User className="w-5 h-5 text-slate-400" />
+                        <div className="w-10 h-10 rounded-full bg-background-subtle flex items-center justify-center">
+                          <User className="w-5 h-5 text-text-muted" />
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-text">{item.user}</h4>
+                            <h4 className="font-bold text-text-heading">{item.user}</h4>
                             <Badge variant={
                               item.priority === 'urgent' ? 'danger' :
                                 item.priority === 'high' ? 'warning' : 'primary'
@@ -152,12 +152,12 @@ export default function CustomerServiceDashboard() {
                         </div>
                       </div>
                       <div className="flex items-center gap-6 text-sm">
-                        <div className="flex items-center gap-1.5 text-text-light">
+                        <div className="flex items-center gap-1.5 text-text-muted">
                           <Clock className="w-4 h-4" />
                           <span>{item.time} ago</span>
                         </div>
                         <div className="flex items-center gap-1.5">
-                          <div className={`w-2 h-2 rounded-full ${item.status === 'active' ? 'bg-green-500' : 'bg-slate-300'}`} />
+                          <div className={`w-2 h-2 rounded-full ${item.status === 'active' ? 'bg-green-500' : 'bg-background-subtle'}`} />
                           <span className="capitalize">{item.status}</span>
                         </div>
                         <Button size="sm" variant="ghost" className="gap-2">
@@ -179,14 +179,14 @@ export default function CustomerServiceDashboard() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
           >
-            <Card className="border-red-100 bg-red-50/20 p-8 text-center">
+            <Card className="border-red-500/20 bg-red-500/10 p-8 text-center">
               <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-red-900 mb-2">Emergency Protocols</h2>
-              <p className="text-red-700 max-w-md mx-auto mb-6">
+              <h2 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-2">Emergency Protocols</h2>
+              <p className="text-red-600/80 dark:text-red-400/80 max-w-md mx-auto mb-6">
                 These cases require immediate intervention. All currently available agents will be redirected to assist.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                <Button variant="outline" className="bg-white border-red-200 text-red-700 hover:bg-red-50">
+                <Button variant="outline" className="bg-background-paper border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/5">
                   Notify Medical Directors
                 </Button>
                 <Button className="bg-red-600 hover:bg-red-700 text-white">

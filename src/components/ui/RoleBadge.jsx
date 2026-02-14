@@ -27,7 +27,7 @@ export default function RoleBadge({ role, size = 'md' }) {
         inline-flex items-center justify-center
         font-medium rounded-full border
         ${sizeClasses[size]}
-        ${roleStyles[role] || 'bg-gray-100 text-gray-600 border-gray-200'}
+        ${roleStyles[role] || 'bg-background-subtle text-text-muted border-border'}
       `}
     >
       {roleLabels[role] || role}

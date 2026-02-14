@@ -2,12 +2,12 @@ import { cn } from '../../lib/utils'
 
 export default function Badge({ children, variant = 'default', className }) {
   const variants = {
-    default: 'bg-gray-100 text-gray-800',
-    primary: 'bg-medical-lightBlue text-medical-blue',
-    success: 'bg-green-100 text-green-800',
-    warning: 'bg-yellow-100 text-yellow-800',
-    danger: 'bg-red-100 text-red-800',
-    info: 'bg-emerald-100 text-emerald-800',
+    default: 'bg-background-subtle text-text-muted border border-border',
+    primary: 'bg-primary/10 text-primary border border-primary/20',
+    success: 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20',
+    warning: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border border-yellow-500/20',
+    danger: 'bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/20',
+    info: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20',
   }
 
   return (

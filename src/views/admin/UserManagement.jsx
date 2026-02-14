@@ -108,8 +108,8 @@ export default function UserManagement() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-clinical-darkGray">User Management</h2>
-                    <p className="text-clinical-gray mt-1">Manage doctors, patients, and staff members</p>
+                    <h2 className="text-2xl font-bold text-text-heading">User Management</h2>
+                    <p className="text-text-muted mt-1">Manage doctors, patients, and staff members</p>
                 </div>
                 {!showAddForm && (activeTab === 'doctors' || activeTab === 'staff') && (
                     <Button
@@ -129,7 +129,7 @@ export default function UserManagement() {
             <div className="flex border-b border-border overflow-x-auto no-scrollbar">
                 <button
                     onClick={() => handleTabChange('doctors')}
-                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${activeTab === 'doctors' ? 'text-primary' : 'text-text-light hover:text-text'
+                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${activeTab === 'doctors' ? 'text-primary' : 'text-text-muted hover:text-text'
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -140,7 +140,7 @@ export default function UserManagement() {
                 </button>
                 <button
                     onClick={() => handleTabChange('patients')}
-                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${activeTab === 'patients' ? 'text-primary' : 'text-text-light hover:text-text'
+                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${activeTab === 'patients' ? 'text-primary' : 'text-text-muted hover:text-text'
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -151,7 +151,7 @@ export default function UserManagement() {
                 </button>
                 <button
                     onClick={() => handleTabChange('staff')}
-                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${activeTab === 'staff' ? 'text-primary' : 'text-text-light hover:text-text'
+                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${activeTab === 'staff' ? 'text-primary' : 'text-text-muted hover:text-text'
                         }`}
                 >
                     <div className="flex items-center gap-2">
@@ -233,10 +233,10 @@ export default function UserManagement() {
                                 placeholder={`Search ${activeTab}...`}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 bg-white border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+                                className="w-full pl-10 pr-4 py-2 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                             />
                         </div>
-                        <Button variant="ghost" className="border border-border bg-white">
+                        <Button variant="ghost" className="border border-border bg-background-paper">
                             <Filter className="w-4 h-4 mr-2" />
                             Filter
                         </Button>
@@ -279,7 +279,7 @@ export default function UserManagement() {
                                 <TableBody>
                                     {activeTab === 'doctors' && filteredDoctors.map((doctor) => (
                                         <TableRow key={doctor.id}>
-                                            <TableCell className="font-medium text-clinical-darkGray">{doctor.name}</TableCell>
+                                            <TableCell className="font-medium text-text-heading">{doctor.name}</TableCell>
                                             <TableCell>{doctor.specialty}</TableCell>
                                             <TableCell>{doctor.email}</TableCell>
                                             <TableCell>{doctor.sessions}</TableCell>
@@ -295,7 +295,7 @@ export default function UserManagement() {
                                     ))}
                                     {activeTab === 'patients' && filteredPatients.map((patient) => (
                                         <TableRow key={patient.id}>
-                                            <TableCell className="font-medium text-clinical-darkGray">{patient.name}</TableCell>
+                                            <TableCell className="font-medium text-text-heading">{patient.name}</TableCell>
                                             <TableCell>{patient.email}</TableCell>
                                             <TableCell>{patient.lastVisit}</TableCell>
                                             <TableCell>
@@ -312,7 +312,7 @@ export default function UserManagement() {
                                         <TableRow key={s.id}>
                                             <TableCell>
                                                 <div className="flex items-center gap-2">
-                                                    <Mail className="w-4 h-4 text-clinical-gray" />
+                                                    <Mail className="w-4 h-4 text-text-muted" />
                                                     <span className="font-medium">{s.email}</span>
                                                 </div>
                                             </TableCell>

@@ -65,9 +65,9 @@ export default function DailyAgenda() {
   }
 
   const getSlotColor = (type, priority) => {
-    if (type === 'break' || type === 'off') return 'bg-gray-100 border-gray-200 opacity-60'
+    if (type === 'break' || type === 'off') return 'bg-background-subtle border-border opacity-60'
     if (type === 'available') return 'bg-background border-border'
-    if (priority === 'urgent') return 'bg-red-50 border-red-200'
+    if (priority === 'urgent') return 'bg-red-500/10 border-red-500/20'
     return 'bg-primary/5 border-primary/20'
   }
 
@@ -84,11 +84,11 @@ export default function DailyAgenda() {
   }
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm p-6">
+    <div className="bg-background-paper rounded-2xl shadow-sm p-6 border border-border">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold text-text">Daily Agenda</h2>
-          <p className="text-sm text-text-light mt-1">{formatDate(selectedDate)}</p>
+          <h2 className="text-xl font-bold text-text-heading">Daily Agenda</h2>
+          <p className="text-sm text-text-muted mt-1">{formatDate(selectedDate)}</p>
         </div>
         <div className="relative inline-block">
           <input
@@ -123,23 +123,23 @@ export default function DailyAgenda() {
             <div className="flex items-start gap-3">
               {/* Time */}
               <div className="flex-shrink-0 w-16 text-center">
-                <div className="text-sm font-semibold text-text">
+                <div className="text-sm font-semibold text-text-heading">
                   {slot.hour}
                 </div>
-                <div className="text-xs text-text-light">{slot.period}</div>
+                <div className="text-xs text-text-muted">{slot.period}</div>
               </div>
 
               {/* Content */}
               <div className="flex-1 min-w-0">
                 {slot.type === 'available' && (
-                  <div className="flex items-center gap-2 text-text-light">
+                  <div className="flex items-center gap-2 text-text-muted">
                     <Clock className="w-4 h-4" />
                     <span className="text-sm">Available</span>
                   </div>
                 )}
 
                 {slot.type === 'break' && (
-                  <div className="flex items-center gap-2 text-text-light">
+                  <div className="flex items-center gap-2 text-text-muted">
                     <Clock className="w-4 h-4" />
                     <span className="text-sm font-medium">{slot.label || 'Break'}</span>
                   </div>
@@ -148,7 +148,7 @@ export default function DailyAgenda() {
                 {slot.type === 'appointment' && (
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-text">{slot.patient}</span>
+                      <span className="font-semibold text-text-heading">{slot.patient}</span>
                       {slot.priority === 'urgent' && (
                         <Badge variant="danger" size="sm">
                           <AlertCircle className="w-3 h-3 mr-1" />
@@ -156,7 +156,7 @@ export default function DailyAgenda() {
                         </Badge>
                       )}
                     </div>
-                    <p className="text-sm text-text-light mb-2">{slot.reason}</p>
+                    <p className="text-sm text-text-muted mb-2">{slot.reason}</p>
                   </div>
                 )}
               </div>
@@ -183,15 +183,15 @@ export default function DailyAgenda() {
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <div className="text-2xl font-bold text-primary">{stats.appointments}</div>
-            <div className="text-xs text-text-light mt-1">Appointments</div>
+            <div className="text-xs text-text-muted mt-1">Appointments</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-secondary">{stats.available}</div>
-            <div className="text-xs text-text-light mt-1">Available Slots</div>
+            <div className="text-xs text-text-muted mt-1">Available Slots</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-accent-dark">{stats.urgent}</div>
-            <div className="text-xs text-text-light mt-1">Urgent</div>
+            <div className="text-xs text-text-muted mt-1">Urgent</div>
           </div>
         </div>
       </div>

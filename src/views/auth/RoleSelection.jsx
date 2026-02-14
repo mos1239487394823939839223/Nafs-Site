@@ -12,7 +12,7 @@ export default function RoleSelection() {
       title: 'Join as a Patient',
       description: 'Book appointments, consult with doctors, and manage your health records',
       icon: User,
-      color: 'from-medical-blue to-medical-darkBlue',
+      color: 'from-primary to-primary-dark',
       features: [
         'Book video/audio consultations',
         'Access medical records',
@@ -26,7 +26,7 @@ export default function RoleSelection() {
       title: 'Join as a Doctor',
       description: 'Provide consultations, manage patients, and grow your practice',
       icon: Stethoscope,
-      color: 'from-medical-teal to-green-600',
+      color: 'from-secondary to-secondary-dark',
       features: [
         'Manage patient queue',
         'Set your availability',
@@ -38,7 +38,7 @@ export default function RoleSelection() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-medical-lightBlue via-white to-clinical-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="w-full max-w-6xl">
         {/* Header */}
         <motion.div
@@ -46,10 +46,10 @@ export default function RoleSelection() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-12"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-clinical-darkGray mb-4">
-            Welcome to <span className="text-medical-blue">Clinc</span>
+          <h1 className="text-4xl md:text-5xl font-bold text-text-heading mb-4">
+            Welcome to <span className="text-primary">Clinc</span>
           </h1>
-          <p className="text-xl text-clinical-gray max-w-2xl mx-auto">
+          <p className="text-xl text-text-muted max-w-2xl mx-auto">
             Choose how you'd like to join our healthcare platform
           </p>
         </motion.div>
@@ -63,28 +63,29 @@ export default function RoleSelection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <div className="bg-white rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow duration-300 h-full flex flex-col">
+              <div className="bg-background-paper rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow duration-300 h-full flex flex-col border border-border">
                 {/* Header with Gradient */}
-                <div className={`bg-gradient-to-r ${role.color} p-8 text-white`}>
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center">
-                      <role.icon className="w-8 h-8" />
+                <div className={`bg-gradient-to-r ${role.color} p-8 text-white relative overflow-hidden`}>
+                  <div className="absolute inset-0 bg-black/10"></div>
+                  <div className="flex items-center gap-4 mb-4 relative z-10">
+                    <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                      <role.icon className="w-8 h-8 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold">{role.title}</h2>
+                      <h2 className="text-2xl font-bold text-white">{role.title}</h2>
                     </div>
                   </div>
-                  <p className="text-white/90">{role.description}</p>
+                  <p className="text-white/90 relative z-10">{role.description}</p>
                 </div>
 
                 {/* Features */}
                 <div className="p-8 flex-1">
-                  <h3 className="font-semibold text-clinical-darkGray mb-4">What you get:</h3>
+                  <h3 className="font-semibold text-text-heading mb-4">What you get:</h3>
                   <ul className="space-y-3">
                     {role.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center gap-3 text-clinical-gray">
-                        <div className="w-5 h-5 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                          <div className="w-2 h-2 bg-green-500 rounded-full" />
+                      <li key={idx} className="flex items-center gap-3 text-text-muted">
+                        <div className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                          <div className="w-2 h-2 bg-primary rounded-full" />
                         </div>
                         <span>{feature}</span>
                       </li>
@@ -115,16 +116,16 @@ export default function RoleSelection() {
           transition={{ delay: 0.3 }}
           className="mt-12 text-center"
         >
-          <p className="text-clinical-gray">
+          <p className="text-text-muted">
             Already have an account?{' '}
             <button
               onClick={() => navigate('/auth/login')}
-              className="text-medical-blue font-medium hover:underline"
+              className="text-primary font-medium hover:underline"
             >
               Sign In
             </button>
           </p>
-          <p className="text-sm text-clinical-gray mt-4">
+          <p className="text-sm text-text-muted mt-4">
             For Customer Service or Admin access, please contact your system administrator
           </p>
         </motion.div>

@@ -265,19 +265,19 @@ export default function DoctorRegistration() {
   }
 
   return (
-    <div className="min-h-screen bg-clinical-white py-8 px-4">
+    <div className="min-h-screen bg-background py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-clinical-darkGray">Doctor Registration</h1>
-          <p className="text-clinical-gray mt-2">Join our network of healthcare professionals</p>
+          <h1 className="text-3xl font-bold text-text-heading">Doctor Registration</h1>
+          <p className="text-text-muted mt-2">Join our network of healthcare professionals</p>
         </div>
 
         {/* Progress Stepper */}
         <ProgressStepper steps={steps} currentStep={currentStep} />
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mt-8">
+        <div className="bg-background-paper rounded-2xl shadow-lg p-8 mt-8 border border-border">
           <AnimatePresence mode="wait">
             {/* Step 1: Professional Details */}
             {currentStep === 1 && (
@@ -289,12 +289,12 @@ export default function DoctorRegistration() {
                 className="space-y-6"
               >
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 bg-medical-lightBlue rounded-full flex items-center justify-center">
-                    <Stethoscope className="w-6 h-6 text-medical-blue" />
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Stethoscope className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-clinical-darkGray">Professional Details</h2>
-                    <p className="text-sm text-clinical-gray">Tell us about your medical expertise</p>
+                    <h2 className="text-xl font-semibold text-text-heading">Professional Details</h2>
+                    <p className="text-sm text-text-muted">Tell us about your medical expertise</p>
                   </div>
                 </div>
 
@@ -332,19 +332,19 @@ export default function DoctorRegistration() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-clinical-darkGray mb-3">
+                  <label className="block text-sm font-medium text-text-muted mb-3">
                     Languages Spoken
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {languages.map((language) => (
-                      <label key={language} className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                      <label key={language} className="flex items-center gap-2 p-3 border border-border rounded-lg cursor-pointer hover:bg-background-subtle transition-colors">
                         <input
                           type="checkbox"
                           checked={(formData.languages || []).includes(language)}
                           onChange={() => toggleLanguage(language)}
-                          className="w-4 h-4 text-medical-blue border-gray-300 rounded focus:ring-medical-blue"
+                          className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
                         />
-                        <span className="text-sm text-clinical-darkGray">{language}</span>
+                        <span className="text-sm text-text-heading">{language}</span>
                       </label>
                     ))}
                   </div>
@@ -381,8 +381,8 @@ export default function DoctorRegistration() {
                     <FileText className="w-6 h-6 text-green-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-clinical-darkGray">Documentation</h2>
-                    <p className="text-sm text-clinical-gray">Upload your credentials for verification</p>
+                    <h2 className="text-xl font-semibold text-text-heading">Documentation</h2>
+                    <p className="text-sm text-text-muted">Upload your credentials for verification</p>
                   </div>
                 </div>
 
@@ -396,14 +396,14 @@ export default function DoctorRegistration() {
 
                 {/* Medical License Upload */}
                 <div>
-                  <label className="block text-sm font-medium text-clinical-darkGray mb-2">
+                  <label className="block text-sm font-medium text-text-muted mb-2">
                     Medical License <span className="text-red-500">*</span>
                   </label>
                   {!uploadedFiles.license ? (
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-medical-blue hover:bg-medical-lightBlue/30 transition-all">
-                      <Upload className="w-8 h-8 text-clinical-gray mb-2" />
-                      <p className="text-sm text-clinical-gray">Click to upload medical license</p>
-                      <p className="text-xs text-clinical-gray mt-1">PDF, JPG, or PNG (Max 5MB)</p>
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-primary/10 transition-all">
+                      <Upload className="w-8 h-8 text-text-muted mb-2" />
+                      <p className="text-sm text-text-light">Click to upload medical license</p>
+                      <p className="text-xs text-text-muted mt-1">PDF, JPG, or PNG (Max 5MB)</p>
                       <input
                         type="file"
                         className="hidden"
@@ -416,8 +416,8 @@ export default function DoctorRegistration() {
                       <div className="flex items-center gap-3">
                         <CheckCircle className="w-5 h-5 text-green-600" />
                         <div>
-                          <p className="text-sm font-medium text-clinical-darkGray">{uploadedFiles.license.name}</p>
-                          <p className="text-xs text-clinical-gray">{(uploadedFiles.license.size / 1024).toFixed(2)} KB</p>
+                          <p className="text-sm font-medium text-text-heading">{uploadedFiles.license.name}</p>
+                          <p className="text-xs text-text-muted">{(uploadedFiles.license.size / 1024).toFixed(2)} KB</p>
                         </div>
                       </div>
                       <button
@@ -432,13 +432,13 @@ export default function DoctorRegistration() {
 
                 {/* Certificates Upload */}
                 <div>
-                  <label className="block text-sm font-medium text-clinical-darkGray mb-2">
+                  <label className="block text-sm font-medium text-text-muted mb-2">
                     Additional Certificates (Optional)
                   </label>
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-medical-blue hover:bg-medical-lightBlue/30 transition-all">
-                    <Upload className="w-8 h-8 text-clinical-gray mb-2" />
-                    <p className="text-sm text-clinical-gray">Click to upload certificates</p>
-                    <p className="text-xs text-clinical-gray mt-1">Board certifications, training certificates, etc.</p>
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-primary/10 transition-all">
+                    <Upload className="w-8 h-8 text-text-muted mb-2" />
+                    <p className="text-sm text-text-light">Click to upload certificates</p>
+                    <p className="text-xs text-text-muted mt-1">Board certifications, training certificates, etc.</p>
                     <input
                       type="file"
                       className="hidden"
@@ -451,12 +451,12 @@ export default function DoctorRegistration() {
                   {uploadedFiles.certificates.length > 0 && (
                     <div className="mt-4 space-y-2">
                       {uploadedFiles.certificates.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                        <div key={index} className="flex items-center justify-between p-3 border border-border rounded-lg">
                           <div className="flex items-center gap-3">
-                            <FileText className="w-5 h-5 text-medical-blue" />
+                            <FileText className="w-5 h-5 text-primary" />
                             <div>
-                              <p className="text-sm font-medium text-clinical-darkGray">{file.name}</p>
-                              <p className="text-xs text-clinical-gray">{(file.size / 1024).toFixed(2)} KB</p>
+                              <p className="text-sm font-medium text-text-heading">{file.name}</p>
+                              <p className="text-xs text-text-muted">{(file.size / 1024).toFixed(2)} KB</p>
                             </div>
                           </div>
                           <button
@@ -493,23 +493,23 @@ export default function DoctorRegistration() {
                     <Calendar className="w-6 h-6 text-purple-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-clinical-darkGray">Set Your Availability</h2>
-                    <p className="text-sm text-clinical-gray">Choose your working days and hours</p>
+                    <h2 className="text-xl font-semibold text-text-heading">Set Your Availability</h2>
+                    <p className="text-sm text-text-muted">Choose your working days and hours</p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
                   {Object.entries(formData.availability).map(([day, schedule]) => (
-                    <div key={day} className={`p-4 border rounded-lg transition-all ${schedule.enabled ? 'border-medical-blue bg-medical-lightBlue/30' : 'border-gray-200'}`}>
+                    <div key={day} className={`p-4 border rounded-lg transition-all ${schedule.enabled ? 'border-primary bg-primary/10' : 'border-border'}`}>
                       <div className="flex items-center justify-between mb-3">
                         <label className="flex items-center gap-3 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={schedule.enabled}
                             onChange={() => toggleDayAvailability(day)}
-                            className="w-5 h-5 text-medical-blue border-gray-300 rounded focus:ring-medical-blue"
+                            className="w-5 h-5 text-primary border-border rounded focus:ring-primary"
                           />
-                          <span className="font-medium text-clinical-darkGray capitalize">{day}</span>
+                          <span className="font-medium text-text-heading capitalize">{day}</span>
                         </label>
                         {schedule.enabled && (
                           <div className="flex items-center gap-2 text-sm text-clinical-gray">
@@ -520,23 +520,23 @@ export default function DoctorRegistration() {
                       </div>
 
                       {schedule.enabled && (
-                        <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-gray-200">
+                        <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-border">
                           <div>
-                            <label className="block text-xs font-medium text-clinical-gray mb-1">Start Time</label>
+                            <label className="block text-xs font-medium text-text-muted mb-1">Start Time</label>
                             <input
                               type="time"
                               value={schedule.start}
                               onChange={(e) => updateDayTime(day, 'start', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-medical-blue text-sm"
+                              className="w-full px-3 py-2 border border-border bg-background rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-clinical-gray mb-1">End Time</label>
+                            <label className="block text-xs font-medium text-text-muted mb-1">End Time</label>
                             <input
                               type="time"
                               value={schedule.end}
                               onChange={(e) => updateDayTime(day, 'end', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-medical-blue text-sm"
+                              className="w-full px-3 py-2 border border-border bg-background rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text"
                             />
                           </div>
                         </div>
@@ -545,8 +545,8 @@ export default function DoctorRegistration() {
                   ))}
                 </div>
 
-                <div className="bg-medical-lightBlue p-4 rounded-lg">
-                  <p className="text-sm text-medical-blue">
+                <div className="bg-primary/10 p-4 rounded-lg">
+                  <p className="text-sm text-primary-dark">
                     <strong>Tip:</strong> You can always update your availability later from your dashboard.
                   </p>
                 </div>

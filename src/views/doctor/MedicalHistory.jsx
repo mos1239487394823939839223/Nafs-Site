@@ -64,8 +64,8 @@ export default function MedicalHistory() {
                     >
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
-                                <h1 className="text-3xl font-bold text-text mb-2 text-clinical-darkGray">Patients Medical History</h1>
-                                <p className="text-text-light text-clinical-gray">Access and manage patient clinical records</p>
+                                <h1 className="text-3xl font-bold mb-2 text-text-heading">Patients Medical History</h1>
+                                <p className="text-text-muted">Access and manage patient clinical records</p>
                             </div>
                             <div className="relative w-full md:w-80">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-clinical-gray" />
@@ -74,7 +74,7 @@ export default function MedicalHistory() {
                                     placeholder="Search patient name..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-border rounded-xl focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                                    className="w-full pl-10 pr-4 py-2 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
                                 />
                             </div>
                         </div>
@@ -92,10 +92,10 @@ export default function MedicalHistory() {
                                             <User className="w-7 h-7 text-primary" />
                                         </div>
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-bold text-lg text-clinical-darkGray truncate">{patient.name}</h3>
-                                            <p className="text-sm text-clinical-gray">View medical history</p>
+                                            <h3 className="font-bold text-lg text-text-heading truncate">{patient.name}</h3>
+                                            <p className="text-sm text-text-muted">View medical history</p>
                                         </div>
-                                        <ChevronRight className="w-5 h-5 text-clinical-gray group-hover:translate-x-1 transition-transform" />
+                                        <ChevronRight className="w-5 h-5 text-text-muted group-hover:translate-x-1 transition-transform" />
                                     </div>
                                 </Card>
                             ))}
@@ -115,8 +115,8 @@ export default function MedicalHistory() {
                                     <ArrowLeft className="w-5 h-5" />
                                 </Button>
                                 <div className="min-w-0">
-                                    <h2 className="text-xl md:text-2xl font-bold text-clinical-darkGray truncate">{selectedPatient.name}</h2>
-                                    <p className="text-clinical-gray text-sm">Clinical history and notes</p>
+                                    <h2 className="text-xl md:text-2xl font-bold text-text-heading truncate">{selectedPatient.name}</h2>
+                                    <p className="text-text-muted text-sm">Clinical history and notes</p>
                                 </div>
                             </div>
                             <div className="flex gap-2 w-full sm:w-auto">
@@ -136,12 +136,12 @@ export default function MedicalHistory() {
                                 patientHistory.map((record) => (
                                     <Card key={record.id} className="overflow-hidden border-border/50">
                                         <div className="bg-background px-4 md:px-6 py-3 border-b border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                            <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-clinical-gray">
-                                                <div className="flex items-center gap-1.5 font-bold italic text-clinical-darkGray">
+                                            <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-text-muted">
+                                                <div className="flex items-center gap-1.5 font-bold italic text-text-heading">
                                                     <Calendar className="w-4 h-4" />
                                                     {record.date}
                                                 </div>
-                                                <div className="flex items-center gap-1.5 font-bold italic text-clinical-darkGray">
+                                                <div className="flex items-center gap-1.5 font-bold italic text-text-heading">
                                                     <User className="w-4 h-4" />
                                                     {record.doctorName}
                                                 </div>
@@ -149,12 +149,12 @@ export default function MedicalHistory() {
                                         </div>
                                         <div className="p-6 space-y-4">
                                             <div>
-                                                <h4 className="text-xs font-black italic uppercase tracking-widest text-clinical-gray mb-2">Session Summary</h4>
-                                                <p className="text-clinical-darkGray leading-relaxed">{record.summary}</p>
+                                                <h4 className="text-xs font-black italic uppercase tracking-widest text-text-muted mb-2">Session Summary</h4>
+                                                <p className="text-text-heading leading-relaxed">{record.summary}</p>
                                             </div>
                                             {record.medications && record.medications.length > 0 && (
                                                 <div>
-                                                    <h4 className="text-xs font-black italic uppercase tracking-widest text-clinical-gray mb-2">Prescribed Medications</h4>
+                                                    <h4 className="text-xs font-black italic uppercase tracking-widest text-text-muted mb-2">Prescribed Medications</h4>
                                                     <div className="flex flex-wrap gap-2">
                                                         {record.medications.map((med, idx) => (
                                                             <Badge key={idx} variant="primary" className="flex items-center gap-1 bg-primary/5 text-primary border-primary/20">
@@ -168,10 +168,10 @@ export default function MedicalHistory() {
                                     </Card>
                                 ))
                             ) : (
-                                <div className="text-center py-20 bg-white rounded-3xl border-2 border-dashed border-border">
-                                    <FileText className="w-16 h-16 text-clinical-gray mx-auto mb-4 opacity-20" />
-                                    <h3 className="text-xl font-bold text-clinical-darkGray mb-2">No clinical records found</h3>
-                                    <p className="text-clinical-gray">Start by adding a new session note for this patient.</p>
+                                <div className="text-center py-20 bg-background-paper rounded-3xl border-2 border-dashed border-border">
+                                    <FileText className="w-16 h-16 text-text-muted mx-auto mb-4 opacity-20" />
+                                    <h3 className="text-xl font-bold text-text-heading mb-2">No clinical records found</h3>
+                                    <p className="text-text-muted">Start by adding a new session note for this patient.</p>
                                 </div>
                             )}
                         </div>
@@ -187,22 +187,22 @@ export default function MedicalHistory() {
             >
                 <div className="space-y-6">
                     <div className="space-y-2">
-                        <label className="text-sm font-black italic text-clinical-gray uppercase tracking-tighter">Session Summary</label>
+                        <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Session Summary</label>
                         <textarea
                             value={newRecord.summary}
                             onChange={(e) => setNewRecord({ ...newRecord, summary: e.target.value })}
                             placeholder="Describe the session highlights, patient progress, etc..."
-                            className="w-full h-40 p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none"
+                            className="w-full h-40 p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none text-text"
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-sm font-black italic text-clinical-gray uppercase tracking-tighter">Medications (comma-separated)</label>
+                        <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Medications (comma-separated)</label>
                         <input
                             type="text"
                             value={newRecord.medications}
                             onChange={(e) => setNewRecord({ ...newRecord, medications: e.target.value })}
                             placeholder="e.g. Aspirin, Ibuprofen"
-                            className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all"
+                            className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
                         />
                     </div>
                     <div className="flex gap-3 pt-4 border-t border-border">

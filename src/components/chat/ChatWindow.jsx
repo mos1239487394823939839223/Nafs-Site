@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react'
 import { Send, Paperclip, Smile, ArrowLeft, X } from 'lucide-react'
 import EmojiPicker from 'emoji-picker-react'
+import { useTheme } from '../../contexts/ThemeContext'
 import MessageBubble from './MessageBubble'
 
 export default function ChatWindow({ conversation, onSendMessage, onBack }) {
+  const { theme } = useTheme()
   const [messageInput, setMessageInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [attachments, setAttachments] = useState([])
@@ -83,9 +85,9 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
   }
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-background-paper">
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 border-b border-border bg-white">
+      <div className="px-4 md:px-6 py-4 border-b border-border bg-background-paper">
         <div className="flex items-center gap-3">
           {/* Back Button */}
           <button
@@ -138,7 +140,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
         {/* Typing Indicator */}
         {isTyping && (
           <div className="flex justify-start mb-4">
-            <div className="bg-gray-100 px-4 py-3 rounded-2xl">
+            <div className="bg-background-subtle px-4 py-3 rounded-2xl">
               <div className="flex gap-1">
                 <div className="w-2 h-2 bg-text-light rounded-full animate-bounce"></div>
                 <div className="w-2 h-2 bg-text-light rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
@@ -153,7 +155,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
 
       {/* Attachment Preview */}
       {attachments.length > 0 && (
-        <div className="px-4 md:px-6 py-3 border-t border-border bg-background-gray">
+        <div className="px-4 md:px-6 py-3 border-t border-border bg-background-subtle">
           <div className="flex gap-2 overflow-x-auto">
             {attachments.map((attachment, index) => (
               <div key={index} className="relative flex-shrink-0">
@@ -168,8 +170,8 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
                     </button>
                   </div>
                 ) : (
-                  <div className="relative p-3 bg-white rounded-xl border border-border">
-                    <p className="text-xs font-medium truncate max-w-[100px]">{attachment.name}</p>
+                  <div className="relative p-3 bg-background-paper rounded-xl border border-border">
+                    <p className="text-xs font-medium truncate max-w-[100px] text-text">{attachment.name}</p>
                     <button
                       onClick={() => removeAttachment(index)}
                       className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
@@ -185,7 +187,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
       )}
 
       {/* Input Area */}
-      <div className="px-4 md:px-6 py-4 border-t border-border bg-white">
+      <div className="px-4 md:px-6 py-4 border-t border-border bg-background-paper">
         <div className="flex items-end gap-2">
           {/* Attachment Button */}
           <button
@@ -211,7 +213,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
               onKeyPress={handleKeyPress}
               placeholder="Type your message..."
               rows="1"
-              className="w-full px-4 py-3 pr-12 border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary resize-none max-h-32"
+              className="w-full px-4 py-3 pr-12 border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary resize-none max-h-32 bg-background text-text"
             />
             <button
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -225,6 +227,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
               <div ref={emojiPickerRef} className="absolute bottom-14 right-0 z-50">
                 <EmojiPicker
                   onEmojiClick={onEmojiClick}
+                  theme={theme}
                   width={320}
                   height={400}
                 />

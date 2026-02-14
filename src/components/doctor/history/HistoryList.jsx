@@ -18,32 +18,32 @@ export default function HistoryList({ sessions }) {
     }
 
     return (
-        <div className="bg-white rounded-xl border border-border-light shadow-sm overflow-hidden">
+        <div className="bg-background-paper rounded-xl border border-border shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                    <thead className="bg-background-gray border-b border-border-light">
+                    <thead className="bg-background-subtle border-b border-border">
                         <tr>
-                            <th className="px-6 py-4 text-sm font-semibold text-text-light">Date & Time</th>
-                            <th className="px-6 py-4 text-sm font-semibold text-text-light">Patient</th>
-                            <th className="px-6 py-4 text-sm font-semibold text-text-light">Type</th>
-                            <th className="px-6 py-4 text-sm font-semibold text-text-light">Duration</th>
-                            <th className="px-6 py-4 text-sm font-semibold text-text-light">Outcome</th>
-                            <th className="px-6 py-4 text-sm font-semibold text-text-light text-right">Actions</th>
+                            <th className="px-6 py-4 text-sm font-semibold text-text-muted">Date & Time</th>
+                            <th className="px-6 py-4 text-sm font-semibold text-text-muted">Patient</th>
+                            <th className="px-6 py-4 text-sm font-semibold text-text-muted">Type</th>
+                            <th className="px-6 py-4 text-sm font-semibold text-text-muted">Duration</th>
+                            <th className="px-6 py-4 text-sm font-semibold text-text-muted">Outcome</th>
+                            <th className="px-6 py-4 text-sm font-semibold text-text-muted text-right">Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-border-light">
+                    <tbody className="divide-y divide-border">
                         {sessions.map((session, index) => (
                             <motion.tr
                                 key={session.id}
                                 initial={{ opacity: 0, y: 10 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: index * 0.05 }}
-                                className="hover:bg-gray-50 transition-colors"
+                                className="hover:bg-background-subtle transition-colors"
                             >
                                 <td className="px-6 py-4">
                                     <div className="flex flex-col">
-                                        <span className="font-medium text-text">{session.date}</span>
-                                        <span className="text-xs text-text-light">{session.time}</span>
+                                        <span className="font-medium text-text-heading">{session.date}</span>
+                                        <span className="text-xs text-text-muted">{session.time}</span>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
@@ -52,15 +52,15 @@ export default function HistoryList({ sessions }) {
                                             {session.patientName.charAt(0)}
                                         </div>
                                         <div>
-                                            <p className="text-sm font-medium text-text">{session.patientName}</p>
+                                            <p className="text-sm font-medium text-text-heading">{session.patientName}</p>
                                         </div>
                                     </div>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <span className="text-sm text-text-light">{session.type}</span>
+                                    <span className="text-sm text-text-muted">{session.type}</span>
                                 </td>
                                 <td className="px-6 py-4">
-                                    <div className="flex items-center gap-1.5 text-sm text-text-light">
+                                    <div className="flex items-center gap-1.5 text-sm text-text-muted">
                                         <Clock className="w-3.5 h-3.5" />
                                         {session.duration}m
                                     </div>
@@ -81,7 +81,7 @@ export default function HistoryList({ sessions }) {
             </div>
 
             {sessions.length === 0 && (
-                <div className="p-8 text-center text-text-light">
+                <div className="p-8 text-center text-text-muted">
                     No past sessions found.
                 </div>
             )}

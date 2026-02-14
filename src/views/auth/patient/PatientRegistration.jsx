@@ -207,19 +207,19 @@ export default function PatientRegistration() {
   }
 
   return (
-    <div className="min-h-screen bg-clinical-white py-8 px-4">
+    <div className="min-h-screen bg-background py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-clinical-darkGray">Patient Registration</h1>
-          <p className="text-clinical-gray mt-2">Complete your profile to get started</p>
+          <h1 className="text-3xl font-bold text-text-heading">Patient Registration</h1>
+          <p className="text-text-muted mt-2">Complete your profile to get started</p>
         </div>
 
         {/* Progress Stepper */}
         <ProgressStepper steps={steps} currentStep={currentStep} />
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mt-8">
+        <div className="bg-background-paper rounded-2xl shadow-lg p-8 mt-8 border border-border">
           <AnimatePresence mode="wait">
             {/* Step 1: Basic Info */}
             {currentStep === 1 && (
@@ -231,12 +231,12 @@ export default function PatientRegistration() {
                 className="space-y-6"
               >
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 bg-medical-lightBlue rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-medical-blue" />
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <User className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-clinical-darkGray">Basic Information</h2>
-                    <p className="text-sm text-clinical-gray">Tell us about yourself</p>
+                    <h2 className="text-xl font-semibold text-text-heading">Basic Information</h2>
+                    <p className="text-sm text-text-muted">Tell us about yourself</p>
                   </div>
                 </div>
 
@@ -289,8 +289,8 @@ export default function PatientRegistration() {
                 </div>
 
                 {formData.dateOfBirth && validateDate(formData.dateOfBirth) && (
-                  <div className="bg-medical-lightBlue p-4 rounded-lg">
-                    <p className="text-sm text-medical-blue">
+                  <div className="bg-primary/10 p-4 rounded-lg">
+                    <p className="text-sm text-primary">
                       Age: {calculateAge(formData.dateOfBirth)} years old
                     </p>
                   </div>
@@ -312,8 +312,8 @@ export default function PatientRegistration() {
                     <Heart className="w-6 h-6 text-green-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-clinical-darkGray">Medical Profile</h2>
-                    <p className="text-sm text-clinical-gray">Help us provide better care</p>
+                    <h2 className="text-xl font-semibold text-text-heading">Medical Profile</h2>
+                    <p className="text-sm text-text-muted">Help us provide better care</p>
                   </div>
                 </div>
 
@@ -334,19 +334,19 @@ export default function PatientRegistration() {
                 </Select>
 
                 <div>
-                  <label className="block text-sm font-medium text-clinical-darkGray mb-3">
+                  <label className="block text-sm font-medium text-text-muted mb-3">
                     Chronic Diseases (Select all that apply)
                   </label>
                   <div className="grid md:grid-cols-2 gap-3">
                     {['Diabetes', 'Hypertension', 'Asthma', 'Heart Disease', 'Kidney Disease', 'None'].map((disease) => (
-                      <label key={disease} className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                      <label key={disease} className="flex items-center gap-3 p-3 border border-border rounded-lg cursor-pointer hover:bg-background-subtle transition-colors">
                         <input
                           type="checkbox"
                           checked={(formData.chronicDiseases || []).includes(disease)}
                           onChange={() => toggleChronicDisease(disease)}
-                          className="w-4 h-4 text-medical-blue border-gray-300 rounded focus:ring-medical-blue"
+                          className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
                         />
-                        <span className="text-sm text-clinical-darkGray">{disease}</span>
+                        <span className="text-sm text-text-heading">{disease}</span>
                       </label>
                     ))}
                   </div>
@@ -368,8 +368,8 @@ export default function PatientRegistration() {
                   rows={3}
                 />
 
-                <div className="border-t pt-6">
-                  <h3 className="font-semibold text-clinical-darkGray mb-4">Emergency Contact</h3>
+                <div className="border-t border-border pt-6">
+                  <h3 className="font-semibold text-text-heading mb-4">Emergency Contact</h3>
                   <div className="grid md:grid-cols-2 gap-6">
                     <Input
                       label="Contact Name"
@@ -409,9 +409,9 @@ export default function PatientRegistration() {
                   </div>
                 </div>
 
-                <div className="bg-medical-lightBlue p-6 rounded-lg text-center">
-                  <p className="text-clinical-darkGray mb-2">We'll send a verification code to:</p>
-                  <p className="text-xl font-semibold text-medical-blue">{formatPhone(formData.phone)}</p>
+                <div className="bg-primary/10 p-6 rounded-lg text-center">
+                  <p className="text-text-heading mb-2">We'll send a verification code to:</p>
+                  <p className="text-xl font-semibold text-primary">{formatPhone(formData.phone)}</p>
                 </div>
 
                 {!otpSent ? (
@@ -425,7 +425,7 @@ export default function PatientRegistration() {
                 ) : (
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-clinical-darkGray mb-2">
+                      <label className="block text-sm font-medium text-text-heading mb-2">
                         Enter 6-Digit Code
                       </label>
                       <input
@@ -433,7 +433,7 @@ export default function PatientRegistration() {
                         maxLength={6}
                         value={formData.otp}
                         onChange={(e) => handleFieldChange('otp', e.target.value.replace(/\D/g, ''))}
-                        className={`w-full px-4 py-3 text-center text-2xl font-mono tracking-widest border rounded-lg focus:outline-none focus:ring-2 focus:ring-medical-blue ${errors.otp ? 'border-red-500' : 'border-gray-300'
+                        className={`w-full px-4 py-3 text-center text-2xl font-mono tracking-widest border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-text ${errors.otp ? 'border-red-500' : 'border-border'
                           }`}
                         placeholder="000000"
                       />
@@ -450,7 +450,7 @@ export default function PatientRegistration() {
                       ) : (
                         <button
                           onClick={handleSendOTP}
-                          className="text-sm text-medical-blue hover:underline"
+                          className="text-sm text-primary hover:underline"
                         >
                           Resend verification code
                         </button>

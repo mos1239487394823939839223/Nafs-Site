@@ -59,28 +59,28 @@ export default function SessionHistory() {
       <HistoryStats stats={stats} />
 
       {/* Filter Bar */}
-      <div className="mb-6 flex items-center justify-between bg-white p-4 rounded-xl border border-border-light shadow-sm">
+      <div className="mb-6 flex items-center justify-between bg-background-paper p-4 rounded-xl border border-border shadow-sm">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-text-light text-sm font-medium">
             <Filter className="w-4 h-4" />
             <span>Filter by:</span>
           </div>
           <select className="text-sm border-none focus:ring-0 bg-transparent text-text font-medium cursor-pointer">
-            <option>All Outcomes</option>
-            <option>Completed</option>
-            <option>Follow-up</option>
-            <option>Cancelled</option>
+            <option className="bg-background-paper text-text">All Outcomes</option>
+            <option className="bg-background-paper text-text">Completed</option>
+            <option className="bg-background-paper text-text">Follow-up</option>
+            <option className="bg-background-paper text-text">Cancelled</option>
           </select>
-          <div className="w-px h-4 bg-border-light"></div>
-          <select className="text-sm border-none focus:ring-0 bg-transparent text-text font-medium cursor-pointer">
-            <option>All Types</option>
-            <option>Consultation</option>
-            <option>Check-up</option>
-            <option>Emergency</option>
+          <div className="w-px h-4 bg-border"></div>
+          <select className="text-sm border-none focus:ring-0 bg-transparent text-text-heading font-medium cursor-pointer">
+            <option className="bg-background-paper text-text">All Types</option>
+            <option className="bg-background-paper text-text">Consultation</option>
+            <option className="bg-background-paper text-text">Check-up</option>
+            <option className="bg-background-paper text-text">Emergency</option>
           </select>
         </div>
-        <div className="text-sm text-text-light">
-          Showing <span className="font-semibold text-text">{sessions.length}</span> results
+        <div className="text-sm text-text-muted">
+          Showing <span className="font-semibold text-text-heading">{sessions.length}</span> results
         </div>
       </div>
 

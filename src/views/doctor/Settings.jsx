@@ -22,17 +22,17 @@ export default function Settings() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-text mb-2">Profile</h1>
-          <p className="text-text-light">Manage your personal information.</p>
+          <p className="text-text-muted">Manage your personal information.</p>
         </div>
 
         {/* Main Content Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-white rounded-2xl shadow-lg border border-border-light overflow-hidden"
+          className="bg-background-paper rounded-2xl shadow-lg border border-border overflow-hidden"
         >
           {/* Decorative Top Bar */}
-          <div className="h-1.5 w-full bg-gradient-to-r from-primary via-secondary to-sage-light" />
+          <div className="h-1.5 w-full bg-gradient-to-r from-primary via-secondary to-primary/50" />
 
           <div className="p-6 md:p-8">
             <ProfileSettings user={user} onSave={handleSave} />
