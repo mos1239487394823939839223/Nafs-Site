@@ -29,15 +29,17 @@ export default function Button({
   };
 
   const { color, variant: uiVariant, className: variantClass } = getVariantProps();
+  const { onClick, onPress, ...remainingProps } = props;
 
   return (
     <NextUIButton
       color={color}
       variant={uiVariant}
+      onPress={onPress || onClick}
       size={size}
       radius="full"
       className={cn(variantClass, className)}
-      {...props}
+      {...remainingProps}
     >
       {children}
     </NextUIButton>

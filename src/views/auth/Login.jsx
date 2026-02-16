@@ -1,124 +1,110 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import Button from '../../components/ui/Button'
-import Input from '../../components/ui/Input'
-import { useToast } from '../../components/ui/Toast'
-import { useAuth, Roles, RoleDashboards } from '../../contexts/AuthContext'
-import { validateEmail, validatePassword, getPasswordStrength } from '../../lib/validation'
-import { Eye, EyeOff, Mail, Lock, Chrome } from 'lucide-react'
-import { motion } from 'framer-motion'
-import { useClinic } from '../../contexts/ClinicContext'
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import Button from "../../components/ui/Button";
+import Input from "../../components/ui/Input";
+import { useToast } from "../../components/ui/Toast";
+import { useAuth, Roles, RoleDashboards } from "../../contexts/AuthContext";
+import {
+  validateEmail,
+  validatePassword,
+  getPasswordStrength,
+} from "../../lib/validation";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { motion } from "framer-motion";
+import { authAPI } from "../../lib/api";
 
 export default function Login() {
-  const navigate = useNavigate()
-  const toast = useToast()
-  const { login: authLogin } = useAuth()
-  const { users, registerUser } = useClinic()
-  const [isLogin, setIsLogin] = useState(true)
-  const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [agreedToTerms, setAgreedToTerms] = useState(false)
+  const navigate = useNavigate();
+  const toast = useToast();
+  const { login: authLogin } = useAuth();
+
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-    confirmPassword: '',
-  })
+    email: "",
+    password: "",
+  });
 
-  const [errors, setErrors] = useState({})
-
-  const passwordStrength = !isLogin && formData.password ? getPasswordStrength(formData.password) : null
+  const [errors, setErrors] = useState({});
 
   const handleChange = (e) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
     // Clear error when user starts typing
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }))
+      setErrors((prev) => ({ ...prev, [name]: "" }));
     }
-  }
+  };
 
   const validateForm = () => {
-    const newErrors = {}
+    const newErrors = {};
 
     if (!validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email address'
+      newErrors.email = "Please enter a valid email address";
     }
 
     if (!formData.password) {
-      newErrors.password = 'Password is required'
-    } else if (!isLogin) {
-      const passwordValidation = validatePassword(formData.password)
-      if (!passwordValidation.isValid) {
-        newErrors.password = 'Password must meet all requirements'
-      }
+      newErrors.password = "Password is required";
     }
 
-    if (!isLogin && formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match'
-    }
-
-    if (!isLogin && !agreedToTerms) {
-      newErrors.terms = 'You must agree to the terms and conditions'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
+    e.preventDefault();
 
     if (!validateForm()) {
-      toast.error('Please fix the errors in the form')
-      return
+      toast.error("Please fix the errors in the form");
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false)
-      if (isLogin) {
-        // Find user in master registry
-        const foundUser = users.find(u => u.email === formData.email && u.password === formData.password)
+    try {
+      // Call login API
+      const response = await authAPI.login(formData.email, formData.password);
 
-        if (foundUser) {
-          authLogin(foundUser, foundUser.role)
-          toast.success('Login successful!')
-          navigate(RoleDashboards[foundUser.role])
-          return
+      if (response.IsSuccess) {
+        // Extract user data from response
+        // Assuming the API returns user data in response.Data
+        const userData = response.Data || {};
+
+        // Determine role from user data (adjust based on actual API response)
+        // You may need to adjust this based on what the API actually returns
+        let userRole = userData.Role || Roles.PATIENT;
+
+        // Map role string to role constant if needed
+        if (typeof userRole === "string") {
+          const roleMapping = {
+            patient: Roles.PATIENT,
+            doctor: Roles.DOCTOR,
+            admin: Roles.ADMIN,
+            staff: Roles.STAFF,
+          };
+          userRole = roleMapping[userRole.toLowerCase()] || Roles.PATIENT;
         }
 
-        // Demo Fallback for non-registered emails
-        let userRole = Roles.PATIENT
-        if (formData.email.includes('doctor')) userRole = Roles.DOCTOR
-        else if (formData.email.includes('admin')) userRole = Roles.ADMIN
-        else if (formData.email.includes('staff')) userRole = Roles.STAFF
+        // Get token from response if available
+        const token = userData.Token || null;
 
-        authLogin({ name: formData.email.split('@')[0], email: formData.email }, userRole)
-        toast.success('Login successful (Demo Mode)!')
-        navigate(RoleDashboards[userRole])
+        authLogin(userData, userRole, token);
+        toast.success(response.Message || "Login successful!");
+        navigate(RoleDashboards[userRole]);
       } else {
-        // Register simulation
-        const newUser = {
-          email: formData.email,
-          password: formData.password,
-          name: formData.email.split('@')[0],
-          role: Roles.PATIENT // Default to patient for quick register
-        }
-        registerUser(newUser)
-        authLogin(newUser, newUser.role)
-        toast.success('Account created and logged in!')
-        navigate('/dashboard/patient')
+        toast.error(response.Message || "Login failed");
+        setLoading(false);
       }
-    }, 1200)
-  }
-
-  const handleGoogleSignIn = () => {
-    toast.info('Google Sign-In integration coming soon!')
-    // In production, this would trigger OAuth flow
-  }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error(
+        error.response?.data?.Message ||
+          "Login failed. Please check your credentials.",
+      );
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background-paper to-background flex items-center justify-center p-4">
@@ -133,32 +119,12 @@ export default function Login() {
           <p className="text-text-light mt-2">Telemedicine Platform</p>
         </div>
 
-        {/* Demo Credentials Info */}
-        {isLogin && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="bg-accent/10 border border-accent/20 rounded-2xl p-4 mb-4"
-          >
-            <p className="text-sm font-semibold text-accent mb-2">🎯 Demo Login Guide</p>
-            <div className="text-xs text-text space-y-1">
-              <p>• <strong>Patient:</strong> patient@example.com</p>
-              <p>• <strong>Doctor:</strong> doctor@example.com</p>
-              <p>• <strong>Admin:</strong> admin@example.com</p>
-              <p>• <strong>Staff:</strong> staff@example.com</p>
-              <p className="text-text-muted mt-2">Password: any password</p>
-            </div>
-          </motion.div>
-        )}
-
         {/* Card */}
         <div className="bg-background-paper rounded-2xl shadow-xl p-8">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-text">
-              {isLogin ? 'Welcome Back' : 'Create Account'}
-            </h2>
+            <h2 className="text-2xl font-bold text-text">Welcome Back</h2>
             <p className="text-text-muted mt-2">
-              {isLogin ? 'Sign in to continue to your account' : 'Join our healthcare platform'}
+              Sign in to continue to your account
             </p>
           </div>
 
@@ -183,12 +149,13 @@ export default function Login() {
               </label>
               <div className="relative">
                 <input
-                  type={showPassword ? 'text' : 'password'}
+                  type={showPassword ? "text" : "password"}
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`w-full px-4 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-background text-text placeholder-text-muted ${errors.password ? 'border-red-500' : 'border-border'
-                    }`}
+                  className={`w-full px-4 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-background text-text placeholder-text-muted ${
+                    errors.password ? "border-red-500" : "border-border"
+                  }`}
                   placeholder="••••••••"
                 />
                 <button
@@ -196,150 +163,46 @@ export default function Login() {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? (
+                    <EyeOff className="w-5 h-5" />
+                  ) : (
+                    <Eye className="w-5 h-5" />
+                  )}
                 </button>
               </div>
               {errors.password && (
                 <p className="mt-1 text-sm text-red-500">{errors.password}</p>
               )}
-
-              {/* Password Strength Indicator */}
-              {!isLogin && formData.password && (
-                <div className="mt-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-xs text-text-muted">Password Strength:</span>
-                    <span className={`text-xs font-medium text-${passwordStrength.color}-500`}>
-                      {passwordStrength.strength.toUpperCase()}
-                    </span>
-                  </div>
-                  <div className="h-1.5 bg-background-subtle rounded-full overflow-hidden">
-                    <div
-                      className={`h-full bg-${passwordStrength.color}-500 transition-all duration-300`}
-                      style={{ width: `${passwordStrength.percentage}%` }}
-                    />
-                  </div>
-                  <div className="mt-2 space-y-1">
-                    {[
-                      { key: 'minLength', label: 'At least 8 characters' },
-                      { key: 'hasUpperCase', label: 'One uppercase letter' },
-                      { key: 'hasLowerCase', label: 'One lowercase letter' },
-                      { key: 'hasNumber', label: 'One number' },
-                      { key: 'hasSpecialChar', label: 'One special character' },
-                    ].map(({ key, label }) => {
-                      const validation = validatePassword(formData.password)
-                      return (
-                        <div key={key} className="flex items-center gap-2 text-xs">
-                          <div className={`w-1.5 h-1.5 rounded-full ${validation[key] ? 'bg-green-500' : 'bg-background-subtle'}`} />
-                          <span className={validation[key] ? 'text-green-600 dark:text-green-400' : 'text-text-muted'}>{label}</span>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
             </div>
 
-            {/* Confirm Password (Register only) */}
-            {!isLogin && (
-              <div>
-                <Input
-                  type={showPassword ? 'text' : 'password'}
-                  name="confirmPassword"
-                  label="Confirm Password"
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  error={errors.confirmPassword}
-                  placeholder="••••••••"
-                />
-              </div>
-            )}
-
-            {/* Terms & Conditions (Register only) */}
-            {!isLogin && (
-              <div>
-                <label className="flex items-start gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={agreedToTerms}
-                    onChange={(e) => setAgreedToTerms(e.target.checked)}
-                    className="mt-1 w-4 h-4 text-primary border-border rounded focus:ring-primary bg-background"
-                  />
-                  <span className="text-sm text-text-muted">
-                    I agree to the{' '}
-                    <a href="#" className="text-primary hover:underline">
-                      Terms and Conditions
-                    </a>{' '}
-                    and{' '}
-                    <a href="#" className="text-primary hover:underline">
-                      Privacy Policy
-                    </a>
-                    {' '}regarding medical data handling
-                  </span>
-                </label>
-                {errors.terms && (
-                  <p className="mt-1 text-sm text-red-500">{errors.terms}</p>
-                )}
-              </div>
-            )}
-
             {/* Submit Button */}
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-            >
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   <span>Please wait...</span>
                 </div>
               ) : (
-                isLogin ? 'Sign In' : 'Create Account'
+                "Sign In"
               )}
             </Button>
           </form>
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-border" />
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-background-paper text-text-muted">Or continue with</span>
-            </div>
-          </div>
-
-          {/* Google Sign In */}
-          <Button
-            type="button"
-            variant="outline"
-            className="w-full"
-            onClick={handleGoogleSignIn}
-          >
-            <Chrome className="w-5 h-5 mr-2" />
-            Sign in with Google
-          </Button>
-
           {/* Toggle Login/Register */}
           <div className="mt-6 text-center">
             <p className="text-sm text-text-muted">
-              {isLogin ? "Don't have an account?" : 'Already have an account?'}{' '}
+              Don't have an account?{" "}
               <button
                 type="button"
-                onClick={() => {
-                  setIsLogin(!isLogin)
-                  setErrors({})
-                  setFormData({ email: '', password: '', confirmPassword: '' })
-                  setAgreedToTerms(false)
-                }}
+                onClick={() => navigate("/auth/role-selection")}
                 className="text-primary font-medium hover:underline"
               >
-                {isLogin ? 'Sign Up' : 'Sign In'}
+                Sign Up
               </button>
             </p>
           </div>
         </div>
       </motion.div>
     </div>
-  )
+  );
 }

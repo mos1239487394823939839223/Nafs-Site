@@ -1,358 +1,394 @@
-import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
-import Button from '../../components/ui/Button'
-import Badge from '../../components/ui/Badge'
-import { Search, Stethoscope, Calendar, Clock, ChevronRight, User, ArrowLeft, CheckCircle, XCircle } from 'lucide-react'
-import CalendarGrid from '../../components/doctor/schedule/CalendarGrid'
-import { useClinic } from '../../contexts/ClinicContext'
-import { useAuth } from '../../contexts/AuthContext'
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import Card, {
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "../../components/ui/Card";
+import Button from "../../components/ui/Button";
+import Badge from "../../components/ui/Badge";
+import {
+  Search,
+  Stethoscope,
+  Calendar,
+  Clock,
+  ChevronRight,
+  User,
+  ArrowLeft,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
+import CalendarGrid from "../../components/doctor/schedule/CalendarGrid";
+import { useClinic } from "../../contexts/ClinicContext";
+import { useAuth } from "../../contexts/AuthContext";
 
 export default function ReserveAppointment() {
-    const { user: currentUser } = useAuth()
-    const [step, setStep] = useState(1) // 1: Specialty, 2: Doctor, 3: Calendar, 4: Success
-    const [selectedSpecialty, setSelectedSpecialty] = useState('')
-    const [selectedDoctor, setSelectedDoctor] = useState(null)
-    const [selectedDate, setSelectedDate] = useState(new Date())
-    const [bookedSlot, setBookedSlot] = useState(null)
-    const [doctorSearch, setDoctorSearch] = useState('')
-    const [mainTab, setMainTab] = useState('reserve') // reserve, status
+  const { user: currentUser } = useAuth();
+  const [step, setStep] = useState(1); // 1: Doctor, 2: Calendar, 3: Success
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [bookedSlot, setBookedSlot] = useState(null);
+  const [doctorSearch, setDoctorSearch] = useState("");
+  const [mainTab, setMainTab] = useState("reserve"); // reserve, status
 
-    const { appointments, addAppointment, updateAppointmentStatus, doctorAvailability, doctors: doctorsContext } = useClinic()
+  const {
+    appointments,
+    addAppointment,
+    updateAppointmentStatus,
+    doctorAvailability,
+    doctors: doctorsContext,
+  } = useClinic();
 
-    const specialties = [...new Set(doctorsContext.map(d => d.specialty))]
-    const doctors = doctorsContext
+  const doctors = doctorsContext;
 
+  const filteredDoctors = doctors.filter((d) =>
+    d.name.toLowerCase().includes(doctorSearch.toLowerCase()),
+  );
 
-    const filteredDoctors = doctors.filter(d =>
-        d.specialty === selectedSpecialty &&
-        d.name.toLowerCase().includes(doctorSearch.toLowerCase())
-    )
+  // Calculate slots based on selected doctor and date
+  const slots = (() => {
+    if (!selectedDoctor) return {};
+    const docId = selectedDoctor.id || selectedDoctor.email;
+    const docAvailability = doctorAvailability[docId] || {};
+    const mapped = {};
+    Object.entries(docAvailability).forEach(([date, hours]) => {
+      hours.forEach((h) => {
+        mapped[`${date}-${h}`] = "available";
+      });
+    });
+    return mapped;
+  })();
 
-    // Calculate slots based on selected doctor and date
-    const slots = (() => {
-        if (!selectedDoctor) return {}
-        const docId = selectedDoctor.id || selectedDoctor.email
-        const docAvailability = doctorAvailability[docId] || {}
-        const mapped = {}
-        Object.entries(docAvailability).forEach(([date, hours]) => {
-            hours.forEach(h => {
-                mapped[`${date}-${h}`] = 'available'
-            })
-        })
-        return mapped
-    })()
+  const handleCancelReservation = (id) => {
+    updateAppointmentStatus(id, "cancelled");
+  };
 
-
-    const handleCancelReservation = (id) => {
-        updateAppointmentStatus(id, 'cancelled')
+  const handleSlotClick = (date, hour) => {
+    const key = `${date.toISOString().split("T")[0]}-${hour}`;
+    if (slots[key] === "available") {
+      setBookedSlot({ date, hour });
+      // In a real app, this would show a confirmation modal or proceed to payment
     }
+  };
 
-    const handleSlotClick = (date, hour) => {
-        const key = `${date.toISOString().split('T')[0]}-${hour}`
-        if (slots[key] === 'available') {
-            setBookedSlot({ date, hour })
-            // In a real app, this would show a confirmation modal or proceed to payment
-        }
-    }
+  const confirmBooking = () => {
+    setStep(3);
+    // Add new reservation to list
+    const newRes = {
+      id: Date.now(),
+      doctorId: selectedDoctor.id || selectedDoctor.email,
+      doctorName: selectedDoctor.name,
+      patientName: currentUser?.name || "Guest User",
+      patientId: currentUser?.id || currentUser?.email,
+      specialty: selectedDoctor.specialty,
+      date: bookedSlot.date.toISOString().split("T")[0],
+      time:
+        bookedSlot.hour > 12
+          ? `${bookedSlot.hour - 12}:00 PM`
+          : `${bookedSlot.hour}:00 AM`,
+      status: "confirmed",
+    };
+    addAppointment(newRes);
+  };
 
-    const confirmBooking = () => {
-        setStep(4)
-        // Add new reservation to list
-        const newRes = {
-            id: Date.now(),
-            doctorId: selectedDoctor.id || selectedDoctor.email,
-            doctorName: selectedDoctor.name,
-            patientName: currentUser?.name || 'Guest User',
-            patientId: currentUser?.id || currentUser?.email,
-            specialty: selectedDoctor.specialty,
-            date: bookedSlot.date.toISOString().split('T')[0],
-            time: bookedSlot.hour > 12 ? `${bookedSlot.hour - 12}:00 PM` : `${bookedSlot.hour}:00 AM`,
-            status: 'confirmed'
-        }
-        addAppointment(newRes)
-    }
-
-    return (
-        <div className="max-w-5xl mx-auto space-y-6">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
-                <div>
-                    <h1 className="text-3xl font-bold text-text-heading">Appointments</h1>
-                    <p className="text-text-muted">Manage and book your health sessions</p>
-                </div>
-            </div>
-
-            {/* Tabs */}
-            <div className="flex border-b border-border mb-8 overflow-x-auto no-scrollbar scroll-smooth">
-                <button
-                    onClick={() => setMainTab('reserve')}
-                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${mainTab === 'reserve' ? 'text-primary' : 'text-text-muted hover:text-text-heading'
-                        }`}
-                >
-                    Reserve Appointment
-                    {mainTab === 'reserve' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />}
-                </button>
-                <button
-                    onClick={() => setMainTab('status')}
-                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${mainTab === 'status' ? 'text-primary' : 'text-text-muted hover:text-text-heading'
-                        }`}
-                >
-                    My Reservation Status
-                    {mainTab === 'status' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />}
-                </button>
-            </div>
-
-            {mainTab === 'reserve' ? (
-                <div className="space-y-6">
-                    {step > 1 && step < 4 && (
-                        <div className="flex justify-start">
-                            <Button variant="ghost" onClick={() => setStep(step - 1)} className="gap-2">
-                                <ArrowLeft className="w-4 h-4" /> Back
-                            </Button>
-                        </div>
-                    )}
-
-                    <AnimatePresence mode="wait">
-                        {step === 1 && (
-                            <motion.div
-                                key="step1"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="grid md:grid-cols-2 lg:grid-cols-3 gap-6"
-                            >
-                                {specialties.map((specialty) => (
-                                    <Card
-                                        key={specialty}
-                                        hover
-                                        className="cursor-pointer group p-6 text-center border-2 border-transparent hover:border-primary/50 transition-all"
-                                        onClick={() => {
-                                            setSelectedSpecialty(specialty)
-                                            setStep(2)
-                                        }}
-                                    >
-                                        <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                                            <Stethoscope className="w-8 h-8 text-primary" />
-                                        </div>
-                                        <h3 className="text-xl font-bold text-text-heading">{specialty}</h3>
-                                        <p className="text-text-muted text-sm mt-2">View available experts in this field</p>
-                                    </Card>
-                                ))}
-                            </motion.div>
-                        )}
-
-                        {step === 2 && (
-                            <motion.div
-                                key="step2"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="space-y-6"
-                            >
-                                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                    <h2 className="text-xl font-semibold flex items-center gap-2">
-                                        <Stethoscope className="w-5 h-5 text-primary" />
-                                        Available Doctors for {selectedSpecialty}
-                                    </h2>
-                                    <div className="relative w-full md:w-64">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light" />
-                                        <input
-                                            type="text"
-                                            placeholder="Search doctor name..."
-                                            value={doctorSearch}
-                                            onChange={(e) => setDoctorSearch(e.target.value)}
-                                            className="w-full pl-10 pr-4 py-2 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-text"
-                                        />
-                                    </div>
-                                </div>
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    {filteredDoctors.map((doctor) => (
-                                        <Card key={doctor.id} className="p-6">
-                                            <div className="flex items-start gap-4">
-                                                <div className="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center flex-shrink-0">
-                                                    <User className="w-8 h-8 text-secondary" />
-                                                </div>
-                                                <div className="flex-1">
-                                                    <h3 className="text-lg font-bold text-text-heading">{doctor.name}</h3>
-                                                    <p className="text-primary text-sm font-medium">{doctor.specialty}</p>
-                                                    <p className="text-text-muted text-sm mt-2 line-clamp-2">{doctor.bio}</p>
-                                                    <Button
-                                                        className="mt-4 w-full"
-                                                        variant="outline"
-                                                        onClick={() => {
-                                                            setSelectedDoctor(doctor)
-                                                            setStep(3)
-                                                        }}
-                                                    >
-                                                        Select Doctor
-                                                    </Button>
-                                                </div>
-                                            </div>
-                                        </Card>
-                                    ))}
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {step === 3 && (
-                            <motion.div
-                                key="step3"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className="grid lg:grid-cols-3 gap-8"
-                            >
-                                <div className="lg:col-span-2">
-                                    <CardHeader className="px-0">
-                                        <CardTitle>Select a Time Slot</CardTitle>
-                                    </CardHeader>
-                                    <CalendarGrid
-                                        selectedDate={selectedDate}
-                                        onDateChange={setSelectedDate}
-                                        slots={slots}
-                                        onSlotClick={handleSlotClick}
-                                    />
-                                </div>
-                                <div className="space-y-6">
-                                    <Card className="p-6 border-l-4 border-l-primary">
-                                        <h3 className="font-bold text-lg mb-4">Booking Summary</h3>
-                                        <div className="space-y-4">
-                                            <div className="flex items-center gap-3">
-                                                <User className="w-5 h-5 text-primary" />
-                                                <div>
-                                                    <p className="text-xs text-text-light">Doctor</p>
-                                                    <p className="font-medium">{selectedDoctor?.name}</p>
-                                                </div>
-                                            </div>
-                                            {bookedSlot && (
-                                                <div className="flex items-center gap-3">
-                                                    <Calendar className="w-5 h-5 text-primary" />
-                                                    <div>
-                                                        <p className="text-xs text-text-muted">Selected Time</p>
-                                                        <p className="font-medium text-text-heading">
-                                                            {bookedSlot.date.toLocaleDateString()} at {bookedSlot.hour > 12 ? `${bookedSlot.hour - 12} PM` : `${bookedSlot.hour} AM`}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <Button
-                                            className="w-full mt-8"
-                                            disabled={!bookedSlot}
-                                            onClick={confirmBooking}
-                                        >
-                                            Confirm Appointment
-                                        </Button>
-                                    </Card>
-                                    <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20 italic text-sm text-emerald-600 dark:text-emerald-400">
-                                        Note: Appointment availability is managed by the healthcare professional.
-                                    </div>
-                                </div>
-                            </motion.div>
-                        )}
-
-                        {step === 4 && (
-                            <motion.div
-                                key="step4"
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="max-w-md mx-auto text-center py-12"
-                            >
-                                <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6 text-green-500">
-                                    <CheckCircle className="w-12 h-12" />
-                                </div>
-                                <h2 className="text-3xl font-bold text-text-heading mb-4">Booking Confirmed!</h2>
-                                <p className="text-text-muted mb-8">
-                                    Your appointment with {selectedDoctor?.name} has been successfully scheduled.
-                                    You will receive a notification before the session starts.
-                                </p>
-                                <Button className="w-full" onClick={() => setStep(1)}>
-                                    Done
-                                </Button>
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                </div>
-            ) : (
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="space-y-6"
-                >
-                    <div className="grid gap-4">
-                        {appointments.length > 0 ? (
-                            appointments.map((res) => (
-                                <Card key={res.id} className="p-6">
-                                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                                                <User className="w-6 h-6 text-primary" />
-                                            </div>
-                                            <div>
-                                                <h3 className="font-bold text-lg">{res.doctorName}</h3>
-                                                <p className="text-text-light text-sm">{res.specialty}</p>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex flex-wrap items-center gap-6">
-                                            <div className="text-sm">
-                                                <div className="flex items-center gap-2 text-text-heading">
-                                                    <Calendar className="w-4 h-4 text-primary" />
-                                                    <span className="font-medium">{res.date}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2 text-text-muted mt-1">
-                                                    <Clock className="w-4 h-4" />
-                                                    <span>{res.time}</span>
-                                                </div>
-                                            </div>
-
-                                            <div className="flex items-center gap-2">
-                                                <Badge
-                                                    variant={
-                                                        res.status === 'confirmed' ? 'primary' :
-                                                            res.status === 'cancelled' ? 'danger' :
-                                                                'secondary'
-                                                    }
-                                                >
-                                                    {res.status.toUpperCase()}
-                                                </Badge>
-
-                                                {res.status === 'confirmed' && (
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
-                                                        onClick={() => handleCancelReservation(res.id)}
-                                                        title="Cancel Appointment"
-                                                    >
-                                                        <XCircle className="w-4 h-4" />
-                                                    </Button>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {res.status === 'cancelled' && (
-                                        <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 dark:text-red-400">
-                                            <span className="font-bold">Reason for cancellation:</span> {res.reason}
-                                        </div>
-                                    )}
-                                </Card>
-                            ))
-                        ) : (
-                            <div className="text-center py-20 bg-background-subtle/20 rounded-2xl border-2 border-dashed border-border">
-                                <Calendar className="w-16 h-16 text-text-muted mx-auto mb-4 opacity-20" />
-                                <h3 className="text-xl font-medium text-text-muted">No reservations found</h3>
-                                <p className="text-text-muted mt-2">You haven't booked any appointments yet.</p>
-                                <Button className="mt-6" variant="outline" onClick={() => setMainTab('reserve')}>
-                                    Book Now
-                                </Button>
-                            </div>
-                        )}
-                    </div>
-                </motion.div>
-            )}
+  return (
+    <div className="max-w-5xl mx-auto space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+        <div>
+          <h1 className="text-3xl font-bold text-text-heading">Appointments</h1>
+          <p className="text-text-muted">
+            Manage and book your health sessions
+          </p>
         </div>
-    )
+      </div>
+
+      {/* Tabs */}
+      <div className="flex border-b border-border mb-8 overflow-x-auto no-scrollbar scroll-smooth">
+        <button
+          onClick={() => setMainTab("reserve")}
+          className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${
+            mainTab === "reserve"
+              ? "text-primary"
+              : "text-text-muted hover:text-text-heading"
+          }`}
+        >
+          Available Doctors
+          {mainTab === "reserve" && (
+            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />
+          )}
+        </button>
+        <button
+          onClick={() => setMainTab("status")}
+          className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${
+            mainTab === "status"
+              ? "text-primary"
+              : "text-text-muted hover:text-text-heading"
+          }`}
+        >
+          My Reservation Status
+          {mainTab === "status" && (
+            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />
+          )}
+        </button>
+      </div>
+
+      {mainTab === "reserve" ? (
+        <div className="space-y-6">
+          {step > 1 && step < 3 && (
+            <div className="flex justify-start">
+              <Button
+                variant="ghost"
+                onClick={() => setStep(step - 1)}
+                className="gap-2"
+              >
+                <ArrowLeft className="w-4 h-4" /> Back
+              </Button>
+            </div>
+          )}
+
+          <AnimatePresence mode="wait">
+            {step === 1 && (
+              <motion.div
+                key="step1"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <h2 className="text-xl font-semibold flex items-center gap-2">
+                    <Stethoscope className="w-5 h-5 text-primary" />
+                    Available Doctors
+                  </h2>
+                  <div className="relative w-full md:w-64">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light" />
+                    <input
+                      type="text"
+                      placeholder="Search doctor name..."
+                      value={doctorSearch}
+                      onChange={(e) => setDoctorSearch(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-text"
+                    />
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-2 gap-6">
+                  {filteredDoctors.map((doctor) => (
+                    <Card key={doctor.id || doctor.email} className="p-6">
+                      <div className="flex items-start gap-4">
+                        <div className="w-16 h-16 rounded-full bg-secondary/10 flex items-center justify-center flex-shrink-0">
+                          <User className="w-8 h-8 text-secondary" />
+                        </div>
+                        <div className="flex-1">
+                          <h3 className="text-lg font-bold text-text-heading">
+                            {doctor.name}
+                          </h3>
+                          <p className="text-primary text-sm font-medium">
+                            {doctor.specialty}
+                          </p>
+                          <p className="text-text-muted text-sm mt-2 line-clamp-2">
+                            {doctor.bio}
+                          </p>
+                          <Button
+                            className="mt-4 w-full"
+                            variant="outline"
+                            onClick={() => {
+                              setSelectedDoctor(doctor);
+                              setStep(2);
+                            }}
+                          >
+                            Select Doctor
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </motion.div>
+            )}
+
+            {step === 2 && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="grid lg:grid-cols-3 gap-8"
+              >
+                <div className="lg:col-span-2">
+                  <CardHeader className="px-0">
+                    <CardTitle>Select a Time Slot</CardTitle>
+                  </CardHeader>
+                  <CalendarGrid
+                    selectedDate={selectedDate}
+                    onDateChange={setSelectedDate}
+                    slots={slots}
+                    onSlotClick={handleSlotClick}
+                  />
+                </div>
+                <div className="space-y-6">
+                  <Card className="p-6 border-l-4 border-l-primary">
+                    <h3 className="font-bold text-lg mb-4">Booking Summary</h3>
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-3">
+                        <User className="w-5 h-5 text-primary" />
+                        <div>
+                          <p className="text-xs text-text-light">Doctor</p>
+                          <p className="font-medium">{selectedDoctor?.name}</p>
+                        </div>
+                      </div>
+                      {bookedSlot && (
+                        <div className="flex items-center gap-3">
+                          <Calendar className="w-5 h-5 text-primary" />
+                          <div>
+                            <p className="text-xs text-text-muted">
+                              Selected Time
+                            </p>
+                            <p className="font-medium text-text-heading">
+                              {bookedSlot.date.toLocaleDateString()} at{" "}
+                              {bookedSlot.hour > 12
+                                ? `${bookedSlot.hour - 12} PM`
+                                : `${bookedSlot.hour} AM`}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <Button
+                      className="w-full mt-8"
+                      disabled={!bookedSlot}
+                      onClick={confirmBooking}
+                    >
+                      Confirm Appointment
+                    </Button>
+                  </Card>
+                  <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20 italic text-sm text-emerald-600 dark:text-emerald-400">
+                    Note: Appointment availability is managed by the healthcare
+                    professional.
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {step === 3 && (
+              <motion.div
+                key="step3"
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="max-w-md mx-auto text-center py-12"
+              >
+                <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto mb-6 text-green-500">
+                  <CheckCircle className="w-12 h-12" />
+                </div>
+                <h2 className="text-3xl font-bold text-text-heading mb-4">
+                  Booking Confirmed!
+                </h2>
+                <p className="text-text-muted mb-8">
+                  Your appointment with {selectedDoctor?.name} has been
+                  successfully scheduled. You will receive a notification before
+                  the session starts.
+                </p>
+                <Button className="w-full" onClick={() => setStep(1)}>
+                  Done
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      ) : (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="space-y-6"
+        >
+          <div className="grid gap-4">
+            {appointments.length > 0 ? (
+              appointments.map((res) => (
+                <Card key={res.id} className="p-6">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                      <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                        <User className="w-6 h-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-bold text-lg">{res.doctorName}</h3>
+                        <p className="text-text-light text-sm">
+                          {res.specialty}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-6">
+                      <div className="text-sm">
+                        <div className="flex items-center gap-2 text-text-heading">
+                          <Calendar className="w-4 h-4 text-primary" />
+                          <span className="font-medium">{res.date}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-text-muted mt-1">
+                          <Clock className="w-4 h-4" />
+                          <span>{res.time}</span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={
+                            res.status === "confirmed"
+                              ? "primary"
+                              : res.status === "cancelled"
+                                ? "danger"
+                                : "secondary"
+                          }
+                        >
+                          {res.status.toUpperCase()}
+                        </Badge>
+
+                        {res.status === "confirmed" && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
+                            onClick={() => handleCancelReservation(res.id)}
+                            title="Cancel Appointment"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {res.status === "cancelled" && (
+                    <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 dark:text-red-400">
+                      <span className="font-bold">
+                        Reason for cancellation:
+                      </span>{" "}
+                      {res.reason}
+                    </div>
+                  )}
+                </Card>
+              ))
+            ) : (
+              <div className="text-center py-20 bg-background-subtle/20 rounded-2xl border-2 border-dashed border-border">
+                <Calendar className="w-16 h-16 text-text-muted mx-auto mb-4 opacity-20" />
+                <h3 className="text-xl font-medium text-text-muted">
+                  No reservations found
+                </h3>
+                <p className="text-text-muted mt-2">
+                  You haven't booked any appointments yet.
+                </p>
+                <Button
+                  className="mt-6"
+                  variant="outline"
+                  onClick={() => setMainTab("reserve")}
+                >
+                  Book Now
+                </Button>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      )}
+    </div>
+  );
 }

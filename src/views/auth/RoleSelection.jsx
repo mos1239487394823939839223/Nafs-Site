@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { User, Stethoscope, ArrowRight } from 'lucide-react'
+import { User, ArrowRight } from 'lucide-react'
 import Button from '../../components/ui/Button'
 
 export default function RoleSelection() {
@@ -21,20 +21,7 @@ export default function RoleSelection() {
       ],
       route: '/auth/register/patient',
     },
-    {
-      id: 'doctor',
-      title: 'Join as a Doctor',
-      description: 'Provide consultations, manage patients, and grow your practice',
-      icon: Stethoscope,
-      color: 'from-secondary to-secondary-dark',
-      features: [
-        'Manage patient queue',
-        'Set your availability',
-        'Earn from consultations',
-        'Build your reputation',
-      ],
-      route: '/auth/register/doctor',
-    },
+
   ]
 
   return (
@@ -55,7 +42,7 @@ export default function RoleSelection() {
         </motion.div>
 
         {/* Role Cards */}
-        <div className="grid md:grid-cols-2 gap-8">
+        <div className="flex justify-center">
           {roles.map((role, index) => (
             <motion.div
               key={role.id}
@@ -63,7 +50,7 @@ export default function RoleSelection() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: index * 0.1 }}
             >
-              <div className="bg-background-paper rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow duration-300 h-full flex flex-col border border-border">
+              <div className="bg-background-paper rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow duration-300 h-full flex flex-col border border-border w-full max-w-md">
                 {/* Header with Gradient */}
                 <div className={`bg-gradient-to-r ${role.color} p-8 text-white relative overflow-hidden`}>
                   <div className="absolute inset-0 bg-black/10"></div>
