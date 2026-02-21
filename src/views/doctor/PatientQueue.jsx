@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Users, Filter, Loader2, ChevronLeft, ChevronRight, Clock } from 'lucide-react'
 import { useToast } from '../../components/ui/Toast'
-import QueueStats from '../../components/doctor/queue/QueueStats'
+
 import QueueItem from '../../components/doctor/queue/QueueItem'
 import { doctorAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -125,17 +125,12 @@ export default function PatientQueue() {
           <h1 className="text-2xl md:text-3xl font-bold text-text-heading mb-2">{t('doctor.patientQueue')}</h1>
           <p className="text-text-muted">{t('doctor.manageConsultations')}</p>
         </div>
-        <div className="p-2 px-3 bg-background-paper border border-border rounded-lg shadow-sm self-start sm:self-auto">
-          <span className="text-sm font-medium text-text-muted flex items-center gap-2">
-            <Users className="w-4 h-4" />
-            {t('doctor.totalPatients')}: {patients.length}
-          </span>
-        </div>
+
       </motion.div>
 
-      <div className="grid lg:grid-cols-3 gap-8">
+      <div className="space-y-6">
         {/* Main Queue List */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6">
           {/* Filters */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2">
             <Filter className="w-5 h-5 text-text-light mr-2" />
@@ -195,18 +190,6 @@ export default function PatientQueue() {
               </button>
             </div>
           )}
-        </div>
-
-        {/* Sidebar / Stats */}
-        <div className="space-y-6">
-          <QueueStats stats={stats} />
-
-          <div className="bg-primary/10 p-6 rounded-2xl border border-primary/20">
-            <h3 className="font-semibold text-text-heading mb-2">{t('doctor.doctorsNote')}</h3>
-            <p className="text-sm text-text-muted">
-              {t('doctor.completeNotesReminder')}
-            </p>
-          </div>
         </div>
       </div>
     </div>

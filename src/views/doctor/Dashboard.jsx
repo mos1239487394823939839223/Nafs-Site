@@ -8,13 +8,9 @@ import {
   Calendar as CalendarIcon,
   Clock,
   Users,
-  MessageSquare,
-  FileText,
   CheckCircle,
-  AlertCircle,
   Loader2
 } from 'lucide-react'
-import DailyAgenda from '../../components/doctor/DailyAgenda'
 import { useAuth } from '../../contexts/AuthContext'
 import { doctorAPI } from '../../lib/api'
 
@@ -151,115 +147,75 @@ export default function DoctorDashboard() {
 
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Patient Queue */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Patient Queue</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loading ? (
-              <div className="flex items-center justify-center py-12">
-                <Loader2 className="w-8 h-8 text-primary animate-spin" />
-              </div>
-            ) : patientQueue.length === 0 ? (
-              <div className="text-center py-12 text-text-muted">
-                <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p>No active bookings</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {patientQueue.map((patient) => (
-                  <div key={patient.id} className="p-4 border border-border rounded-2xl hover:border-primary transition-colors shadow-sm">
-                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-3">
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center flex-wrap gap-3">
-                          <h4 className="font-semibold text-text-heading truncate">{patient.name}</h4>
-                          <Badge variant={getStatusVariant(patient.statusCode)}>
-                            {patient.status}
-                          </Badge>
-                          {!patient.paymentConfirmed && (
-                            <Badge variant="warning">Unpaid</Badge>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-4 mt-2 text-sm text-text-muted">
-                          <div className="flex items-center gap-1">
-                            <Clock className="w-4 h-4" />
-                            <span>{patient.time}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            <CalendarIcon className="w-4 h-4" />
-                            <span>{patient.date}</span>
-                          </div>
-                          {patient.duration && (
-                            <span>{patient.duration} min</span>
-                          )}
-                        </div>
+      {/* Patient Queue */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Patient Queue</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            </div>
+          ) : patientQueue.length === 0 ? (
+            <div className="text-center py-12 text-text-muted">
+              <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p>No active bookings</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {patientQueue.map((patient) => (
+                <div key={patient.id} className="p-4 border border-border rounded-2xl hover:border-primary transition-colors shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center flex-wrap gap-3">
+                        <h4 className="font-semibold text-text-heading truncate">{patient.name}</h4>
+                        <Badge variant={getStatusVariant(patient.statusCode)}>
+                          {patient.status}
+                        </Badge>
+                        {!patient.paymentConfirmed && (
+                          <Badge variant="warning">Unpaid</Badge>
+                        )}
                       </div>
-                      <Button
-                        size="sm"
-                        className="w-full sm:w-auto"
-                        variant={patient.statusCode === 1 || patient.statusCode === 2 ? 'primary' : 'outline'}
-                        onClick={() => {
-                          if (patient.meetingUrl) {
-                            window.open(patient.meetingUrl, '_blank')
-                          } else if (patient.statusCode === 1 || patient.statusCode === 2) {
-                            navigate('/dashboard/doctor/messages')
-                          } else {
-                            setSelectedPatient(patient)
-                            setIsDetailsModalOpen(true)
-                          }
-                        }}
-                      >
-                        {patient.statusCode === 1 || patient.statusCode === 2 ? 'Join Now' : 'View Details'}
-                      </Button>
+                      <div className="flex items-center gap-4 mt-2 text-sm text-text-muted">
+                        <div className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          <span>{patient.time}</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <CalendarIcon className="w-4 h-4" />
+                          <span>{patient.date}</span>
+                        </div>
+                        {patient.duration && (
+                          <span>{patient.duration} min</span>
+                        )}
+                      </div>
                     </div>
-                    <div className="bg-background p-3 rounded-xl text-sm">
-                      <p className="text-text-heading"><strong>Notes:</strong> {patient.reason}</p>
-                    </div>
+                    <Button
+                      size="sm"
+                      className="w-full sm:w-auto"
+                      variant={patient.statusCode === 1 || patient.statusCode === 2 ? 'primary' : 'outline'}
+                      onClick={() => {
+                        if (patient.meetingUrl) {
+                          window.open(patient.meetingUrl, '_blank')
+                        } else {
+                          setSelectedPatient(patient)
+                          setIsDetailsModalOpen(true)
+                        }
+                      }}
+                    >
+                      {patient.statusCode === 1 || patient.statusCode === 2 ? 'Join Now' : 'View Details'}
+                    </Button>
                   </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Daily Agenda */}
-        <DailyAgenda />
-      </div>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Card hover className="cursor-pointer" onClick={() => navigate('/dashboard/doctor/schedule')}>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
-              <CalendarIcon className="w-8 h-8 text-primary" />
+                  <div className="bg-background p-3 rounded-xl text-sm">
+                    <p className="text-text-heading"><strong>Notes:</strong> {patient.reason}</p>
+                  </div>
+                </div>
+              ))}
             </div>
-            <h3 className="font-semibold text-text-heading mt-4">Update Schedule</h3>
-            <p className="text-sm text-text-muted mt-2">Manage your availability</p>
-          </div>
-        </Card>
-
-        <Card hover className="cursor-pointer" onClick={() => navigate('/dashboard/doctor/medical-history')}>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto">
-              <FileText className="w-8 h-8 text-secondary" />
-            </div>
-            <h3 className="font-semibold text-text-heading mt-4">Medical Records</h3>
-            <p className="text-sm text-text-muted mt-2">Access patient files</p>
-          </div>
-        </Card>
-
-        <Card hover className="cursor-pointer" onClick={() => navigate('/dashboard/doctor/messages')}>
-          <div className="text-center">
-            <div className="w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center mx-auto">
-              <MessageSquare className="w-8 h-8 text-accent-dark" />
-            </div>
-            <h3 className="font-semibold text-text-heading mt-4">Messages</h3>
-            <p className="text-sm text-text-muted mt-2">Chat with patients</p>
-          </div>
-        </Card>
-      </div>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Patient Details Modal */}
       <Modal
@@ -306,21 +262,18 @@ export default function DoctorDashboard() {
 
             {/* Actions */}
             <div className="flex gap-3 pt-4 border-t border-border">
-              <Button
-                variant="primary"
-                className="flex-1"
-                onClick={() => {
-                  setIsDetailsModalOpen(false)
-                  if (selectedPatient.meetingUrl) {
+              {selectedPatient.meetingUrl && (
+                <Button
+                  variant="primary"
+                  className="flex-1"
+                  onClick={() => {
+                    setIsDetailsModalOpen(false)
                     window.open(selectedPatient.meetingUrl, '_blank')
-                  } else {
-                    navigate('/dashboard/doctor/messages')
-                  }
-                }}
-              >
-                <MessageSquare className="w-4 h-4 mr-2" />
-                Start Chat
-              </Button>
+                  }}
+                >
+                  Join Meeting
+                </Button>
+              )}
               <Button
                 variant="outline"
                 className="flex-1"

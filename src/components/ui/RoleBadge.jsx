@@ -1,36 +1,38 @@
+import Chip from '@mui/material/Chip'
 import { Roles } from '../../contexts/AuthContext'
 
-export default function RoleBadge({ role, size = 'md' }) {
-  const sizeClasses = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-3 py-1 text-sm',
-    lg: 'px-4 py-2 text-base',
+export default function RoleBadge({ role, size = 'md', sx }) {
+  const sizeMap = {
+    sm: 'small',
+    md: 'medium',
+    lg: 'medium',
   }
 
-  const roleStyles = {
-    [Roles.PATIENT]: 'bg-primary/10 text-primary border-primary/20',
-    [Roles.DOCTOR]: 'bg-secondary/10 text-secondary border-secondary/20',
-    [Roles.ADMIN]: 'bg-accent/20 text-accent-dark border-accent/30',
-    [Roles.STAFF]: 'bg-secondary/10 text-secondary-dark border-secondary/20',
+  const roleConfig = {
+    [Roles.PATIENT]: { label: 'Patient', color: 'primary' },
+    [Roles.DOCTOR]: { label: 'Doctor', color: 'secondary' },
+    [Roles.ADMIN]: { label: 'Admin', color: 'warning' },
+    [Roles.STAFF]: { label: 'Support Staff', color: 'info' },
   }
 
-  const roleLabels = {
-    [Roles.PATIENT]: 'Patient',
-    [Roles.DOCTOR]: 'Doctor',
-    [Roles.ADMIN]: 'Admin',
-    [Roles.STAFF]: 'Support Staff',
-  }
+  const config = roleConfig[role] || { label: role, color: 'default' }
 
   return (
-    <span
-      className={`
-        inline-flex items-center justify-center
-        font-medium rounded-full border
-        ${sizeClasses[size]}
-        ${roleStyles[role] || 'bg-background-subtle text-text-muted border-border'}
-      `}
-    >
-      {roleLabels[role] || role}
-    </span>
+    <Chip
+      label={config.label}
+      color={config.color}
+      variant="outlined"
+      size={sizeMap[size] || 'medium'}
+      sx={{
+        borderRadius: '999px',
+        fontWeight: 500,
+        ...(size === 'lg' && {
+          fontSize: '1rem',
+          height: 36,
+          '& .MuiChip-label': { px: 2 },
+        }),
+        ...sx,
+      }}
+    />
   )
 }

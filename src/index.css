@@ -100,6 +100,7 @@ body {
 /* RTL Support */
 [dir="rtl"] {
   direction: rtl;
+  font-family: 'Almarai', 'Inter', system-ui, sans-serif;
 }
 
 [dir="ltr"] {

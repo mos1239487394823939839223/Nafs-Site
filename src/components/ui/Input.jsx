@@ -1,103 +1,119 @@
 import * as React from 'react'
-import { cn } from '../../lib/utils'
+import TextField from '@mui/material/TextField'
+import InputAdornment from '@mui/material/InputAdornment'
+import MuiSelect from '@mui/material/Select'
+import MenuItem from '@mui/material/MenuItem'
+import FormControl from '@mui/material/FormControl'
+import InputLabel from '@mui/material/InputLabel'
+import FormHelperText from '@mui/material/FormHelperText'
 
 const Input = React.forwardRef(
-  ({ className, type = 'text', label, error, icon: Icon, startContent, ...props }, ref) => {
-    const IconComp = Icon || (startContent ? () => startContent : null)
+  ({ className, type = 'text', label, error, icon: Icon, startContent, placeholder, value, onChange, name, required, disabled, sx, ...props }, ref) => {
+    const startAdornment = (Icon || startContent) ? (
+      <InputAdornment position="start">
+        {Icon ? <Icon style={{ width: 18, height: 18, opacity: 0.6 }} /> : startContent}
+      </InputAdornment>
+    ) : undefined
 
     return (
-      <div className="w-full space-y-1.5">
-        {label && (
-          <label className="block text-sm font-medium text-text-muted">
-            {label}
-          </label>
-        )}
-        <div className="relative">
-          {IconComp && (
-            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-text-light pointer-events-none">
-              {Icon ? <Icon className="w-4 h-4" /> : startContent}
-            </div>
-          )}
-          <input
-            type={type}
-            className={cn(
-              'flex h-11 w-full rounded-xl border bg-background-subtle/50 px-4 py-2 text-sm text-text transition-all duration-200',
-              'placeholder:text-text-light/50',
-              'hover:bg-background-subtle hover:border-border-dark',
-              'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-background',
-              'disabled:cursor-not-allowed disabled:opacity-50',
-              error ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500' : 'border-border-light',
-              IconComp ? 'pl-10' : '',
-              className
-            )}
-            ref={ref}
-            {...props}
-          />
-        </div>
-        {error && (
-          <p className="text-xs text-red-500 mt-1">{error}</p>
-        )}
-      </div>
+      <TextField
+        inputRef={ref}
+        type={type}
+        label={label}
+        placeholder={placeholder}
+        error={!!error}
+        helperText={error || undefined}
+        fullWidth
+        name={name}
+        value={value}
+        onChange={onChange}
+        required={required}
+        disabled={disabled}
+        className={className}
+        size="medium"
+        slotProps={{
+          input: {
+            startAdornment,
+          },
+        }}
+        sx={{
+          '& .MuiOutlinedInput-root': {
+            borderRadius: '12px',
+          },
+          ...sx,
+        }}
+        {...props}
+      />
     )
   }
 )
 
 Input.displayName = 'Input'
 
-export function Select({ label, error, className, children, ...props }) {
+export function Select({ label, error, className, children, value, onChange, name, required, disabled, sx, ...props }) {
+  // Auto-convert <option> to <MenuItem> for backward compatibility
+  const convertedChildren = React.Children.map(children, (child) => {
+    if (React.isValidElement(child) && child.type === 'option') {
+      return (
+        <MenuItem value={child.props.value}>
+          {child.props.children}
+        </MenuItem>
+      )
+    }
+    return child
+  })
+
   return (
-    <div className="w-full space-y-1.5">
-      {label && (
-        <label className="block text-sm font-medium text-text-muted">
-          {label}
-        </label>
-      )}
-      <select
-        className={cn(
-          'flex h-11 w-full rounded-xl border bg-background-subtle/50 px-4 py-2 text-sm text-text transition-all duration-200',
-          'hover:bg-background-subtle hover:border-border-dark',
-          'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-background',
-          'disabled:cursor-not-allowed disabled:opacity-50',
-          'cursor-pointer appearance-none',
-          error ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500' : 'border-border-light',
-          className
-        )}
+    <FormControl fullWidth error={!!error} className={className}>
+      {label && <InputLabel>{label}</InputLabel>}
+      <MuiSelect
+        label={label}
+        value={value}
+        onChange={onChange}
+        name={name}
+        required={required}
+        disabled={disabled}
+        sx={{
+          borderRadius: '12px',
+          ...sx,
+        }}
         {...props}
       >
-        {children}
-      </select>
-      {error && (
-        <p className="text-xs text-red-500 mt-1">{error}</p>
-      )}
-    </div>
+        {convertedChildren}
+      </MuiSelect>
+      {error && <FormHelperText>{error}</FormHelperText>}
+    </FormControl>
   )
 }
 
-export function Textarea({ label, error, className, ...props }) {
+export function Textarea({ label, error, className, rows = 3, value, onChange, name, placeholder, required, disabled, sx, ...props }) {
   return (
-    <div className="w-full space-y-1.5">
-      {label && (
-        <label className="block text-sm font-medium text-text-muted">
-          {label}
-        </label>
-      )}
-      <textarea
-        className={cn(
-          'flex w-full rounded-xl border bg-background-subtle/50 px-4 py-3 text-sm text-text transition-all duration-200 resize-none min-h-[88px]',
-          'placeholder:text-text-light/50',
-          'hover:bg-background-subtle hover:border-border-dark',
-          'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-background',
-          'disabled:cursor-not-allowed disabled:opacity-50',
-          error ? 'border-red-400 focus:ring-red-500/20 focus:border-red-500' : 'border-border-light',
-          className
-        )}
-        {...props}
-      />
-      {error && (
-        <p className="text-xs text-red-500 mt-1">{error}</p>
-      )}
-    </div>
+    <TextField
+      label={label}
+      error={!!error}
+      helperText={error || undefined}
+      fullWidth
+      multiline
+      rows={rows}
+      value={value}
+      onChange={onChange}
+      name={name}
+      placeholder={placeholder}
+      required={required}
+      disabled={disabled}
+      className={className}
+      sx={{
+        '& .MuiOutlinedInput-root': {
+          borderRadius: '12px',
+        },
+        ...sx,
+      }}
+      {...props}
+    />
   )
 }
+
+// Re-export MenuItem for use with Select
+export { MenuItem }
 
 export default Input

@@ -1,24 +1,44 @@
-import { cn } from '../../lib/utils'
+import CircularProgress from '@mui/material/CircularProgress'
+import Box from '@mui/material/Box'
+import Typography from '@mui/material/Typography'
 
-export default function Spinner({ className, size = 'md', label }) {
-  const sizes = {
-    sm: 'w-4 h-4 border-2',
-    md: 'w-8 h-8 border-[3px]',
-    lg: 'w-12 h-12 border-4',
-  }
+const sizeMap = {
+  sm: 16,
+  md: 32,
+  lg: 48,
+}
 
+export default function Spinner({ className, size = 'md', label, sx }) {
   return (
-    <div className="flex flex-col items-center gap-3">
-      <div
-        className={cn(
-          'rounded-full border-primary/30 border-t-primary animate-spin',
-          sizes[size],
-          className
-        )}
+    <Box
+      className={className}
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: 1.5,
+        ...sx,
+      }}
+    >
+      <CircularProgress
+        size={sizeMap[size] || sizeMap.md}
+        thickness={size === 'sm' ? 4 : 3.5}
       />
       {label && (
-        <span className="text-sm text-text-muted animate-pulse">{label}</span>
+        <Typography
+          variant="body2"
+          color="text.secondary"
+          sx={{
+            animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+            '@keyframes pulse': {
+              '0%, 100%': { opacity: 1 },
+              '50%': { opacity: 0.5 },
+            },
+          }}
+        >
+          {label}
+        </Typography>
       )}
-    </div>
+    </Box>
   )
 }

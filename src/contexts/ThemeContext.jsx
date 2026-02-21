@@ -1,4 +1,7 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useMemo } from 'react'
+import { ThemeProvider as MuiThemeProvider } from '@mui/material/styles'
+import CssBaseline from '@mui/material/CssBaseline'
+import { createAppTheme } from '../theme/muiTheme'
 
 const ThemeContext = createContext(null)
 
@@ -34,6 +37,9 @@ export const ThemeProvider = ({ children }) => {
         setTheme((prevTheme) => (prevTheme === 'light' ? 'dark' : 'light'))
     }
 
+    // Create MUI theme based on current mode
+    const muiTheme = useMemo(() => createAppTheme(theme), [theme])
+
     const value = {
         theme,
         toggleTheme,
@@ -41,7 +47,10 @@ export const ThemeProvider = ({ children }) => {
 
     return (
         <ThemeContext.Provider value={value}>
-            {children}
+            <MuiThemeProvider theme={muiTheme}>
+                <CssBaseline />
+                {children}
+            </MuiThemeProvider>
         </ThemeContext.Provider>
     )
 }

@@ -1,85 +1,187 @@
 import * as React from 'react'
-import * as DialogPrimitive from '@radix-ui/react-dialog'
-import { X } from 'lucide-react'
-import { cn } from '../../lib/utils'
+import MuiDialog from '@mui/material/Dialog'
+import MuiDialogTitle from '@mui/material/DialogTitle'
+import MuiDialogContent from '@mui/material/DialogContent'
+import MuiDialogActions from '@mui/material/DialogActions'
+import DialogContentText from '@mui/material/DialogContentText'
+import IconButton from '@mui/material/IconButton'
+import CloseIcon from '@mui/icons-material/Close'
+import Zoom from '@mui/material/Zoom'
 
-const Dialog = DialogPrimitive.Root
-const DialogTrigger = DialogPrimitive.Trigger
-const DialogPortal = DialogPrimitive.Portal
-const DialogClose = DialogPrimitive.Close
+const Transition = React.forwardRef(function Transition(props, ref) {
+  return <Zoom ref={ref} {...props} />
+})
 
-const DialogOverlay = React.forwardRef(({ className, ...props }, ref) => (
-  <DialogPrimitive.Overlay
+// Root Dialog component - manages open/close state
+function Dialog({ children, open, onOpenChange, ...props }) {
+  // We pass the open state and close handler down to children
+  const childrenWithProps = React.Children.map(children, (child) => {
+    if (React.isValidElement(child)) {
+      return React.cloneElement(child, {
+        _dialogOpen: !!open,
+        _dialogOnClose: () => onOpenChange?.(false),
+      })
+    }
+    return child
+  })
+
+  return <>{childrenWithProps}</>
+}
+
+// DialogContent wraps everything in MUI Dialog
+const DialogContent = React.forwardRef(({ className, children, _dialogOpen, _dialogOnClose, sx, ...props }, ref) => (
+  <MuiDialog
     ref={ref}
-    className={cn(
-      'fixed inset-0 z-50 bg-black/60 backdrop-blur-sm',
-      'data-[state=open]:animate-in data-[state=closed]:animate-out',
-      'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
-      className
-    )}
+    open={!!_dialogOpen}
+    onClose={_dialogOnClose}
+    TransitionComponent={Transition}
+    maxWidth="md"
+    fullWidth
+    className={className}
+    sx={{
+      '& .MuiDialog-paper': {
+        borderRadius: '16px',
+        border: '1px solid',
+        borderColor: 'divider',
+        boxShadow: '0 25px 50px -12px rgba(0,0,0,0.15)',
+        overflow: 'hidden',
+      },
+      '& .MuiBackdrop-root': {
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        backdropFilter: 'blur(4px)',
+      },
+      ...sx,
+    }}
     {...props}
-  />
-))
-DialogOverlay.displayName = 'DialogOverlay'
-
-const DialogContent = React.forwardRef(({ className, children, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
-      ref={ref}
-      className={cn(
-        'fixed left-[50%] top-[50%] z-50 grid w-full max-w-2xl translate-x-[-50%] translate-y-[-50%] gap-0 border border-border/60 bg-card rounded-2xl shadow-2xl shadow-black/10',
-        'data-[state=open]:animate-in data-[state=closed]:animate-out',
-        'data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0',
-        'data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95',
-        'data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%]',
-        'data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%]',
-        'duration-200',
-        className
-      )}
-      {...props}
-    >
-      {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-full p-1.5 text-text-light hover:text-text hover:bg-background-subtle transition-all focus:outline-none focus:ring-2 focus:ring-primary/30">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
-    </DialogPrimitive.Content>
-  </DialogPortal>
+  >
+    {/* Close button */}
+    {_dialogOnClose && (
+      <IconButton
+        aria-label="close"
+        onClick={_dialogOnClose}
+        sx={{
+          position: 'absolute',
+          right: 12,
+          top: 12,
+          zIndex: 10,
+          color: 'text.secondary',
+          '&:hover': {
+            bgcolor: 'action.hover',
+          },
+        }}
+      >
+        <CloseIcon fontSize="small" />
+      </IconButton>
+    )}
+    {React.Children.map(children, (child) => {
+      if (React.isValidElement(child)) {
+        // Strip _dialog props from being passed further
+        const { _dialogOpen: _, _dialogOnClose: __, ...childProps } = child.props
+        return React.cloneElement(child, childProps)
+      }
+      return child
+    })}
+  </MuiDialog>
 ))
 DialogContent.displayName = 'DialogContent'
 
-const DialogHeader = ({ className, ...props }) => (
-  <div
-    className={cn('flex flex-col space-y-2 p-6 pb-4 border-b border-border/40', className)}
+// Simple trigger wrapper
+function DialogTrigger({ children, asChild, onClick, ...props }) {
+  if (!children) return null
+  return React.cloneElement(children, {
+    onClick: (e) => {
+      children.props?.onClick?.(e)
+      onClick?.(e)
+    },
+    ...props,
+  })
+}
+
+// No-ops for API compatibility
+function DialogPortal({ children }) {
+  return <>{children}</>
+}
+
+function DialogClose({ children, ...props }) {
+  return children || null
+}
+
+const DialogOverlay = React.forwardRef((props, ref) => null)
+DialogOverlay.displayName = 'DialogOverlay'
+
+const DialogHeader = ({ className, children, sx, ...props }) => (
+  <MuiDialogTitle
+    className={className}
+    component="div"
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 1,
+      pb: 2,
+      pr: 5,
+      borderBottom: '1px solid',
+      borderColor: 'divider',
+      ...sx,
+    }}
     {...props}
-  />
+  >
+    {children}
+  </MuiDialogTitle>
 )
 DialogHeader.displayName = 'DialogHeader'
 
-const DialogFooter = ({ className, ...props }) => (
-  <div
-    className={cn('flex flex-col-reverse sm:flex-row sm:justify-end gap-2 p-6 pt-4 border-t border-border/40', className)}
+const DialogFooter = ({ className, children, sx, ...props }) => (
+  <MuiDialogActions
+    className={className}
+    sx={{
+      px: 3,
+      py: 2,
+      borderTop: '1px solid',
+      borderColor: 'divider',
+      gap: 1,
+      ...sx,
+    }}
     {...props}
-  />
+  >
+    {children}
+  </MuiDialogActions>
 )
 DialogFooter.displayName = 'DialogFooter'
 
-const DialogTitle = React.forwardRef(({ className, ...props }, ref) => (
-  <DialogPrimitive.Title
+const DialogTitle = React.forwardRef(({ className, children, sx, ...props }, ref) => (
+  <MuiDialogTitle
     ref={ref}
-    className={cn('text-lg font-semibold leading-none tracking-tight text-text-heading', className)}
+    className={className}
+    component="h2"
+    sx={{
+      fontSize: '1.125rem',
+      fontWeight: 600,
+      lineHeight: 1,
+      letterSpacing: '-0.01em',
+      p: 0,
+      ...sx,
+    }}
     {...props}
-  />
+  >
+    {children}
+  </MuiDialogTitle>
 ))
 DialogTitle.displayName = 'DialogTitle'
 
-const DialogDescription = React.forwardRef(({ className, ...props }, ref) => (
-  <DialogPrimitive.Description
+const DialogDescription = React.forwardRef(({ className, children, sx, ...props }, ref) => (
+  <DialogContentText
     ref={ref}
-    className={cn('text-sm text-text-muted', className)}
+    className={className}
+    sx={{
+      fontSize: '0.875rem',
+      color: 'text.secondary',
+      mt: 0.5,
+      ...sx,
+    }}
     {...props}
-  />
+  >
+    {children}
+  </DialogContentText>
 ))
 DialogDescription.displayName = 'DialogDescription'
 

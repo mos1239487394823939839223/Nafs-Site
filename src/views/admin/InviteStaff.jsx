@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
-import Input, { Select } from '../../components/ui/Input'
+import Input, { Select, MenuItem } from '../../components/ui/Input'
 import Table, { TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table'
 import Badge from '../../components/ui/Badge'
 import { useToast } from '../../components/ui/Toast'
@@ -193,9 +193,9 @@ export default function InviteStaff() {
               error={errors.permissions}
             >
               {permissionLevels.map(level => (
-                <option key={level.value} value={level.value}>
+                <MenuItem key={level.value} value={level.value}>
                   {level.label}
-                </option>
+                </MenuItem>
               ))}
             </Select>
 
