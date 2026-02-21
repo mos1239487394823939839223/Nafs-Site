@@ -2,17 +2,19 @@ import { useState } from 'react'
 import DynamicSidebar from './DynamicSidebar'
 import Header from './Header'
 import { Menu, X } from 'lucide-react'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { isRTL } = useLanguage()
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background">
+    <div className="flex h-screen overflow-hidden bg-background" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Dynamic Sidebar */}
       <DynamicSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden min-w-0 lg:ml-64">
+      <div className={`flex-1 flex flex-col overflow-hidden min-w-0 ${isRTL ? 'lg:mr-64' : 'lg:ml-64'}`}>
         {/* Header */}
         <Header onMenuClick={() => setSidebarOpen(true)} />
 

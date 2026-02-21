@@ -29,7 +29,7 @@ export default function MedicalHistory() {
         const fetchBookings = async () => {
             try {
                 setLoading(true)
-                const response = await doctorAPI.getBookings(0, 100)
+                const response = await doctorAPI.getBookings(1, 100)
                 if (response.IsSuccess && response.Data) {
                     setBookings(response.Data.Items || [])
                 }

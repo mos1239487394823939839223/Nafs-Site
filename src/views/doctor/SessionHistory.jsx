@@ -21,7 +21,7 @@ export default function SessionHistory() {
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState(null) // null = all
-  const [pageIndex, setPageIndex] = useState(0)
+  const [pageIndex, setPageIndex] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalRecords, setTotalRecords] = useState(0)
   const pageSize = 20
@@ -81,7 +81,7 @@ export default function SessionHistory() {
 
   const handleStatusFilter = (status) => {
     setStatusFilter(status)
-    setPageIndex(0) // Reset to first page on filter change
+    setPageIndex(1) // Reset to first page on filter change
   }
 
   return (
@@ -152,19 +152,19 @@ export default function SessionHistory() {
               <Button
                 variant="outline"
                 size="sm"
-                disabled={pageIndex === 0}
-                onClick={() => setPageIndex(prev => Math.max(0, prev - 1))}
+                disabled={pageIndex <= 1}
+                onClick={() => setPageIndex(prev => Math.max(1, prev - 1))}
               >
                 <ChevronLeft className="w-4 h-4" />
                 {t('common.previous')}
               </Button>
               <span className="text-sm text-text-muted">
-                {t('common.page')} {pageIndex + 1} {t('common.of')} {totalPages}
+                {t('common.page')} {pageIndex} {t('common.of')} {totalPages}
               </span>
               <Button
                 variant="outline"
                 size="sm"
-                disabled={pageIndex >= totalPages - 1}
+                disabled={pageIndex >= totalPages}
                 onClick={() => setPageIndex(prev => prev + 1)}
               >
                 {t('common.next')}

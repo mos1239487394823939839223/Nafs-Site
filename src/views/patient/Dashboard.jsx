@@ -44,7 +44,7 @@ export default function PatientDashboard() {
     const fetchBookings = async () => {
       try {
         setLoading(true)
-        const response = await patientAPI.getPatientBookings(0, 20)
+        const response = await patientAPI.getPatientBookings(1, 20)
         if (response?.IsSuccess !== false && response?.Data) {
           setBookings(response.Data.Items || response.Data || [])
         }

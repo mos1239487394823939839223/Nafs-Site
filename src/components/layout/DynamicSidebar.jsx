@@ -26,7 +26,7 @@ import {
 
 export default function DynamicSidebar({ isOpen, onClose }) {
   const { role, user, logout } = useAuth()
-  const { t } = useLanguage()
+  const { t, isRTL } = useLanguage()
 
   // Navigation items for each role
   const navigationConfig = {
@@ -79,10 +79,14 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full w-64 bg-background-paper border-r border-border
+          fixed top-0 h-full w-64 bg-background-paper
           transform transition-transform duration-300 ease-in-out z-50
-          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${isRTL 
+            ? `right-0 border-l border-border ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}` 
+            : `left-0 border-r border-border ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`
+          }
         `}
+        dir={isRTL ? 'rtl' : 'ltr'}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
@@ -124,7 +128,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
                         ${isActive
-                          ? 'bg-primary/10 text-primary border-l-4 border-primary'
+                          ? `bg-primary/10 text-primary ${isRTL ? 'border-r-4' : 'border-l-4'} border-primary`
                           : 'text-text hover:bg-background-gray hover:text-primary'
                         }`
                       }

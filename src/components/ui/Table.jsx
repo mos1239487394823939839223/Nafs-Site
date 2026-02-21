@@ -1,51 +1,68 @@
+import * as React from 'react'
 import { cn } from '../../lib/utils'
 
-export default function Table({ children, className }) {
-  return (
-    <div className="w-full overflow-x-auto">
-      <table className={cn('w-full border-collapse', className)}>
-        {children}
-      </table>
-    </div>
-  )
-}
+const Table = React.forwardRef(({ className, ...props }, ref) => (
+  <div className="relative w-full overflow-auto rounded-xl border border-border/60 bg-card">
+    <table
+      ref={ref}
+      className={cn('w-full caption-bottom text-sm', className)}
+      {...props}
+    />
+  </div>
+))
+Table.displayName = 'Table'
 
-export function TableHeader({ children, className }) {
-  return (
-    <thead className={cn('bg-background-subtle border-b border-border', className)}>
-      {children}
-    </thead>
-  )
-}
+const TableHeader = React.forwardRef(({ className, ...props }, ref) => (
+  <thead
+    ref={ref}
+    className={cn('bg-background-subtle/70 [&_tr]:border-b', className)}
+    {...props}
+  />
+))
+TableHeader.displayName = 'TableHeader'
 
-export function TableBody({ children, className }) {
-  return (
-    <tbody className={cn('divide-y divide-border', className)}>
-      {children}
-    </tbody>
-  )
-}
+const TableBody = React.forwardRef(({ className, ...props }, ref) => (
+  <tbody
+    ref={ref}
+    className={cn('[&_tr:last-child]:border-0', className)}
+    {...props}
+  />
+))
+TableBody.displayName = 'TableBody'
 
-export function TableRow({ children, className, hover = true }) {
-  return (
-    <tr className={cn(hover && 'hover:bg-background-subtle transition-colors', className)}>
-      {children}
-    </tr>
-  )
-}
+const TableRow = React.forwardRef(({ className, hover = true, ...props }, ref) => (
+  <tr
+    ref={ref}
+    className={cn(
+      'border-b border-border/40 transition-colors',
+      hover && 'hover:bg-primary/[0.03] data-[state=selected]:bg-primary/5',
+      className
+    )}
+    {...props}
+  />
+))
+TableRow.displayName = 'TableRow'
 
-export function TableHead({ children, className }) {
-  return (
-    <th className={cn('px-6 py-3 text-left text-xs font-semibold text-text-muted uppercase tracking-wider', className)}>
-      {children}
-    </th>
-  )
-}
+const TableHead = React.forwardRef(({ className, ...props }, ref) => (
+  <th
+    ref={ref}
+    className={cn(
+      'h-11 px-4 text-left align-middle font-semibold text-text-muted text-xs uppercase tracking-wider [&:has([role=checkbox])]:pr-0',
+      className
+    )}
+    {...props}
+  />
+))
+TableHead.displayName = 'TableHead'
 
-export function TableCell({ children, className }) {
-  return (
-    <td className={cn('px-6 py-4 text-sm text-text', className)}>
-      {children}
-    </td>
-  )
-}
+const TableCell = React.forwardRef(({ className, ...props }, ref) => (
+  <td
+    ref={ref}
+    className={cn('px-4 py-3 align-middle text-sm [&:has([role=checkbox])]:pr-0', className)}
+    {...props}
+  />
+))
+TableCell.displayName = 'TableCell'
+
+export default Table
+export { Table, TableHeader, TableBody, TableRow, TableHead, TableCell }

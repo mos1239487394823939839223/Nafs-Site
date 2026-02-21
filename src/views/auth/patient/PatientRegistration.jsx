@@ -158,6 +158,20 @@ export default function PatientRegistration() {
       } else {
         console.warn("⚠️ Server returned success=false for SendOtp");
         console.error("Error Message:", response.Message);
+
+        // If it's a cooldown error, OTP was already sent — treat as soft success
+        const isCooldown = response.Message &&
+          (response.Message.toLowerCase().includes('wait') ||
+           response.Message.toLowerCase().includes('seconds') ||
+           response.Message.toLowerCase().includes('ثانية'));
+
+        if (isCooldown) {
+          setOtpSent(true);
+          toast.success(t('auth.otpAlreadySent') || 'OTP was already sent to your email. Please check your inbox.');
+          console.groupEnd();
+          return true;
+        }
+
         toast.error(response.Message || t('errors.failedSendOtp'));
         console.groupEnd();
         return false;
@@ -251,12 +265,12 @@ export default function PatientRegistration() {
         const otpSent = await handleSendOTP();
         console.log("OTP send function returned:", otpSent);
 
-        // Only move to next step if OTP was sent successfully
-        if (otpSent) {
-          nextStep();
-        } else {
-          console.warn("⚠️ OTP failed to send after successful registration.");
+        // Always move to OTP step after successful registration.
+        // If OTP send failed due to cooldown, the user already has an OTP in their email.
+        if (!otpSent) {
+          toast.success('OTP was already sent to your email. Please check your inbox.');
         }
+        nextStep();
       } else {
         console.error(
           "❌ Registration failed (IsSuccess check):",
@@ -346,6 +360,11 @@ export default function PatientRegistration() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background-paper to-background py-12 px-4 flex items-center justify-center">
       <div className="w-full max-w-2xl">
+        {/* Progress Stepper */}
+        <div className="mb-8">
+          <ProgressStepper steps={steps} currentStep={currentStep} />
+        </div>
+
         {/* Form Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}

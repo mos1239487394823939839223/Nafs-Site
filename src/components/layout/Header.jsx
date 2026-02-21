@@ -9,7 +9,7 @@ import RoleBadge from '../ui/RoleBadge'
 export default function Header({ onMenuClick }) {
   const { role, user } = useAuth()
   const { theme, toggleTheme } = useTheme()
-  const { language, toggleLanguage, t } = useLanguage()
+  const { language, toggleLanguage, t, isRTL } = useLanguage()
   const [showNotifications, setShowNotifications] = useState(false)
   const [activeNotifTab, setActiveNotifTab] = useState('patient')
 
@@ -36,7 +36,7 @@ export default function Header({ onMenuClick }) {
         <div className="flex items-center gap-4">
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 hover:bg-background-subtle rounded-xl transition-colors -ml-2"
+            className={`lg:hidden p-2 hover:bg-background-subtle rounded-xl transition-colors ${isRTL ? '-mr-2' : '-ml-2'}`}
           >
             <Menu className="w-6 h-6 text-text" />
           </button>
@@ -73,11 +73,11 @@ export default function Header({ onMenuClick }) {
 
           {/* Search */}
           <div className="relative hidden md:block">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-light" />
+            <Search className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-text-light ${isRTL ? 'right-3' : 'left-3'}`} />
             <input
               type="text"
               placeholder={t('common.search') + '...'}
-              className="pl-10 pr-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary w-64 transition-all bg-background text-text"
+              className={`py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary w-64 transition-all bg-background text-text ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
             />
           </div>
 
@@ -99,7 +99,7 @@ export default function Header({ onMenuClick }) {
                   onClick={() => setShowNotifications(false)}
                 />
 
-                <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 bg-background-paper rounded-2xl shadow-xl border border-border z-50 overflow-hidden">
+                <div className={`absolute mt-2 w-[calc(100vw-2rem)] sm:w-80 bg-background-paper rounded-2xl shadow-xl border border-border z-50 overflow-hidden ${isRTL ? 'left-0' : 'right-0'}`}>
                   <div className="p-4 border-b border-border flex items-center justify-between">
                     <h3 className="font-bold text-text-heading font-black italic uppercase tracking-tighter">{t('common.notifications')}</h3>
                     <Badge variant="outline">{notifications.length}</Badge>

@@ -23,7 +23,7 @@ export default function PatientQueue() {
   const [filter, setFilter] = useState('all')
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
-  const [pageIndex, setPageIndex] = useState(0)
+  const [pageIndex, setPageIndex] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const pageSize = 20
 
@@ -177,17 +177,17 @@ export default function PatientQueue() {
           {totalPages > 1 && (
             <div className="flex items-center justify-center gap-4">
               <button
-                disabled={pageIndex === 0}
-                onClick={() => setPageIndex(prev => Math.max(0, prev - 1))}
+                disabled={pageIndex <= 1}
+                onClick={() => setPageIndex(prev => Math.max(1, prev - 1))}
                 className="p-2 rounded-lg border border-border hover:bg-background-subtle disabled:opacity-50 transition-colors"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <span className="text-sm text-text-muted">
-                {t('common.page')} {pageIndex + 1} {t('common.of')} {totalPages}
+                {t('common.page')} {pageIndex} {t('common.of')} {totalPages}
               </span>
               <button
-                disabled={pageIndex >= totalPages - 1}
+                disabled={pageIndex >= totalPages}
                 onClick={() => setPageIndex(prev => prev + 1)}
                 className="p-2 rounded-lg border border-border hover:bg-background-subtle disabled:opacity-50 transition-colors"
               >

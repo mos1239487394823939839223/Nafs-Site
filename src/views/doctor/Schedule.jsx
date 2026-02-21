@@ -160,7 +160,7 @@ export default function Schedule() {
       toast.error(t('errors.saveFailed'))
     } finally {
       setSaving(false)
-    }
+  }
   }
 
   // Handle block time
@@ -621,7 +621,7 @@ export default function Schedule() {
                         <Badge variant={slot.IsActive ? 'success' : 'danger'}>
                           {slot.IsActive ? t('common.active') : t('common.inactive')}
                         </Badge>
-                      </div>
+        </div>
                       <button
                         onClick={() => handleDelete(slot.Id)}
                         disabled={deletingId === slot.Id}
@@ -641,16 +641,16 @@ export default function Schedule() {
                   </div>
                 ))}
               </div>
-            ) : (
+          ) : (
               <div className="text-center py-10 bg-background-paper rounded-2xl border-2 border-dashed border-border">
                 <CalendarIcon className="w-12 h-12 text-text-muted mx-auto mb-3 opacity-30" />
                 <p className="text-text-muted">{t('doctor.noWeeklySchedule')}</p>
                 <Button variant="outline" size="sm" className="mt-3" onClick={() => setIsWeeklyModalOpen(true)}>
                   {t('doctor.setWeeklySchedule')}
-                </Button>
+        </Button>
               </div>
             )}
-          </motion.div>
+      </motion.div>
 
           {/* Specific Time Slots */}
           <motion.div

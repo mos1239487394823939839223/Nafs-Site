@@ -37,7 +37,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 export default function ReserveAppointment() {
   const { user: currentUser } = useAuth();
   const toast = useToast();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
 
   // BookingStatus enum
   const BookingStatusMap = {
@@ -61,7 +61,7 @@ export default function ReserveAppointment() {
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [pagination, setPagination] = useState({
-    pageIndex: 0,
+    pageIndex: 1,
     pageSize: 10,
     totalPages: 0,
     totalRecords: 0,
@@ -71,14 +71,14 @@ export default function ReserveAppointment() {
   const [patientBookings, setPatientBookings] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [bookingsPagination, setBookingsPagination] = useState({
-    pageIndex: 0,
+    pageIndex: 1,
     pageSize: 10,
     totalPages: 0,
   });
   const [cancellingId, setCancellingId] = useState(null);
 
   // Fetch Doctors with Pagination
-  const fetchDoctors = async (page = 0) => {
+  const fetchDoctors = async (page = 1) => {
     setLoading(true);
     try {
       const response = await patientAPI.getAllDoctors(page, pagination.pageSize);
@@ -102,7 +102,7 @@ export default function ReserveAppointment() {
   };
 
   // Fetch Patient Bookings for status tab
-  const fetchPatientBookings = async (page = 0) => {
+  const fetchPatientBookings = async (page = 1) => {
     setBookingsLoading(true);
     try {
       const response = await patientAPI.getPatientBookings(page, bookingsPagination.pageSize);
@@ -126,15 +126,128 @@ export default function ReserveAppointment() {
 
   useEffect(() => {
     if (mainTab === "reserve") {
-      fetchDoctors(0);
+      fetchDoctors(1);
     } else if (mainTab === "status") {
-      fetchPatientBookings(0);
+      fetchPatientBookings(1);
     }
   }, [mainTab]);
 
+  // Re-fetch doctor slots when the user navigates to a different week
+  useEffect(() => {
+    if (step === 2 && selectedDoctor) {
+      fetchDoctorSlots(selectedDoctor.Id, selectedDate);
+    }
+  }, [selectedDate]);
+
   const handlePageChange = (newPage) => {
-    if (newPage >= 0 && newPage < pagination.totalPages) {
+    if (newPage >= 1 && newPage <= pagination.totalPages) {
       fetchDoctors(newPage);
+    }
+  };
+
+  // Helper to format date as YYYY-MM-DD
+  const formatDateKey = (d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  // Get the week date range for a given base date
+  // Ensures StartDate is never in the past (backend rejects past dates)
+  const getWeekRange = (baseDate) => {
+    const weekStart = new Date(baseDate);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Sunday
+    weekStart.setHours(0, 0, 0, 0);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    // Use today if the week start is in the past
+    const start = weekStart < today ? today : weekStart;
+
+    const end = new Date(weekStart);
+    end.setDate(end.getDate() + 6); // Saturday
+    end.setHours(23, 59, 59, 999);
+    return { start, end };
+  };
+
+  // Fetch available slots from the API for a given doctor and week
+  const fetchDoctorSlots = async (doctorId, baseDate) => {
+    try {
+      const { start, end } = getWeekRange(baseDate);
+      const response = await patientAPI.getDoctorSlots(
+        String(doctorId),
+        formatDateKey(start),
+        formatDateKey(end)
+      );
+
+      console.log("Doctor Slots API response:", response);
+
+      const mappedSlots = {};
+
+      if (response.IsSuccess && response.Data) {
+        // API returns { DoctorId, DoctorName, Slots: [...] }
+        const slotsData = response.Data.Slots
+          || response.Data.Items
+          || (Array.isArray(response.Data) ? response.Data : []);
+
+        console.log("Slots data parsed:", slotsData);
+
+        slotsData.forEach(slot => {
+          // Handle various field names for the time
+          const slotTime = slot.StartTime || slot.Date || slot.Start || slot.SessionStartTime || slot.SlotStart;
+          if (slotTime) {
+            const slotDate = new Date(slotTime);
+            const dateKey = formatDateKey(slotDate);
+            const hour = slotDate.getHours();
+            const key = `${dateKey}-${hour}`;
+
+            // Check if slot is available or booked
+            if (slot.IsBooked || slot.Booked) {
+              mappedSlots[key] = "booked";
+            } else {
+              mappedSlots[key] = "available";
+            }
+          }
+        });
+
+        if (slotsData.length === 0) {
+          console.warn("Doctor has no available slots for this period");
+        }
+      }
+
+      // Fallback: also try DoctoreSchualings from doctor data if slots API returned nothing
+      if (Object.keys(mappedSlots).length === 0 && selectedDoctor?.DoctoreSchualings) {
+        const apiSchedules = selectedDoctor.DoctoreSchualings || [];
+        apiSchedules.forEach(schedule => {
+          if (schedule.Aviable && schedule.Date) {
+            const scheduleDate = new Date(schedule.Date);
+            const dateKey = formatDateKey(scheduleDate);
+            const hour = scheduleDate.getHours();
+            const key = `${dateKey}-${hour}`;
+            mappedSlots[key] = "available";
+          }
+        });
+      }
+
+      setSlots(mappedSlots);
+    } catch (error) {
+      console.error("Error fetching doctor slots:", error);
+      // Fallback to DoctoreSchualings if the slots API fails
+      if (selectedDoctor?.DoctoreSchualings) {
+        const mappedSlots = {};
+        selectedDoctor.DoctoreSchualings.forEach(schedule => {
+          if (schedule.Aviable && schedule.Date) {
+            const scheduleDate = new Date(schedule.Date);
+            const dateKey = formatDateKey(scheduleDate);
+            const hour = scheduleDate.getHours();
+            const key = `${dateKey}-${hour}`;
+            mappedSlots[key] = "available";
+          }
+        });
+        setSlots(mappedSlots);
+      }
     }
   };
 
@@ -154,28 +267,9 @@ export default function ReserveAppointment() {
         if (doctorData) {
           setSelectedDoctor(doctorData);
 
-          // Map DoctoreSchualings (scheduling) to the slots grid
-          const apiSchedules = doctorData.DoctoreSchualings || [];
-          const mappedSlots = {};
+          // Fetch available slots from dedicated API
+          await fetchDoctorSlots(doctorId, selectedDate);
 
-          const formatDate = (d) => {
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, '0');
-            const day = String(d.getDate()).padStart(2, '0');
-            return `${year}-${month}-${day}`;
-          };
-
-          apiSchedules.forEach(schedule => {
-            if (schedule.Aviable && schedule.Date) {
-              const scheduleDate = new Date(schedule.Date);
-              const dateKey = formatDate(scheduleDate);
-              const hour = scheduleDate.getHours();
-              const key = `${dateKey}-${hour}`;
-              mappedSlots[key] = "available";
-            }
-          });
-
-          setSlots(mappedSlots);
           setStep(2);
         } else {
           toast.error(t('errors.doctorNotFound'));
@@ -217,10 +311,12 @@ export default function ReserveAppointment() {
     const dateKey = `${year}-${month}-${day}`;
 
     const key = `${dateKey}-${hour}`;
+    console.log("Slot clicked:", key, "status:", slots[key]);
 
     // Allow booking if slot is available
     if (slots[key] === "available") {
       setBookedSlot({ date, hour });
+      console.log("Booked slot set:", { date: dateKey, hour });
     }
   };
 
@@ -251,7 +347,7 @@ export default function ReserveAppointment() {
       const bookingRequest = {
         DoctorId: selectedDoctor.Id,
         SessionStartTime: formatDate(bookingDate),
-        DurationMinutes: 60, // Default duration, or fetch from slot if available
+        DurationMinutes: 30, // Backend accepts 30 or 45 minutes only
         PatientNotes: "Booked via Web App"
       };
 
@@ -264,62 +360,58 @@ export default function ReserveAppointment() {
       }
     } catch (error) {
       console.error("Booking error:", error);
-      toast.error(t('errors.bookingFailed'));
+      const errorMsg = error.response?.data?.Message || t('errors.bookingFailed');
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6">
+    <div className="max-w-6xl mx-auto space-y-6 p-4 md:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-3xl font-bold text-text-heading">{t('patient.appointments')}</h1>
-          <p className="text-text-muted">
-            {t('patient.manageAndBookSessions')}
+          <p className="text-text-muted mt-1">
+            {t('patient.manageBookSessions')}
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-border mb-8 overflow-x-auto no-scrollbar scroll-smooth">
+      <div className="flex border-b-2 border-border mb-8 overflow-x-auto no-scrollbar scroll-smooth gap-1">
         <button
           onClick={() => setMainTab("reserve")}
-          className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${mainTab === "reserve"
-            ? "text-primary"
-            : "text-text-muted hover:text-text-heading"
+          className={`px-5 md:px-8 py-3.5 font-semibold transition-all relative whitespace-nowrap rounded-t-xl ${mainTab === "reserve"
+            ? "text-primary bg-primary/5 border-b-2 border-primary -mb-[2px]"
+            : "text-text-muted hover:text-text-heading hover:bg-background-subtle"
             }`}
         >
           {t('patient.availableDoctors')}
-          {mainTab === "reserve" && (
-            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />
-          )}
         </button>
         <button
           onClick={() => setMainTab("status")}
-          className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${mainTab === "status"
-            ? "text-primary"
-            : "text-text-muted hover:text-text-heading"
+          className={`px-5 md:px-8 py-3.5 font-semibold transition-all relative whitespace-nowrap rounded-t-xl ${mainTab === "status"
+            ? "text-primary bg-primary/5 border-b-2 border-primary -mb-[2px]"
+            : "text-text-muted hover:text-text-heading hover:bg-background-subtle"
             }`}
         >
           {t('patient.myReservationStatus')}
-          {mainTab === "status" && (
-            <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />
-          )}
         </button>
       </div>
 
       {mainTab === "reserve" ? (
         <div className="space-y-6">
           {step > 1 && step < 3 && (
-            <div className="flex justify-start">
+            <div className={`flex ${isRTL ? 'justify-end' : 'justify-start'}`}>
               <Button
                 variant="ghost"
                 onClick={() => setStep(step - 1)}
-                className="gap-2"
+                className="gap-2 hover:bg-primary/10"
               >
-                <ArrowLeft className="w-4 h-4" /> {t('common.backToList')}
+                {isRTL ? <ChevronRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+                {t('common.backToList')}
               </Button>
             </div>
           )}
@@ -333,22 +425,15 @@ export default function ReserveAppointment() {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-6"
               >
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <h2 className="text-xl font-semibold flex items-center gap-2">
-                    <Stethoscope className="w-5 h-5 text-primary" />
-                    {t('patient.selectDoctor')}
-                  </h2>
-                  {/* Search can be implemented server-side later if API supports it */}
-                  {/* <div className="relative w-full md:w-64">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light" />
-                    <input
-                      type="text"
-                      placeholder="Search doctor name..."
-                      value={doctorSearch}
-                      onChange={(e) => setDoctorSearch(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-text"
-                    />
-                  </div> */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-2">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                      <Stethoscope className="w-5 h-5 text-primary" />
+                    </div>
+                    <h2 className="text-xl font-bold text-text-heading">
+                      {t('patient.selectDoctor')}
+                    </h2>
+                  </div>
                 </div>
 
                 {/* Doctors Table */}
@@ -362,65 +447,67 @@ export default function ReserveAppointment() {
                       <Table>
                         <TableHeader>
                           <TableRow hover={false}>
-                            <TableHead>{t('common.doctor')}</TableHead>
-                            <TableHead>{t('doctor.specialty')}</TableHead>
-                            <TableHead>{t('doctor.experienceBio')}</TableHead>
-                            <TableHead className="text-right">{t('common.action')}</TableHead>
+                            <TableHead className="w-[30%]">{t('common.doctor')}</TableHead>
+                            <TableHead className="w-[20%]">{t('common.specialty')}</TableHead>
+                            <TableHead className="w-[35%]">{t('patient.experienceBio')}</TableHead>
+                            <TableHead className={`w-[15%] ${isRTL ? 'text-left' : 'text-right'}`}>{t('common.action')}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
                           {doctors.length > 0 ? (
                             doctors.map((doctor) => (
                               <TableRow key={doctor.Id}>
-                                <TableCell>
+                                <TableCell className="py-4">
                                   <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center flex-shrink-0">
+                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm">
                                       {doctor.Image ? (
                                         <img src={doctor.Image} alt={doctor.Name} className="w-full h-full rounded-full object-cover" />
                                       ) : (
-                                        <User className="w-5 h-5 text-secondary" />
+                                        <User className="w-6 h-6 text-primary" />
                                       )}
                                     </div>
                                     <div>
-                                      <p className="font-semibold text-text-heading">{doctor.Name}</p>
+                                      <p className="font-bold text-text-heading text-base">{doctor.Name}</p>
+                                      <p className="text-xs text-text-muted">{t('common.doctor')}</p>
                                     </div>
                                   </div>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="py-4">
                                   {doctor.Specialist && doctor.Specialist.length > 0 ? (
-                                    <div className="flex flex-wrap gap-1">
+                                    <div className="flex flex-wrap gap-1.5">
                                       {doctor.Specialist.map((spec, idx) => (
-                                        <Badge key={idx} variant="secondary" className="text-xs">
+                                        <Badge key={idx} variant="secondary" className="text-xs px-2.5 py-1">
                                           {spec}
                                         </Badge>
                                       ))}
                                     </div>
                                   ) : (
-                                    <span className="text-text-muted italic">{t('doctor.general')}</span>
+                                    <Badge variant="outline" className="text-xs">{t('common.general')}</Badge>
                                   )}
                                 </TableCell>
-                                <TableCell>
-                                  <p className="max-w-xs truncate text-text-muted" title={doctor.Description}>
-                                    {doctor.Description || t('doctor.noDescription')}
+                                <TableCell className="py-4">
+                                  <p className="max-w-xs line-clamp-2 text-text-muted text-sm leading-relaxed" title={doctor.Description}>
+                                    {doctor.Description || t('common.noDescription')}
                                   </p>
                                 </TableCell>
-                                <TableCell className="text-right">
+                                <TableCell className={`py-4 ${isRTL ? 'text-left' : 'text-right'}`}>
                                   <Button
-                                    variant="ghost"
+                                    variant="outline"
                                     size="sm"
                                     onClick={() => handleSelectDoctor(doctor.Id)}
-                                    title={t('patient.viewCalendar')}
-                                    className="text-primary hover:text-primary-dark hover:bg-primary/10"
+                                    className="gap-2 text-primary border-primary/30 hover:bg-primary hover:text-white transition-all"
                                   >
-                                    <Eye className="w-5 h-5" />
+                                    <Eye className="w-4 h-4" />
+                                    <span className="hidden sm:inline">{t('common.view')}</span>
                                   </Button>
                                 </TableCell>
                               </TableRow>
                             ))
                           ) : (
                             <TableRow>
-                              <TableCell colSpan={4} className="text-center py-8 text-text-muted">
-                                {t('patient.noDoctorsFound')}
+                              <TableCell colSpan={4} className="text-center py-12 text-text-muted">
+                                <User className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                                <p className="font-medium">{t('patient.noDoctorsFound')}</p>
                               </TableCell>
                             </TableRow>
                           )}
@@ -429,26 +516,30 @@ export default function ReserveAppointment() {
 
                       {/* Pagination Controls */}
                       {pagination.totalPages > 1 && (
-                        <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-background-subtle/30">
-                          <span className="text-sm text-text-muted">
-                            {t('common.page')} {pagination.pageIndex + 1} {t('common.of')} {pagination.totalPages}
+                        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-border bg-background-subtle/30">
+                          <span className="text-sm text-text-muted font-medium">
+                            {t('common.page')} {pagination.pageIndex} {t('common.of')} {pagination.totalPages}
                           </span>
                           <div className="flex items-center gap-2">
                             <Button
                               variant="outline"
                               size="sm"
-                              disabled={pagination.pageIndex === 0}
+                              disabled={pagination.pageIndex <= 1}
                               onClick={() => handlePageChange(pagination.pageIndex - 1)}
+                              className="gap-1"
                             >
-                              <ChevronLeft className="w-4 h-4 mr-1" /> {t('common.previous')}
+                              {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+                              {t('common.previous')}
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
-                              disabled={pagination.pageIndex >= pagination.totalPages - 1}
+                              disabled={pagination.pageIndex >= pagination.totalPages}
                               onClick={() => handlePageChange(pagination.pageIndex + 1)}
+                              className="gap-1"
                             >
-                              {t('common.next')} <ChevronRight className="w-4 h-4 ml-1" />
+                              {t('common.next')}
+                              {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                             </Button>
                           </div>
                         </div>
@@ -477,7 +568,16 @@ export default function ReserveAppointment() {
                     onDateChange={setSelectedDate}
                     slots={slots}
                     onSlotClick={handleSlotClick}
+                    mode="patient"
+                    selectedSlot={bookedSlot}
                   />
+                  {Object.keys(slots).length === 0 && (
+                    <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-center">
+                      <Calendar className="w-8 h-8 text-amber-500 mx-auto mb-2" />
+                      <p className="text-amber-700 font-medium">{t('patient.noSlotsAvailable') || 'No available slots for this week'}</p>
+                      <p className="text-amber-600 text-sm mt-1">{t('patient.trySlotsNextWeek') || 'Try navigating to the next week, or the doctor may not have set their schedule yet.'}</p>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-6">
                   <Card className="p-6 border-l-4 border-l-primary">
@@ -501,7 +601,7 @@ export default function ReserveAppointment() {
                         <div className="flex items-center gap-3">
                           <Stethoscope className="w-5 h-5 text-primary" />
                           <div>
-                            <p className="text-xs text-text-light">{t('doctor.specialty')}</p>
+                            <p className="text-xs text-text-light">{t('common.specialty')}</p>
                             <p className="font-medium text-sm">{selectedDoctor.Specialist.join(", ")}</p>
                           </div>
                         </div>
@@ -682,26 +782,30 @@ export default function ReserveAppointment() {
 
               {/* Pagination */}
               {bookingsPagination.totalPages > 1 && (
-                <div className="flex items-center justify-between pt-4">
-                  <span className="text-sm text-text-muted">
-                    {t('common.page')} {bookingsPagination.pageIndex + 1} {t('common.of')} {bookingsPagination.totalPages}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 mt-6 border-t border-border">
+                  <span className="text-sm text-text-muted font-medium">
+                    {t('common.page')} {bookingsPagination.pageIndex} {t('common.of')} {bookingsPagination.totalPages}
                   </span>
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={bookingsPagination.pageIndex === 0}
+                      disabled={bookingsPagination.pageIndex <= 1}
                       onClick={() => fetchPatientBookings(bookingsPagination.pageIndex - 1)}
+                      className="gap-1"
                     >
-                      <ChevronLeft className="w-4 h-4 mr-1" /> {t('common.previous')}
+                      {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+                      {t('common.previous')}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={bookingsPagination.pageIndex >= bookingsPagination.totalPages - 1}
+                      disabled={bookingsPagination.pageIndex >= bookingsPagination.totalPages}
                       onClick={() => fetchPatientBookings(bookingsPagination.pageIndex + 1)}
+                      className="gap-1"
                     >
-                      {t('common.next')} <ChevronRight className="w-4 h-4 ml-1" />
+                      {t('common.next')}
+                      {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                     </Button>
                   </div>
                 </div>

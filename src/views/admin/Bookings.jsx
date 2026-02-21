@@ -20,7 +20,7 @@ export default function AdminBookings() {
   const toast = useToast()
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
-  const [pageIndex, setPageIndex] = useState(0)
+  const [pageIndex, setPageIndex] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalRecords, setTotalRecords] = useState(0)
   const [statusFilter, setStatusFilter] = useState(null)
@@ -108,7 +108,7 @@ export default function AdminBookings() {
                 value={statusFilter === null ? '' : statusFilter}
                 onChange={(e) => {
                   setStatusFilter(e.target.value === '' ? null : parseInt(e.target.value))
-                  setPageIndex(0)
+                  setPageIndex(1)
                 }}
                 className="border border-border rounded-xl px-3 py-2.5 bg-background text-text focus:ring-2 focus:ring-primary/20 outline-none text-sm"
               >
@@ -208,19 +208,19 @@ export default function AdminBookings() {
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={pageIndex === 0}
-                    onClick={() => setPageIndex(prev => Math.max(0, prev - 1))}
+                    disabled={pageIndex <= 1}
+                    onClick={() => setPageIndex(prev => Math.max(1, prev - 1))}
                   >
                     <ChevronLeft className="w-4 h-4 mr-1" />
                     Previous
                   </Button>
                   <span className="text-sm text-text-muted">
-                    Page {pageIndex + 1} of {totalPages}
+                    Page {pageIndex} of {totalPages}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
-                    disabled={pageIndex >= totalPages - 1}
+                    disabled={pageIndex >= totalPages}
                     onClick={() => setPageIndex(prev => prev + 1)}
                   >
                     Next

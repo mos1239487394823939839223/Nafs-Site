@@ -36,7 +36,7 @@ export default function BookingModal({ isOpen, onClose }) {
   const fetchDoctors = async () => {
     try {
       setLoading(true)
-      const response = await patientAPI.getAllDoctors(0, 50)
+      const response = await patientAPI.getAllDoctors(1, 50)
       if (response?.IsSuccess !== false && response?.Data) {
         const items = response.Data.Items || response.Data || []
         setDoctors(Array.isArray(items) ? items : [])

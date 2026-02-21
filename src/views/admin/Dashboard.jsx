@@ -28,7 +28,7 @@ export default function AdminDashboard() {
       setLoading(true)
       try {
         const [doctorsRes, bookingsRes, usersRes] = await Promise.allSettled([
-          adminAPI.getDoctors(0, 50),
+          adminAPI.getDoctors(1, 50),
           adminAPI.getBookings({ pageIndex: 0, pageSize: 50 }),
           userAPI.getUsers({ pageIndex: 1, pageSize: 1 }), // Just to get count
         ])

@@ -216,7 +216,7 @@ export const userAPI = {
 // ─── Patient API Functions ───────────────────────────────────────────────────
 export const patientAPI = {
     // Get all doctors with pagination
-    getAllDoctors: async (pageIndex = 0, pageSize = 10) => {
+    getAllDoctors: async (pageIndex = 1, pageSize = 10) => {
         const response = await api.get('/Patient/GetAllDoctors', {
             params: {
                 PageIndex: pageIndex,
@@ -254,7 +254,7 @@ export const patientAPI = {
     },
 
     // Get Patient Bookings
-    getPatientBookings: async (pageIndex = 0, pageSize = 10, status = null) => {
+    getPatientBookings: async (pageIndex = 1, pageSize = 10, status = null) => {
         const params = {
             PageIndex: pageIndex,
             PageSize: pageSize,
@@ -278,7 +278,7 @@ export const patientAPI = {
 // ─── Doctor API Functions ────────────────────────────────────────────────────
 export const doctorAPI = {
     // Get doctor bookings with pagination and optional status filter
-    getBookings: async (pageIndex = 0, pageSize = 20, status = null) => {
+    getBookings: async (pageIndex = 1, pageSize = 20, status = null) => {
         const params = {
             PageIndex: pageIndex,
             PageSize: pageSize,
@@ -335,7 +335,7 @@ export const doctorAPI = {
 // ─── Admin API Functions ─────────────────────────────────────────────────────
 export const adminAPI = {
     // Get all doctors (admin view)
-    getDoctors: async (pageIndex = 0, pageSize = 20, isActive = null) => {
+    getDoctors: async (pageIndex = 1, pageSize = 20, isActive = null) => {
         const params = {
             PageIndex: pageIndex,
             PageSize: pageSize,
@@ -381,7 +381,7 @@ export const adminAPI = {
     // Get all bookings (admin view)
     getBookings: async (params = {}) => {
         const queryParams = {
-            PageIndex: params.pageIndex || 0,
+            PageIndex: params.pageIndex || 1,
             PageSize: params.pageSize || 20,
         };
         if (params.doctorId) queryParams.DoctorId = params.doctorId;
@@ -403,7 +403,7 @@ export const chatAPI = {
     },
 
     // Get messages for a specific room (paginated)
-    getRoomMessages: async (roomId, pageIndex = 0, pageSize = 50) => {
+    getRoomMessages: async (roomId, pageIndex = 1, pageSize = 50) => {
         const response = await api.get(`/Chat/Room/${roomId}/Messages`, {
             params: {
                 PageIndex: pageIndex,

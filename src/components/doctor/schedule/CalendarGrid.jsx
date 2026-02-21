@@ -1,7 +1,7 @@
 import { motion } from 'framer-motion'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 
-export default function CalendarGrid({ selectedDate, onDateChange, slots, onSlotClick }) {
+export default function CalendarGrid({ selectedDate, onDateChange, slots, onSlotClick, mode = 'doctor', selectedSlot = null }) {
   const hours = Array.from({ length: 9 }, (_, i) => i + 9) // 9 AM to 5 PM
   const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -36,6 +36,15 @@ export default function CalendarGrid({ selectedDate, onDateChange, slots, onSlot
 
     const key = `${dateKey}-${hour}`;
     return slots[key] || 'none' // 'available', 'booked', 'none'
+  }
+
+  const isSelected = (date, hour) => {
+    if (!selectedSlot) return false;
+    const slotDate = selectedSlot.date;
+    return slotDate.getFullYear() === date.getFullYear()
+      && slotDate.getMonth() === date.getMonth()
+      && slotDate.getDate() === date.getDate()
+      && selectedSlot.hour === hour;
   }
 
   return (
@@ -104,28 +113,40 @@ export default function CalendarGrid({ selectedDate, onDateChange, slots, onSlot
                 const status = getSlotStatus(date, hour)
                 const isPast = date < new Date().setHours(0, 0, 0, 0)
 
+                const isPatient = mode === 'patient'
+                const isDisabled = isPast || status === 'booked' || (isPatient && status === 'none')
+                const selected = isSelected(date, hour)
+
                 return (
                   <motion.button
                     key={i}
-                    whileHover={{ scale: 0.98 }}
-                    whileTap={{ scale: 0.95 }}
-                    disabled={isPast || status === 'booked'}
+                    whileHover={!isDisabled ? { scale: 0.98 } : {}}
+                    whileTap={!isDisabled ? { scale: 0.95 } : {}}
+                    disabled={isDisabled}
                     onClick={() => onSlotClick(date, hour)}
-                    className={`h-16 border-r border-border last:border-r-0 transition-all relative group ${isPast ? 'bg-background-subtle cursor-not-allowed' :
-                      status === 'booked' ? 'bg-primary/20 cursor-not-allowed' :
-                        status === 'available' ? 'bg-primary text-white' :
-                          'hover:bg-background-subtle'
+                    className={`h-16 border-r border-border last:border-r-0 transition-all relative group ${isPast ? 'bg-gray-100 cursor-not-allowed opacity-50' :
+                      status === 'booked' ? 'bg-orange-100 border-2 border-orange-300 cursor-not-allowed' :
+                        selected ? 'bg-emerald-600 ring-4 ring-emerald-300 text-white cursor-pointer shadow-lg z-10' :
+                          status === 'available' ? 'bg-emerald-100 border-2 border-emerald-400 cursor-pointer hover:bg-emerald-200' :
+                            isPatient ? 'cursor-default' :
+                              'hover:bg-background-subtle cursor-pointer'
                       }`}
                   >
                     {/* Content */}
                     <div className="flex flex-col items-center justify-center h-full">
                       {status === 'booked' && (
-                        <span className="text-xs font-semibold text-primary">Booked</span>
+                        <span className="text-xs font-semibold text-orange-600">Booked</span>
                       )}
-                      {status === 'available' && (
-                        <span className="text-xs font-medium">Available</span>
+                      {selected && (
+                        <span className="text-sm font-bold">✓ Selected</span>
                       )}
-                      {!isPast && status === 'none' && (
+                      {status === 'available' && !selected && (
+                        <>
+                          <div className="w-2 h-2 rounded-full bg-emerald-500 mb-1"></div>
+                          <span className="text-xs font-semibold text-emerald-700">Available</span>
+                        </>
+                      )}
+                      {!isPast && status === 'none' && !isPatient && (
                         <span className="opacity-0 group-hover:opacity-100 text-xs text-primary font-medium transition-opacity">
                           Add Slot
                         </span>

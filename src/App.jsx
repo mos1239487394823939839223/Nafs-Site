@@ -1,5 +1,4 @@
 import React from 'react'
-import { NextUIProvider } from "@nextui-org/react";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AuthProvider, useAuth, Roles } from './contexts/AuthContext'
 import { ToastProvider } from './components/ui/Toast'
@@ -300,15 +299,13 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <NextUIProvider>
-          <ThemeProvider>
-            <LanguageProvider>
-              <ToastProvider>
-                <AppRoutes />
-              </ToastProvider>
-            </LanguageProvider>
-          </ThemeProvider>
-        </NextUIProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <ToastProvider>
+              <AppRoutes />
+            </ToastProvider>
+          </LanguageProvider>
+        </ThemeProvider>
       </AuthProvider>
     </BrowserRouter>
   )
