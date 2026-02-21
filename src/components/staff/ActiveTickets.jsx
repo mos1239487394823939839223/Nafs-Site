@@ -1,17 +1,53 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Badge from '../ui/Badge'
-import { Clock, User, AlertCircle, CheckCircle, MessageSquare } from 'lucide-react'
-import { useClinic } from '../../contexts/ClinicContext'
+import { Clock, User, AlertCircle, CheckCircle, MessageSquare, Loader2 } from 'lucide-react'
+import { chatAPI } from '../../lib/api'
 
 export default function ActiveTickets() {
   const [filter, setFilter] = useState('all')
+  const [tickets, setTickets] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const { tickets, updateTicketStatus } = useClinic()
+  // Fetch chat rooms as "tickets" for customer service
+  useEffect(() => {
+    const fetchTickets = async () => {
+      setLoading(true)
+      try {
+        const response = await chatAPI.getRooms()
+        if (response?.IsSuccess !== false && response?.Data) {
+          const rooms = response.Data || []
+          const mappedTickets = rooms.map((room, index) => ({
+            id: room.Id || index,
+            user: room.Name || room.OtherUserName || 'Unknown User',
+            role: 'patient',
+            issue: room.LastMessage || 'No message yet',
+            priority: 'medium',
+            status: room.UnreadCount > 0 ? 'open' : 'resolved',
+            time: room.LastMessageTime ? new Date(room.LastMessageTime).toLocaleTimeString() : 'N/A',
+            category: 'general',
+            assignee: null,
+          }))
+          setTickets(mappedTickets)
+        }
+      } catch (error) {
+        console.error('Failed to fetch tickets:', error)
+        // Use empty array on error
+        setTickets([])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchTickets()
+  }, [])
+
+  const updateTicketStatus = (id, newStatus) => {
+    setTickets(prev => prev.map(t => t.id === id ? { ...t, status: newStatus } : t))
+  }
 
   const handleMoveStatus = (id, newStatus) => {
     updateTicketStatus(id, newStatus)
   }
-
 
   const categories = [
     { value: 'all', label: 'All Tickets', count: tickets.length },
@@ -32,19 +68,20 @@ export default function ActiveTickets() {
     }
   }
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'resolved': return 'success'
-      case 'in-progress': return 'primary'
-      case 'open': return 'warning'
-      default: return 'primary'
-    }
-  }
-
   const groupedByStatus = {
     open: filteredTickets.filter(t => t.status === 'open'),
     'in-progress': filteredTickets.filter(t => t.status === 'in-progress'),
     resolved: filteredTickets.filter(t => t.status === 'resolved')
+  }
+
+  if (loading) {
+    return (
+      <div className="bg-background-paper rounded-2xl shadow-sm p-6">
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -87,6 +124,9 @@ export default function ActiveTickets() {
             </span>
           </div>
           <div className="space-y-3">
+            {groupedByStatus.open.length === 0 && (
+              <p className="text-sm text-text-muted text-center py-4">No open tickets</p>
+            )}
             {groupedByStatus.open.map((ticket) => (
               <div key={ticket.id} className="bg-background-paper rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm">
                 <div className="flex items-start justify-between mb-2">
@@ -134,6 +174,9 @@ export default function ActiveTickets() {
             </span>
           </div>
           <div className="space-y-3">
+            {groupedByStatus['in-progress'].length === 0 && (
+              <p className="text-sm text-text-muted text-center py-4">No tickets in progress</p>
+            )}
             {groupedByStatus['in-progress'].map((ticket) => (
               <div key={ticket.id} className="bg-background-paper rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm">
                 <div className="flex items-start justify-between mb-2">
@@ -153,7 +196,7 @@ export default function ActiveTickets() {
                   </div>
                   <div className="flex items-center gap-1">
                     <User className="w-3 h-3" />
-                    <span>{ticket.assignee}</span>
+                    <span>{ticket.assignee || 'Staff'}</span>
                   </div>
                 </div>
                 <button
@@ -177,6 +220,9 @@ export default function ActiveTickets() {
             </span>
           </div>
           <div className="space-y-3">
+            {groupedByStatus.resolved.length === 0 && (
+              <p className="text-sm text-text-muted text-center py-4">No resolved tickets</p>
+            )}
             {groupedByStatus.resolved.map((ticket) => (
               <div key={ticket.id} className="bg-background-paper rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm opacity-75">
                 <div className="flex items-start justify-between mb-2">
@@ -196,7 +242,7 @@ export default function ActiveTickets() {
                   </div>
                   <div className="flex items-center gap-1">
                     <User className="w-3 h-3" />
-                    <span>{ticket.assignee}</span>
+                    <span>{ticket.assignee || 'Staff'}</span>
                   </div>
                 </div>
               </div>

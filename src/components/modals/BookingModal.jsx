@@ -1,29 +1,126 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
 import Input, { Select } from '../ui/Input'
 import Badge from '../ui/Badge'
-import { Search, Calendar, Clock, Star } from 'lucide-react'
-import { useClinic } from '../../contexts/ClinicContext'
+import { Search, Calendar, Clock, Star, Loader2, Stethoscope } from 'lucide-react'
+import { patientAPI } from '../../lib/api'
+import { useToast } from '../ui/Toast'
 
 export default function BookingModal({ isOpen, onClose }) {
-  const { doctors } = useClinic()
+  const toast = useToast()
   const [step, setStep] = useState(1) // 1: Select Doctor, 2: Select Time, 3: Confirm
   const [selectedDoctor, setSelectedDoctor] = useState(null)
   const [selectedDate, setSelectedDate] = useState('')
   const [selectedTime, setSelectedTime] = useState('')
+  const [doctors, setDoctors] = useState([])
+  const [loading, setLoading] = useState(false)
+  const [bookingLoading, setBookingLoading] = useState(false)
+  const [availableSlots, setAvailableSlots] = useState([])
+  const [slotsLoading, setSlotsLoading] = useState(false)
 
-  const timeSlots = [
-    '09:00 AM', '10:00 AM', '11:00 AM', '12:00 PM',
-    '02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM'
-  ]
+  // Fetch doctors when modal opens
+  useEffect(() => {
+    if (isOpen) {
+      fetchDoctors()
+    }
+  }, [isOpen])
 
-  const handleBooking = () => {
-    // Simulate booking
-    alert('Appointment booked successfully!')
-    onClose()
-    setStep(1)
+  // Fetch available slots when doctor and date change
+  useEffect(() => {
+    if (selectedDoctor && selectedDate) {
+      fetchSlots()
+    }
+  }, [selectedDoctor, selectedDate])
+
+  const fetchDoctors = async () => {
+    try {
+      setLoading(true)
+      const response = await patientAPI.getAllDoctors(0, 50)
+      if (response?.IsSuccess !== false && response?.Data) {
+        const items = response.Data.Items || response.Data || []
+        setDoctors(Array.isArray(items) ? items : [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch doctors:', error)
+    } finally {
+      setLoading(false)
+    }
   }
+
+  const fetchSlots = async () => {
+    try {
+      setSlotsLoading(true)
+      const doctorId = selectedDoctor?.Id || selectedDoctor?.id
+      const response = await patientAPI.getDoctorSlots(doctorId, selectedDate, selectedDate)
+      if (response?.IsSuccess !== false && response?.Data) {
+        const slots = response.Data || []
+        setAvailableSlots(Array.isArray(slots) ? slots : [])
+      } else {
+        setAvailableSlots([])
+      }
+    } catch (error) {
+      console.error('Failed to fetch slots:', error)
+      setAvailableSlots([])
+    } finally {
+      setSlotsLoading(false)
+    }
+  }
+
+  const handleBooking = async () => {
+    if (!selectedDoctor || !selectedDate || !selectedTime) {
+      toast.error('Please select all booking details')
+      return
+    }
+
+    setBookingLoading(true)
+    try {
+      const doctorId = selectedDoctor?.Id || selectedDoctor?.id
+      const sessionStartTime = `${selectedDate}T${selectedTime}:00`
+
+      const bookingData = {
+        DoctorId: doctorId,
+        SessionStartTime: sessionStartTime,
+        DurationMinutes: 30,
+      }
+
+      const response = await patientAPI.createBooking(bookingData)
+
+      if (response?.IsSuccess !== false) {
+        toast.success('Appointment booked successfully!')
+        onClose()
+        setStep(1)
+        setSelectedDoctor(null)
+        setSelectedDate('')
+        setSelectedTime('')
+      } else {
+        toast.error(response?.Message || 'Failed to book appointment')
+      }
+    } catch (error) {
+      console.error('Booking error:', error)
+      toast.error(error.response?.data?.Message || 'Failed to book appointment')
+    } finally {
+      setBookingLoading(false)
+    }
+  }
+
+  // Generate time slots from available slots or use fallback
+  const getTimeSlots = () => {
+    if (availableSlots.length > 0) {
+      return availableSlots.map(slot => ({
+        time: slot.StartTime || slot.start,
+        label: slot.StartTime || slot.start,
+        available: slot.IsAvailable !== false,
+      }))
+    }
+    // Fallback time slots
+    return [
+      '09:00', '09:30', '10:00', '10:30', '11:00', '11:30',
+      '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'
+    ].map(t => ({ time: t, label: t, available: true }))
+  }
+
+  const timeSlots = getTimeSlots()
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Book an Appointment" size="lg">
@@ -56,46 +153,54 @@ export default function BookingModal({ isOpen, onClose }) {
       {/* Step 1: Select Doctor */}
       {step === 1 && (
         <div>
-          <div className="mb-6">
-            <Select label="Filter by Specialty">
-              <option value="">All Specialties</option>
-              <option value="cardiology">Cardiology</option>
-              <option value="general">General Medicine</option>
-              <option value="dermatology">Dermatology</option>
-              <option value="pediatrics">Pediatrics</option>
-            </Select>
-          </div>
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            </div>
+          ) : doctors.length === 0 ? (
+            <div className="text-center py-12">
+              <Stethoscope className="w-12 h-12 text-text-muted mx-auto mb-3 opacity-30" />
+              <p className="text-text-muted">No doctors available at the moment</p>
+            </div>
+          ) : (
+            <div className="space-y-4 max-h-96 overflow-y-auto">
+              {doctors.map((doctor) => {
+                const doctorId = doctor.Id || doctor.id
+                const doctorName = doctor.Name || doctor.name || 'Doctor'
+                const specialty = doctor.Specialist?.join(', ') || doctor.specialty || 'General'
+                const fee = doctor.ConsultationFee || doctor.price || 'N/A'
 
-          <div className="space-y-4 max-h-96 overflow-y-auto">
-            {doctors.map((doctor) => (
-              <div
-                key={doctor.id}
-                onClick={() => setSelectedDoctor(doctor)}
-                className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${selectedDoctor?.id === doctor.id
-                  ? 'border-primary bg-primary/5'
-                  : 'border-border hover:border-primary'
-                  }`}
-              >
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <h4 className="font-semibold text-text-heading">{doctor.name}</h4>
-                    <p className="text-sm text-text-muted mt-1">{doctor.specialty}</p>
-                    <div className="flex items-center gap-4 mt-2">
-                      <div className="flex items-center gap-1">
-                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                        <span className="text-sm font-medium text-text-heading">{doctor.rating}</span>
+                return (
+                  <div
+                    key={doctorId}
+                    onClick={() => setSelectedDoctor(doctor)}
+                    className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${(selectedDoctor?.Id || selectedDoctor?.id) === doctorId
+                      ? 'border-primary bg-primary/5'
+                      : 'border-border hover:border-primary'
+                      }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-text-heading">Dr. {doctorName}</h4>
+                        <p className="text-sm text-text-muted mt-1">{specialty}</p>
+                        {doctor.Description && (
+                          <p className="text-xs text-text-muted mt-1 line-clamp-2">{doctor.Description}</p>
+                        )}
                       </div>
-                      <span className="text-sm text-text-muted">{doctor.experience}</span>
+                      <div className="text-right">
+                        {fee !== 'N/A' && (
+                          <>
+                            <p className="text-2xl font-bold text-primary">{fee} EGP</p>
+                            <p className="text-xs text-text-muted">per session</p>
+                          </>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="text-2xl font-bold text-primary">{doctor.price} EGP</p>
-                    <p className="text-xs text-text-muted">per session</p>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+                )
+              })}
+            </div>
+          )}
 
           <div className="mt-6 flex justify-end">
             <Button onClick={() => setStep(2)} disabled={!selectedDoctor}>
@@ -113,7 +218,10 @@ export default function BookingModal({ isOpen, onClose }) {
               type="date"
               label="Select Date"
               value={selectedDate}
-              onChange={(e) => setSelectedDate(e.target.value)}
+              onChange={(e) => {
+                setSelectedDate(e.target.value)
+                setSelectedTime('')
+              }}
               min={new Date().toISOString().split('T')[0]}
             />
           </div>
@@ -122,20 +230,26 @@ export default function BookingModal({ isOpen, onClose }) {
             <label className="block text-sm font-medium text-text-heading mb-3">
               Available Time Slots
             </label>
-            <div className="grid grid-cols-4 gap-3">
-              {timeSlots.map((time) => (
-                <button
-                  key={time}
-                  onClick={() => setSelectedTime(time)}
-                  className={`p-3 border-2 rounded-lg text-sm font-medium transition-all ${selectedTime === time
-                    ? 'border-primary bg-primary/10 text-primary'
-                    : 'border-border hover:border-primary text-text-muted hover:text-text'
-                    }`}
-                >
-                  {time}
-                </button>
-              ))}
-            </div>
+            {slotsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 text-primary animate-spin" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-4 gap-3">
+                {timeSlots.filter(s => s.available).map((slot) => (
+                  <button
+                    key={slot.time}
+                    onClick={() => setSelectedTime(slot.time)}
+                    className={`p-3 border-2 rounded-lg text-sm font-medium transition-all ${selectedTime === slot.time
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border hover:border-primary text-text-muted hover:text-text'
+                      }`}
+                  >
+                    {slot.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="mt-6 flex justify-between">
@@ -157,11 +271,15 @@ export default function BookingModal({ isOpen, onClose }) {
             <div className="space-y-3">
               <div className="flex justify-between">
                 <span className="text-text-muted">Doctor:</span>
-                <span className="font-medium text-text-heading">{selectedDoctor?.name}</span>
+                <span className="font-medium text-text-heading">
+                  Dr. {selectedDoctor?.Name || selectedDoctor?.name}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">Specialty:</span>
-                <span className="font-medium text-text-heading">{selectedDoctor?.specialty}</span>
+                <span className="font-medium text-text-heading">
+                  {selectedDoctor?.Specialist?.join(', ') || selectedDoctor?.specialty || 'General'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-text-muted">Date:</span>
@@ -171,10 +289,14 @@ export default function BookingModal({ isOpen, onClose }) {
                 <span className="text-text-muted">Time:</span>
                 <span className="font-medium text-text-heading">{selectedTime}</span>
               </div>
-              <div className="flex justify-between pt-3 border-t border-border">
-                <span className="text-text-muted">Total:</span>
-                <span className="text-2xl font-bold text-primary">{selectedDoctor?.price} EGP</span>
-              </div>
+              {(selectedDoctor?.ConsultationFee || selectedDoctor?.price) && (
+                <div className="flex justify-between pt-3 border-t border-border">
+                  <span className="text-text-muted">Total:</span>
+                  <span className="text-2xl font-bold text-primary">
+                    {selectedDoctor?.ConsultationFee || selectedDoctor?.price} EGP
+                  </span>
+                </div>
+              )}
             </div>
           </div>
 
@@ -182,8 +304,15 @@ export default function BookingModal({ isOpen, onClose }) {
             <Button variant="outline" onClick={() => setStep(2)}>
               Back
             </Button>
-            <Button onClick={handleBooking}>
-              Confirm & Pay
+            <Button onClick={handleBooking} disabled={bookingLoading}>
+              {bookingLoading ? (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Booking...
+                </div>
+              ) : (
+                'Confirm Booking'
+              )}
             </Button>
           </div>
         </div>

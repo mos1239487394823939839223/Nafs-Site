@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
@@ -8,33 +8,48 @@ import {
   Users,
   Stethoscope,
   Calendar,
-  AlertCircle,
-  CheckCircle,
   Clock,
   Search,
   Filter,
   ChevronRight,
   User,
-  ShieldAlert
+  ShieldAlert,
+  Loader2
 } from 'lucide-react'
 import ActiveTickets from '../../components/staff/ActiveTickets'
-import { useClinic } from '../../contexts/ClinicContext'
+import { chatAPI } from '../../lib/api'
 
 export default function CustomerServiceDashboard() {
-  const [activeTab, setActiveTab] = useState('overview') // overview, patients, doctors, emergency
+  const [activeTab, setActiveTab] = useState('overview')
+  const [chatRooms, setChatRooms] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const { tickets, updateTicketStatus, appointments } = useClinic()
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        const response = await chatAPI.getRooms()
+        if (response?.IsSuccess !== false && response?.Data) {
+          setChatRooms(response.Data || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch dashboard data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
+
+  const totalChats = chatRooms.length
+  const unreadChats = chatRooms.filter(r => (r.UnreadCount || 0) > 0).length
 
   const stats = [
-    { label: 'Patient Inquiries', value: tickets.filter(t => t.role === 'patient').length, icon: Users, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
-    { label: 'Doctor Requests', value: tickets.filter(t => t.role === 'doctor').length, icon: Stethoscope, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-500/10' },
-    { label: 'Live Sessions', value: appointments.filter(a => a.status === 'in-progress').length, icon: Calendar, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-500/10' },
-    { label: 'Urgent Cases', value: tickets.filter(t => t.priority === 'urgent').length, icon: ShieldAlert, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-500/10' },
+    { label: 'Active Chats', value: totalChats, icon: MessageSquare, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
+    { label: 'Unread Messages', value: unreadChats, icon: Users, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-500/10' },
+    { label: 'Live Sessions', value: 0, icon: Calendar, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-500/10' },
+    { label: 'Urgent Cases', value: 0, icon: ShieldAlert, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-500/10' },
   ]
-
-  const patientInquiries = tickets.filter(t => t.role === 'patient')
-  const doctorRequests = tickets.filter(t => t.role === 'doctor')
-
 
   return (
     <div className="space-y-8 max-w-7xl mx-auto">
@@ -47,7 +62,7 @@ export default function CustomerServiceDashboard() {
         <div className="flex items-center gap-3">
           <div className="bg-background-paper px-4 py-2 rounded-xl border border-border flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-sm font-medium">8 Agents Online</span>
+            <span className="text-sm font-medium text-text">Online</span>
           </div>
           <Button variant="primary" size="sm">
             View Active Monitor
@@ -65,7 +80,9 @@ export default function CustomerServiceDashboard() {
               </div>
               <div>
                 <p className="text-sm text-text-muted font-medium">{stat.label}</p>
-                <p className="text-2xl font-bold text-text-heading">{stat.value}</p>
+                <p className="text-2xl font-bold text-text-heading">
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : stat.value}
+                </p>
               </div>
             </div>
           </Card>
@@ -122,7 +139,7 @@ export default function CustomerServiceDashboard() {
                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-light" />
                     <input
                       placeholder="Search cases..."
-                      className="pl-9 pr-4 py-1.5 bg-background border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                      className="pl-9 pr-4 py-1.5 bg-background border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 text-text"
                     />
                   </div>
                   <Button variant="outline" size="sm" className="gap-2">
@@ -131,41 +148,10 @@ export default function CustomerServiceDashboard() {
                 </div>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="divide-y divide-border">
-                  {(activeTab === 'patients' ? patientInquiries : doctorRequests).map((item) => (
-                    <div key={item.id} className="p-4 hover:bg-background-subtle transition-colors flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-background-subtle flex items-center justify-center">
-                          <User className="w-5 h-5 text-text-muted" />
-                        </div>
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h4 className="font-bold text-text-heading">{item.user}</h4>
-                            <Badge variant={
-                              item.priority === 'urgent' ? 'danger' :
-                                item.priority === 'high' ? 'warning' : 'primary'
-                            } size="sm">
-                              {item.priority}
-                            </Badge>
-                          </div>
-                          <p className="text-sm text-text-light">{item.subject}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-6 text-sm">
-                        <div className="flex items-center gap-1.5 text-text-muted">
-                          <Clock className="w-4 h-4" />
-                          <span>{item.time} ago</span>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                          <div className={`w-2 h-2 rounded-full ${item.status === 'active' ? 'bg-green-500' : 'bg-background-subtle'}`} />
-                          <span className="capitalize">{item.status}</span>
-                        </div>
-                        <Button size="sm" variant="ghost" className="gap-2">
-                          Handle <ChevronRight className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                <div className="text-center py-12 text-text-muted">
+                  <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p>No {activeTab === 'patients' ? 'patient' : 'doctor'} support requests at the moment.</p>
+                  <p className="text-sm mt-1">New requests will appear here automatically.</p>
                 </div>
               </CardContent>
             </Card>

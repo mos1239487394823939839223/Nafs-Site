@@ -55,28 +55,41 @@ export default function Login() {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    console.log("Login attempt with:", formData.email);
+
     if (!validateForm()) {
+      console.log("Validation failed", errors);
       toast.error("Please fix the errors in the form");
       return;
     }
 
+    console.log("Validation passed, calling API...");
     setLoading(true);
 
     try {
       // Call login API
       const response = await authAPI.login(formData.email, formData.password);
+      console.log("API Response raw:", response);
 
       if (response.IsSuccess) {
         // Extract user data from response
-        // Assuming the API returns user data in response.Data
         const userData = response.Data || {};
 
-        // Determine role from user data (adjust based on actual API response)
-        // You may need to adjust this based on what the API actually returns
-        let userRole = userData.Role || Roles.PATIENT;
+        // Determine role from user data
+        let userRole = userData.Role;
 
-        // Map role string to role constant if needed
-        if (typeof userRole === "string") {
+        // Handle numeric roles from API
+        if (typeof userRole === "number") {
+          const roleIdMapping = {
+            1: Roles.ADMIN,
+            2: Roles.DOCTOR,
+            3: Roles.PATIENT,
+            4: Roles.STAFF
+          };
+          userRole = roleIdMapping[userRole] || Roles.PATIENT;
+        }
+        // Handle string roles
+        else if (typeof userRole === "string") {
           const roleMapping = {
             patient: Roles.PATIENT,
             doctor: Roles.DOCTOR,
@@ -84,24 +97,60 @@ export default function Login() {
             staff: Roles.STAFF,
           };
           userRole = roleMapping[userRole.toLowerCase()] || Roles.PATIENT;
+        } else {
+          // Default fallback
+          userRole = Roles.PATIENT;
         }
 
-        // Get token from response if available
-        const token = userData.Token || null;
+        // Extract token from response — try all possible field names
+        // Swagger says the field is "Authorization" in UserLoginResponse
+        let token = userData.Authorization || userData.Token || userData.token || userData.AccessToken || null;
 
+        // Debug: log what we got so we can verify
+        console.log("Token extraction — Available keys:", Object.keys(userData));
+        console.log("Token extraction — userData.Authorization:", userData.Authorization ? "EXISTS (length: " + userData.Authorization.length + ")" : "MISSING");
+        console.log("Token extraction — Final token:", token ? "EXISTS (length: " + token.length + ")" : "NULL");
+
+        // Clean token — strip "Bearer " prefix if the API already includes it
+        if (token && typeof token === 'string' && token.toLowerCase().startsWith('bearer ')) {
+          token = token.substring(7).trim();
+        }
+
+        // Update Auth Context
         authLogin(userData, userRole, token);
+
         toast.success(response.Message || "Login successful!");
-        navigate(RoleDashboards[userRole]);
+
+        // Determine redirect path
+        const targetPath = RoleDashboards[userRole];
+
+        setLoading(false);
+
+        if (targetPath) {
+          navigate(targetPath);
+        } else {
+          console.error("Unknown role or missing dashboard path:", userRole);
+          // Default to home or patient dashboard if path is missing
+          navigate("/dashboard/patient");
+        }
       } else {
+        console.log("Login failed (IsSuccess false):", response.Message);
         toast.error(response.Message || "Login failed");
         setLoading(false);
       }
     } catch (error) {
-      console.error("Login error:", error);
-      toast.error(
-        error.response?.data?.Message ||
-          "Login failed. Please check your credentials.",
-      );
+      console.error("Login caught error:", error);
+      let errorMessage = "Login failed. Please check your credentials.";
+
+      if (error.code === 'ECONNABORTED') {
+        errorMessage = "Connection timed out. Please check your internet connection or try again later.";
+      } else if (!error.response) {
+        errorMessage = "Network error. Please check your internet connection.";
+      } else if (error.response?.data?.Message) {
+        errorMessage = error.response.data.Message;
+      }
+
+      toast.error(errorMessage);
       setLoading(false);
     }
   };
@@ -153,9 +202,8 @@ export default function Login() {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`w-full px-4 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-background text-text placeholder-text-muted ${
-                    errors.password ? "border-red-500" : "border-border"
-                  }`}
+                  className={`w-full px-4 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-background text-text placeholder-text-muted ${errors.password ? "border-red-500" : "border-border"
+                    }`}
                   placeholder="••••••••"
                 />
                 <button
@@ -188,8 +236,19 @@ export default function Login() {
             </Button>
           </form>
 
+          {/* Forgot Password */}
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              onClick={() => navigate("/auth/forgot-password")}
+              className="text-sm text-primary hover:underline"
+            >
+              Forgot your password?
+            </button>
+          </div>
+
           {/* Toggle Login/Register */}
-          <div className="mt-6 text-center">
+          <div className="mt-4 text-center">
             <p className="text-sm text-text-muted">
               Don't have an account?{" "}
               <button

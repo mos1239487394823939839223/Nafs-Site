@@ -1,24 +1,20 @@
 import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
-import { Bell, Search, User, Menu, Moon, Sun } from 'lucide-react'
+import { useLanguage } from '../../contexts/LanguageContext'
+import { Bell, Search, User, Menu, Moon, Sun, Globe } from 'lucide-react'
 import Badge from '../ui/Badge'
 import RoleBadge from '../ui/RoleBadge'
 
-import { useClinic } from '../../contexts/ClinicContext'
-
 export default function Header({ onMenuClick }) {
   const { role, user } = useAuth()
-  const { notifications: sharedNotifications } = useClinic()
   const { theme, toggleTheme } = useTheme()
+  const { language, toggleLanguage } = useLanguage()
   const [showNotifications, setShowNotifications] = useState(false)
-  // Mock notifications split by source for Staff
   const [activeNotifTab, setActiveNotifTab] = useState('patient')
 
-  // Filter shared notifications
-  const notifications = role === 'staff'
-    ? sharedNotifications.filter(n => n.source === activeNotifTab || n.role === 'staff')
-    : sharedNotifications.filter(n => n.role === role || n.role === 'all')
+  // Notifications placeholder (will be replaced with real API)
+  const notifications = []
 
   const roleLabels = {
     patient: 'Patient Portal',
@@ -56,6 +52,16 @@ export default function Header({ onMenuClick }) {
 
         {/* Actions */}
         <div className="flex items-center gap-2 md:gap-4">
+          {/* Language Toggle */}
+          <button
+            onClick={toggleLanguage}
+            className="p-2 hover:bg-background-subtle rounded-xl transition-colors text-text flex items-center gap-1"
+            title={language === 'en' ? 'التبديل إلى العربية' : 'Switch to English'}
+          >
+            <Globe className="w-5 h-5 md:w-6 md:h-6" />
+            <span className="text-xs font-bold hidden sm:inline">{language === 'en' ? 'AR' : 'EN'}</span>
+          </button>
+
           {/* Theme Toggle */}
           <button
             onClick={toggleTheme}

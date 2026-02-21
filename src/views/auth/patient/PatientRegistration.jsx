@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMultiStepForm } from "../../../hooks/useMultiStepForm";
 import { useAuth, Roles } from "../../../contexts/AuthContext";
-import { useClinic } from "../../../contexts/ClinicContext";
 import { useToast } from "../../../components/ui/Toast";
 import ProgressStepper from "../../../components/forms/ProgressStepper";
 import Button from "../../../components/ui/Button";
@@ -30,7 +29,6 @@ import { api, authAPI } from "../../../lib/api";
 export default function PatientRegistration() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const { registerUser } = useClinic();
   const toast = useToast();
   const [loading, setLoading] = useState(false);
 
@@ -121,12 +119,21 @@ export default function PatientRegistration() {
   // Step 3 - Send OTP
   const handleSendOTP = async () => {
     setLoading(true);
+    console.group("🚀 Sending OTP Debug Info");
+    console.log("Attempting to send OTP to:", formData.email);
 
     try {
       // Call API to send OTP (user must already be registered)
       const response = await authAPI.sendOtp(formData.email);
 
+      console.log("📡 Server Response for SendOtp:", response);
+      console.log("Status Code:", response?.status);
+      console.log("IsSuccess:", response?.IsSuccess);
+      console.log("Messages:", response?.Message);
+      console.log("Data Payload:", response?.Data);
+
       if (response.IsSuccess) {
+        console.log("✅ OTP sent successfully according to server");
         setOtpSent(true);
         setOtpTimer(60);
         toast.success(
@@ -144,17 +151,27 @@ export default function PatientRegistration() {
           });
         }, 1000);
 
+        console.groupEnd();
         return true;
       } else {
+        console.warn("⚠️ Server returned success=false for SendOtp");
+        console.error("Error Message:", response.Message);
         toast.error(response.Message || "Failed to send OTP");
+        console.groupEnd();
         return false;
       }
     } catch (error) {
-      console.error("Send OTP error:", error);
+      console.error("❌ Send OTP Request Failed:", error);
+      if (error.response) {
+        console.error("Response Data:", error.response.data);
+        console.error("Response Status:", error.response.status);
+        console.error("Response Headers:", error.response.headers);
+      }
       toast.error(
         error.response?.data?.Message ||
-          "Failed to send OTP. Please try again.",
+        "Failed to send OTP. Please try again.",
       );
+      console.groupEnd();
       return false;
     } finally {
       setLoading(false);
@@ -172,6 +189,7 @@ export default function PatientRegistration() {
 
   // Register user first (Step 1 completion)
   const handleRegisterUser = async () => {
+    console.group("📝 Registration Process Started");
     console.log("Starting registration process...");
     setLoading(true);
 
@@ -192,15 +210,15 @@ export default function PatientRegistration() {
         Birthday: new Date(formData.dateOfBirth).toISOString(),
       };
 
-      console.log("Registration payload:", payload);
+      console.log("📤 Registration Payload:", payload);
 
       const registerResponse = await api.post("/Auth/Register", payload);
-      console.log("Registration response:", registerResponse);
-      console.log("Registration response data:", registerResponse.data);
-      console.log("IsSuccess value:", registerResponse.data?.IsSuccess);
-      console.log("Message:", registerResponse.data?.Message);
-      console.log("Details:", registerResponse.data?.Details);
-      console.log("Status:", registerResponse.status);
+
+      console.log("📡 Server Response for Registration:", registerResponse);
+      console.log("Status Code:", registerResponse?.status);
+      console.log("IsSuccess Property:", registerResponse?.data?.IsSuccess);
+      console.log("Response Message:", registerResponse?.data?.Message);
+      console.log("Response Details:", registerResponse?.data?.Details);
 
       // Check if response has an error message (backend error)
       if (
@@ -209,16 +227,15 @@ export default function PatientRegistration() {
           registerResponse.data.Message.includes("Error"))
       ) {
         console.error(
-          "Registration failed with backend error:",
+          "❌ Registration failed with backend error:",
           registerResponse.data,
         );
-        console.error("Error message:", registerResponse.data.Message);
-        console.error("Error details:", registerResponse.data.Details);
         const errorMsg =
           registerResponse.data.Details ||
           registerResponse.data.Message ||
           "Registration failed";
         toast.error(errorMsg);
+        console.groupEnd();
         return;
       }
 
@@ -226,24 +243,30 @@ export default function PatientRegistration() {
         registerResponse.data?.IsSuccess !== false &&
         registerResponse.status === 200
       ) {
-        console.log("Registration successful, sending OTP...");
+        console.log("✅ Registration reported successful, proceeding to send OTP...");
+
         // Registration successful, now send OTP
         const otpSent = await handleSendOTP();
-        console.log("OTP sent result:", otpSent);
+        console.log("OTP send function returned:", otpSent);
+
         // Only move to next step if OTP was sent successfully
         if (otpSent) {
           nextStep();
+        } else {
+          console.warn("⚠️ OTP failed to send after successful registration.");
         }
       } else {
         console.error(
-          "Registration failed:",
+          "❌ Registration failed (IsSuccess check):",
           registerResponse.data?.Message || registerResponse.data,
         );
         toast.error(registerResponse.data?.Message || "Registration failed");
       }
     } catch (error) {
-      console.error("Registration error:", error);
-      console.error("Error response:", error.response);
+      console.error("❌ Registration Threw Exception:", error);
+      console.error("Error Response Data:", error.response?.data);
+      console.error("Error Status:", error.response?.status);
+
       const errorMessage =
         error.response?.data?.Message ||
         error.response?.data?.message ||
@@ -252,6 +275,7 @@ export default function PatientRegistration() {
       toast.error(errorMessage);
     } finally {
       setLoading(false);
+      console.groupEnd();
     }
   };
 
@@ -485,9 +509,8 @@ export default function PatientRegistration() {
                           e.target.value.replace(/\D/g, ""),
                         )
                       }
-                      className={`w-full px-4 py-3 text-center text-2xl font-mono tracking-widest border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-text ${
-                        errors.otp ? "border-red-500" : "border-border"
-                      }`}
+                      className={`w-full px-4 py-3 text-center text-2xl font-mono tracking-widest border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-text ${errors.otp ? "border-red-500" : "border-border"
+                        }`}
                       placeholder="000000"
                     />
                     {errors.otp && (

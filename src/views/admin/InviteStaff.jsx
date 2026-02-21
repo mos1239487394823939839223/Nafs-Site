@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Input, { Select } from '../../components/ui/Input'
@@ -6,36 +6,48 @@ import Table, { TableHeader, TableBody, TableRow, TableHead, TableCell } from '.
 import Badge from '../../components/ui/Badge'
 import { useToast } from '../../components/ui/Toast'
 import { validateEmail } from '../../lib/validation'
-import { Mail, UserPlus, Send, CheckCircle, Clock, XCircle } from 'lucide-react'
-import { useClinic } from '../../contexts/ClinicContext'
+import { Mail, Send, CheckCircle, Clock, XCircle, Loader2, UserPlus } from 'lucide-react'
+import { authAPI, userAPI } from '../../lib/api'
 
 export default function InviteStaff() {
   const toast = useToast()
   const [loading, setLoading] = useState(false)
+  const [fetchLoading, setFetchLoading] = useState(true)
+  const [staffList, setStaffList] = useState([])
   const [formData, setFormData] = useState({
+    name: '',
     email: '',
-    role: '',
+    password: '',
+    phoneNumber: '',
     permissions: 'support-agent',
   })
   const [errors, setErrors] = useState({})
-
-  const { users, registerUser } = useClinic()
-
-  // Derived staff data from context
-  const invitations = users.filter(u => u.role === 'staff' || u.role === 'customer-service').map(u => ({
-    id: u.email,
-    email: u.email,
-    role: 'Customer Service',
-    permissions: u.permissions || 'Support Agent',
-    status: 'accepted',
-    date: u.dateAdded || '2026-02-01'
-  }))
 
   const permissionLevels = [
     { value: 'view-only', label: 'View Only', description: 'Can view tickets and patient information' },
     { value: 'support-agent', label: 'Support Agent', description: 'Can respond to tickets and manage patient queries' },
     { value: 'manager', label: 'Manager', description: 'Full access including team management and reporting' },
   ]
+
+  // Fetch staff list from API
+  useEffect(() => {
+    const fetchStaff = async () => {
+      try {
+        setFetchLoading(true)
+        // Role 3 = Staff/CustomerService (adjust if backend uses different role number)
+        const response = await userAPI.getUsers({ pageIndex: 1, pageSize: 50, role: 3 })
+        if (response?.Data) {
+          const items = response.Data.Items || response.Data || []
+          setStaffList(Array.isArray(items) ? items : [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch staff:', error)
+      } finally {
+        setFetchLoading(false)
+      }
+    }
+    fetchStaff()
+  }, [])
 
   const handleChange = (e) => {
     const { name, value } = e.target
@@ -48,8 +60,16 @@ export default function InviteStaff() {
   const validateForm = () => {
     const newErrors = {}
 
+    if (!formData.name.trim()) {
+      newErrors.name = 'Please enter a name'
+    }
+
     if (!validateEmail(formData.email)) {
       newErrors.email = 'Please enter a valid email address'
+    }
+
+    if (!formData.password || formData.password.length < 6) {
+      newErrors.password = 'Password must be at least 6 characters'
     }
 
     if (!formData.permissions) {
@@ -60,7 +80,7 @@ export default function InviteStaff() {
     return Object.keys(newErrors).length === 0
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
 
     if (!validateForm()) {
@@ -70,51 +90,69 @@ export default function InviteStaff() {
 
     setLoading(true)
 
-    // Simulate API call
-    setTimeout(() => {
-      setLoading(false)
-
-      const newUser = {
-        email: formData.email,
-        password: 'password',
-        role: 'staff',
-        permissions: permissionLevels.find(p => p.value === formData.permissions)?.label || '',
-        status: 'pending',
-        dateAdded: new Date().toISOString().split('T')[0],
+    try {
+      const registerData = {
+        Name: formData.name,
+        Email: formData.email,
+        Password: formData.password,
+        PhoneNumber: formData.phoneNumber || null,
+        Gender: 0,
+        Birthday: '2000-01-01',
+        Role: 3, // Staff role
       }
 
-      registerUser(newUser)
+      const response = await authAPI.register(registerData)
 
-      toast.success(`Invitation sent to ${formData.email}`)
-      setFormData({ email: '', role: '', permissions: 'support-agent' })
-    }, 1000)
-  }
+      if (response?.IsSuccess !== false) {
+        toast.success(`Staff member ${formData.name} registered successfully`)
+        setFormData({ name: '', email: '', password: '', phoneNumber: '', permissions: 'support-agent' })
 
-  const resendInvitation = (email) => {
-    toast.success(`Invitation resent to ${email}`)
-  }
-
-  const cancelInvitation = (id) => {
-    setInvitations(prev => prev.filter(inv => inv.id !== id))
-    toast.success('Invitation cancelled')
+        // Refresh staff list
+        const refreshResponse = await userAPI.getUsers({ pageIndex: 1, pageSize: 50, role: 3 })
+        if (refreshResponse?.Data) {
+          const items = refreshResponse.Data.Items || refreshResponse.Data || []
+          setStaffList(Array.isArray(items) ? items : [])
+        }
+      } else {
+        toast.error(response?.Message || 'Failed to register staff member')
+      }
+    } catch (error) {
+      console.error('Staff registration error:', error)
+      toast.error(error.response?.data?.Message || 'Failed to register staff member')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-clinical-darkGray">Invite Staff Members</h2>
-        <p className="text-clinical-gray mt-1">Add customer service team members to your platform</p>
+        <h2 className="text-2xl font-bold text-text-heading">Add Staff Members</h2>
+        <p className="text-text-muted mt-1">Register customer service team members to your platform</p>
       </div>
 
-      {/* Invite Form */}
+      {/* Registration Form */}
       <Card>
         <CardHeader>
-          <CardTitle>Send Invitation</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <UserPlus className="w-5 h-5 text-primary" />
+            Register New Staff
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
+              <Input
+                label="Full Name"
+                type="text"
+                name="name"
+                value={formData.name}
+                onChange={handleChange}
+                error={errors.name}
+                placeholder="John Doe"
+              />
+
               <Input
                 label="Email Address"
                 type="email"
@@ -122,47 +160,63 @@ export default function InviteStaff() {
                 value={formData.email}
                 onChange={handleChange}
                 error={errors.email}
-                placeholder="staff@clinc.com"
+                placeholder="staff@nafs.com"
               />
 
-              <Select
-                label="Permission Level"
-                name="permissions"
-                value={formData.permissions}
+              <Input
+                label="Password"
+                type="password"
+                name="password"
+                value={formData.password}
                 onChange={handleChange}
-                error={errors.permissions}
-              >
-                {permissionLevels.map(level => (
-                  <option key={level.value} value={level.value}>
-                    {level.label}
-                  </option>
-                ))}
-              </Select>
+                error={errors.password}
+                placeholder="Min 6 characters"
+              />
+
+              <Input
+                label="Phone Number (Optional)"
+                type="tel"
+                name="phoneNumber"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                placeholder="+20 xxx xxxx xxx"
+              />
             </div>
+
+            <Select
+              label="Permission Level"
+              name="permissions"
+              value={formData.permissions}
+              onChange={handleChange}
+              error={errors.permissions}
+            >
+              {permissionLevels.map(level => (
+                <option key={level.value} value={level.value}>
+                  {level.label}
+                </option>
+              ))}
+            </Select>
 
             {/* Permission Description */}
             {formData.permissions && (
-              <div className="bg-medical-lightBlue p-4 rounded-lg">
-                <p className="text-sm text-medical-blue">
+              <div className="bg-primary/5 p-4 rounded-xl border border-primary/10">
+                <p className="text-sm text-primary">
                   <strong>{permissionLevels.find(p => p.value === formData.permissions)?.label}:</strong>{' '}
                   {permissionLevels.find(p => p.value === formData.permissions)?.description}
                 </p>
               </div>
             )}
 
-            <Button
-              type="submit"
-              disabled={loading}
-            >
+            <Button type="submit" disabled={loading}>
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Sending...</span>
+                  <span>Registering...</span>
                 </div>
               ) : (
                 <>
                   <Send className="w-4 h-4 mr-2" />
-                  Send Invitation
+                  Register Staff Member
                 </>
               )}
             </Button>
@@ -170,89 +224,73 @@ export default function InviteStaff() {
         </CardContent>
       </Card>
 
-      {/* Invitations List */}
+      {/* Staff List */}
       <Card>
         <CardHeader>
-          <CardTitle>Invitation History</CardTitle>
+          <CardTitle>Current Staff Members</CardTitle>
         </CardHeader>
         <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Permissions</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Date Sent</TableHead>
-                <TableHead>Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {invitations.map((invitation) => (
-                <TableRow key={invitation.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Mail className="w-4 h-4 text-clinical-gray" />
-                      <span className="font-medium">{invitation.email}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{invitation.role}</TableCell>
-                  <TableCell>{invitation.permissions}</TableCell>
-                  <TableCell>
-                    {invitation.status === 'accepted' && (
-                      <Badge variant="success">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Accepted
-                      </Badge>
-                    )}
-                    {invitation.status === 'pending' && (
-                      <Badge variant="warning">
-                        <Clock className="w-3 h-3 mr-1" />
-                        Pending
-                      </Badge>
-                    )}
-                    {invitation.status === 'expired' && (
-                      <Badge variant="danger">
-                        <XCircle className="w-3 h-3 mr-1" />
-                        Expired
-                      </Badge>
-                    )}
-                  </TableCell>
-                  <TableCell>{invitation.date}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      {invitation.status === 'pending' && (
-                        <>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => resendInvitation(invitation.email)}
-                          >
-                            Resend
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => cancelInvitation(invitation.id)}
-                          >
-                            Cancel
-                          </Button>
-                        </>
-                      )}
-                    </div>
-                  </TableCell>
+          {fetchLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            </div>
+          ) : staffList.length === 0 ? (
+            <div className="text-center py-12 text-text-muted">
+              <UserPlus className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p>No staff members found</p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Name</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Phone</TableHead>
+                  <TableHead>Status</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {staffList.map((member) => (
+                  <TableRow key={member.Id || member.Email}>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 rounded-full bg-secondary/10 flex items-center justify-center">
+                          <span className="text-xs font-bold text-secondary">
+                            {(member.Name || member.UserName || 'S').charAt(0)}
+                          </span>
+                        </div>
+                        <span className="font-medium text-text-heading">{member.Name || member.UserName || 'N/A'}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Mail className="w-4 h-4 text-text-muted" />
+                        <span>{member.Email || 'N/A'}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-text-muted">{member.PhoneNumber || 'N/A'}</TableCell>
+                    <TableCell>
+                      <Badge variant={member.IsActive !== false ? 'success' : 'danger'}>
+                        {member.IsActive !== false ? (
+                          <><CheckCircle className="w-3 h-3 mr-1" /> Active</>
+                        ) : (
+                          <><XCircle className="w-3 h-3 mr-1" /> Inactive</>
+                        )}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
         </CardContent>
       </Card>
 
       {/* Info Box */}
-      <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-lg">
-        <p className="text-sm text-emerald-800">
-          <strong>Note:</strong> Invited staff members will receive an email with a unique registration link.
-          The invitation is valid for 7 days.
+      <div className="bg-primary/5 border border-primary/10 p-4 rounded-xl">
+        <p className="text-sm text-primary">
+          <strong>Note:</strong> New staff members can log in immediately with the credentials you provide.
+          Make sure to share the login details securely.
         </p>
       </div>
     </div>

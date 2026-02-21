@@ -1,29 +1,47 @@
 import { useState } from 'react'
-import { Camera, User, Mail, Phone, MapPin, Briefcase } from 'lucide-react'
+import { Camera, User, Mail, Phone, MapPin, Briefcase, Loader2 } from 'lucide-react'
 import Button from '../../ui/Button'
 import Input, { Textarea } from '../../ui/Input'
 
-export default function ProfileSettings({ user, onSave }) {
+export default function ProfileSettings({ user, onSave, onImageUpload }) {
   const [formData, setFormData] = useState({
-    name: user?.name || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    specialty: user?.specialty || '',
-    bio: user?.bio || '',
-    location: user?.location || 'Cairo, Egypt'
+    name: user?.name || user?.Name || '',
+    email: user?.email || user?.Email || '',
+    phone: user?.phone || user?.PhoneNumber || '',
+    specialty: user?.specialty || user?.Specialist?.[0] || '',
+    bio: user?.bio || user?.Description || '',
+    location: user?.location || ''
   })
 
-  // Simulated avatar preview
-  const [avatar, setAvatar] = useState(null)
+  const [avatar, setAvatar] = useState(user?.image || user?.Image || null)
+  const [saving, setSaving] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))
   }
 
-  const handleFileChange = (e) => {
+  const handleFileChange = async (e) => {
     const file = e.target.files[0]
     if (file) {
       setAvatar(URL.createObjectURL(file))
+      if (onImageUpload) {
+        setUploadingImage(true)
+        try {
+          await onImageUpload(file)
+        } finally {
+          setUploadingImage(false)
+        }
+      }
+    }
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await onSave(formData)
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -33,7 +51,9 @@ export default function ProfileSettings({ user, onSave }) {
       <div className="flex flex-col md:flex-row items-center gap-8 p-6 bg-background-gray/30 rounded-2xl border border-dashed border-border">
          <div className="relative group">
             <div className="w-32 h-32 rounded-full border-4 border-white shadow-md flex items-center justify-center overflow-hidden bg-primary/5">
-                {avatar ? (
+                {uploadingImage ? (
+                  <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                ) : avatar ? (
                 <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
                 <span className="text-4xl font-bold text-primary">{formData.name.charAt(0)}</span>
@@ -124,8 +144,13 @@ export default function ProfileSettings({ user, onSave }) {
       </div>
 
       <div className="flex justify-end pt-6">
-        <Button size="lg" className="w-full md:w-auto px-8" onClick={() => onSave(formData)}>
-          Save Changes
+        <Button size="lg" className="w-full md:w-auto px-8" onClick={handleSave} disabled={saving}>
+          {saving ? (
+            <div className="flex items-center gap-2">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              Saving...
+            </div>
+          ) : 'Save Changes'}
         </Button>
       </div>
     </div>

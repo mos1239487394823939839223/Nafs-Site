@@ -1,36 +1,90 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, FileText, User, Plus, Calendar, Clock, ChevronRight, ArrowLeft, Save, Pill, MessageSquare } from 'lucide-react'
+import { Search, FileText, User, Plus, Calendar, Clock, ChevronRight, ArrowLeft, Save, Pill, MessageSquare, Loader2 } from 'lucide-react'
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import Modal from '../../components/ui/Modal'
-import { useClinic } from '../../contexts/ClinicContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/ui/Toast'
+import { doctorAPI } from '../../lib/api'
 
 export default function MedicalHistory() {
     const { user } = useAuth()
-    const { medicalHistory, appointments, addMedicalRecord } = useClinic()
     const toast = useToast()
 
     const [selectedPatient, setSelectedPatient] = useState(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
     const [newRecord, setNewRecord] = useState({ summary: '', medications: '' })
+    const [loading, setLoading] = useState(true)
+    const [bookings, setBookings] = useState([])
+    // Local medical records (stored in memory since there's no dedicated medical history API)
+    const [localRecords, setLocalRecords] = useState(() => {
+        try {
+            const stored = localStorage.getItem('nafs_medical_records')
+            return stored ? JSON.parse(stored) : []
+        } catch {
+            return []
+        }
+    })
 
-    // Unique patients from appointments
-    const doctorId = user?.id || user?.email
-    const myPatients = Array.from(new Set(appointments
-        .filter(app => app.doctorId === doctorId || app.doctorName === user?.name)
-        .map(app => app.patientName)
-    )).map(name => ({ name }))
+    // Fetch bookings from API to extract patient list
+    useEffect(() => {
+        const fetchBookings = async () => {
+            try {
+                setLoading(true)
+                const response = await doctorAPI.getBookings(0, 100)
+                if (response.IsSuccess && response.Data) {
+                    setBookings(response.Data.Items || [])
+                }
+            } catch (error) {
+                console.error('Failed to fetch bookings:', error)
+                toast.error('Failed to load patient data')
+            } finally {
+                setLoading(false)
+            }
+        }
+        fetchBookings()
+    }, [])
+
+    // Extract unique patients from bookings
+    const myPatients = []
+    const seenPatients = new Set()
+    bookings.forEach(booking => {
+        const patientId = booking.PatientId
+        const patientName = booking.PatientName
+        if (patientId && !seenPatients.has(patientId)) {
+            seenPatients.add(patientId)
+            // Count bookings for this patient
+            const patientBookings = bookings.filter(b => b.PatientId === patientId)
+            const completedSessions = patientBookings.filter(b => b.Status === 3).length
+            const lastSession = patientBookings
+                .filter(b => b.SessionStartTime)
+                .sort((a, b) => new Date(b.SessionStartTime) - new Date(a.SessionStartTime))[0]
+
+            myPatients.push({
+                id: patientId,
+                name: patientName || 'Unknown Patient',
+                totalSessions: patientBookings.length,
+                completedSessions,
+                lastSessionDate: lastSession?.SessionStartTime
+                    ? new Date(lastSession.SessionStartTime).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                    : 'N/A',
+            })
+        }
+    })
 
     const filteredPatients = myPatients.filter(p =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
-    const patientHistory = medicalHistory.filter(h => h.patientName === selectedPatient?.name)
+    const patientHistory = localRecords.filter(h => h.patientId === selectedPatient?.id)
+
+    // Save records to localStorage whenever they change
+    useEffect(() => {
+        localStorage.setItem('nafs_medical_records', JSON.stringify(localRecords))
+    }, [localRecords])
 
     const handleAddRecord = () => {
         if (!newRecord.summary) {
@@ -38,17 +92,29 @@ export default function MedicalHistory() {
             return
         }
 
-        addMedicalRecord({
+        const record = {
+            id: Date.now().toString(),
+            patientId: selectedPatient.id,
             patientName: selectedPatient.name,
             date: new Date().toISOString().split('T')[0],
-            doctorName: user?.name || 'Doctor',
+            doctorName: user?.name || user?.Name || 'Doctor',
             summary: newRecord.summary,
             medications: newRecord.medications.split(',').map(m => m.trim()).filter(m => m)
-        })
+        }
+
+        setLocalRecords(prev => [record, ...prev])
 
         toast.success('Medical record added successfully')
         setIsAddModalOpen(false)
         setNewRecord({ summary: '', medications: '' })
+    }
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center py-32">
+                <Loader2 className="w-12 h-12 text-primary animate-spin" />
+            </div>
+        )
     }
 
     return (
@@ -79,27 +145,37 @@ export default function MedicalHistory() {
                             </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {filteredPatients.map((patient, i) => (
-                                <Card
-                                    key={i}
-                                    hover
-                                    className="p-6 cursor-pointer border-2 border-transparent hover:border-primary/30 transition-all group"
-                                    onClick={() => setSelectedPatient(patient)}
-                                >
-                                    <div className="flex items-center gap-4">
-                                        <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                                            <User className="w-7 h-7 text-primary" />
+                        {filteredPatients.length === 0 ? (
+                            <div className="text-center py-20 bg-background-paper rounded-3xl border-2 border-dashed border-border">
+                                <User className="w-16 h-16 text-text-muted mx-auto mb-4 opacity-20" />
+                                <h3 className="text-xl font-bold text-text-heading mb-2">No patients found</h3>
+                                <p className="text-text-muted">Patients will appear here once they book sessions with you.</p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {filteredPatients.map((patient) => (
+                                    <Card
+                                        key={patient.id}
+                                        hover
+                                        className="p-6 cursor-pointer border-2 border-transparent hover:border-primary/30 transition-all group"
+                                        onClick={() => setSelectedPatient(patient)}
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                                                <User className="w-7 h-7 text-primary" />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h3 className="font-bold text-lg text-text-heading truncate">{patient.name}</h3>
+                                                <p className="text-sm text-text-muted">
+                                                    {patient.completedSessions} completed • Last: {patient.lastSessionDate}
+                                                </p>
+                                            </div>
+                                            <ChevronRight className="w-5 h-5 text-text-muted group-hover:translate-x-1 transition-transform" />
                                         </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-bold text-lg text-text-heading truncate">{patient.name}</h3>
-                                            <p className="text-sm text-text-muted">View medical history</p>
-                                        </div>
-                                        <ChevronRight className="w-5 h-5 text-text-muted group-hover:translate-x-1 transition-transform" />
-                                    </div>
-                                </Card>
-                            ))}
-                        </div>
+                                    </Card>
+                                ))}
+                            </div>
+                        )}
                     </motion.div>
                 ) : (
                     <motion.div
@@ -116,7 +192,7 @@ export default function MedicalHistory() {
                                 </Button>
                                 <div className="min-w-0">
                                     <h2 className="text-xl md:text-2xl font-bold text-text-heading truncate">{selectedPatient.name}</h2>
-                                    <p className="text-text-muted text-sm">Clinical history and notes</p>
+                                    <p className="text-text-muted text-sm">Clinical history and notes • {selectedPatient.totalSessions} sessions</p>
                                 </div>
                             </div>
                             <div className="flex gap-2 w-full sm:w-auto">
@@ -131,7 +207,66 @@ export default function MedicalHistory() {
                             </div>
                         </div>
 
+                        {/* Session History from Bookings */}
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <Calendar className="w-5 h-5 text-primary" />
+                                    Session History
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                {(() => {
+                                    const patientBookings = bookings
+                                        .filter(b => b.PatientId === selectedPatient.id)
+                                        .sort((a, b) => new Date(b.SessionStartTime) - new Date(a.SessionStartTime))
+
+                                    if (patientBookings.length === 0) {
+                                        return <p className="text-text-muted text-center py-4">No sessions found</p>
+                                    }
+
+                                    const StatusMap = {
+                                        0: { label: 'Pending', variant: 'warning' },
+                                        1: { label: 'Confirmed', variant: 'primary' },
+                                        2: { label: 'In Progress', variant: 'info' },
+                                        3: { label: 'Completed', variant: 'success' },
+                                        4: { label: 'Cancelled', variant: 'danger' },
+                                        5: { label: 'No Show', variant: 'danger' },
+                                    }
+
+                                    return (
+                                        <div className="space-y-2">
+                                            {patientBookings.map(booking => {
+                                                const statusInfo = StatusMap[booking.Status] || { label: 'Unknown', variant: 'secondary' }
+                                                const sessionDate = booking.SessionStartTime ? new Date(booking.SessionStartTime) : null
+                                                return (
+                                                    <div key={booking.Id} className="flex items-center justify-between p-3 border border-border rounded-xl">
+                                                        <div className="flex items-center gap-3">
+                                                            <div className="flex items-center gap-1.5 text-sm text-text-muted">
+                                                                <Calendar className="w-4 h-4" />
+                                                                {sessionDate?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) || 'N/A'}
+                                                            </div>
+                                                            <div className="flex items-center gap-1.5 text-sm text-text-muted">
+                                                                <Clock className="w-4 h-4" />
+                                                                {sessionDate?.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) || 'N/A'}
+                                                            </div>
+                                                            {booking.DurationMinutes && (
+                                                                <span className="text-xs text-text-muted">{booking.DurationMinutes} min</span>
+                                                            )}
+                                                        </div>
+                                                        <Badge variant={statusInfo.variant}>{statusInfo.label}</Badge>
+                                                    </div>
+                                                )
+                                            })}
+                                        </div>
+                                    )
+                                })()}
+                            </CardContent>
+                        </Card>
+
+                        {/* Clinical Notes */}
                         <div className="space-y-6">
+                            <h3 className="text-lg font-bold text-text-heading">Clinical Notes</h3>
                             {patientHistory.length > 0 ? (
                                 patientHistory.map((record) => (
                                     <Card key={record.id} className="overflow-hidden border-border/50">

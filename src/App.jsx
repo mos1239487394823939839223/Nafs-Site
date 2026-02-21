@@ -1,12 +1,12 @@
-import { useState, useEffect } from 'react'
+import React from 'react'
 import { NextUIProvider } from "@nextui-org/react";
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
 import { AuthProvider, useAuth, Roles } from './contexts/AuthContext'
 import { ToastProvider } from './components/ui/Toast'
 import ProtectedRoute from './components/auth/ProtectedRoute'
-import { ClinicProvider, useClinic } from './contexts/ClinicContext'
 
 import { ThemeProvider } from './contexts/ThemeContext'
+import { LanguageProvider, useLanguage } from './contexts/LanguageContext'
 import Layout from './components/layout/Layout'
 
 import PatientSettings from './views/patient/Settings'
@@ -28,9 +28,12 @@ import RoleSelection from './views/auth/RoleSelection'
 import PatientRegistration from './views/auth/patient/PatientRegistration'
 import DoctorRegistration from './views/auth/doctor/DoctorRegistration'
 import PendingApproval from './views/auth/PendingApproval'
+import ForgotPassword from './views/auth/ForgotPassword'
 
 import InviteStaff from './views/admin/InviteStaff'
 import AdminMessages from './views/admin/Messages'
+import AdminBookings from './views/admin/Bookings'
+import AdminDashboard from './views/admin/Dashboard'
 import MessagesPage from './views/shared/MessagesPage'
 
 function RootRedirect() {
@@ -44,8 +47,7 @@ function RootRedirect() {
 }
 
 function AppRoutes() {
-  const [isRTL, setIsRTL] = useState(false)
-  const { notifications } = useClinic()
+  const { isRTL } = useLanguage()
 
   return (
     <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen bg-background">
@@ -56,6 +58,7 @@ function AppRoutes() {
         <Route path="/auth/register/patient" element={<PatientRegistration />} />
         <Route path="/auth/register/doctor" element={<DoctorRegistration />} />
         <Route path="/auth/pending-approval" element={<PendingApproval />} />
+        <Route path="/auth/forgot-password" element={<ForgotPassword />} />
 
         {/* Protected Patient Routes */}
         <Route
@@ -206,7 +209,17 @@ function AppRoutes() {
           path="/admin"
           element={
             <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
-              <Navigate to="/admin/users" replace />
+              <Navigate to="/admin/dashboard" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+              <Layout>
+                <AdminDashboard />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -216,6 +229,26 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
               <Layout>
                 <UserManagement />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/bookings"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+              <Layout>
+                <AdminBookings />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/invite-staff"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+              <Layout>
+                <InviteStaff />
               </Layout>
             </ProtectedRoute>
           }
@@ -268,13 +301,13 @@ function App() {
     <BrowserRouter>
       <AuthProvider>
         <NextUIProvider>
-          <ClinicProvider>
-            <ThemeProvider>
+          <ThemeProvider>
+            <LanguageProvider>
               <ToastProvider>
                 <AppRoutes />
               </ToastProvider>
-            </ThemeProvider>
-          </ClinicProvider>
+            </LanguageProvider>
+          </ThemeProvider>
         </NextUIProvider>
       </AuthProvider>
     </BrowserRouter>

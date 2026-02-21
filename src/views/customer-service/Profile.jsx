@@ -1,19 +1,89 @@
+import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import ProfileSettings from '../../components/doctor/settings/ProfileSettings'
-
-import { useClinic } from '../../contexts/ClinicContext'
+import { userAPI } from '../../lib/api'
+import { Lock } from 'lucide-react'
+import Button from '../../components/ui/Button'
 
 export default function StaffProfile() {
     const { user, updateProfile } = useAuth()
-    const { updateUser } = useClinic()
     const toast = useToast()
 
-    const handleSave = (data) => {
-        updateUser(user.email, data)
-        updateProfile(data)
-        toast.success('Information updated successfully')
+    // Change password state
+    const [showPasswordSection, setShowPasswordSection] = useState(false)
+    const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
+    const [passwordLoading, setPasswordLoading] = useState(false)
+
+    const handleSave = async (data) => {
+        try {
+            const response = await userAPI.editMainInfo({
+                name: data.name,
+                phoneNumber: data.phone,
+                email: data.email,
+            })
+
+            if (response?.IsSuccess !== false) {
+                updateProfile(data)
+                toast.success('Information updated successfully')
+            } else {
+                toast.error(response?.Message || 'Failed to save settings')
+            }
+        } catch (error) {
+            console.error('Save settings error:', error)
+            toast.error(error.response?.data?.Message || 'Failed to save settings')
+        }
+    }
+
+    const handleImageUpload = async (file) => {
+        try {
+            const reader = new FileReader()
+            reader.onload = async () => {
+                const base64 = reader.result.split(',')[1]
+                const userId = user?.id || user?.Id
+                const response = await userAPI.updateImage(userId, base64)
+
+                if (response?.IsSuccess !== false) {
+                    updateProfile({ image: reader.result })
+                    toast.success('Profile image updated')
+                } else {
+                    toast.error(response?.Message || 'Failed to upload image')
+                }
+            }
+            reader.readAsDataURL(file)
+        } catch (error) {
+            console.error('Image upload error:', error)
+            toast.error('Failed to upload image')
+        }
+    }
+
+    const handlePasswordChange = async (e) => {
+        e.preventDefault()
+        if (passwordData.newPassword !== passwordData.confirmPassword) {
+            toast.error('New passwords do not match')
+            return
+        }
+        if (passwordData.newPassword.length < 6) {
+            toast.error('Password must be at least 6 characters')
+            return
+        }
+        setPasswordLoading(true)
+        try {
+            const response = await userAPI.changePassword(passwordData.currentPassword, passwordData.newPassword)
+            if (response?.IsSuccess !== false) {
+                toast.success('Password changed successfully')
+                setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
+                setShowPasswordSection(false)
+            } else {
+                toast.error(response?.Message || 'Failed to change password')
+            }
+        } catch (error) {
+            console.error('Password change error:', error)
+            toast.error(error.response?.data?.Message || 'Failed to change password')
+        } finally {
+            setPasswordLoading(false)
+        }
     }
 
     return (
@@ -31,10 +101,82 @@ export default function StaffProfile() {
                 >
                     <div className="h-1.5 w-full bg-gradient-to-r from-secondary to-primary" />
                     <div className="p-6 md:p-8">
-                        <ProfileSettings user={user} onSave={handleSave} />
+                        <ProfileSettings user={user} onSave={handleSave} onImageUpload={handleImageUpload} />
+                    </div>
+                </motion.div>
+
+                {/* Change Password Section */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                    className="mt-8 bg-background-paper rounded-2xl shadow-lg border border-border overflow-hidden"
+                >
+                    <div className="p-6 md:p-8">
+                        <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                                    <Lock className="w-5 h-5 text-primary" />
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-text">Change Password</h3>
+                                    <p className="text-sm text-text-muted">Update your account password</p>
+                                </div>
+                            </div>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setShowPasswordSection(!showPasswordSection)}
+                            >
+                                {showPasswordSection ? 'Cancel' : 'Change'}
+                            </Button>
+                        </div>
+
+                        {showPasswordSection && (
+                            <form onSubmit={handlePasswordChange} className="space-y-4 mt-6 pt-6 border-t border-border">
+                                <div>
+                                    <label className="block text-sm font-medium text-text mb-1">Current Password</label>
+                                    <input
+                                        type="password"
+                                        value={passwordData.currentPassword}
+                                        onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
+                                        className="w-full px-4 py-2.5 border border-border rounded-xl bg-background text-text focus:ring-2 focus:ring-primary/20 outline-none"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-text mb-1">New Password</label>
+                                    <input
+                                        type="password"
+                                        value={passwordData.newPassword}
+                                        onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                                        className="w-full px-4 py-2.5 border border-border rounded-xl bg-background text-text focus:ring-2 focus:ring-primary/20 outline-none"
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-text mb-1">Confirm New Password</label>
+                                    <input
+                                        type="password"
+                                        value={passwordData.confirmPassword}
+                                        onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                                        className="w-full px-4 py-2.5 border border-border rounded-xl bg-background text-text focus:ring-2 focus:ring-primary/20 outline-none"
+                                        required
+                                    />
+                                </div>
+                                <Button type="submit" disabled={passwordLoading} className="w-full">
+                                    {passwordLoading ? (
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            Updating...
+                                        </div>
+                                    ) : 'Update Password'}
+                                </Button>
+                            </form>
+                        )}
                     </div>
                 </motion.div>
             </div>
-        </div >
+        </div>
     )
 }

@@ -40,7 +40,10 @@ const navigationConfig = {
     { name: 'Profile', path: '/dashboard/doctor/settings', icon: Settings },
   ],
   [Roles.ADMIN]: [
+    { name: 'Dashboard', path: '/admin/dashboard', icon: Home },
     { name: 'User Management', path: '/admin/users', icon: Users },
+    { name: 'Bookings', path: '/admin/bookings', icon: Calendar },
+    { name: 'Add Staff', path: '/admin/invite-staff', icon: UserPlus },
     { name: 'Messages', path: '/admin/messages', icon: MessageSquare },
     { name: 'Profile', path: '/admin/profile', icon: Settings },
   ],

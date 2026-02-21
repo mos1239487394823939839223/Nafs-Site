@@ -1,21 +1,28 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Clock, FileText, Calendar, AlertCircle } from 'lucide-react'
+import { Clock, Calendar, AlertCircle, Loader2 } from 'lucide-react'
 import Button from '../ui/Button'
 import Badge from '../ui/Badge'
+import { doctorAPI } from '../../lib/api'
 
-import { useClinic } from '../../contexts/ClinicContext'
-import { useAuth } from '../../contexts/AuthContext'
+// BookingStatus enum
+const BookingStatusMap = {
+  0: 'Pending',
+  1: 'Confirmed',
+  2: 'InProgress',
+  3: 'Completed',
+  4: 'Cancelled',
+  5: 'NoShow',
+}
 
 export default function DailyAgenda() {
   const navigate = useNavigate()
   const [selectedDate, setSelectedDate] = useState(new Date())
   const dateInputRef = useRef(null)
+  const [bookings, setBookings] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const { user } = useAuth()
-  const { appointments, doctorAvailability } = useClinic()
-
-  const formatDate = (date) => {
+  const formatDateDisplay = (date) => {
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -28,35 +35,62 @@ export default function DailyAgenda() {
     setSelectedDate(new Date(e.target.value))
   }
 
-  // Generate dynamic slots based on context
-  const dateStr = selectedDate.toISOString().split('T')[0]
-  const docId = user?.id || user?.email
-  const availableHours = doctorAvailability[docId]?.[dateStr] || []
-  const dailyApps = appointments.filter(app =>
-    (app.doctorId === docId || app.doctorName === user?.name) && app.date === dateStr
-  )
+  // Fetch bookings from API
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        setLoading(true)
+        const response = await doctorAPI.getBookings(0, 50)
+        if (response.IsSuccess && response.Data) {
+          setBookings(response.Data.Items || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch bookings for agenda:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchBookings()
+  }, [])
 
+  // Filter bookings for selected date
+  const dateStr = selectedDate.toISOString().split('T')[0]
+  const dailyBookings = bookings.filter(b => {
+    if (!b.SessionStartTime) return false
+    const bookingDate = new Date(b.SessionStartTime).toISOString().split('T')[0]
+    return bookingDate === dateStr
+  })
+
+  // Sort by time
+  dailyBookings.sort((a, b) => new Date(a.SessionStartTime) - new Date(b.SessionStartTime))
+
+  // Generate time slots for the day
   const timeSlots = []
   for (let h = 8; h <= 19; h++) {
     const period = h >= 12 ? 'PM' : 'AM'
     const displayHour = h > 12 ? h - 12 : h
     const timeKey = `${displayHour < 10 ? '0' : ''}${displayHour}:00`
-    const timeFull = `${displayHour}:00 ${period}`
 
-    const app = dailyApps.find(a => a.time.includes(timeFull))
+    // Find booking at this hour
+    const booking = dailyBookings.find(b => {
+      const bookingHour = new Date(b.SessionStartTime).getHours()
+      return bookingHour === h
+    })
 
-    if (app) {
+    if (booking) {
+      const startTime = new Date(booking.SessionStartTime)
       timeSlots.push({
         hour: timeKey,
         period,
         type: 'appointment',
-        patient: app.patientName,
+        patient: booking.PatientName,
         sessionType: 'video',
-        reason: app.specialty || 'Consultation',
-        priority: 'routine'
+        reason: booking.PatientNotes || 'Consultation',
+        priority: 'routine',
+        meetingUrl: booking.MeetingUrl,
+        status: booking.Status,
+        duration: booking.DurationMinutes,
       })
-    } else if (availableHours.includes(h)) {
-      timeSlots.push({ hour: timeKey, period, type: 'available' })
     } else if (h === 12) {
       timeSlots.push({ hour: '12:00', period: 'PM', type: 'break', label: 'Lunch Break' })
     } else {
@@ -78,9 +112,9 @@ export default function DailyAgenda() {
   }
 
   const stats = {
-    appointments: timeSlots.filter(s => s.type === 'appointment').length,
-    available: timeSlots.filter(s => s.type === 'available').length,
-    urgent: timeSlots.filter(s => s.priority === 'urgent').length
+    appointments: dailyBookings.length,
+    available: 0,
+    urgent: 0
   }
 
   return (
@@ -88,7 +122,7 @@ export default function DailyAgenda() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h2 className="text-xl font-bold text-text-heading">Daily Agenda</h2>
-          <p className="text-sm text-text-muted mt-1">{formatDate(selectedDate)}</p>
+          <p className="text-sm text-text-muted mt-1">{formatDateDisplay(selectedDate)}</p>
         </div>
         <div className="relative inline-block">
           <input
@@ -109,74 +143,89 @@ export default function DailyAgenda() {
         </div>
       </div>
 
-      <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
-        {timeSlots.map((slot, index) => (
-          <div
-            key={index}
-            className={`
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <Loader2 className="w-8 h-8 text-primary animate-spin" />
+        </div>
+      ) : (
+        <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
+          {timeSlots.map((slot, index) => (
+            <div
+              key={index}
+              className={`
               border rounded-xl p-3 transition-all duration-200
               ${getSlotColor(slot.type, slot.priority)}
               ${getSlotHoverColor(slot.type)}
               ${slot.type === 'appointment' ? 'cursor-pointer' : ''}
             `}
-          >
-            <div className="flex items-start gap-3">
-              {/* Time */}
-              <div className="flex-shrink-0 w-16 text-center">
-                <div className="text-sm font-semibold text-text-heading">
-                  {slot.hour}
+            >
+              <div className="flex items-start gap-3">
+                {/* Time */}
+                <div className="flex-shrink-0 w-16 text-center">
+                  <div className="text-sm font-semibold text-text-heading">
+                    {slot.hour}
+                  </div>
+                  <div className="text-xs text-text-muted">{slot.period}</div>
                 </div>
-                <div className="text-xs text-text-muted">{slot.period}</div>
-              </div>
 
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                {slot.type === 'available' && (
-                  <div className="flex items-center gap-2 text-text-muted">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm">Available</span>
-                  </div>
-                )}
+                {/* Content */}
+                <div className="flex-1 min-w-0">
+                  {slot.type === 'available' && (
+                    <div className="flex items-center gap-2 text-text-muted">
+                      <Clock className="w-4 h-4" />
+                      <span className="text-sm">Available</span>
+                    </div>
+                  )}
 
-                {slot.type === 'break' && (
-                  <div className="flex items-center gap-2 text-text-muted">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm font-medium">{slot.label || 'Break'}</span>
-                  </div>
-                )}
+                  {slot.type === 'break' && (
+                    <div className="flex items-center gap-2 text-text-muted">
+                      <Clock className="w-4 h-4" />
+                      <span className="text-sm font-medium">{slot.label || 'Break'}</span>
+                    </div>
+                  )}
 
-                {slot.type === 'appointment' && (
-                  <div>
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="font-semibold text-text-heading">{slot.patient}</span>
-                      {slot.priority === 'urgent' && (
-                        <Badge variant="danger" size="sm">
-                          <AlertCircle className="w-3 h-3 mr-1" />
-                          Urgent
-                        </Badge>
+                  {slot.type === 'appointment' && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-semibold text-text-heading">{slot.patient}</span>
+                        {slot.priority === 'urgent' && (
+                          <Badge variant="danger" size="sm">
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Urgent
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-text-muted mb-1">{slot.reason}</p>
+                      {slot.duration && (
+                        <p className="text-xs text-text-muted">{slot.duration} min</p>
                       )}
                     </div>
-                    <p className="text-sm text-text-muted mb-2">{slot.reason}</p>
+                  )}
+                </div>
+
+                {/* Actions */}
+                {slot.type === 'appointment' && (
+                  <div className="flex-shrink-0">
+                    <Button
+                      size="sm"
+                      variant={slot.priority === 'urgent' ? 'primary' : 'outline'}
+                      onClick={() => {
+                        if (slot.meetingUrl) {
+                          window.open(slot.meetingUrl, '_blank')
+                        } else {
+                          navigate('/dashboard/doctor/messages')
+                        }
+                      }}
+                    >
+                      Join
+                    </Button>
                   </div>
                 )}
               </div>
-
-              {/* Actions */}
-              {slot.type === 'appointment' && (
-                <div className="flex-shrink-0">
-                  <Button
-                    size="sm"
-                    variant={slot.priority === 'urgent' ? 'primary' : 'outline'}
-                    onClick={() => navigate('/dashboard/doctor/messages')}
-                  >
-                    Join
-                  </Button>
-                </div>
-              )}
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
 
       {/* Summary */}
       <div className="mt-6 pt-6 border-t border-border">

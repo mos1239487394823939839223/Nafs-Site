@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Input, { Select } from '../../components/ui/Input'
@@ -15,55 +15,98 @@ import {
     Clock,
     XCircle,
     Stethoscope,
-    User
+    User,
+    Loader2,
+    ToggleLeft,
+    ToggleRight,
+    ChevronLeft,
+    ChevronRight,
+    RefreshCw,
+    Phone
 } from 'lucide-react'
-
-import { useClinic } from '../../contexts/ClinicContext'
+import { adminAPI, userAPI } from '../../lib/api'
 
 export default function UserManagement() {
     const toast = useToast()
-    const { users, registerUser } = useClinic()
     const [activeTab, setActiveTab] = useState('doctors')
     const [searchTerm, setSearchTerm] = useState('')
     const [showAddForm, setShowAddForm] = useState(false)
+    const [loading, setLoading] = useState(false)
+    const [submitting, setSubmitting] = useState(false)
 
-    // Derived Data from Context
-    const doctors = users.filter(u => u.role === 'doctor').map(u => ({
-        id: u.email,
-        name: u.name,
-        specialty: u.specialty || 'General',
-        email: u.email,
-        status: 'active',
-        sessions: Math.floor(Math.random() * 100)
-    }))
+    // Doctors data
+    const [doctors, setDoctors] = useState([])
+    const [doctorsPage, setDoctorsPage] = useState(0)
+    const [doctorsTotalPages, setDoctorsTotalPages] = useState(1)
 
-    const patients = users.filter(u => u.role === 'patient').map(u => ({
-        id: u.email,
-        name: u.name,
-        email: u.email,
-        lastVisit: '2026-01-20',
-        status: 'active'
-    }))
+    // Patients data
+    const [patients, setPatients] = useState([])
+    const [patientsPage, setPatientsPage] = useState(0)
+    const [patientsTotalPages, setPatientsTotalPages] = useState(1)
 
-    const staff = users.filter(u => u.role === 'staff').map(u => ({
-        id: u.email,
-        email: u.email,
-        role: u.name === 'Support Agent' ? 'Support Agent' : 'Manager',
-        status: 'accepted',
-        date: '2026-01-20'
-    }))
-
+    // Add Doctor Form
     const [formData, setFormData] = useState({
         name: '',
         email: '',
-        role: 'doctor', // doctor or staff
-        specialty: '',
-        permissions: 'support-agent'
+        password: '',
+        phoneNumber: '',
+        description: '',
+        specialist: ''
     })
+
+    const fetchDoctors = useCallback(async () => {
+        setLoading(true)
+        try {
+            const response = await adminAPI.getDoctors(doctorsPage, 20)
+            if (response?.Data) {
+                setDoctors(response.Data.Items || response.Data || [])
+                if (response.Data.TotalPages) {
+                    setDoctorsTotalPages(response.Data.TotalPages)
+                }
+            } else if (Array.isArray(response)) {
+                setDoctors(response)
+            }
+        } catch (error) {
+            console.error('Failed to fetch doctors:', error)
+            toast.error('Failed to load doctors')
+        } finally {
+            setLoading(false)
+        }
+    }, [doctorsPage])
+
+    const fetchPatients = useCallback(async () => {
+        setLoading(true)
+        try {
+            // Use userAPI.getUsers to fetch patients (role might be filtered)
+            const response = await userAPI.getUsers({ pageIndex: patientsPage + 1, pageSize: 20 })
+            if (response?.Data) {
+                setPatients(response.Data.Items || response.Data || [])
+                if (response.Data.TotalPages) {
+                    setPatientsTotalPages(response.Data.TotalPages)
+                }
+            } else if (Array.isArray(response)) {
+                setPatients(response)
+            }
+        } catch (error) {
+            console.error('Failed to fetch patients:', error)
+            toast.error('Failed to load users')
+        } finally {
+            setLoading(false)
+        }
+    }, [patientsPage])
+
+    useEffect(() => {
+        if (activeTab === 'doctors') {
+            fetchDoctors()
+        } else if (activeTab === 'patients') {
+            fetchPatients()
+        }
+    }, [activeTab, fetchDoctors, fetchPatients])
 
     const handleTabChange = (tab) => {
         setActiveTab(tab)
         setShowAddForm(false)
+        setSearchTerm('')
     }
 
     const handleInputChange = (e) => {
@@ -71,66 +114,94 @@ export default function UserManagement() {
         setFormData(prev => ({ ...prev, [name]: value }))
     }
 
-    const handleAddUser = (e) => {
+    const handleAddDoctor = async (e) => {
         e.preventDefault()
-
-        const newUser = {
-            name: formData.name || formData.email.split('@')[0],
-            email: formData.email,
-            password: 'password', // Default password for new members
-            role: formData.role,
-            specialty: formData.specialty,
-            permissions: formData.permissions
+        if (!formData.name || !formData.email || !formData.password) {
+            toast.error('Please fill in all required fields')
+            return
         }
 
-        registerUser(newUser)
-        toast.success(`${formData.role === 'doctor' ? 'Doctor' : 'Staff Member'} added successfully`)
+        setSubmitting(true)
+        try {
+            const response = await adminAPI.addDoctor({
+                name: formData.name,
+                email: formData.email,
+                password: formData.password,
+                phoneNumber: formData.phoneNumber,
+                description: formData.description,
+                specialist: formData.specialist ? [formData.specialist] : null,
+            })
 
-        setShowAddForm(false)
-        setFormData({ name: '', email: '', role: 'doctor', specialty: '', permissions: 'support-agent' })
+            if (response?.IsSuccess !== false) {
+                toast.success('Doctor added successfully')
+                setShowAddForm(false)
+                setFormData({ name: '', email: '', password: '', phoneNumber: '', description: '', specialist: '' })
+                fetchDoctors()
+            } else {
+                toast.error(response?.Message || 'Failed to add doctor')
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.Message || 'Failed to add doctor')
+        } finally {
+            setSubmitting(false)
+        }
     }
 
-    const filteredDoctors = doctors.filter(d =>
-        d.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        d.email.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    const handleToggleDoctor = async (doctorId) => {
+        try {
+            const response = await adminAPI.toggleDoctor(doctorId)
+            if (response?.IsSuccess !== false) {
+                toast.success('Doctor status updated')
+                fetchDoctors()
+            } else {
+                toast.error(response?.Message || 'Failed to update status')
+            }
+        } catch (error) {
+            toast.error(error.response?.data?.Message || 'Failed to update status')
+        }
+    }
 
-    const filteredPatients = patients.filter(p =>
-        p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        p.email.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    const filteredDoctors = doctors.filter(d => {
+        const name = (d.Name || d.name || '').toLowerCase()
+        const email = (d.Email || d.email || '').toLowerCase()
+        return name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase())
+    })
 
-    const filteredStaff = staff.filter(s =>
-        s.email.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    const filteredPatients = patients.filter(p => {
+        const name = (p.Name || p.name || '').toLowerCase()
+        const email = (p.Email || p.email || '').toLowerCase()
+        return name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase())
+    })
 
     return (
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold text-text-heading">User Management</h2>
-                    <p className="text-text-muted mt-1">Manage doctors, patients, and staff members</p>
+                    <p className="text-text-muted mt-1">Manage doctors and patients</p>
                 </div>
-                {!showAddForm && (activeTab === 'doctors' || activeTab === 'staff') && (
-                    <Button
-                        className="w-full sm:w-auto"
-                        onClick={() => {
-                            setFormData(prev => ({ ...prev, role: activeTab === 'doctors' ? 'doctor' : 'staff' }))
-                            setShowAddForm(true)
-                        }}
-                    >
-                        <UserPlus className="w-4 h-4 mr-2" />
-                        {activeTab === 'doctors' ? 'Add Doctor' : 'Invite Staff'}
+                <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={activeTab === 'doctors' ? fetchDoctors : fetchPatients} disabled={loading}>
+                        <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                        Refresh
                     </Button>
-                )}
+                    {!showAddForm && activeTab === 'doctors' && (
+                        <Button
+                            className="w-full sm:w-auto"
+                            onClick={() => setShowAddForm(true)}
+                        >
+                            <UserPlus className="w-4 h-4 mr-2" />
+                            Add Doctor
+                        </Button>
+                    )}
+                </div>
             </div>
 
             {/* Tabs */}
             <div className="flex border-b border-border overflow-x-auto no-scrollbar">
                 <button
                     onClick={() => handleTabChange('doctors')}
-                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${activeTab === 'doctors' ? 'text-primary' : 'text-text-muted hover:text-text'
-                        }`}
+                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${activeTab === 'doctors' ? 'text-primary' : 'text-text-muted hover:text-text'}`}
                 >
                     <div className="flex items-center gap-2">
                         <Stethoscope className="w-4 h-4" />
@@ -140,80 +211,88 @@ export default function UserManagement() {
                 </button>
                 <button
                     onClick={() => handleTabChange('patients')}
-                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${activeTab === 'patients' ? 'text-primary' : 'text-text-muted hover:text-text'
-                        }`}
+                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${activeTab === 'patients' ? 'text-primary' : 'text-text-muted hover:text-text'}`}
                 >
                     <div className="flex items-center gap-2">
                         <User className="w-4 h-4" />
-                        Patients
+                        Users
                     </div>
                     {activeTab === 'patients' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />}
-                </button>
-                <button
-                    onClick={() => handleTabChange('staff')}
-                    className={`px-4 md:px-6 py-3 font-medium transition-colors relative whitespace-nowrap ${activeTab === 'staff' ? 'text-primary' : 'text-text-muted hover:text-text'
-                        }`}
-                >
-                    <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4" />
-                        Staff
-                    </div>
-                    {activeTab === 'staff' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />}
                 </button>
             </div>
 
             {showAddForm ? (
                 <Card>
                     <CardHeader>
-                        <CardTitle>{formData.role === 'doctor' ? 'Add New Doctor' : 'Invite Staff Member'}</CardTitle>
+                        <CardTitle>Add New Doctor</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <form onSubmit={handleAddUser} className="space-y-6">
+                        <form onSubmit={handleAddDoctor} className="space-y-6">
                             <div className="grid md:grid-cols-2 gap-6">
-                                {formData.role === 'doctor' && (
-                                    <Input
-                                        label="Full Name"
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleInputChange}
-                                        placeholder="e.g. Dr. Ahmed Hassan"
-                                        required
-                                    />
-                                )}
                                 <Input
-                                    label="Email Address"
+                                    label="Full Name *"
+                                    name="name"
+                                    value={formData.name}
+                                    onChange={handleInputChange}
+                                    placeholder="e.g. Dr. Ahmed Hassan"
+                                    required
+                                    icon={User}
+                                />
+                                <Input
+                                    label="Email Address *"
                                     type="email"
                                     name="email"
                                     value={formData.email}
                                     onChange={handleInputChange}
-                                    placeholder="name@clinc.com"
+                                    placeholder="name@example.com"
+                                    required
+                                    icon={Mail}
+                                />
+                                <Input
+                                    label="Password *"
+                                    type="password"
+                                    name="password"
+                                    value={formData.password}
+                                    onChange={handleInputChange}
+                                    placeholder="Min 6 characters"
                                     required
                                 />
-                                {formData.role === 'doctor' ? (
-                                    <Input
-                                        label="Specialty"
-                                        name="specialty"
-                                        value={formData.specialty}
+                                <Input
+                                    label="Phone Number"
+                                    name="phoneNumber"
+                                    value={formData.phoneNumber}
+                                    onChange={handleInputChange}
+                                    placeholder="+201234567890"
+                                    icon={Phone}
+                                />
+                                <Input
+                                    label="Specialty"
+                                    name="specialist"
+                                    value={formData.specialist}
+                                    onChange={handleInputChange}
+                                    placeholder="e.g. Psychiatry"
+                                    icon={Stethoscope}
+                                />
+                                <div className="md:col-span-2">
+                                    <label className="block text-sm font-medium text-text-muted mb-2">Description</label>
+                                    <textarea
+                                        name="description"
+                                        value={formData.description}
                                         onChange={handleInputChange}
-                                        placeholder="e.g. Cardiology"
-                                        required
+                                        placeholder="Professional bio..."
+                                        rows={3}
+                                        className="w-full px-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 bg-background text-text resize-none"
                                     />
-                                ) : (
-                                    <Select
-                                        label="Permission Level"
-                                        name="permissions"
-                                        value={formData.permissions}
-                                        onChange={handleInputChange}
-                                    >
-                                        <option value="view-only">View Only</option>
-                                        <option value="support-agent">Support Agent</option>
-                                        <option value="manager">Manager</option>
-                                    </Select>
-                                )}
+                                </div>
                             </div>
                             <div className="flex items-center gap-4">
-                                <Button type="submit">
-                                    {formData.role === 'doctor' ? 'Create Account' : 'Send Invitation'}
+                                <Button type="submit" disabled={submitting}>
+                                    {submitting ? (
+                                        <div className="flex items-center gap-2">
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Creating...
+                                        </div>
+                                    ) : 'Create Doctor Account'}
                                 </Button>
                                 <Button variant="ghost" type="button" onClick={() => setShowAddForm(false)}>
                                     Cancel
@@ -224,7 +303,7 @@ export default function UserManagement() {
                 </Card>
             ) : (
                 <div className="space-y-4">
-                    {/* Search and Filters */}
+                    {/* Search */}
                     <div className="flex gap-4">
                         <div className="relative flex-1">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light" />
@@ -236,110 +315,132 @@ export default function UserManagement() {
                                 className="w-full pl-10 pr-4 py-2 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
                             />
                         </div>
-                        <Button variant="ghost" className="border border-border bg-background-paper">
-                            <Filter className="w-4 h-4 mr-2" />
-                            Filter
-                        </Button>
                     </div>
 
-                    {/* Data Table */}
-                    <Card>
-                        <CardContent className="p-0">
-                            <Table>
-                                <TableHeader>
-                                    <TableRow>
-                                        {activeTab === 'doctors' && (
-                                            <>
-                                                <TableHead>Doctor Name</TableHead>
-                                                <TableHead>Specialty</TableHead>
-                                                <TableHead>Email</TableHead>
-                                                <TableHead>Sessions</TableHead>
-                                                <TableHead>Status</TableHead>
-                                            </>
-                                        )}
-                                        {activeTab === 'patients' && (
-                                            <>
-                                                <TableHead>Patient Name</TableHead>
-                                                <TableHead>Email</TableHead>
-                                                <TableHead>Last Visit</TableHead>
-                                                <TableHead>Status</TableHead>
-                                            </>
-                                        )}
-                                        {activeTab === 'staff' && (
-                                            <>
-                                                <TableHead>Email</TableHead>
-                                                <TableHead>Role</TableHead>
-                                                <TableHead>Status</TableHead>
-                                                <TableHead>Date Added</TableHead>
-                                            </>
-                                        )}
-                                        <TableHead>Actions</TableHead>
-                                    </TableRow>
-                                </TableHeader>
-                                <TableBody>
-                                    {activeTab === 'doctors' && filteredDoctors.map((doctor) => (
-                                        <TableRow key={doctor.id}>
-                                            <TableCell className="font-medium text-text-heading">{doctor.name}</TableCell>
-                                            <TableCell>{doctor.specialty}</TableCell>
-                                            <TableCell>{doctor.email}</TableCell>
-                                            <TableCell>{doctor.sessions}</TableCell>
-                                            <TableCell>
-                                                <Badge variant={doctor.status === 'active' ? 'success' : 'secondary'}>
-                                                    {doctor.status}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Button variant="ghost" size="sm">Edit</Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                    {activeTab === 'patients' && filteredPatients.map((patient) => (
-                                        <TableRow key={patient.id}>
-                                            <TableCell className="font-medium text-text-heading">{patient.name}</TableCell>
-                                            <TableCell>{patient.email}</TableCell>
-                                            <TableCell>{patient.lastVisit}</TableCell>
-                                            <TableCell>
-                                                <Badge variant={patient.status === 'active' ? 'success' : 'secondary'}>
-                                                    {patient.status}
-                                                </Badge>
-                                            </TableCell>
-                                            <TableCell>
-                                                <Button variant="ghost" size="sm">View</Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                    {activeTab === 'staff' && filteredStaff.map((s) => (
-                                        <TableRow key={s.id}>
-                                            <TableCell>
-                                                <div className="flex items-center gap-2">
-                                                    <Mail className="w-4 h-4 text-text-muted" />
-                                                    <span className="font-medium">{s.email}</span>
-                                                </div>
-                                            </TableCell>
-                                            <TableCell>{s.role}</TableCell>
-                                            <TableCell>
-                                                {s.status === 'accepted' ? (
-                                                    <Badge variant="success">
-                                                        <CheckCircle className="w-3 h-3 mr-1" />
-                                                        Accepted
-                                                    </Badge>
-                                                ) : (
-                                                    <Badge variant="warning">
-                                                        <Clock className="w-3 h-3 mr-1" />
-                                                        Pending
-                                                    </Badge>
+                    {/* Loading */}
+                    {loading ? (
+                        <div className="flex items-center justify-center py-20">
+                            <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                        </div>
+                    ) : (
+                        <>
+                            {/* Data Table */}
+                            <Card>
+                                <CardContent className="p-0">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                {activeTab === 'doctors' && (
+                                                    <>
+                                                        <TableHead>Doctor Name</TableHead>
+                                                        <TableHead>Specialty</TableHead>
+                                                        <TableHead>Email</TableHead>
+                                                        <TableHead>Phone</TableHead>
+                                                        <TableHead>Status</TableHead>
+                                                        <TableHead>Actions</TableHead>
+                                                    </>
                                                 )}
-                                            </TableCell>
-                                            <TableCell>{s.date}</TableCell>
-                                            <TableCell>
-                                                <Button variant="ghost" size="sm">Manage</Button>
-                                            </TableCell>
-                                        </TableRow>
-                                    ))}
-                                </TableBody>
-                            </Table>
-                        </CardContent>
-                    </Card>
+                                                {activeTab === 'patients' && (
+                                                    <>
+                                                        <TableHead>Name</TableHead>
+                                                        <TableHead>Email</TableHead>
+                                                        <TableHead>Phone</TableHead>
+                                                        <TableHead>Status</TableHead>
+                                                    </>
+                                                )}
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {activeTab === 'doctors' && filteredDoctors.map((doctor) => (
+                                                <TableRow key={doctor.Id || doctor.id || doctor.Email}>
+                                                    <TableCell className="font-medium text-text-heading">{doctor.Name || doctor.name}</TableCell>
+                                                    <TableCell>{(doctor.Specialist || doctor.specialist || []).join(', ') || 'N/A'}</TableCell>
+                                                    <TableCell>{doctor.Email || doctor.email}</TableCell>
+                                                    <TableCell>{doctor.PhoneNumber || doctor.phoneNumber || 'N/A'}</TableCell>
+                                                    <TableCell>
+                                                        <Badge variant={doctor.IsActive !== false ? 'success' : 'secondary'}>
+                                                            {doctor.IsActive !== false ? 'Active' : 'Inactive'}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-2">
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="sm"
+                                                                onClick={() => handleToggleDoctor(doctor.Id || doctor.id)}
+                                                                title={doctor.IsActive !== false ? 'Deactivate' : 'Activate'}
+                                                            >
+                                                                {doctor.IsActive !== false ? (
+                                                                    <ToggleRight className="w-5 h-5 text-green-600" />
+                                                                ) : (
+                                                                    <ToggleLeft className="w-5 h-5 text-gray-400" />
+                                                                )}
+                                                            </Button>
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                            {activeTab === 'patients' && filteredPatients.map((patient) => (
+                                                <TableRow key={patient.Id || patient.id || patient.Email}>
+                                                    <TableCell className="font-medium text-text-heading">{patient.Name || patient.name}</TableCell>
+                                                    <TableCell>{patient.Email || patient.email}</TableCell>
+                                                    <TableCell>{patient.PhoneNumber || patient.phoneNumber || 'N/A'}</TableCell>
+                                                    <TableCell>
+                                                        <Badge variant="success">Active</Badge>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))}
+                                            {activeTab === 'doctors' && filteredDoctors.length === 0 && (
+                                                <TableRow>
+                                                    <TableCell colSpan={6} className="text-center py-8 text-text-muted">
+                                                        No doctors found
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                            {activeTab === 'patients' && filteredPatients.length === 0 && (
+                                                <TableRow>
+                                                    <TableCell colSpan={4} className="text-center py-8 text-text-muted">
+                                                        No users found
+                                                    </TableCell>
+                                                </TableRow>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </CardContent>
+                            </Card>
+
+                            {/* Pagination */}
+                            <div className="flex items-center justify-between">
+                                <p className="text-sm text-text-muted">
+                                    Page {(activeTab === 'doctors' ? doctorsPage : patientsPage) + 1} of {activeTab === 'doctors' ? doctorsTotalPages : patientsTotalPages}
+                                </p>
+                                <div className="flex gap-2">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={(activeTab === 'doctors' ? doctorsPage : patientsPage) === 0}
+                                        onClick={() => {
+                                            if (activeTab === 'doctors') setDoctorsPage(p => Math.max(0, p - 1))
+                                            else setPatientsPage(p => Math.max(0, p - 1))
+                                        }}
+                                    >
+                                        <ChevronLeft className="w-4 h-4" />
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        disabled={(activeTab === 'doctors' ? doctorsPage : patientsPage) + 1 >= (activeTab === 'doctors' ? doctorsTotalPages : patientsTotalPages)}
+                                        onClick={() => {
+                                            if (activeTab === 'doctors') setDoctorsPage(p => p + 1)
+                                            else setPatientsPage(p => p + 1)
+                                        }}
+                                    >
+                                        <ChevronRight className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
             )}
         </div>

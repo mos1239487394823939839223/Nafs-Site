@@ -19,12 +19,11 @@ import {
   Clock
 } from 'lucide-react'
 
-import { useAuth, Roles } from '../../../contexts/AuthContext'
-import { useClinic } from '../../../contexts/ClinicContext'
+import { useAuth } from '../../../contexts/AuthContext'
+import { api, authAPI } from '../../../lib/api'
 
 export default function DoctorRegistration() {
   const navigate = useNavigate()
-  const { registerUser } = useClinic()
   const toast = useToast()
   const [loading, setLoading] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState({
@@ -164,31 +163,58 @@ export default function DoctorRegistration() {
     }
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setLoading(true)
 
-    // Get temporary credentials
-    const tempRegData = JSON.parse(sessionStorage.getItem('temp_reg_data') || '{}')
+    try {
+      // Get temporary credentials from sessionStorage
+      const tempRegData = JSON.parse(sessionStorage.getItem('temp_reg_data') || '{}')
 
-    // Simulate API call and Register User
-    setTimeout(() => {
-      setLoading(false)
-
-      const newUser = {
-        name: tempRegData.name || tempRegData.email.split('@')[0],
+      // Build the doctor registration payload for Admin/AddDoctor
+      const doctorPayload = {
+        name: tempRegData.name || `${tempRegData.firstName || ''} ${tempRegData.lastName || ''}`.trim(),
         email: tempRegData.email,
         password: tempRegData.password,
-        role: Roles.DOCTOR,
-        specialty: formData.specialty,
-        bio: formData.bio,
-        status: 'pending'
+        phoneNumber: tempRegData.phone || '',
+        description: formData.bio || null,
+        specialist: formData.specialty ? [formData.specialty] : null,
       }
 
-      registerUser(newUser)
+      // Try registering via the general Auth/Register first (as patient), 
+      // then the admin can approve as doctor. Or use Admin/AddDoctor if available.
+      // For self-registration, use Auth/Register and then navigate to pending approval.
+      const registerPayload = {
+        Name: doctorPayload.name,
+        PhoneNumber: doctorPayload.phoneNumber,
+        Email: doctorPayload.email,
+        Password: doctorPayload.password,
+        Gender: tempRegData.gender === 'female' ? 2 : 1,
+        Birthday: tempRegData.dateOfBirth ? new Date(tempRegData.dateOfBirth).toISOString() : null,
+      }
 
-      sessionStorage.removeItem('temp_reg_data')
-      navigate('/auth/pending-approval')
-    }, 2000)
+      const response = await api.post('/Auth/Register', registerPayload)
+
+      if (response.data?.IsSuccess !== false && response.status === 200) {
+        // Send OTP for email verification
+        try {
+          await authAPI.sendOtp(doctorPayload.email)
+        } catch (otpErr) {
+          console.warn('OTP send failed after doctor registration:', otpErr)
+        }
+
+        sessionStorage.removeItem('temp_reg_data')
+        toast.success('Registration submitted! Your account is pending approval.')
+        navigate('/auth/pending-approval')
+      } else {
+        toast.error(response.data?.Message || 'Registration failed')
+      }
+    } catch (error) {
+      console.error('Doctor registration error:', error)
+      const errorMessage = error.response?.data?.Message || error.message || 'Registration failed. Please try again.'
+      toast.error(errorMessage)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleFieldChange = (field, value) => {

@@ -1,57 +1,94 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Filter } from 'lucide-react'
-import { useToast } from '../../components/ui/Toast' // Adjusted import path
-import QueueList from '../../components/doctor/queue/QueueList'
+import { Users, Filter, Loader2, ChevronLeft, ChevronRight, Clock } from 'lucide-react'
+import { useToast } from '../../components/ui/Toast'
 import QueueStats from '../../components/doctor/queue/QueueStats'
-import { useClinic } from '../../contexts/ClinicContext'
-import { useAuth } from '../../contexts/AuthContext'
+import QueueItem from '../../components/doctor/queue/QueueItem'
+import { doctorAPI } from '../../lib/api'
+
+// BookingStatus enum
+const BookingStatusMap = {
+  0: 'waiting',       // Pending → show as waiting
+  1: 'confirmed',     // Confirmed
+  2: 'in-progress',   // InProgress
+  3: 'completed',     // Completed
+  4: 'cancelled',     // Cancelled
+  5: 'cancelled',     // NoShow → show as cancelled
+}
 
 export default function PatientQueue() {
   const toast = useToast()
-  const [filter, setFilter] = useState('all') // all, waiting, in-progress, completed
+  const [filter, setFilter] = useState('all')
+  const [bookings, setBookings] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [pageIndex, setPageIndex] = useState(0)
+  const [totalPages, setTotalPages] = useState(1)
+  const pageSize = 20
 
-  const { user } = useAuth()
-  const { appointments, updateAppointmentStatus } = useClinic()
+  // Fetch bookings from API
+  const fetchBookings = async () => {
+    try {
+      setLoading(true)
+      const response = await doctorAPI.getBookings(pageIndex, pageSize)
+      if (response.IsSuccess && response.Data) {
+        setBookings(response.Data.Items || [])
+        setTotalPages(response.Data.Pages || 1)
+      }
+    } catch (error) {
+      console.error('Failed to fetch bookings:', error)
+      toast.error('Failed to load patient queue')
+    } finally {
+      setLoading(false)
+    }
+  }
 
-  // Filter appointments for this doctor
-  const patients = appointments
-    .filter(app => {
-      const isMyId = app.doctorId === user?.id || app.doctorId === user?.email;
-      const isMyName = app.doctorName?.toLowerCase() === user?.name?.toLowerCase();
-      // Special fallback for demo: if user is 'doctor' and app is for 'Dr. Ahmed Hassan'
-      const isDemoMatch = (user?.email === 'doctor@example.com' || user?.name === 'doctor') &&
-        (app.doctorId === 1 || app.doctorName === 'Dr. Ahmed Hassan');
+  useEffect(() => {
+    fetchBookings()
+  }, [pageIndex])
 
-      return isMyId || isMyName || isDemoMatch;
-    })
-    .map(app => ({
-      id: app.id,
-      name: app.patientName,
-      status: app.status,
-      waitTime: Math.floor(Math.random() * 30), // Scenario wait time
-      specialty: app.specialty,
-      time: app.time
-    }))
+  // Format time for display
+  const formatTime = (dateTimeStr) => {
+    if (!dateTimeStr) return ''
+    const date = new Date(dateTimeStr)
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+  }
 
+  // Map bookings to patient queue format
+  const patients = bookings.map(booking => {
+    const now = new Date()
+    const sessionStart = new Date(booking.SessionStartTime)
+    const waitTime = Math.max(0, Math.floor((now - sessionStart) / 60000))
+
+    return {
+      id: booking.Id,
+      name: booking.PatientName || 'Unknown Patient',
+      status: BookingStatusMap[booking.Status] || 'waiting',
+      statusCode: booking.Status,
+      waitTime: booking.Status === 0 || booking.Status === 1 ? waitTime : 0,
+      specialty: 'Consultation',
+      time: formatTime(booking.SessionStartTime),
+      duration: booking.DurationMinutes,
+      meetingUrl: booking.MeetingUrl,
+      paymentConfirmed: booking.PaymentConfirmed,
+    }
+  })
 
   // Stats calculation
   const stats = {
     waiting: patients.filter(p => p.status === 'waiting' || p.status === 'confirmed').length,
     completed: patients.filter(p => p.status === 'completed').length,
-    avgWait: Math.round(patients.reduce((acc, p) => acc + p.waitTime, 0) / patients.length) || 0
+    avgWait: patients.length > 0
+      ? Math.round(patients.filter(p => p.status === 'waiting' || p.status === 'confirmed').reduce((acc, p) => acc + p.waitTime, 0) /
+        Math.max(1, patients.filter(p => p.status === 'waiting' || p.status === 'confirmed').length))
+      : 0
   }
 
   const handleAction = (action, id) => {
-    let newStatus = ''
-    if (action === 'start') newStatus = 'in-progress'
-    else if (action === 'complete') newStatus = 'completed'
-    else if (action === 'cancel' || action === 'no-show') newStatus = 'cancelled'
-
-    if (newStatus) {
-      updateAppointmentStatus(id, newStatus)
-      toast.success(`Action updated for patient session`)
-    }
+    // Actions would need a backend endpoint to update booking status
+    // For now, show a toast and refresh
+    toast.success(`Action "${action}" triggered for booking #${id}`)
+    // Could call an API to update status here in the future
+    fetchBookings()
   }
 
   const filters = [
@@ -60,6 +97,19 @@ export default function PatientQueue() {
     { id: 'in-progress', label: 'In Progress' },
     { id: 'completed', label: 'Completed' },
   ]
+
+  // Filter patients based on selected filter
+  const filteredPatients = patients.filter(p => {
+    if (filter === 'all') return true
+    if (filter === 'waiting') return p.status === 'waiting' || p.status === 'confirmed'
+    return p.status === filter
+  })
+
+  // Sort: In-progress first, then waiting, then completed
+  const sortedPatients = [...filteredPatients].sort((a, b) => {
+    const statusOrder = { 'in-progress': 0, 'waiting': 1, 'confirmed': 1, 'completed': 2, 'cancelled': 3 }
+    return (statusOrder[a.status] || 4) - (statusOrder[b.status] || 4)
+  })
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -103,21 +153,54 @@ export default function PatientQueue() {
 
           {/* List */}
           <div className='min-h-[400px]'>
-            <QueueList
-              patients={patients}
-              filter={filter}
-              onAction={handleAction}
-            />
+            {loading ? (
+              <div className="flex items-center justify-center py-20">
+                <Loader2 className="w-10 h-10 text-primary animate-spin" />
+              </div>
+            ) : sortedPatients.length === 0 ? (
+              <div className="text-center py-12 bg-background-paper rounded-xl border border-dashed border-border">
+                <Users className="w-12 h-12 text-text-muted mx-auto mb-3 opacity-30" />
+                <p className="text-text-muted">No patients found within this filter.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {sortedPatients.map((patient) => (
+                  <QueueItem key={patient.id} patient={patient} onAction={handleAction} />
+                ))}
+              </div>
+            )}
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-4">
+              <button
+                disabled={pageIndex === 0}
+                onClick={() => setPageIndex(prev => Math.max(0, prev - 1))}
+                className="p-2 rounded-lg border border-border hover:bg-background-subtle disabled:opacity-50 transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <span className="text-sm text-text-muted">
+                Page {pageIndex + 1} of {totalPages}
+              </span>
+              <button
+                disabled={pageIndex >= totalPages - 1}
+                onClick={() => setPageIndex(prev => prev + 1)}
+                className="p-2 rounded-lg border border-border hover:bg-background-subtle disabled:opacity-50 transition-colors"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Sidebar / Stats */}
         <div className="space-y-6">
           <QueueStats stats={stats} />
 
-          {/* Quick Actions / Notes area could go here */}
           <div className="bg-primary/10 p-6 rounded-2xl border border-primary/20">
-            <h3 className="font-semibold text-text-heading mb-2">👨‍⚕️ Doctor's Note</h3>
+            <h3 className="font-semibold text-text-heading mb-2">Doctor's Note</h3>
             <p className="text-sm text-text-muted">
               Remember to complete patient notes within 15 minutes of session end.
             </p>
