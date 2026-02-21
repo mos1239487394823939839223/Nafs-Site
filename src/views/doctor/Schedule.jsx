@@ -7,29 +7,7 @@ import Modal from '../../components/ui/Modal'
 import { useToast } from '../../components/ui/Toast'
 import { useAuth } from '../../contexts/AuthContext'
 import { doctorAPI } from '../../lib/api'
-
-// Day of week mapping
-const DayOfWeekNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday']
-const DayOfWeekShort = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
-
-// SlotDuration enum mapping (backend expects 30 or 45)
-const SlotDurationLabels = {
-  30: '30 min',
-  45: '45 min',
-}
-
-// AvailabilityType enum mapping (from API: 0=Blocked, 1=Weekly, 2=SpecificSlot)
-const AvailabilityTypeLabels = {
-  0: 'Blocked',
-  1: 'Weekly',
-  2: 'Specific Slot',
-}
-
-const AvailabilityTypeColors = {
-  0: 'error',
-  1: 'primary',
-  2: 'success',
-}
+import { useLanguage } from '../../contexts/LanguageContext'
 
 // Calendar helper functions
 const getMonthDays = (year, month) => {
@@ -70,6 +48,13 @@ const formatDateKey = (date) => {
 export default function Schedule() {
   const toast = useToast()
   const { user } = useAuth()
+  const { t } = useLanguage()
+
+  // Day of week mapping
+  const DayOfWeekNames = [t('doctor.sunday'), t('doctor.monday'), t('doctor.tuesday'), t('doctor.wednesday'), t('doctor.thursday'), t('doctor.friday'), t('doctor.saturday')]
+  const DayOfWeekShort = [t('doctor.sun'), t('doctor.mon'), t('doctor.tue'), t('doctor.wed'), t('doctor.thu'), t('doctor.fri'), t('doctor.sat')]
+
+  const SlotDurationLabels = { 30: '30 ' + t('doctor.min'), 45: '45 ' + t('doctor.min') }
 
   const [availability, setAvailability] = useState([])
   const [loading, setLoading] = useState(true)
@@ -118,7 +103,7 @@ export default function Schedule() {
       }
     } catch (error) {
       console.error('Failed to fetch availability:', error)
-      toast.error('Failed to load availability')
+      toast.error(t('errors.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -134,15 +119,15 @@ export default function Schedule() {
       setSaving(true)
       const response = await doctorAPI.setWeeklySchedule(weeklySchedules)
       if (response.IsSuccess) {
-        toast.success('Weekly schedule saved successfully')
+        toast.success(t('success.scheduleSaved'))
         setIsWeeklyModalOpen(false)
         fetchAvailability()
       } else {
-        toast.error(response.Message || 'Failed to save weekly schedule')
+        toast.error(response.Message || t('errors.saveFailed'))
       }
     } catch (error) {
       console.error('Failed to save weekly schedule:', error)
-      toast.error('Failed to save weekly schedule')
+      toast.error(t('errors.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -151,7 +136,7 @@ export default function Schedule() {
   // Handle add time slot
   const handleAddSlot = async () => {
     if (!slotForm.SpecificDate) {
-      toast.error('Please select a date')
+      toast.error(t('errors.selectDate'))
       return
     }
     try {
@@ -163,16 +148,16 @@ export default function Schedule() {
         slotForm.SlotDuration
       )
       if (response.IsSuccess) {
-        toast.success('Time slot added successfully')
+        toast.success(t('success.slotAdded'))
         setIsSlotModalOpen(false)
         setSlotForm({ SpecificDate: '', StartTime: '09:00', EndTime: '10:00', SlotDuration: 30 })
         fetchAvailability()
       } else {
-        toast.error(response.Message || 'Failed to add time slot')
+        toast.error(response.Message || t('errors.saveFailed'))
       }
     } catch (error) {
       console.error('Failed to add time slot:', error)
-      toast.error('Failed to add time slot')
+      toast.error(t('errors.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -181,7 +166,7 @@ export default function Schedule() {
   // Handle block time
   const handleBlockTime = async () => {
     if (!blockForm.SpecificDate) {
-      toast.error('Please select a date')
+      toast.error(t('errors.selectDate'))
       return
     }
     try {
@@ -192,16 +177,16 @@ export default function Schedule() {
         blockForm.EndTime
       )
       if (response.IsSuccess) {
-        toast.success('Time blocked successfully')
+        toast.success(t('success.timeBlocked'))
         setIsBlockModalOpen(false)
         setBlockForm({ SpecificDate: '', StartTime: '09:00', EndTime: '17:00' })
         fetchAvailability()
       } else {
-        toast.error(response.Message || 'Failed to block time')
+        toast.error(response.Message || t('errors.saveFailed'))
       }
     } catch (error) {
       console.error('Failed to block time:', error)
-      toast.error('Failed to block time')
+      toast.error(t('errors.saveFailed'))
     } finally {
       setSaving(false)
     }
@@ -213,14 +198,14 @@ export default function Schedule() {
       setDeletingId(id)
       const response = await doctorAPI.deleteAvailability(id)
       if (response.IsSuccess) {
-        toast.success('Availability deleted successfully')
+        toast.success(t('success.deleted'))
         setAvailability(prev => prev.filter(a => a.Id !== id))
       } else {
-        toast.error(response.Message || 'Failed to delete availability')
+        toast.error(response.Message || t('errors.deleteFailed'))
       }
     } catch (error) {
       console.error('Failed to delete availability:', error)
-      toast.error('Failed to delete availability')
+      toast.error(t('errors.deleteFailed'))
     } finally {
       setDeletingId(null)
     }
@@ -318,8 +303,8 @@ export default function Schedule() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8"
       >
         <div>
-          <h1 className="text-3xl font-bold text-text mb-2">My Schedule</h1>
-          <p className="text-text-light">Manage your weekly availability and time slots</p>
+          <h1 className="text-3xl font-bold text-text mb-2">{t('doctor.mySchedule')}</h1>
+          <p className="text-text-light">{t('doctor.manageAvailability')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {/* View Toggle */}
@@ -333,7 +318,7 @@ export default function Schedule() {
               }`}
             >
               <CalendarIcon className="w-4 h-4 inline mr-1.5" />
-              Calendar
+              {t('doctor.calendar')}
             </button>
             <button
               onClick={() => setViewMode('cards')}
@@ -344,20 +329,20 @@ export default function Schedule() {
               }`}
             >
               <LayoutGrid className="w-4 h-4 inline mr-1.5" />
-              Cards
+              {t('doctor.cards')}
             </button>
           </div>
           <Button onClick={() => setIsWeeklyModalOpen(true)} className="gap-2">
             <CalendarIcon className="w-4 h-4" />
-            Set Weekly Schedule
+            {t('doctor.setWeeklySchedule')}
           </Button>
           <Button variant="outline" onClick={() => setIsSlotModalOpen(true)} className="gap-2">
             <Plus className="w-4 h-4" />
-            Add Slot
+            {t('doctor.addSlot')}
           </Button>
           <Button variant="outline" onClick={() => setIsBlockModalOpen(true)} className="gap-2 text-red-600 border-red-200 hover:bg-red-50">
             <Ban className="w-4 h-4" />
-            Block Time
+            {t('doctor.blockTime')}
           </Button>
         </div>
       </motion.div>
@@ -395,7 +380,7 @@ export default function Schedule() {
                 onClick={goToToday}
                 className="px-4 py-2 text-sm font-medium bg-primary/10 text-primary rounded-xl hover:bg-primary/20 transition-colors"
               >
-                Today
+                {t('doctor.today')}
               </button>
             </div>
 
@@ -453,7 +438,7 @@ export default function Schedule() {
                           <div className="flex items-center gap-1">
                             <div className="w-1.5 h-1.5 rounded-full bg-green-500 flex-shrink-0" />
                             <span className="text-[10px] text-green-600 font-medium truncate hidden sm:block">
-                              Slot
+                              {t('doctor.slot')}
                             </span>
                           </div>
                         )}
@@ -461,7 +446,7 @@ export default function Schedule() {
                           <div className="flex items-center gap-1">
                             <div className="w-1.5 h-1.5 rounded-full bg-red-400 flex-shrink-0" />
                             <span className="text-[10px] text-red-500 font-medium truncate hidden sm:block">
-                              Blocked
+                              {t('doctor.blocked')}
                             </span>
                           </div>
                         )}
@@ -476,15 +461,15 @@ export default function Schedule() {
             <div className="px-6 py-3 border-t border-border bg-background-subtle flex flex-wrap gap-4">
               <div className="flex items-center gap-2 text-xs text-text-muted">
                 <div className="w-2.5 h-2.5 rounded-full bg-primary" />
-                Weekly Schedule
+                {t('doctor.weeklySchedule')}
               </div>
               <div className="flex items-center gap-2 text-xs text-text-muted">
                 <div className="w-2.5 h-2.5 rounded-full bg-green-500" />
-                Specific Slot
+                {t('doctor.specificSlot')}
               </div>
               <div className="flex items-center gap-2 text-xs text-text-muted">
                 <div className="w-2.5 h-2.5 rounded-full bg-red-400" />
-                Blocked
+                {t('doctor.blocked')}
               </div>
             </div>
           </div>
@@ -504,7 +489,7 @@ export default function Schedule() {
                       {new Date(selectedDay + 'T00:00:00').toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
                     </h3>
                     <p className="text-sm text-text-muted mt-0.5">
-                      {selectedDayEvents.length} {selectedDayEvents.length === 1 ? 'entry' : 'entries'}
+                      {selectedDayEvents.length} {selectedDayEvents.length === 1 ? t('doctor.entry') : t('doctor.entries')}
                     </p>
                   </div>
                   <button
@@ -551,12 +536,12 @@ export default function Schedule() {
                                   {event.StartTime} - {event.EndTime}
                                 </span>
                                 <Badge variant={event._type === 'weekly' ? 'primary' : event._type === 'specific' ? 'success' : 'danger'}>
-                                  {event._type === 'weekly' ? 'Weekly' : event._type === 'specific' ? 'Slot' : 'Blocked'}
+                                  {event._type === 'weekly' ? t('doctor.weekly') : event._type === 'specific' ? t('doctor.slot') : t('doctor.blocked')}
                                 </Badge>
                               </div>
                               {event._type !== 'blocked' && (
                                 <p className="text-xs text-text-muted mt-1">
-                                  Duration: {SlotDurationLabels[event.SlotDuration] || `${event.SlotDuration} min`}
+                                  {t('doctor.duration')}: {SlotDurationLabels[event.SlotDuration] || `${event.SlotDuration} ${t('doctor.min')}`}
                                 </p>
                               )}
                             </div>
@@ -578,7 +563,7 @@ export default function Schedule() {
                   ) : (
                     <div className="text-center py-8">
                       <CalendarIcon className="w-10 h-10 text-text-muted mx-auto mb-2 opacity-30" />
-                      <p className="text-text-muted text-sm">No availability for this day</p>
+                      <p className="text-text-muted text-sm">{t('doctor.noAvailability')}</p>
                       <div className="flex gap-2 justify-center mt-4">
                         <Button
                           size="sm"
@@ -590,7 +575,7 @@ export default function Schedule() {
                           className="gap-1.5"
                         >
                           <Plus className="w-3.5 h-3.5" />
-                          Add Slot
+                          {t('doctor.addSlot')}
                         </Button>
                         <Button
                           size="sm"
@@ -602,7 +587,7 @@ export default function Schedule() {
                           className="gap-1.5 text-red-600 border-red-200 hover:bg-red-50"
                         >
                           <Ban className="w-3.5 h-3.5" />
-                          Block
+                          {t('doctor.block')}
                         </Button>
                       </div>
                     </div>
@@ -622,7 +607,7 @@ export default function Schedule() {
           >
             <h2 className="text-xl font-bold text-text-heading mb-4 flex items-center gap-2">
               <CalendarIcon className="w-5 h-5 text-primary" />
-              Weekly Schedule
+              {t('doctor.weeklySchedule')}
             </h2>
             {weeklyAvailability.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -634,7 +619,7 @@ export default function Schedule() {
                           {slot.DayOfWeek !== null && slot.DayOfWeek !== undefined ? DayOfWeekNames[slot.DayOfWeek] : 'N/A'}
                         </span>
                         <Badge variant={slot.IsActive ? 'success' : 'danger'}>
-                          {slot.IsActive ? 'Active' : 'Inactive'}
+                          {slot.IsActive ? t('common.active') : t('common.inactive')}
                         </Badge>
                       </div>
                       <button
@@ -650,8 +635,8 @@ export default function Schedule() {
                       </button>
                     </div>
                     <div className="text-sm text-text-muted space-y-1">
-                      <p><strong>Time:</strong> {slot.StartTime} - {slot.EndTime}</p>
-                      <p><strong>Slot Duration:</strong> {SlotDurationLabels[slot.SlotDuration] || `${slot.SlotDuration}`}</p>
+                      <p><strong>{t('doctor.time')}:</strong> {slot.StartTime} - {slot.EndTime}</p>
+                      <p><strong>{t('doctor.slotDuration')}:</strong> {SlotDurationLabels[slot.SlotDuration] || `${slot.SlotDuration}`}</p>
                     </div>
                   </div>
                 ))}
@@ -659,9 +644,9 @@ export default function Schedule() {
             ) : (
               <div className="text-center py-10 bg-background-paper rounded-2xl border-2 border-dashed border-border">
                 <CalendarIcon className="w-12 h-12 text-text-muted mx-auto mb-3 opacity-30" />
-                <p className="text-text-muted">No weekly schedule set</p>
+                <p className="text-text-muted">{t('doctor.noWeeklySchedule')}</p>
                 <Button variant="outline" size="sm" className="mt-3" onClick={() => setIsWeeklyModalOpen(true)}>
-                  Set Weekly Schedule
+                  {t('doctor.setWeeklySchedule')}
                 </Button>
               </div>
             )}
@@ -675,14 +660,14 @@ export default function Schedule() {
           >
             <h2 className="text-xl font-bold text-text-heading mb-4 flex items-center gap-2">
               <Plus className="w-5 h-5 text-green-600" />
-              Specific Time Slots
+              {t('doctor.specificTimeSlots')}
             </h2>
             {specificSlots.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {specificSlots.map((slot) => (
                   <div key={slot.Id} className="bg-background-paper border border-green-200 rounded-2xl p-4 shadow-sm">
                     <div className="flex items-center justify-between mb-3">
-                      <Badge variant="success">Specific Slot</Badge>
+                      <Badge variant="success">{t('doctor.specificSlot')}</Badge>
                       <button
                         onClick={() => handleDelete(slot.Id)}
                         disabled={deletingId === slot.Id}
@@ -696,16 +681,16 @@ export default function Schedule() {
                       </button>
                     </div>
                     <div className="text-sm text-text-muted space-y-1">
-                      <p><strong>Date:</strong> {slot.SpecificDate || 'N/A'}</p>
-                      <p><strong>Time:</strong> {slot.StartTime} - {slot.EndTime}</p>
-                      <p><strong>Duration:</strong> {SlotDurationLabels[slot.SlotDuration] || `${slot.SlotDuration}`}</p>
+                      <p><strong>{t('doctor.date')}:</strong> {slot.SpecificDate || 'N/A'}</p>
+                      <p><strong>{t('doctor.time')}:</strong> {slot.StartTime} - {slot.EndTime}</p>
+                      <p><strong>{t('doctor.duration')}:</strong> {SlotDurationLabels[slot.SlotDuration] || `${slot.SlotDuration}`}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="text-center py-8 bg-background-paper rounded-2xl border-2 border-dashed border-border">
-                <p className="text-text-muted text-sm">No specific time slots</p>
+                <p className="text-text-muted text-sm">{t('doctor.noSpecificSlots')}</p>
               </div>
             )}
           </motion.div>
@@ -718,14 +703,14 @@ export default function Schedule() {
           >
             <h2 className="text-xl font-bold text-text-heading mb-4 flex items-center gap-2">
               <Ban className="w-5 h-5 text-primary-dark opacity-60" />
-              Blocked Time
+              {t('doctor.blockedTime')}
             </h2>
             {blockedSlots.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {blockedSlots.map((slot) => (
                   <div key={slot.Id} className="bg-background-subtle border border-primary-dark/20 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow opacity-80 hover:opacity-100">
                     <div className="flex items-center justify-between mb-3">
-                      <Badge variant="default" className="bg-primary-dark/10 text-primary-dark border-primary-dark/20">Blocked</Badge>
+                      <Badge variant="default" className="bg-primary-dark/10 text-primary-dark border-primary-dark/20">{t('doctor.blocked')}</Badge>
                       <button
                         onClick={() => handleDelete(slot.Id)}
                         disabled={deletingId === slot.Id}
@@ -739,15 +724,15 @@ export default function Schedule() {
                       </button>
                     </div>
                     <div className="text-sm text-text-muted space-y-1">
-                      <p><strong>Date:</strong> {slot.SpecificDate || 'N/A'}</p>
-                      <p><strong>Time:</strong> {slot.StartTime} - {slot.EndTime}</p>
+                      <p><strong>{t('doctor.date')}:</strong> {slot.SpecificDate || 'N/A'}</p>
+                      <p><strong>{t('doctor.time')}:</strong> {slot.StartTime} - {slot.EndTime}</p>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
               <div className="text-center py-8 bg-background-paper rounded-2xl border-2 border-dashed border-border">
-                <p className="text-text-muted text-sm">No blocked times</p>
+                <p className="text-text-muted text-sm">{t('doctor.noBlockedTimes')}</p>
               </div>
             )}
           </motion.div>
@@ -758,14 +743,14 @@ export default function Schedule() {
       <Modal
         isOpen={isWeeklyModalOpen}
         onClose={() => setIsWeeklyModalOpen(false)}
-        title="Set Weekly Schedule"
+        title={t('doctor.setWeeklySchedule')}
         size="lg"
       >
         <div className="space-y-4">
           {weeklySchedules.map((row, index) => (
             <div key={index} className="flex flex-wrap items-end gap-3 p-4 bg-background rounded-xl border border-border">
               <div className="flex-1 min-w-[140px]">
-                <label className="text-xs font-semibold text-text-muted mb-1 block">Day</label>
+                <label className="text-xs font-semibold text-text-muted mb-1 block">{t('doctor.day')}</label>
                 <select
                   value={row.DayOfWeek}
                   onChange={(e) => updateWeeklyRow(index, 'DayOfWeek', e.target.value)}
@@ -777,7 +762,7 @@ export default function Schedule() {
                 </select>
               </div>
               <div className="min-w-[110px]">
-                <label className="text-xs font-semibold text-text-muted mb-1 block">Start</label>
+                <label className="text-xs font-semibold text-text-muted mb-1 block">{t('doctor.start')}</label>
                 <input
                   type="time"
                   value={row.StartTime}
@@ -786,7 +771,7 @@ export default function Schedule() {
                 />
               </div>
               <div className="min-w-[110px]">
-                <label className="text-xs font-semibold text-text-muted mb-1 block">End</label>
+                <label className="text-xs font-semibold text-text-muted mb-1 block">{t('doctor.end')}</label>
                 <input
                   type="time"
                   value={row.EndTime}
@@ -795,7 +780,7 @@ export default function Schedule() {
                 />
               </div>
               <div className="min-w-[120px]">
-                <label className="text-xs font-semibold text-text-muted mb-1 block">Slot Duration</label>
+                <label className="text-xs font-semibold text-text-muted mb-1 block">{t('doctor.slotDuration')}</label>
                 <select
                   value={row.SlotDuration}
                   onChange={(e) => updateWeeklyRow(index, 'SlotDuration', e.target.value)}
@@ -819,23 +804,23 @@ export default function Schedule() {
 
           <Button variant="outline" size="sm" onClick={addWeeklyRow} className="gap-2 w-full">
             <Plus className="w-4 h-4" />
-            Add Day
+            {t('doctor.addDay')}
           </Button>
 
           <div className="flex gap-3 pt-4 border-t border-border">
             <Button variant="outline" className="flex-1" onClick={() => setIsWeeklyModalOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button className="flex-1 gap-2" onClick={handleSaveWeekly} disabled={saving}>
           {saving ? (
             <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-              Saving...
+              {t('common.saving')}
             </>
           ) : (
             <>
               <Save className="w-4 h-4" />
-                  Save Schedule
+                  {t('doctor.saveSchedule')}
             </>
           )}
         </Button>
@@ -847,12 +832,12 @@ export default function Schedule() {
       <Modal
         isOpen={isSlotModalOpen}
         onClose={() => setIsSlotModalOpen(false)}
-        title="Add Time Slot"
+        title={t('doctor.addTimeSlot')}
         size="md"
       >
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-semibold text-text-muted mb-1 block">Date</label>
+            <label className="text-sm font-semibold text-text-muted mb-1 block">{t('doctor.date')}</label>
             <input
               type="date"
               value={slotForm.SpecificDate}
@@ -862,7 +847,7 @@ export default function Schedule() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-semibold text-text-muted mb-1 block">Start Time</label>
+              <label className="text-sm font-semibold text-text-muted mb-1 block">{t('doctor.startTime')}</label>
               <input
                 type="time"
                 value={slotForm.StartTime}
@@ -871,7 +856,7 @@ export default function Schedule() {
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-text-muted mb-1 block">End Time</label>
+              <label className="text-sm font-semibold text-text-muted mb-1 block">{t('doctor.endTime')}</label>
               <input
                 type="time"
                 value={slotForm.EndTime}
@@ -881,7 +866,7 @@ export default function Schedule() {
             </div>
           </div>
           <div>
-            <label className="text-sm font-semibold text-text-muted mb-1 block">Slot Duration</label>
+            <label className="text-sm font-semibold text-text-muted mb-1 block">{t('doctor.slotDuration')}</label>
             <select
               value={slotForm.SlotDuration}
               onChange={(e) => setSlotForm({ ...slotForm, SlotDuration: parseInt(e.target.value) })}
@@ -894,18 +879,18 @@ export default function Schedule() {
           </div>
           <div className="flex gap-3 pt-4 border-t border-border">
             <Button variant="outline" className="flex-1" onClick={() => setIsSlotModalOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button className="flex-1 gap-2" onClick={handleAddSlot} disabled={saving}>
               {saving ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Adding...
+                  {t('common.adding')}
                 </>
               ) : (
                 <>
                   <Plus className="w-4 h-4" />
-                  Add Slot
+                  {t('doctor.addSlot')}
                 </>
               )}
             </Button>
@@ -917,12 +902,12 @@ export default function Schedule() {
       <Modal
         isOpen={isBlockModalOpen}
         onClose={() => setIsBlockModalOpen(false)}
-        title="Block Time"
+        title={t('doctor.blockTime')}
         size="md"
       >
         <div className="space-y-4">
           <div>
-            <label className="text-sm font-semibold text-text-muted mb-1 block">Date</label>
+            <label className="text-sm font-semibold text-text-muted mb-1 block">{t('doctor.date')}</label>
             <input
               type="date"
               value={blockForm.SpecificDate}
@@ -932,7 +917,7 @@ export default function Schedule() {
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="text-sm font-semibold text-text-muted mb-1 block">Start Time</label>
+              <label className="text-sm font-semibold text-text-muted mb-1 block">{t('doctor.startTime')}</label>
               <input
                 type="time"
                 value={blockForm.StartTime}
@@ -941,7 +926,7 @@ export default function Schedule() {
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-text-muted mb-1 block">End Time</label>
+              <label className="text-sm font-semibold text-text-muted mb-1 block">{t('doctor.endTime')}</label>
               <input
                 type="time"
                 value={blockForm.EndTime}
@@ -952,18 +937,18 @@ export default function Schedule() {
           </div>
           <div className="flex gap-3 pt-4 border-t border-border">
             <Button variant="outline" className="flex-1" onClick={() => setIsBlockModalOpen(false)}>
-              Cancel
+              {t('common.cancel')}
             </Button>
             <Button className="flex-1 gap-2 bg-red-600 hover:bg-red-700" onClick={handleBlockTime} disabled={saving}>
               {saving ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Blocking...
+                  {t('common.saving')}
                 </>
               ) : (
                 <>
                   <Ban className="w-4 h-4" />
-                  Block Time
+                  {t('doctor.blockTime')}
                 </>
               )}
             </Button>

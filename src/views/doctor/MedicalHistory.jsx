@@ -8,10 +8,12 @@ import Modal from '../../components/ui/Modal'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import { doctorAPI } from '../../lib/api'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function MedicalHistory() {
     const { user } = useAuth()
     const toast = useToast()
+    const { t } = useLanguage()
 
     const [selectedPatient, setSelectedPatient] = useState(null)
     const [searchQuery, setSearchQuery] = useState('')
@@ -19,15 +21,8 @@ export default function MedicalHistory() {
     const [newRecord, setNewRecord] = useState({ summary: '', medications: '' })
     const [loading, setLoading] = useState(true)
     const [bookings, setBookings] = useState([])
-    // Local medical records (stored in memory since there's no dedicated medical history API)
-    const [localRecords, setLocalRecords] = useState(() => {
-        try {
-            const stored = localStorage.getItem('nafs_medical_records')
-            return stored ? JSON.parse(stored) : []
-        } catch {
-            return []
-        }
-    })
+    // Local medical records (in-memory only — no backend API exists yet for clinical notes)
+    const [localRecords, setLocalRecords] = useState([])
 
     // Fetch bookings from API to extract patient list
     useEffect(() => {
@@ -40,7 +35,7 @@ export default function MedicalHistory() {
                 }
             } catch (error) {
                 console.error('Failed to fetch bookings:', error)
-                toast.error('Failed to load patient data')
+                toast.error(t('errors.loadFailed'))
             } finally {
                 setLoading(false)
             }
@@ -81,14 +76,9 @@ export default function MedicalHistory() {
 
     const patientHistory = localRecords.filter(h => h.patientId === selectedPatient?.id)
 
-    // Save records to localStorage whenever they change
-    useEffect(() => {
-        localStorage.setItem('nafs_medical_records', JSON.stringify(localRecords))
-    }, [localRecords])
-
     const handleAddRecord = () => {
         if (!newRecord.summary) {
-            toast.error('Please enter a summary')
+            toast.error(t('errors.enterSummary'))
             return
         }
 
@@ -104,7 +94,7 @@ export default function MedicalHistory() {
 
         setLocalRecords(prev => [record, ...prev])
 
-        toast.success('Medical record added successfully')
+        toast.success(t('success.recordAdded'))
         setIsAddModalOpen(false)
         setNewRecord({ summary: '', medications: '' })
     }
@@ -130,14 +120,14 @@ export default function MedicalHistory() {
                     >
                         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                             <div>
-                                <h1 className="text-3xl font-bold mb-2 text-text-heading">Patients Medical History</h1>
-                                <p className="text-text-muted">Access and manage patient clinical records</p>
+                                <h1 className="text-3xl font-bold mb-2 text-text-heading">{t('doctor.medicalHistory')}</h1>
+                                <p className="text-text-muted">{t('doctor.manageClinicalRecords')}</p>
                             </div>
                             <div className="relative w-full md:w-80">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-clinical-gray" />
                                 <input
                                     type="text"
-                                    placeholder="Search patient name..."
+                                    placeholder={t('doctor.searchPatient')}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="w-full pl-10 pr-4 py-2 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
@@ -148,8 +138,8 @@ export default function MedicalHistory() {
                         {filteredPatients.length === 0 ? (
                             <div className="text-center py-20 bg-background-paper rounded-3xl border-2 border-dashed border-border">
                                 <User className="w-16 h-16 text-text-muted mx-auto mb-4 opacity-20" />
-                                <h3 className="text-xl font-bold text-text-heading mb-2">No patients found</h3>
-                                <p className="text-text-muted">Patients will appear here once they book sessions with you.</p>
+                                <h3 className="text-xl font-bold text-text-heading mb-2">{t('doctor.noPatientsFound')}</h3>
+                                <p className="text-text-muted">{t('doctor.patientsAppearHere')}</p>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -192,17 +182,17 @@ export default function MedicalHistory() {
                                 </Button>
                                 <div className="min-w-0">
                                     <h2 className="text-xl md:text-2xl font-bold text-text-heading truncate">{selectedPatient.name}</h2>
-                                    <p className="text-text-muted text-sm">Clinical history and notes • {selectedPatient.totalSessions} sessions</p>
+                                    <p className="text-text-muted text-sm">{t('doctor.clinicalHistory')} • {selectedPatient.totalSessions} {t('doctor.sessions')}</p>
                                 </div>
                             </div>
                             <div className="flex gap-2 w-full sm:w-auto">
                                 <Button variant="outline" className="flex-1 sm:flex-none gap-2" onClick={() => {
                                     window.location.href = '/dashboard/doctor/messages'
                                 }}>
-                                    <MessageSquare className="w-4 h-4" /> Message
+                                    <MessageSquare className="w-4 h-4" /> {t('chat.message')}
                                 </Button>
                                 <Button className="flex-1 sm:flex-none gap-2" onClick={() => setIsAddModalOpen(true)}>
-                                    <Plus className="w-4 h-4" /> Add Note
+                                    <Plus className="w-4 h-4" /> {t('doctor.addNote')}
                                 </Button>
                             </div>
                         </div>
@@ -212,7 +202,7 @@ export default function MedicalHistory() {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <Calendar className="w-5 h-5 text-primary" />
-                                    Session History
+                                    {t('doctor.sessionHistory')}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
@@ -222,7 +212,7 @@ export default function MedicalHistory() {
                                         .sort((a, b) => new Date(b.SessionStartTime) - new Date(a.SessionStartTime))
 
                                     if (patientBookings.length === 0) {
-                                        return <p className="text-text-muted text-center py-4">No sessions found</p>
+                                        return <p className="text-text-muted text-center py-4">{t('doctor.noSessionsFound')}</p>
                                     }
 
                                     const StatusMap = {
@@ -266,7 +256,7 @@ export default function MedicalHistory() {
 
                         {/* Clinical Notes */}
                         <div className="space-y-6">
-                            <h3 className="text-lg font-bold text-text-heading">Clinical Notes</h3>
+                            <h3 className="text-lg font-bold text-text-heading">{t('doctor.clinicalNotes')}</h3>
                             {patientHistory.length > 0 ? (
                                 patientHistory.map((record) => (
                                     <Card key={record.id} className="overflow-hidden border-border/50">
@@ -284,12 +274,12 @@ export default function MedicalHistory() {
                                         </div>
                                         <div className="p-6 space-y-4">
                                             <div>
-                                                <h4 className="text-xs font-black italic uppercase tracking-widest text-text-muted mb-2">Session Summary</h4>
+                                                <h4 className="text-xs font-black italic uppercase tracking-widest text-text-muted mb-2">{t('doctor.sessionSummary')}</h4>
                                                 <p className="text-text-heading leading-relaxed">{record.summary}</p>
                                             </div>
                                             {record.medications && record.medications.length > 0 && (
                                                 <div>
-                                                    <h4 className="text-xs font-black italic uppercase tracking-widest text-text-muted mb-2">Prescribed Medications</h4>
+                                                    <h4 className="text-xs font-black italic uppercase tracking-widest text-text-muted mb-2">{t('doctor.prescribedMedications')}</h4>
                                                     <div className="flex flex-wrap gap-2">
                                                         {record.medications.map((med, idx) => (
                                                             <Badge key={idx} variant="primary" className="flex items-center gap-1 bg-primary/5 text-primary border-primary/20">
@@ -305,8 +295,8 @@ export default function MedicalHistory() {
                             ) : (
                                 <div className="text-center py-20 bg-background-paper rounded-3xl border-2 border-dashed border-border">
                                     <FileText className="w-16 h-16 text-text-muted mx-auto mb-4 opacity-20" />
-                                    <h3 className="text-xl font-bold text-text-heading mb-2">No clinical records found</h3>
-                                    <p className="text-text-muted">Start by adding a new session note for this patient.</p>
+                                    <h3 className="text-xl font-bold text-text-heading mb-2">{t('doctor.noClinicalRecords')}</h3>
+                                    <p className="text-text-muted">{t('doctor.addSessionNote')}</p>
                                 </div>
                             )}
                         </div>
@@ -322,7 +312,7 @@ export default function MedicalHistory() {
             >
                 <div className="space-y-6">
                     <div className="space-y-2">
-                        <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Session Summary</label>
+                        <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.sessionSummary')}</label>
                         <textarea
                             value={newRecord.summary}
                             onChange={(e) => setNewRecord({ ...newRecord, summary: e.target.value })}
@@ -331,7 +321,7 @@ export default function MedicalHistory() {
                         />
                     </div>
                     <div className="space-y-2">
-                        <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Medications (comma-separated)</label>
+                        <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.medications')}</label>
                         <input
                             type="text"
                             value={newRecord.medications}
@@ -341,9 +331,9 @@ export default function MedicalHistory() {
                         />
                     </div>
                     <div className="flex gap-3 pt-4 border-t border-border">
-                        <Button variant="outline" className="flex-1" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
+                        <Button variant="outline" className="flex-1" onClick={() => setIsAddModalOpen(false)}>{t('common.cancel')}</Button>
                         <Button className="flex-1 gap-2" onClick={handleAddRecord}>
-                            <Save className="w-4 h-4" /> Save Record
+                            <Save className="w-4 h-4" /> {t('common.save')}
                         </Button>
                     </div>
                 </div>

@@ -1,5 +1,6 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth, Roles } from '../../contexts/AuthContext'
+import { useLanguage } from '../../contexts/LanguageContext'
 import RoleBadge from '../ui/RoleBadge'
 import {
   Home,
@@ -23,39 +24,40 @@ import {
   TicketIcon,
 } from 'lucide-react'
 
-// Navigation items for each role
-const navigationConfig = {
-  [Roles.PATIENT]: [
-    { name: 'Reserve Appointment', path: '/dashboard/patient/reserve', icon: Calendar },
-    { name: 'Messages', path: '/dashboard/patient/messages', icon: MessageSquare },
-    { name: 'Profile', path: '/dashboard/patient/profile', icon: Settings },
-  ],
-  [Roles.DOCTOR]: [
-    { name: 'Dashboard', path: '/dashboard/doctor', icon: Home },
-    { name: 'Patient Queue', path: '/dashboard/doctor/queue', icon: Users },
-    { name: 'Medical History', path: '/dashboard/doctor/medical-history', icon: FileText },
-    { name: 'My Schedule', path: '/dashboard/doctor/schedule', icon: Calendar },
-    { name: 'Session History', path: '/dashboard/doctor/history', icon: Activity },
-    { name: 'Messages', path: '/dashboard/doctor/messages', icon: MessageSquare },
-    { name: 'Profile', path: '/dashboard/doctor/settings', icon: Settings },
-  ],
-  [Roles.ADMIN]: [
-    { name: 'Dashboard', path: '/admin/dashboard', icon: Home },
-    { name: 'User Management', path: '/admin/users', icon: Users },
-    { name: 'Bookings', path: '/admin/bookings', icon: Calendar },
-    { name: 'Add Staff', path: '/admin/invite-staff', icon: UserPlus },
-    { name: 'Messages', path: '/admin/messages', icon: MessageSquare },
-    { name: 'Profile', path: '/admin/profile', icon: Settings },
-  ],
-  [Roles.STAFF]: [
-    { name: 'Dashboard', path: '/dashboard/staff', icon: Home },
-    { name: 'Messages', path: '/dashboard/staff/messages', icon: MessageSquare },
-    { name: 'Profile', path: '/dashboard/staff/profile', icon: Settings },
-  ],
-}
-
 export default function DynamicSidebar({ isOpen, onClose }) {
   const { role, user, logout } = useAuth()
+  const { t } = useLanguage()
+
+  // Navigation items for each role
+  const navigationConfig = {
+    [Roles.PATIENT]: [
+      { name: t('nav.reserve'), path: '/dashboard/patient/reserve', icon: Calendar },
+      { name: t('nav.messages'), path: '/dashboard/patient/messages', icon: MessageSquare },
+      { name: t('nav.profile'), path: '/dashboard/patient/profile', icon: Settings },
+    ],
+    [Roles.DOCTOR]: [
+      { name: t('nav.dashboard'), path: '/dashboard/doctor', icon: Home },
+      { name: t('nav.queue'), path: '/dashboard/doctor/queue', icon: Users },
+      { name: t('nav.medicalHistory'), path: '/dashboard/doctor/medical-history', icon: FileText },
+      { name: t('nav.schedule'), path: '/dashboard/doctor/schedule', icon: Calendar },
+      { name: t('nav.history'), path: '/dashboard/doctor/history', icon: Activity },
+      { name: t('nav.messages'), path: '/dashboard/doctor/messages', icon: MessageSquare },
+      { name: t('nav.profile'), path: '/dashboard/doctor/settings', icon: Settings },
+    ],
+    [Roles.ADMIN]: [
+      { name: t('nav.dashboard'), path: '/admin/dashboard', icon: Home },
+      { name: t('nav.users'), path: '/admin/users', icon: Users },
+      { name: t('nav.bookings'), path: '/admin/bookings', icon: Calendar },
+      { name: t('nav.inviteStaff'), path: '/admin/invite-staff', icon: UserPlus },
+      { name: t('nav.messages'), path: '/admin/messages', icon: MessageSquare },
+      { name: t('nav.profile'), path: '/admin/profile', icon: Settings },
+    ],
+    [Roles.STAFF]: [
+      { name: t('nav.dashboard'), path: '/dashboard/staff', icon: Home },
+      { name: t('nav.messages'), path: '/dashboard/staff/messages', icon: MessageSquare },
+      { name: t('nav.profile'), path: '/dashboard/staff/profile', icon: Settings },
+    ],
+  }
 
   const navItems = navigationConfig[role] || []
 
@@ -85,8 +87,8 @@ export default function DynamicSidebar({ isOpen, onClose }) {
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="p-6 border-b border-border">
-            <h1 className="text-2xl font-bold text-primary">Clinc</h1>
-            <p className="text-sm text-text-light mt-1">Telemedicine Platform</p>
+            <h1 className="text-2xl font-bold text-primary">{t('auth.platformName')}</h1>
+            <p className="text-sm text-text-light mt-1">{t('auth.platformTagline')}</p>
           </div>
 
           {/* User Info */}
@@ -143,7 +145,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
               className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-text hover:bg-red-50 hover:text-red-600 transition-all duration-200"
             >
               <LogOut className="w-5 h-5" />
-              <span className="font-medium">Logout</span>
+              <span className="font-medium">{t('auth.logout')}</span>
             </button>
           </div>
         </div>

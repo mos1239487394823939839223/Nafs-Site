@@ -9,7 +9,7 @@ import RoleBadge from '../ui/RoleBadge'
 export default function Header({ onMenuClick }) {
   const { role, user } = useAuth()
   const { theme, toggleTheme } = useTheme()
-  const { language, toggleLanguage } = useLanguage()
+  const { language, toggleLanguage, t } = useLanguage()
   const [showNotifications, setShowNotifications] = useState(false)
   const [activeNotifTab, setActiveNotifTab] = useState('patient')
 
@@ -17,16 +17,16 @@ export default function Header({ onMenuClick }) {
   const notifications = []
 
   const roleLabels = {
-    patient: 'Patient Portal',
-    doctor: 'Doctor Workspace',
-    admin: 'Admin Dashboard',
-    staff: 'Customer Service',
+    patient: t('nav.patientPortal'),
+    doctor: t('nav.doctorWorkspace'),
+    admin: t('nav.adminDashboard'),
+    staff: t('nav.customerService'),
   }
 
   const notifTabs = [
-    { id: 'patient', label: 'Patients' },
-    { id: 'doctor', label: 'Doctors' },
-    { id: 'admin', label: 'Admin' }
+    { id: 'patient', label: t('admin.patients') },
+    { id: 'doctor', label: t('admin.doctors') },
+    { id: 'admin', label: t('nav.adminDashboard') }
   ]
 
   return (
@@ -42,7 +42,7 @@ export default function Header({ onMenuClick }) {
           </button>
           <div className="flex items-center gap-3">
             <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-text truncate max-w-[120px] sm:max-w-none">
-              {roleLabels[role] || 'Dashboard'}
+              {roleLabels[role] || t('nav.dashboard')}
             </h2>
             <div className="hidden sm:block">
               <RoleBadge role={role} size="sm" />
@@ -76,7 +76,7 @@ export default function Header({ onMenuClick }) {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-text-light" />
             <input
               type="text"
-              placeholder="Search..."
+              placeholder={t('common.search') + '...'}
               className="pl-10 pr-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary w-64 transition-all bg-background text-text"
             />
           </div>
@@ -101,7 +101,7 @@ export default function Header({ onMenuClick }) {
 
                 <div className="absolute right-0 mt-2 w-[calc(100vw-2rem)] sm:w-80 bg-background-paper rounded-2xl shadow-xl border border-border z-50 overflow-hidden">
                   <div className="p-4 border-b border-border flex items-center justify-between">
-                    <h3 className="font-bold text-text-heading font-black italic uppercase tracking-tighter">Notifications</h3>
+                    <h3 className="font-bold text-text-heading font-black italic uppercase tracking-tighter">{t('common.notifications')}</h3>
                     <Badge variant="outline">{notifications.length}</Badge>
                   </div>
 
@@ -135,12 +135,12 @@ export default function Header({ onMenuClick }) {
                       ))
                     ) : (
                       <div className="p-8 text-center text-text-light opacity-50">
-                        No new {activeNotifTab} alerts
+                        {t('common.noAlerts')}
                       </div>
                     )}
                   </div>
                   <div className="p-3 bg-background border-t border-border text-center">
-                    <button className="text-[10px] font-black uppercase italic text-primary hover:underline">Mark all as read</button>
+                    <button className="text-[10px] font-black uppercase italic text-primary hover:underline">{t('common.markAllRead')}</button>
                   </div>
                 </div>
               </>

@@ -6,10 +6,12 @@ import ProfileSettings from '../../components/doctor/settings/ProfileSettings'
 import { userAPI } from '../../lib/api'
 import { Lock } from 'lucide-react'
 import Button from '../../components/ui/Button'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function StaffProfile() {
     const { user, updateProfile } = useAuth()
     const toast = useToast()
+    const { t } = useLanguage()
 
     // Change password state
     const [showPasswordSection, setShowPasswordSection] = useState(false)
@@ -26,13 +28,13 @@ export default function StaffProfile() {
 
             if (response?.IsSuccess !== false) {
                 updateProfile(data)
-                toast.success('Information updated successfully')
+                toast.success(t('success.infoUpdated'))
             } else {
-                toast.error(response?.Message || 'Failed to save settings')
+                toast.error(response?.Message || t('errors.somethingWentWrong'))
             }
         } catch (error) {
             console.error('Save settings error:', error)
-            toast.error(error.response?.data?.Message || 'Failed to save settings')
+            toast.error(error.response?.data?.Message || t('errors.somethingWentWrong'))
         }
     }
 
@@ -46,41 +48,41 @@ export default function StaffProfile() {
 
                 if (response?.IsSuccess !== false) {
                     updateProfile({ image: reader.result })
-                    toast.success('Profile image updated')
+                    toast.success(t('success.imageUpdated'))
                 } else {
-                    toast.error(response?.Message || 'Failed to upload image')
+                    toast.error(response?.Message || t('errors.somethingWentWrong'))
                 }
             }
             reader.readAsDataURL(file)
         } catch (error) {
             console.error('Image upload error:', error)
-            toast.error('Failed to upload image')
+            toast.error(t('errors.somethingWentWrong'))
         }
     }
 
     const handlePasswordChange = async (e) => {
         e.preventDefault()
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-            toast.error('New passwords do not match')
+            toast.error(t('errors.passwordMismatch'))
             return
         }
         if (passwordData.newPassword.length < 6) {
-            toast.error('Password must be at least 6 characters')
+            toast.error(t('errors.passwordTooShort'))
             return
         }
         setPasswordLoading(true)
         try {
             const response = await userAPI.changePassword(passwordData.currentPassword, passwordData.newPassword)
             if (response?.IsSuccess !== false) {
-                toast.success('Password changed successfully')
+                toast.success(t('success.passwordChanged'))
                 setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
                 setShowPasswordSection(false)
             } else {
-                toast.error(response?.Message || 'Failed to change password')
+                toast.error(response?.Message || t('errors.somethingWentWrong'))
             }
         } catch (error) {
             console.error('Password change error:', error)
-            toast.error(error.response?.data?.Message || 'Failed to change password')
+            toast.error(error.response?.data?.Message || t('errors.somethingWentWrong'))
         } finally {
             setPasswordLoading(false)
         }
@@ -90,8 +92,8 @@ export default function StaffProfile() {
         <div className="min-h-screen bg-background p-6 md:p-10">
             <div className="max-w-4xl mx-auto">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-text-heading mb-2">Staff Profile</h1>
-                    <p className="text-text-muted">Manage your support account information.</p>
+                    <h1 className="text-3xl font-bold text-text-heading mb-2">{t('staff.staffProfile')}</h1>
+                    <p className="text-text-muted">{t('staff.manageSupport')}</p>
                 </div>
 
                 <motion.div
@@ -119,8 +121,8 @@ export default function StaffProfile() {
                                     <Lock className="w-5 h-5 text-primary" />
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-text">Change Password</h3>
-                                    <p className="text-sm text-text-muted">Update your account password</p>
+                                    <h3 className="font-semibold text-text">{t('settings.changePassword')}</h3>
+                                    <p className="text-sm text-text-muted">{t('settings.updateAccountPassword')}</p>
                                 </div>
                             </div>
                             <Button
@@ -128,14 +130,14 @@ export default function StaffProfile() {
                                 size="sm"
                                 onClick={() => setShowPasswordSection(!showPasswordSection)}
                             >
-                                {showPasswordSection ? 'Cancel' : 'Change'}
+                                {showPasswordSection ? t('common.cancel') : t('settings.change')}
                             </Button>
                         </div>
 
                         {showPasswordSection && (
                             <form onSubmit={handlePasswordChange} className="space-y-4 mt-6 pt-6 border-t border-border">
                                 <div>
-                                    <label className="block text-sm font-medium text-text mb-1">Current Password</label>
+                                    <label className="block text-sm font-medium text-text mb-1">{t('auth.currentPassword')}</label>
                                     <input
                                         type="password"
                                         value={passwordData.currentPassword}
@@ -145,7 +147,7 @@ export default function StaffProfile() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-text mb-1">New Password</label>
+                                    <label className="block text-sm font-medium text-text mb-1">{t('auth.newPassword')}</label>
                                     <input
                                         type="password"
                                         value={passwordData.newPassword}
@@ -155,7 +157,7 @@ export default function StaffProfile() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="block text-sm font-medium text-text mb-1">Confirm New Password</label>
+                                    <label className="block text-sm font-medium text-text mb-1">{t('auth.confirmNewPassword')}</label>
                                     <input
                                         type="password"
                                         value={passwordData.confirmPassword}
@@ -168,9 +170,9 @@ export default function StaffProfile() {
                                     {passwordLoading ? (
                                         <div className="flex items-center gap-2">
                                             <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                            Updating...
+                                            {t('common.updating')}
                                         </div>
-                                    ) : 'Update Password'}
+                                    ) : t('settings.updatePassword')}
                                 </Button>
                             </form>
                         )}

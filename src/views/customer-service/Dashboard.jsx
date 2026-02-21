@@ -18,8 +18,10 @@ import {
 } from 'lucide-react'
 import ActiveTickets from '../../components/staff/ActiveTickets'
 import { chatAPI } from '../../lib/api'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function CustomerServiceDashboard() {
+  const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState('overview')
   const [chatRooms, setChatRooms] = useState([])
   const [loading, setLoading] = useState(true)
@@ -45,10 +47,10 @@ export default function CustomerServiceDashboard() {
   const unreadChats = chatRooms.filter(r => (r.UnreadCount || 0) > 0).length
 
   const stats = [
-    { label: 'Active Chats', value: totalChats, icon: MessageSquare, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
-    { label: 'Unread Messages', value: unreadChats, icon: Users, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-500/10' },
-    { label: 'Live Sessions', value: 0, icon: Calendar, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-500/10' },
-    { label: 'Urgent Cases', value: 0, icon: ShieldAlert, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-500/10' },
+    { label: t('staff.activeChats'), value: totalChats, icon: MessageSquare, color: 'text-emerald-600 dark:text-emerald-400', bg: 'bg-emerald-500/10' },
+    { label: t('staff.unreadMessages'), value: unreadChats, icon: Users, color: 'text-purple-600 dark:text-purple-400', bg: 'bg-purple-500/10' },
+    { label: t('staff.liveSessions'), value: 0, icon: Calendar, color: 'text-green-600 dark:text-green-400', bg: 'bg-green-500/10' },
+    { label: t('staff.urgentCases'), value: 0, icon: ShieldAlert, color: 'text-red-600 dark:text-red-400', bg: 'bg-red-500/10' },
   ]
 
   return (
@@ -56,16 +58,16 @@ export default function CustomerServiceDashboard() {
       {/* Header section */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-text-heading">Customer Service Hub</h1>
-          <p className="text-text-muted">Bridge between Patients, Doctors, and Support</p>
+          <h1 className="text-3xl font-bold text-text-heading">{t('staff.customerServiceHub')}</h1>
+          <p className="text-text-muted">{t('staff.hubSubtitle')}</p>
         </div>
         <div className="flex items-center gap-3">
           <div className="bg-background-paper px-4 py-2 rounded-xl border border-border flex items-center gap-2">
             <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
-            <span className="text-sm font-medium text-text">Online</span>
+            <span className="text-sm font-medium text-text">{t('staff.online')}</span>
           </div>
           <Button variant="primary" size="sm">
-            View Active Monitor
+            {t('staff.viewActiveMonitor')}
           </Button>
         </div>
       </div>
@@ -91,19 +93,24 @@ export default function CustomerServiceDashboard() {
 
       {/* Navigation Tabs */}
       <div className="flex items-center gap-2 bg-background-subtle p-1 rounded-2xl w-fit">
-        {['overview', 'patients', 'doctors', 'emergency'].map((tab) => (
+        {[
+          { key: 'overview', label: t('staff.overview') },
+          { key: 'patients', label: t('staff.patients') },
+          { key: 'doctors', label: t('staff.doctors') },
+          { key: 'emergency', label: t('staff.emergency') },
+        ].map((tab) => (
           <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
             className={`
-                            px-6 py-2.5 rounded-xl text-sm font-bold capitalize transition-all
-                            ${activeTab === tab
+                            px-6 py-2.5 rounded-xl text-sm font-bold transition-all
+                            ${activeTab === tab.key
                 ? 'bg-background-paper text-primary shadow-sm'
                 : 'text-text-muted hover:text-text'
               }
                         `}
           >
-            {tab}
+            {tab.label}
           </button>
         ))}
       </div>
@@ -132,26 +139,26 @@ export default function CustomerServiceDashboard() {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between border-b border-border pb-4">
                 <CardTitle className="text-xl">
-                  {activeTab === 'patients' ? 'Patient Support Queue' : 'Doctor Support Queue'}
+                  {activeTab === 'patients' ? t('staff.patientSupportQueue') : t('staff.doctorSupportQueue')}
                 </CardTitle>
                 <div className="flex items-center gap-2">
                   <div className="relative">
                     <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-light" />
                     <input
-                      placeholder="Search cases..."
+                      placeholder={t('staff.searchCases')}
                       className="pl-9 pr-4 py-1.5 bg-background border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 text-text"
                     />
                   </div>
                   <Button variant="outline" size="sm" className="gap-2">
-                    <Filter className="w-4 h-4" /> Filter
+                    <Filter className="w-4 h-4" /> {t('common.filter')}
                   </Button>
                 </div>
               </CardHeader>
               <CardContent className="p-0">
                 <div className="text-center py-12 text-text-muted">
                   <Users className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p>No {activeTab === 'patients' ? 'patient' : 'doctor'} support requests at the moment.</p>
-                  <p className="text-sm mt-1">New requests will appear here automatically.</p>
+                  <p>{t('staff.noSupportRequests')}</p>
+                  <p className="text-sm mt-1">{t('staff.newRequestsAppear')}</p>
                 </div>
               </CardContent>
             </Card>
@@ -167,16 +174,16 @@ export default function CustomerServiceDashboard() {
           >
             <Card className="border-red-500/20 bg-red-500/10 p-8 text-center">
               <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
-              <h2 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-2">Emergency Protocols</h2>
+              <h2 className="text-2xl font-bold text-red-600 dark:text-red-400 mb-2">{t('staff.emergencyProtocols')}</h2>
               <p className="text-red-600/80 dark:text-red-400/80 max-w-md mx-auto mb-6">
-                These cases require immediate intervention. All currently available agents will be redirected to assist.
+                {t('staff.emergencyDesc')}
               </p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl mx-auto">
                 <Button variant="outline" className="bg-background-paper border-red-500/20 text-red-600 dark:text-red-400 hover:bg-red-500/5">
-                  Notify Medical Directors
+                  {t('staff.notifyMedicalDirectors')}
                 </Button>
                 <Button className="bg-red-600 hover:bg-red-700 text-white">
-                  Activate Rapid Response
+                  {t('staff.activateRapidResponse')}
                 </Button>
               </div>
             </Card>

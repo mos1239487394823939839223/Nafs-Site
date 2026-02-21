@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import Badge from '../ui/Badge'
 import { Clock, User, AlertCircle, CheckCircle, MessageSquare, Loader2 } from 'lucide-react'
 import { chatAPI } from '../../lib/api'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function ActiveTickets() {
+  const { t } = useLanguage()
   const [filter, setFilter] = useState('all')
   const [tickets, setTickets] = useState([])
   const [loading, setLoading] = useState(true)
@@ -50,11 +52,11 @@ export default function ActiveTickets() {
   }
 
   const categories = [
-    { value: 'all', label: 'All Tickets', count: tickets.length },
-    { value: 'payment', label: 'Payment', count: tickets.filter(t => t.category === 'payment').length },
-    { value: 'technical', label: 'Technical', count: tickets.filter(t => t.category === 'technical').length },
-    { value: 'appointment', label: 'Appointment', count: tickets.filter(t => t.category === 'appointment').length },
-    { value: 'general', label: 'General', count: tickets.filter(t => t.category === 'general').length },
+    { value: 'all', label: t('staff.allTickets'), count: tickets.length },
+    { value: 'payment', label: t('staff.payment'), count: tickets.filter(tk => tk.category === 'payment').length },
+    { value: 'technical', label: t('staff.technical'), count: tickets.filter(tk => tk.category === 'technical').length },
+    { value: 'appointment', label: t('staff.appointment'), count: tickets.filter(tk => tk.category === 'appointment').length },
+    { value: 'general', label: t('common.general'), count: tickets.filter(tk => tk.category === 'general').length },
   ]
 
   const filteredTickets = filter === 'all' ? tickets : tickets.filter(t => t.category === filter)
@@ -88,8 +90,8 @@ export default function ActiveTickets() {
     <div className="bg-background-paper rounded-2xl shadow-sm p-6">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-xl font-bold text-text-heading">Active Tickets</h2>
-          <p className="text-sm text-text-muted mt-1">Manage customer support requests</p>
+          <h2 className="text-xl font-bold text-text-heading">{t('staff.activeTickets')}</h2>
+          <p className="text-sm text-text-muted mt-1">{t('staff.manageRequests')}</p>
         </div>
       </div>
 
@@ -118,14 +120,14 @@ export default function ActiveTickets() {
         <div className="bg-background-subtle rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-4">
             <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
-            <h3 className="font-semibold text-text-heading">Open</h3>
+            <h3 className="font-semibold text-text-heading">{t('staff.open')}</h3>
             <span className="ml-auto text-sm text-text-muted bg-background-paper px-2 py-1 rounded-full">
               {groupedByStatus.open.length}
             </span>
           </div>
           <div className="space-y-3">
             {groupedByStatus.open.length === 0 && (
-              <p className="text-sm text-text-muted text-center py-4">No open tickets</p>
+              <p className="text-sm text-text-muted text-center py-4">{t('staff.noOpenTickets')}</p>
             )}
             {groupedByStatus.open.map((ticket) => (
               <div key={ticket.id} className="bg-background-paper rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm">
@@ -150,14 +152,14 @@ export default function ActiveTickets() {
                       <span>{ticket.assignee}</span>
                     </div>
                   ) : (
-                    <span className="text-red-500">Unassigned</span>
+                    <span className="text-red-500">{t('staff.unassigned')}</span>
                   )}
                 </div>
                 <button
                   onClick={() => handleMoveStatus(ticket.id, 'in-progress')}
                   className="w-full mt-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-primary/10 text-primary rounded-lg hover:bg-primary hover:text-white transition-all"
                 >
-                  Start Case
+                  {t('staff.startCase')}
                 </button>
               </div>
             ))}
@@ -168,14 +170,14 @@ export default function ActiveTickets() {
         <div className="bg-background-subtle rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-4">
             <MessageSquare className="w-5 h-5 text-primary" />
-            <h3 className="font-semibold text-text-heading">In Progress</h3>
+            <h3 className="font-semibold text-text-heading">{t('staff.inProgress')}</h3>
             <span className="ml-auto text-sm text-text-muted bg-background-paper px-2 py-1 rounded-full">
               {groupedByStatus['in-progress'].length}
             </span>
           </div>
           <div className="space-y-3">
             {groupedByStatus['in-progress'].length === 0 && (
-              <p className="text-sm text-text-muted text-center py-4">No tickets in progress</p>
+              <p className="text-sm text-text-muted text-center py-4">{t('staff.noTicketsInProgress')}</p>
             )}
             {groupedByStatus['in-progress'].map((ticket) => (
               <div key={ticket.id} className="bg-background-paper rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm">
@@ -203,7 +205,7 @@ export default function ActiveTickets() {
                   onClick={() => handleMoveStatus(ticket.id, 'resolved')}
                   className="w-full mt-2 py-1 text-[10px] font-bold uppercase tracking-wider bg-green-500/10 text-green-700 dark:text-green-400 rounded-lg hover:bg-green-600 hover:text-white transition-all"
                 >
-                  Resolve Ticket
+                  {t('staff.resolveTicket')}
                 </button>
               </div>
             ))}
@@ -214,14 +216,14 @@ export default function ActiveTickets() {
         <div className="bg-background-subtle rounded-2xl p-4">
           <div className="flex items-center gap-2 mb-4">
             <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
-            <h3 className="font-semibold text-text-heading">Resolved</h3>
+            <h3 className="font-semibold text-text-heading">{t('staff.resolved')}</h3>
             <span className="ml-auto text-sm text-text-muted bg-background-paper px-2 py-1 rounded-full">
               {groupedByStatus.resolved.length}
             </span>
           </div>
           <div className="space-y-3">
             {groupedByStatus.resolved.length === 0 && (
-              <p className="text-sm text-text-muted text-center py-4">No resolved tickets</p>
+              <p className="text-sm text-text-muted text-center py-4">{t('staff.noResolvedTickets')}</p>
             )}
             {groupedByStatus.resolved.map((ticket) => (
               <div key={ticket.id} className="bg-background-paper rounded-xl p-3 border border-border hover:border-primary transition-colors cursor-pointer shadow-sm opacity-75">

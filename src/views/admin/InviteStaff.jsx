@@ -8,9 +8,11 @@ import { useToast } from '../../components/ui/Toast'
 import { validateEmail } from '../../lib/validation'
 import { Mail, Send, CheckCircle, Clock, XCircle, Loader2, UserPlus } from 'lucide-react'
 import { authAPI, userAPI } from '../../lib/api'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function InviteStaff() {
   const toast = useToast()
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [fetchLoading, setFetchLoading] = useState(true)
   const [staffList, setStaffList] = useState([])
@@ -61,19 +63,19 @@ export default function InviteStaff() {
     const newErrors = {}
 
     if (!formData.name.trim()) {
-      newErrors.name = 'Please enter a name'
+      newErrors.name = t('errors.required')
     }
 
     if (!validateEmail(formData.email)) {
-      newErrors.email = 'Please enter a valid email address'
+      newErrors.email = t('errors.invalidEmail')
     }
 
     if (!formData.password || formData.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters'
+      newErrors.password = t('errors.passwordTooShort')
     }
 
     if (!formData.permissions) {
-      newErrors.permissions = 'Please select a permission level'
+      newErrors.permissions = t('errors.required')
     }
 
     setErrors(newErrors)
@@ -84,7 +86,7 @@ export default function InviteStaff() {
     e.preventDefault()
 
     if (!validateForm()) {
-      toast.error('Please fix the errors in the form')
+      toast.error(t('errors.fixFormErrors'))
       return
     }
 
@@ -104,7 +106,7 @@ export default function InviteStaff() {
       const response = await authAPI.register(registerData)
 
       if (response?.IsSuccess !== false) {
-        toast.success(`Staff member ${formData.name} registered successfully`)
+        toast.success(t('success.staffAdded'))
         setFormData({ name: '', email: '', password: '', phoneNumber: '', permissions: 'support-agent' })
 
         // Refresh staff list
@@ -114,11 +116,11 @@ export default function InviteStaff() {
           setStaffList(Array.isArray(items) ? items : [])
         }
       } else {
-        toast.error(response?.Message || 'Failed to register staff member')
+        toast.error(response?.Message || t('errors.somethingWentWrong'))
       }
     } catch (error) {
       console.error('Staff registration error:', error)
-      toast.error(error.response?.data?.Message || 'Failed to register staff member')
+      toast.error(error.response?.data?.Message || t('errors.somethingWentWrong'))
     } finally {
       setLoading(false)
     }
@@ -128,8 +130,8 @@ export default function InviteStaff() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold text-text-heading">Add Staff Members</h2>
-        <p className="text-text-muted mt-1">Register customer service team members to your platform</p>
+        <h2 className="text-2xl font-bold text-text-heading">{t('admin.addStaff')}</h2>
+        <p className="text-text-muted mt-1">{t('admin.registerTeamMembers')}</p>
       </div>
 
       {/* Registration Form */}
@@ -137,14 +139,14 @@ export default function InviteStaff() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-primary" />
-            Register New Staff
+            {t('admin.registerNewStaff')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid md:grid-cols-2 gap-6">
               <Input
-                label="Full Name"
+                label={t('settings.fullName')}
                 type="text"
                 name="name"
                 value={formData.name}
@@ -154,7 +156,7 @@ export default function InviteStaff() {
               />
 
               <Input
-                label="Email Address"
+                label={t('settings.emailAddress')}
                 type="email"
                 name="email"
                 value={formData.email}
@@ -164,17 +166,17 @@ export default function InviteStaff() {
               />
 
               <Input
-                label="Password"
+                label={t('common.password')}
                 type="password"
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
                 error={errors.password}
-                placeholder="Min 6 characters"
+                placeholder={t('admin.minChars')}
               />
 
               <Input
-                label="Phone Number (Optional)"
+                label={t('admin.phoneOptional')}
                 type="tel"
                 name="phoneNumber"
                 value={formData.phoneNumber}
@@ -184,7 +186,7 @@ export default function InviteStaff() {
             </div>
 
             <Select
-              label="Permission Level"
+              label={t('admin.permissionLevel')}
               name="permissions"
               value={formData.permissions}
               onChange={handleChange}
@@ -211,12 +213,12 @@ export default function InviteStaff() {
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Registering...</span>
+                  <span>{t('admin.registering')}</span>
                 </div>
               ) : (
                 <>
                   <Send className="w-4 h-4 mr-2" />
-                  Register Staff Member
+                  {t('admin.registerStaffMember')}
                 </>
               )}
             </Button>
@@ -227,7 +229,7 @@ export default function InviteStaff() {
       {/* Staff List */}
       <Card>
         <CardHeader>
-          <CardTitle>Current Staff Members</CardTitle>
+          <CardTitle>{t('admin.currentStaffMembers')}</CardTitle>
         </CardHeader>
         <CardContent>
           {fetchLoading ? (
@@ -237,16 +239,16 @@ export default function InviteStaff() {
           ) : staffList.length === 0 ? (
             <div className="text-center py-12 text-text-muted">
               <UserPlus className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p>No staff members found</p>
+              <p>{t('admin.noStaffMembers')}</p>
             </div>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>{t('common.name')}</TableHead>
+                  <TableHead>{t('common.email')}</TableHead>
+                  <TableHead>{t('common.phone')}</TableHead>
+                  <TableHead>{t('common.status')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -272,9 +274,9 @@ export default function InviteStaff() {
                     <TableCell>
                       <Badge variant={member.IsActive !== false ? 'success' : 'danger'}>
                         {member.IsActive !== false ? (
-                          <><CheckCircle className="w-3 h-3 mr-1" /> Active</>
+                          <><CheckCircle className="w-3 h-3 mr-1" /> {t('common.active')}</>
                         ) : (
-                          <><XCircle className="w-3 h-3 mr-1" /> Inactive</>
+                          <><XCircle className="w-3 h-3 mr-1" /> {t('common.inactive')}</>
                         )}
                       </Badge>
                     </TableCell>
@@ -289,8 +291,7 @@ export default function InviteStaff() {
       {/* Info Box */}
       <div className="bg-primary/5 border border-primary/10 p-4 rounded-xl">
         <p className="text-sm text-primary">
-          <strong>Note:</strong> New staff members can log in immediately with the credentials you provide.
-          Make sure to share the login details securely.
+          <strong>Note:</strong> {t('admin.staffNote')}
         </p>
       </div>
     </div>

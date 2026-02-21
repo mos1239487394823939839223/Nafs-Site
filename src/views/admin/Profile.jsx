@@ -6,10 +6,12 @@ import { userAPI } from '../../lib/api'
 import { Camera, User, Mail, Phone, Lock, Loader2 } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function AdminProfile() {
     const { user, updateProfile } = useAuth()
     const toast = useToast()
+    const { t } = useLanguage()
 
     const [formData, setFormData] = useState({
         name: user?.name || user?.Name || '',
@@ -41,15 +43,15 @@ export default function AdminProfile() {
                     const response = await userAPI.updateImage(user?.ID || user?.id, base64)
                     if (response?.IsSuccess !== false) {
                         updateProfile({ image: response.Data || reader.result })
-                        toast.success('Profile photo updated')
+                        toast.success(t('success.photoUpdated'))
                     } else {
-                        toast.error(response?.Message || 'Failed to update photo')
+                        toast.error(response?.Message || t('errors.somethingWentWrong'))
                     }
                     setUploadingImage(false)
                 }
                 reader.readAsDataURL(file)
             } catch (error) {
-                toast.error('Failed to upload image')
+                toast.error(t('errors.somethingWentWrong'))
                 setUploadingImage(false)
             }
         }
@@ -66,12 +68,12 @@ export default function AdminProfile() {
 
             if (response?.IsSuccess !== false) {
                 updateProfile(formData)
-                toast.success('Profile updated successfully')
+                toast.success(t('success.profileUpdated'))
             } else {
-                toast.error(response?.Message || 'Failed to update profile')
+                toast.error(response?.Message || t('errors.somethingWentWrong'))
             }
         } catch (error) {
-            toast.error(error.response?.data?.Message || 'Failed to update profile')
+            toast.error(error.response?.data?.Message || t('errors.somethingWentWrong'))
         } finally {
             setSaving(false)
         }
@@ -79,15 +81,15 @@ export default function AdminProfile() {
 
     const handleChangePassword = async () => {
         if (!passwordData.currentPassword || !passwordData.newPassword) {
-            toast.error('Please fill in all password fields')
+            toast.error(t('errors.fillPasswordFields'))
             return
         }
         if (passwordData.newPassword.length < 6) {
-            toast.error('New password must be at least 6 characters')
+            toast.error(t('errors.passwordTooShort'))
             return
         }
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-            toast.error('Passwords do not match')
+            toast.error(t('errors.passwordMismatch'))
             return
         }
 
@@ -95,14 +97,14 @@ export default function AdminProfile() {
         try {
             const response = await userAPI.changePassword(passwordData.currentPassword, passwordData.newPassword)
             if (response?.IsSuccess !== false) {
-                toast.success('Password changed successfully')
+                toast.success(t('success.passwordChanged'))
                 setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
                 setShowPasswordSection(false)
             } else {
-                toast.error(response?.Message || 'Failed to change password')
+                toast.error(response?.Message || t('errors.somethingWentWrong'))
             }
         } catch (error) {
-            toast.error(error.response?.data?.Message || 'Failed to change password')
+            toast.error(error.response?.data?.Message || t('errors.somethingWentWrong'))
         } finally {
             setPasswordLoading(false)
         }
@@ -114,8 +116,8 @@ export default function AdminProfile() {
 
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-text-heading mb-2">Admin Profile</h1>
-                    <p className="text-text-muted">Manage your administrative account information.</p>
+                    <h1 className="text-3xl font-bold text-text-heading mb-2">{t('admin.adminProfile')}</h1>
+                    <p className="text-text-muted">{t('admin.manageAccount')}</p>
                 </div>
 
                 {/* Main Content Card */}
@@ -149,9 +151,9 @@ export default function AdminProfile() {
                                 </label>
                             </div>
                             <div className="text-center md:text-left space-y-2">
-                                <h3 className="text-lg font-semibold text-text">Profile Photo</h3>
+                                <h3 className="text-lg font-semibold text-text">{t('settings.profilePhoto')}</h3>
                                 <p className="text-sm text-text-light max-w-xs">
-                                    Upload a professional photo.
+                                    {t('admin.uploadProfessionalPhoto')}
                                 </p>
                             </div>
                         </div>
@@ -159,18 +161,18 @@ export default function AdminProfile() {
                         {/* Personal Info */}
                         <div className="grid md:grid-cols-2 gap-x-6 gap-y-6">
                             <div className="md:col-span-2 pb-2 border-b border-border-light mb-2">
-                                <h3 className="font-semibold text-text">Personal Information</h3>
+                                <h3 className="font-semibold text-text">{t('settings.personalInfo')}</h3>
                             </div>
 
                             <Input
-                                label="Full Name"
+                                label={t('settings.fullName')}
                                 value={formData.name}
                                 onChange={(e) => handleChange('name', e.target.value)}
                                 icon={User}
                                 className="bg-background-gray/20"
                             />
                             <Input
-                                label="Email Address"
+                                label={t('settings.emailAddress')}
                                 value={formData.email}
                                 onChange={(e) => handleChange('email', e.target.value)}
                                 icon={Mail}
@@ -178,7 +180,7 @@ export default function AdminProfile() {
                                 disabled
                             />
                             <Input
-                                label="Phone Number"
+                                label={t('settings.phoneNumber')}
                                 value={formData.phone}
                                 onChange={(e) => handleChange('phone', e.target.value)}
                                 icon={Phone}
@@ -191,9 +193,9 @@ export default function AdminProfile() {
                                 {saving ? (
                                     <div className="flex items-center gap-2">
                                         <Loader2 className="w-4 h-4 animate-spin" />
-                                        Saving...
+                                        {t('common.saving')}
                                     </div>
-                                ) : 'Save Changes'}
+                                ) : t('common.save')}
                             </Button>
                         </div>
                     </div>
@@ -213,8 +215,8 @@ export default function AdminProfile() {
                                     <Lock className="w-5 h-5 text-primary" />
                                 </div>
                                 <div>
-                                    <h3 className="font-semibold text-text">Change Password</h3>
-                                    <p className="text-sm text-text-muted">Update your account password</p>
+                                    <h3 className="font-semibold text-text">{t('settings.changePassword')}</h3>
+                                    <p className="text-sm text-text-muted">{t('settings.updateAccountPassword')}</p>
                                 </div>
                             </div>
                             <Button
@@ -222,7 +224,7 @@ export default function AdminProfile() {
                                 size="sm"
                                 onClick={() => setShowPasswordSection(!showPasswordSection)}
                             >
-                                {showPasswordSection ? 'Cancel' : 'Change'}
+                                {showPasswordSection ? t('common.cancel') : t('settings.change')}
                             </Button>
                         </div>
 
@@ -235,7 +237,7 @@ export default function AdminProfile() {
                                 {['currentPassword', 'newPassword', 'confirmPassword'].map((field) => (
                                     <div key={field}>
                                         <label className="block text-sm font-medium text-text-muted mb-2">
-                                            {field === 'currentPassword' ? 'Current Password' : field === 'newPassword' ? 'New Password' : 'Confirm New Password'}
+                                            {field === 'currentPassword' ? t('auth.currentPassword') : field === 'newPassword' ? t('auth.newPassword') : t('auth.confirmNewPassword')}
                                         </label>
                                         <input
                                             type="password"
@@ -248,7 +250,7 @@ export default function AdminProfile() {
                                 ))}
                                 <div className="flex justify-end">
                                     <Button onClick={handleChangePassword} disabled={passwordLoading}>
-                                        {passwordLoading ? 'Updating...' : 'Update Password'}
+                                        {passwordLoading ? t('common.updating') : t('settings.updatePassword')}
                                     </Button>
                                 </div>
                             </motion.div>

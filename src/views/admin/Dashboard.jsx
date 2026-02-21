@@ -14,8 +14,10 @@ import {
 } from 'lucide-react'
 import KPICard from '../../components/admin/KPICard'
 import { adminAPI, userAPI } from '../../lib/api'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function AdminDashboard() {
+  const { t } = useLanguage()
   const [doctors, setDoctors] = useState([])
   const [bookings, setBookings] = useState([])
   const [usersCount, setUsersCount] = useState(0)
@@ -98,12 +100,12 @@ export default function AdminDashboard() {
     .slice(0, 8)
 
   const BookingStatusMap = {
-    0: { label: 'Pending', variant: 'warning' },
-    1: { label: 'Confirmed', variant: 'primary' },
-    2: { label: 'In Progress', variant: 'info' },
-    3: { label: 'Completed', variant: 'success' },
-    4: { label: 'Cancelled', variant: 'danger' },
-    5: { label: 'No Show', variant: 'danger' },
+    0: { label: t('bookingStatus.pending'), variant: 'warning' },
+    1: { label: t('bookingStatus.confirmed'), variant: 'primary' },
+    2: { label: t('bookingStatus.inProgress'), variant: 'info' },
+    3: { label: t('bookingStatus.completed'), variant: 'success' },
+    4: { label: t('bookingStatus.cancelled'), variant: 'danger' },
+    5: { label: t('bookingStatus.noShow'), variant: 'danger' },
   }
 
   if (loading) {
@@ -119,7 +121,7 @@ export default function AdminDashboard() {
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KPICard
-          title="Total Sessions"
+          title={t('admin.totalSessions')}
           value={platformStats.totalSessions}
           change={completedBookings > 0 ? Math.round((completedBookings / Math.max(1, platformStats.totalSessions)) * 100) : 0}
           trend="up"
@@ -128,7 +130,7 @@ export default function AdminDashboard() {
           color="primary"
         />
         <KPICard
-          title="Active Doctors"
+          title={t('admin.activeDoctors')}
           value={platformStats.totalDoctors}
           change=""
           trend="up"
@@ -137,7 +139,7 @@ export default function AdminDashboard() {
           color="primary"
         />
         <KPICard
-          title="Active Bookings"
+          title={t('admin.activeBookings')}
           value={platformStats.activeSessions}
           change=""
           trend="up"
@@ -146,7 +148,7 @@ export default function AdminDashboard() {
           color="secondary"
         />
         <KPICard
-          title="Total Users"
+          title={t('admin.totalUsers')}
           value={platformStats.totalPatients}
           change=""
           trend="up"
@@ -163,7 +165,7 @@ export default function AdminDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Stethoscope className="w-5 h-5 text-primary" />
-              Top Performing Doctors
+              {t('admin.topDoctors')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -171,10 +173,10 @@ export default function AdminDashboard() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Doctor</TableHead>
-                    <TableHead>Specialty</TableHead>
-                    <TableHead>Sessions</TableHead>
-                    <TableHead>Status</TableHead>
+                    <TableHead>{t('common.doctor')}</TableHead>
+                    <TableHead>{t('common.specialty')}</TableHead>
+                    <TableHead>{t('admin.sessions')}</TableHead>
+                    <TableHead>{t('common.status')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -197,7 +199,7 @@ export default function AdminDashboard() {
             ) : (
               <div className="text-center py-8 text-text-muted">
                 <Stethoscope className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p>No doctor data available yet</p>
+                <p>{t('admin.noDoctorData')}</p>
               </div>
             )}
           </CardContent>
@@ -208,7 +210,7 @@ export default function AdminDashboard() {
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-primary" />
-              Recent Bookings
+              {t('admin.recentBookings')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -243,7 +245,7 @@ export default function AdminDashboard() {
             ) : (
               <div className="text-center py-8 text-text-muted">
                 <Calendar className="w-10 h-10 mx-auto mb-3 opacity-30" />
-                <p>No bookings yet</p>
+                <p>{t('admin.noBookingsYet')}</p>
               </div>
             )}
           </CardContent>

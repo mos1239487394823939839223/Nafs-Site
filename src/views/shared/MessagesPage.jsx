@@ -4,9 +4,11 @@ import { chatAPI } from '../../lib/api'
 import ChatWindow from '../../components/chat/ChatWindow'
 import { Search, MessageSquare, Loader2, RefreshCw, Stethoscope, User, Headphones } from 'lucide-react'
 import Button from '../../components/ui/Button'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function MessagesPage() {
   const { user } = useAuth()
+  const { t } = useLanguage()
   const [activeRoom, setActiveRoom] = useState(null)
   const [rooms, setRooms] = useState([])
   const [messages, setMessages] = useState([])
@@ -117,7 +119,7 @@ export default function MessagesPage() {
         `}>
           <div className="p-4 border-b border-border">
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-lg font-bold text-text-heading">Messages</h2>
+              <h2 className="text-lg font-bold text-text-heading">{t('chat.messages')}</h2>
               <Button variant="ghost" size="sm" onClick={fetchRooms} disabled={loading}>
                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
               </Button>
@@ -126,7 +128,7 @@ export default function MessagesPage() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
               <input
                 type="text"
-                placeholder="Search conversations..."
+                placeholder={t('chat.searchConversations')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-background-subtle border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20"
@@ -142,7 +144,7 @@ export default function MessagesPage() {
             ) : filteredRooms.length === 0 ? (
               <div className="text-center py-12 text-text-muted">
                 <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                <p className="text-sm">No conversations yet</p>
+                <p className="text-sm">{t('chat.noConversations')}</p>
               </div>
             ) : (
               filteredRooms.map((room) => (
@@ -178,7 +180,7 @@ export default function MessagesPage() {
                         )}
                       </div>
                       <p className="text-sm text-text-muted truncate">
-                        {room.LastMessage || 'No messages yet'}
+                        {room.LastMessage || t('chat.noMessagesYet')}
                       </p>
                     </div>
                   </div>
@@ -213,8 +215,8 @@ export default function MessagesPage() {
               <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                 <MessageSquare className="w-10 h-10 text-primary" />
               </div>
-              <h3 className="text-xl font-bold text-text-heading mb-2">Messages</h3>
-              <p className="text-text-muted">Select a conversation to start chatting.</p>
+              <h3 className="text-xl font-bold text-text-heading mb-2">{t('chat.messages')}</h3>
+              <p className="text-text-muted">{t('chat.selectConversation')}</p>
             </div>
           )}
         </div>

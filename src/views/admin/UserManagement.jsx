@@ -25,9 +25,11 @@ import {
     Phone
 } from 'lucide-react'
 import { adminAPI, userAPI } from '../../lib/api'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function UserManagement() {
     const toast = useToast()
+    const { t } = useLanguage()
     const [activeTab, setActiveTab] = useState('doctors')
     const [searchTerm, setSearchTerm] = useState('')
     const [showAddForm, setShowAddForm] = useState(false)
@@ -68,7 +70,7 @@ export default function UserManagement() {
             }
         } catch (error) {
             console.error('Failed to fetch doctors:', error)
-            toast.error('Failed to load doctors')
+            toast.error(t('errors.failedLoadDoctors'))
         } finally {
             setLoading(false)
         }
@@ -89,7 +91,7 @@ export default function UserManagement() {
             }
         } catch (error) {
             console.error('Failed to fetch patients:', error)
-            toast.error('Failed to load users')
+            toast.error(t('errors.somethingWentWrong'))
         } finally {
             setLoading(false)
         }
@@ -117,7 +119,7 @@ export default function UserManagement() {
     const handleAddDoctor = async (e) => {
         e.preventDefault()
         if (!formData.name || !formData.email || !formData.password) {
-            toast.error('Please fill in all required fields')
+            toast.error(t('errors.fillRequired'))
             return
         }
 
@@ -133,15 +135,15 @@ export default function UserManagement() {
             })
 
             if (response?.IsSuccess !== false) {
-                toast.success('Doctor added successfully')
+                toast.success(t('success.doctorAdded'))
                 setShowAddForm(false)
                 setFormData({ name: '', email: '', password: '', phoneNumber: '', description: '', specialist: '' })
                 fetchDoctors()
             } else {
-                toast.error(response?.Message || 'Failed to add doctor')
+                toast.error(response?.Message || t('errors.somethingWentWrong'))
             }
         } catch (error) {
-            toast.error(error.response?.data?.Message || 'Failed to add doctor')
+            toast.error(error.response?.data?.Message || t('errors.somethingWentWrong'))
         } finally {
             setSubmitting(false)
         }
@@ -151,13 +153,13 @@ export default function UserManagement() {
         try {
             const response = await adminAPI.toggleDoctor(doctorId)
             if (response?.IsSuccess !== false) {
-                toast.success('Doctor status updated')
+                toast.success(t('success.statusUpdated'))
                 fetchDoctors()
             } else {
-                toast.error(response?.Message || 'Failed to update status')
+                toast.error(response?.Message || t('errors.somethingWentWrong'))
             }
         } catch (error) {
-            toast.error(error.response?.data?.Message || 'Failed to update status')
+            toast.error(error.response?.data?.Message || t('errors.somethingWentWrong'))
         }
     }
 
@@ -177,13 +179,13 @@ export default function UserManagement() {
         <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-text-heading">User Management</h2>
-                    <p className="text-text-muted mt-1">Manage doctors and patients</p>
+                    <h2 className="text-2xl font-bold text-text-heading">{t('admin.userManagement')}</h2>
+                    <p className="text-text-muted mt-1">{t('admin.manageDoctorsPatients')}</p>
                 </div>
                 <div className="flex gap-2">
                     <Button variant="outline" size="sm" onClick={activeTab === 'doctors' ? fetchDoctors : fetchPatients} disabled={loading}>
                         <RefreshCw className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                        Refresh
+                        {t('common.refresh')}
                     </Button>
                     {!showAddForm && activeTab === 'doctors' && (
                         <Button
@@ -191,7 +193,7 @@ export default function UserManagement() {
                             onClick={() => setShowAddForm(true)}
                         >
                             <UserPlus className="w-4 h-4 mr-2" />
-                            Add Doctor
+                            {t('admin.addDoctor')}
                         </Button>
                     )}
                 </div>
@@ -205,7 +207,7 @@ export default function UserManagement() {
                 >
                     <div className="flex items-center gap-2">
                         <Stethoscope className="w-4 h-4" />
-                        Doctors
+                        {t('admin.doctors')}
                     </div>
                     {activeTab === 'doctors' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />}
                 </button>
@@ -215,7 +217,7 @@ export default function UserManagement() {
                 >
                     <div className="flex items-center gap-2">
                         <User className="w-4 h-4" />
-                        Users
+                        {t('admin.users')}
                     </div>
                     {activeTab === 'patients' && <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />}
                 </button>
@@ -224,13 +226,13 @@ export default function UserManagement() {
             {showAddForm ? (
                 <Card>
                     <CardHeader>
-                        <CardTitle>Add New Doctor</CardTitle>
+                        <CardTitle>{t('admin.addNewDoctor')}</CardTitle>
                     </CardHeader>
                     <CardContent>
                         <form onSubmit={handleAddDoctor} className="space-y-6">
                             <div className="grid md:grid-cols-2 gap-6">
                                 <Input
-                                    label="Full Name *"
+                                    label={`${t('settings.fullName')} *`}
                                     name="name"
                                     value={formData.name}
                                     onChange={handleInputChange}
@@ -239,7 +241,7 @@ export default function UserManagement() {
                                     icon={User}
                                 />
                                 <Input
-                                    label="Email Address *"
+                                    label={`${t('settings.emailAddress')} *`}
                                     type="email"
                                     name="email"
                                     value={formData.email}
@@ -249,16 +251,16 @@ export default function UserManagement() {
                                     icon={Mail}
                                 />
                                 <Input
-                                    label="Password *"
+                                    label={`${t('common.password')} *`}
                                     type="password"
                                     name="password"
                                     value={formData.password}
                                     onChange={handleInputChange}
-                                    placeholder="Min 6 characters"
+                                    placeholder={t('admin.minChars')}
                                     required
                                 />
                                 <Input
-                                    label="Phone Number"
+                                    label={t('settings.phoneNumber')}
                                     name="phoneNumber"
                                     value={formData.phoneNumber}
                                     onChange={handleInputChange}
@@ -266,7 +268,7 @@ export default function UserManagement() {
                                     icon={Phone}
                                 />
                                 <Input
-                                    label="Specialty"
+                                    label={t('common.specialty')}
                                     name="specialist"
                                     value={formData.specialist}
                                     onChange={handleInputChange}
@@ -274,12 +276,12 @@ export default function UserManagement() {
                                     icon={Stethoscope}
                                 />
                                 <div className="md:col-span-2">
-                                    <label className="block text-sm font-medium text-text-muted mb-2">Description</label>
+                                    <label className="block text-sm font-medium text-text-muted mb-2">{t('common.description')}</label>
                                     <textarea
                                         name="description"
                                         value={formData.description}
                                         onChange={handleInputChange}
-                                        placeholder="Professional bio..."
+                                        placeholder={t('admin.professionalBio')}
                                         rows={3}
                                         className="w-full px-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 bg-background text-text resize-none"
                                     />
@@ -290,12 +292,12 @@ export default function UserManagement() {
                                     {submitting ? (
                                         <div className="flex items-center gap-2">
                                             <Loader2 className="w-4 h-4 animate-spin" />
-                                            Creating...
+                                            {t('admin.creating')}
                                         </div>
-                                    ) : 'Create Doctor Account'}
+                                    ) : t('admin.createDoctorAccount')}
                                 </Button>
                                 <Button variant="ghost" type="button" onClick={() => setShowAddForm(false)}>
-                                    Cancel
+                                    {t('common.cancel')}
                                 </Button>
                             </div>
                         </form>
@@ -309,7 +311,7 @@ export default function UserManagement() {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light" />
                             <input
                                 type="text"
-                                placeholder={`Search ${activeTab}...`}
+                                placeholder={`${t('common.search')} ${activeTab === 'doctors' ? t('admin.doctors') : t('admin.users')}...`}
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="w-full pl-10 pr-4 py-2 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
@@ -332,20 +334,20 @@ export default function UserManagement() {
                                             <TableRow>
                                                 {activeTab === 'doctors' && (
                                                     <>
-                                                        <TableHead>Doctor Name</TableHead>
-                                                        <TableHead>Specialty</TableHead>
-                                                        <TableHead>Email</TableHead>
-                                                        <TableHead>Phone</TableHead>
-                                                        <TableHead>Status</TableHead>
-                                                        <TableHead>Actions</TableHead>
+                                                        <TableHead>{t('common.name')}</TableHead>
+                                                        <TableHead>{t('common.specialty')}</TableHead>
+                                                        <TableHead>{t('common.email')}</TableHead>
+                                                        <TableHead>{t('common.phone')}</TableHead>
+                                                        <TableHead>{t('common.status')}</TableHead>
+                                                        <TableHead>{t('common.actions')}</TableHead>
                                                     </>
                                                 )}
                                                 {activeTab === 'patients' && (
                                                     <>
-                                                        <TableHead>Name</TableHead>
-                                                        <TableHead>Email</TableHead>
-                                                        <TableHead>Phone</TableHead>
-                                                        <TableHead>Status</TableHead>
+                                                        <TableHead>{t('common.name')}</TableHead>
+                                                        <TableHead>{t('common.email')}</TableHead>
+                                                        <TableHead>{t('common.phone')}</TableHead>
+                                                        <TableHead>{t('common.status')}</TableHead>
                                                     </>
                                                 )}
                                             </TableRow>
@@ -359,7 +361,7 @@ export default function UserManagement() {
                                                     <TableCell>{doctor.PhoneNumber || doctor.phoneNumber || 'N/A'}</TableCell>
                                                     <TableCell>
                                                         <Badge variant={doctor.IsActive !== false ? 'success' : 'secondary'}>
-                                                            {doctor.IsActive !== false ? 'Active' : 'Inactive'}
+                                                            {doctor.IsActive !== false ? t('common.active') : t('common.inactive')}
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell>
@@ -386,21 +388,21 @@ export default function UserManagement() {
                                                     <TableCell>{patient.Email || patient.email}</TableCell>
                                                     <TableCell>{patient.PhoneNumber || patient.phoneNumber || 'N/A'}</TableCell>
                                                     <TableCell>
-                                                        <Badge variant="success">Active</Badge>
+                                                        <Badge variant="success">{t('common.active')}</Badge>
                                                     </TableCell>
                                                 </TableRow>
                                             ))}
                                             {activeTab === 'doctors' && filteredDoctors.length === 0 && (
                                                 <TableRow>
                                                     <TableCell colSpan={6} className="text-center py-8 text-text-muted">
-                                                        No doctors found
+                                                        {t('admin.noDoctorsFound')}
                                                     </TableCell>
                                                 </TableRow>
                                             )}
                                             {activeTab === 'patients' && filteredPatients.length === 0 && (
                                                 <TableRow>
                                                     <TableCell colSpan={4} className="text-center py-8 text-text-muted">
-                                                        No users found
+                                                        {t('admin.noUsersFound')}
                                                     </TableCell>
                                                 </TableRow>
                                             )}

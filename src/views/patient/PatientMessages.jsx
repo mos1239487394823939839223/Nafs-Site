@@ -17,9 +17,11 @@ import Card from "../../components/ui/Card";
 import ChatWindow from "../../components/chat/ChatWindow";
 import { useAuth } from "../../contexts/AuthContext";
 import { chatAPI } from "../../lib/api";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function PatientMessages() {
   const { user } = useAuth();
+  const { t } = useLanguage();
 
   const [mode, setMode] = useState("rooms"); // rooms, chat
   const [activeRoom, setActiveRoom] = useState(null);
@@ -138,12 +140,12 @@ export default function PatientMessages() {
             {/* Header */}
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h1 className="text-2xl font-bold text-text-heading">Messages</h1>
-                <p className="text-text-muted text-sm mt-1">Your conversations</p>
+                <h1 className="text-2xl font-bold text-text-heading">{t('chat.messages')}</h1>
+                <p className="text-text-muted text-sm mt-1">{t('chat.yourConversations')}</p>
               </div>
               <Button variant="outline" size="sm" onClick={fetchRooms} disabled={loading}>
                 <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
-                Refresh
+                {t('common.refresh')}
               </Button>
             </div>
 
@@ -152,7 +154,7 @@ export default function PatientMessages() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light" />
               <input
                 type="text"
-                placeholder="Search conversations..."
+                placeholder={t('chat.searchConversations')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-text"
@@ -169,8 +171,8 @@ export default function PatientMessages() {
                 <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mb-4">
                   <MessageSquare className="w-10 h-10 text-primary" />
                 </div>
-                <h3 className="text-xl font-bold text-text-heading mb-2">No Conversations</h3>
-                <p className="text-text-muted">You don't have any chat conversations yet.</p>
+                <h3 className="text-xl font-bold text-text-heading mb-2">{t('chat.noConversations')}</h3>
+                <p className="text-text-muted">{t('chat.noConversationsDesc')}</p>
               </div>
             ) : (
               <div className="flex-1 overflow-y-auto space-y-2">
@@ -204,7 +206,7 @@ export default function PatientMessages() {
                           )}
                         </div>
                         <p className="text-sm text-text-muted truncate">
-                          {room.LastMessage || "No messages yet"}
+                          {room.LastMessage || t('chat.noMessagesYet')}
                         </p>
                       </div>
                       <ChevronRight className="w-5 h-5 text-text-muted flex-shrink-0" />

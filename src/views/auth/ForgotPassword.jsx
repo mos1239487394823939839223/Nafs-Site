@@ -7,10 +7,12 @@ import { useToast } from '../../components/ui/Toast'
 import { validateEmail } from '../../lib/validation'
 import { Mail, ArrowLeft, Shield, Lock, CheckCircle, Eye, EyeOff } from 'lucide-react'
 import { authAPI } from '../../lib/api'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function ForgotPassword() {
   const navigate = useNavigate()
   const toast = useToast()
+  const { t } = useLanguage()
 
   // Steps: 1 = Enter Email, 2 = Enter OTP, 3 = New Password
   const [step, setStep] = useState(1)
@@ -27,7 +29,7 @@ export default function ForgotPassword() {
   // Step 1: Send forgot password OTP
   const handleSendOTP = async () => {
     if (!validateEmail(email)) {
-      setErrors({ email: 'Please enter a valid email address' })
+      setErrors({ email: t('errors.invalidEmail') })
       return
     }
     setErrors({})
@@ -36,7 +38,7 @@ export default function ForgotPassword() {
     try {
       const response = await authAPI.forgotPassword(email)
       if (response?.IsSuccess !== false) {
-        toast.success('Verification code sent to your email')
+        toast.success(t('success.otpSent'))
         setStep(2)
         setOtpTimer(60)
         const interval = setInterval(() => {
@@ -49,10 +51,10 @@ export default function ForgotPassword() {
           })
         }, 1000)
       } else {
-        toast.error(response?.Message || 'Failed to send verification code')
+        toast.error(response?.Message || t('errors.failedSendOtp'))
       }
     } catch (error) {
-      toast.error(error.response?.data?.Message || 'Failed to send verification code. Please try again.')
+      toast.error(error.response?.data?.Message || t('errors.failedSendOtp'))
     } finally {
       setLoading(false)
     }
@@ -61,7 +63,7 @@ export default function ForgotPassword() {
   // Step 2: Confirm OTP
   const handleConfirmOTP = async () => {
     if (!otp || otp.length !== 6) {
-      setErrors({ otp: 'Please enter the 6-digit verification code' })
+      setErrors({ otp: t('errors.otpInvalid') })
       return
     }
     setErrors({})
@@ -73,13 +75,13 @@ export default function ForgotPassword() {
         // The response might contain a token for password change
         const token = response?.Data?.Token || response?.Data
         setResetToken(token)
-        toast.success('Code verified successfully')
+        toast.success(t('success.codeVerified'))
         setStep(3)
       } else {
-        toast.error(response?.Message || 'Invalid verification code')
+        toast.error(response?.Message || t('errors.failedVerifyOtp'))
       }
     } catch (error) {
-      toast.error(error.response?.data?.Message || 'Invalid verification code. Please try again.')
+      toast.error(error.response?.data?.Message || t('errors.failedVerifyOtp'))
     } finally {
       setLoading(false)
     }
@@ -89,10 +91,10 @@ export default function ForgotPassword() {
   const handleResetPassword = async () => {
     const newErrors = {}
     if (!newPassword || newPassword.length < 6) {
-      newErrors.newPassword = 'Password must be at least 6 characters'
+      newErrors.newPassword = t('errors.passwordTooShort')
     }
     if (newPassword !== confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match'
+      newErrors.confirmPassword = t('errors.passwordMismatch')
     }
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors)
@@ -104,13 +106,13 @@ export default function ForgotPassword() {
     try {
       const response = await authAPI.changePasswordByToken(resetToken, newPassword)
       if (response?.IsSuccess !== false) {
-        toast.success('Password reset successfully! Please sign in.')
+        toast.success(t('success.passwordReset'))
         navigate('/auth/login')
       } else {
-        toast.error(response?.Message || 'Failed to reset password')
+        toast.error(response?.Message || t('errors.failedResetPassword'))
       }
     } catch (error) {
-      toast.error(error.response?.data?.Message || 'Failed to reset password. Please try again.')
+      toast.error(error.response?.data?.Message || t('errors.failedResetPassword'))
     } finally {
       setLoading(false)
     }
@@ -122,7 +124,7 @@ export default function ForgotPassword() {
     try {
       const response = await authAPI.forgotPassword(email)
       if (response?.IsSuccess !== false) {
-        toast.success('Verification code resent')
+        toast.success(t('success.otpResent'))
         setOtpTimer(60)
         const interval = setInterval(() => {
           setOtpTimer(prev => {
@@ -134,10 +136,10 @@ export default function ForgotPassword() {
           })
         }, 1000)
       } else {
-        toast.error(response?.Message || 'Failed to resend code')
+        toast.error(response?.Message || t('errors.failedSendOtp'))
       }
     } catch (error) {
-      toast.error(error.response?.data?.Message || 'Failed to resend code')
+      toast.error(error.response?.data?.Message || t('errors.failedSendOtp'))
     } finally {
       setLoading(false)
     }
@@ -152,8 +154,8 @@ export default function ForgotPassword() {
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary">Nafs</h1>
-          <p className="text-text-light mt-2">Reset Your Password</p>
+          <h1 className="text-4xl font-bold text-primary">{t('auth.platformName')}</h1>
+          <p className="text-text-light mt-2">{t('auth.resetYourPassword')}</p>
         </div>
 
         {/* Card */}
@@ -172,15 +174,15 @@ export default function ForgotPassword() {
                     <Mail className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-text-heading">Forgot Password</h2>
-                    <p className="text-sm text-text-muted">Enter your email to receive a verification code</p>
+                    <h2 className="text-xl font-semibold text-text-heading">{t('auth.forgotPasswordTitle')}</h2>
+                    <p className="text-sm text-text-muted">{t('auth.enterEmail')}</p>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <Input
                     type="email"
-                    label="Email Address"
+                    label={t('auth.email')}
                     value={email}
                     onChange={(e) => {
                       setEmail(e.target.value)
@@ -198,10 +200,10 @@ export default function ForgotPassword() {
                     {loading ? (
                       <div className="flex items-center justify-center gap-2">
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Sending...</span>
+                        <span>{t('common.sending')}</span>
                       </div>
                     ) : (
-                      'Send Verification Code'
+                      t('auth.sendVerificationCode')
                     )}
                   </Button>
                 </div>
@@ -221,18 +223,18 @@ export default function ForgotPassword() {
                     <Shield className="w-6 h-6 text-purple-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-text-heading">Enter Verification Code</h2>
-                    <p className="text-sm text-text-muted">Code sent to {email}</p>
+                    <h2 className="text-xl font-semibold text-text-heading">{t('auth.enterVerificationCode')}</h2>
+                    <p className="text-sm text-text-muted">{t('auth.codeSentTo')} {email}</p>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <div className="bg-primary/10 p-4 rounded-lg text-center">
-                    <p className="text-sm text-primary font-medium">Check your inbox for the 6-digit code</p>
+                    <p className="text-sm text-primary font-medium">{t('auth.checkInbox')}</p>
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-text-heading mb-2">Verification Code</label>
+                    <label className="block text-sm font-medium text-text-heading mb-2">{t('auth.verificationCode')}</label>
                     <input
                       type="text"
                       maxLength={6}
@@ -250,11 +252,11 @@ export default function ForgotPassword() {
                   <div className="text-center">
                     {otpTimer > 0 ? (
                       <p className="text-sm text-text-muted">
-                        Resend code in <span className="font-semibold text-primary">{otpTimer}s</span>
+                        {t('auth.resendIn')} <span className="font-semibold text-primary">{otpTimer}s</span>
                       </p>
                     ) : (
                       <button onClick={handleResendOTP} className="text-sm text-primary hover:underline" disabled={loading}>
-                        Resend verification code
+                        {t('auth.resendOtp')}
                       </button>
                     )}
                   </div>
@@ -267,10 +269,10 @@ export default function ForgotPassword() {
                     {loading ? (
                       <div className="flex items-center justify-center gap-2">
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Verifying...</span>
+                        <span>{t('common.verifying')}</span>
                       </div>
                     ) : (
-                      'Verify Code'
+                      t('auth.verifyCode')
                     )}
                   </Button>
                 </div>
@@ -290,14 +292,14 @@ export default function ForgotPassword() {
                     <Lock className="w-6 h-6 text-green-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-text-heading">Set New Password</h2>
-                    <p className="text-sm text-text-muted">Create a strong password for your account</p>
+                    <h2 className="text-xl font-semibold text-text-heading">{t('auth.setNewPassword')}</h2>
+                    <p className="text-sm text-text-muted">{t('auth.setNewPasswordDesc')}</p>
                   </div>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-text-muted mb-2">New Password</label>
+                    <label className="block text-sm font-medium text-text-muted mb-2">{t('auth.newPassword')}</label>
                     <div className="relative">
                       <input
                         type={showPassword ? 'text' : 'password'}
@@ -321,7 +323,7 @@ export default function ForgotPassword() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-text-muted mb-2">Confirm Password</label>
+                    <label className="block text-sm font-medium text-text-muted mb-2">{t('auth.confirmPassword')}</label>
                     <input
                       type="password"
                       value={confirmPassword}
@@ -343,12 +345,12 @@ export default function ForgotPassword() {
                     {loading ? (
                       <div className="flex items-center justify-center gap-2">
                         <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>Resetting...</span>
+                        <span>{t('common.resetting')}</span>
                       </div>
                     ) : (
                       <>
                         <CheckCircle className="w-4 h-4 mr-2" />
-                        Reset Password
+                        {t('auth.resetPassword')}
                       </>
                     )}
                   </Button>
@@ -364,7 +366,7 @@ export default function ForgotPassword() {
               className="text-sm text-text-muted hover:text-primary flex items-center justify-center gap-1 mx-auto"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to Sign In
+              {t('auth.backToSignIn')}
             </button>
           </div>
         </div>

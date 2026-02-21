@@ -2,22 +2,24 @@ import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { User, ArrowRight } from 'lucide-react'
 import Button from '../../components/ui/Button'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function RoleSelection() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
   const roles = [
     {
       id: 'patient',
-      title: 'Join as a Patient',
-      description: 'Book appointments, consult with doctors, and manage your health records',
+      title: t('auth.patientTitle'),
+      description: t('auth.patientDesc'),
       icon: User,
       color: 'from-primary to-primary-dark',
       features: [
-        'Book video/audio consultations',
-        'Access medical records',
-        'AI Health Assistant',
-        'Track health metrics',
+        t('auth.bookVideoConsultations'),
+        t('auth.accessMedicalRecords'),
+        t('auth.aiHealthAssistant'),
+        t('auth.trackHealthMetrics'),
       ],
       route: '/auth/register/patient',
     },
@@ -34,10 +36,10 @@ export default function RoleSelection() {
           className="text-center mb-12"
         >
           <h1 className="text-4xl md:text-5xl font-bold text-text-heading mb-4">
-            Welcome to <span className="text-primary">Clinc</span>
+            {t('auth.roleSelection').split(' ')[0]} <span className="text-primary">{t('auth.platformName')}</span>
           </h1>
           <p className="text-xl text-text-muted max-w-2xl mx-auto">
-            Choose how you'd like to join our healthcare platform
+            {t('auth.roleSelectionSubtitle')}
           </p>
         </motion.div>
 
@@ -67,7 +69,7 @@ export default function RoleSelection() {
 
                 {/* Features */}
                 <div className="p-8 flex-1">
-                  <h3 className="font-semibold text-text-heading mb-4">What you get:</h3>
+                  <h3 className="font-semibold text-text-heading mb-4">{t('auth.whatYouGet')}</h3>
                   <ul className="space-y-3">
                     {role.features.map((feature, idx) => (
                       <li key={idx} className="flex items-center gap-3 text-text-muted">
@@ -87,7 +89,7 @@ export default function RoleSelection() {
                     className="w-full group"
                     variant={role.id === 'patient' ? 'primary' : 'secondary'}
                   >
-                    <span>Get Started</span>
+                    <span>{t('auth.getStarted')}</span>
                     <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </div>
@@ -104,16 +106,16 @@ export default function RoleSelection() {
           className="mt-12 text-center"
         >
           <p className="text-text-muted">
-            Already have an account?{' '}
+            {t('auth.hasAccount')}{' '}
             <button
               onClick={() => navigate('/auth/login')}
               className="text-primary font-medium hover:underline"
             >
-              Sign In
+              {t('auth.login')}
             </button>
           </p>
           <p className="text-sm text-text-muted mt-4">
-            For Customer Service or Admin access, please contact your system administrator
+            {t('auth.adminAccessNote')}
           </p>
         </motion.div>
       </div>

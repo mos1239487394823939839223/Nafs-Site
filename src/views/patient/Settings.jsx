@@ -6,10 +6,12 @@ import ProfileSettings from '../../components/patient/settings/ProfileSettings'
 import { userAPI } from '../../lib/api'
 import { Eye, EyeOff, Lock } from 'lucide-react'
 import Button from '../../components/ui/Button'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function Settings() {
   const { user, updateProfile } = useAuth()
   const toast = useToast()
+  const { t } = useLanguage()
 
   // Change password state
   const [showPasswordSection, setShowPasswordSection] = useState(false)
@@ -27,13 +29,13 @@ export default function Settings() {
 
       if (response?.IsSuccess !== false) {
         updateProfile(data)
-        toast.success('Settings saved successfully')
+        toast.success(t('success.settingsSaved'))
       } else {
-        toast.error(response?.Message || 'Failed to save settings')
+        toast.error(response?.Message || t('errors.saveFailed'))
       }
     } catch (error) {
       console.error('Save settings error:', error)
-      toast.error(error.response?.data?.Message || 'Failed to save settings')
+      toast.error(error.response?.data?.Message || t('errors.saveFailed'))
     }
   }
 
@@ -46,29 +48,29 @@ export default function Settings() {
         const response = await userAPI.updateImage(user?.ID || user?.id, base64)
         if (response?.IsSuccess !== false) {
           updateProfile({ image: response.Data || reader.result })
-          toast.success('Profile photo updated')
+          toast.success(t('success.photoUpdated'))
         } else {
-          toast.error(response?.Message || 'Failed to update photo')
+          toast.error(response?.Message || t('errors.photoUpdateFailed'))
         }
       }
       reader.readAsDataURL(file)
     } catch (error) {
       console.error('Image upload error:', error)
-      toast.error('Failed to upload image')
+      toast.error(t('errors.photoUpdateFailed'))
     }
   }
 
   const handleChangePassword = async () => {
     if (!passwordData.currentPassword || !passwordData.newPassword) {
-      toast.error('Please fill in all password fields')
+      toast.error(t('errors.fillAllPasswordFields'))
       return
     }
     if (passwordData.newPassword.length < 6) {
-      toast.error('New password must be at least 6 characters')
+      toast.error(t('errors.passwordMinLength'))
       return
     }
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error('Passwords do not match')
+      toast.error(t('errors.passwordsDoNotMatch'))
       return
     }
 
@@ -76,14 +78,14 @@ export default function Settings() {
     try {
       const response = await userAPI.changePassword(passwordData.currentPassword, passwordData.newPassword)
       if (response?.IsSuccess !== false) {
-        toast.success('Password changed successfully')
+        toast.success(t('success.passwordChanged'))
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
         setShowPasswordSection(false)
       } else {
-        toast.error(response?.Message || 'Failed to change password')
+        toast.error(response?.Message || t('errors.passwordChangeFailed'))
       }
     } catch (error) {
-      toast.error(error.response?.data?.Message || 'Failed to change password')
+      toast.error(error.response?.data?.Message || t('errors.passwordChangeFailed'))
     } finally {
       setPasswordLoading(false)
     }
@@ -95,8 +97,8 @@ export default function Settings() {
 
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text mb-2">Profile</h1>
-          <p className="text-text-muted">Manage your personal information.</p>
+          <h1 className="text-3xl font-bold text-text mb-2">{t('settings.profile')}</h1>
+          <p className="text-text-muted">{t('settings.managePersonalInfo')}</p>
         </div>
 
         {/* Main Content Card */}
@@ -127,8 +129,8 @@ export default function Settings() {
                   <Lock className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-text">Change Password</h3>
-                  <p className="text-sm text-text-muted">Update your account password</p>
+                  <h3 className="font-semibold text-text">{t('settings.changePassword')}</h3>
+                  <p className="text-sm text-text-muted">{t('settings.updateAccountPassword')}</p>
                 </div>
               </div>
               <Button
@@ -136,7 +138,7 @@ export default function Settings() {
                 size="sm"
                 onClick={() => setShowPasswordSection(!showPasswordSection)}
               >
-                {showPasswordSection ? 'Cancel' : 'Change'}
+                {showPasswordSection ? t('common.cancel') : t('common.change')}
               </Button>
             </div>
 
@@ -149,7 +151,7 @@ export default function Settings() {
                 {['currentPassword', 'newPassword', 'confirmPassword'].map((field) => (
                   <div key={field}>
                     <label className="block text-sm font-medium text-text-muted mb-2">
-                      {field === 'currentPassword' ? 'Current Password' : field === 'newPassword' ? 'New Password' : 'Confirm New Password'}
+                      {field === 'currentPassword' ? t('settings.currentPassword') : field === 'newPassword' ? t('settings.newPassword') : t('settings.confirmNewPassword')}
                     </label>
                     <div className="relative">
                       <input
@@ -164,7 +166,7 @@ export default function Settings() {
                 ))}
                 <div className="flex justify-end">
                   <Button onClick={handleChangePassword} disabled={passwordLoading}>
-                    {passwordLoading ? 'Updating...' : 'Update Password'}
+                    {passwordLoading ? t('common.updating') : t('settings.updatePassword')}
                   </Button>
                 </div>
               </motion.div>

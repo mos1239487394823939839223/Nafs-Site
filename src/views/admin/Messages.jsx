@@ -4,9 +4,11 @@ import Button from '../../components/ui/Button'
 import ChatWindow from '../../components/chat/ChatWindow'
 import { chatAPI } from '../../lib/api'
 import { useAuth } from '../../contexts/AuthContext'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function AdminMessages() {
     const { user } = useAuth()
+    const { t } = useLanguage()
     const [activeRoom, setActiveRoom] = useState(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [rooms, setRooms] = useState([])
@@ -109,7 +111,7 @@ export default function AdminMessages() {
                 `}>
                     <div className="p-4 border-b border-border bg-background-paper">
                         <div className="flex items-center justify-between mb-3">
-                            <h2 className="text-lg font-bold text-text-heading">Communications</h2>
+                            <h2 className="text-lg font-bold text-text-heading">{t('chat.communications')}</h2>
                             <Button variant="ghost" size="sm" onClick={fetchRooms} disabled={loading}>
                                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                             </Button>
@@ -118,7 +120,7 @@ export default function AdminMessages() {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                             <input
                                 type="text"
-                                placeholder="Search conversations..."
+                                placeholder={t('chat.searchConversations')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 className="w-full pl-10 pr-4 py-2 bg-background-subtle border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20"
@@ -134,7 +136,7 @@ export default function AdminMessages() {
                         ) : filteredRooms.length === 0 ? (
                             <div className="text-center py-12 text-text-muted">
                                 <MessageSquare className="w-10 h-10 mx-auto mb-3 opacity-50" />
-                                <p>No conversations</p>
+                                <p>{t('chat.noConversations')}</p>
                             </div>
                         ) : (
                             filteredRooms.map((room) => (
@@ -170,7 +172,7 @@ export default function AdminMessages() {
                                                 )}
                                             </div>
                                             <p className="text-sm text-text-muted truncate">
-                                                {room.LastMessage || 'No messages yet'}
+                                                {room.LastMessage || t('chat.noMessagesYet')}
                                             </p>
                                         </div>
                                     </div>
@@ -205,8 +207,8 @@ export default function AdminMessages() {
                             <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
                                 <MessageSquare className="w-10 h-10 text-primary" />
                             </div>
-                            <h3 className="text-xl font-bold text-text-heading mb-2">Internal Messaging</h3>
-                            <p className="text-text-muted">Select a contact to start a conversation.</p>
+                            <h3 className="text-xl font-bold text-text-heading mb-2">{t('chat.internalMessaging')}</h3>
+                            <p className="text-text-muted">{t('chat.selectConversation')}</p>
                         </div>
                     )}
                 </div>

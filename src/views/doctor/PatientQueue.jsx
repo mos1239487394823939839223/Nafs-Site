@@ -5,19 +5,21 @@ import { useToast } from '../../components/ui/Toast'
 import QueueStats from '../../components/doctor/queue/QueueStats'
 import QueueItem from '../../components/doctor/queue/QueueItem'
 import { doctorAPI } from '../../lib/api'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 // BookingStatus enum
 const BookingStatusMap = {
-  0: 'waiting',       // Pending → show as waiting
-  1: 'confirmed',     // Confirmed
-  2: 'in-progress',   // InProgress
-  3: 'completed',     // Completed
-  4: 'cancelled',     // Cancelled
-  5: 'cancelled',     // NoShow → show as cancelled
+  0: 'waiting',
+  1: 'confirmed',
+  2: 'in-progress',
+  3: 'completed',
+  4: 'cancelled',
+  5: 'cancelled',
 }
 
 export default function PatientQueue() {
   const toast = useToast()
+  const { t } = useLanguage()
   const [filter, setFilter] = useState('all')
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
@@ -36,7 +38,7 @@ export default function PatientQueue() {
       }
     } catch (error) {
       console.error('Failed to fetch bookings:', error)
-      toast.error('Failed to load patient queue')
+      toast.error(t('errors.loadFailed'))
     } finally {
       setLoading(false)
     }
@@ -92,10 +94,10 @@ export default function PatientQueue() {
   }
 
   const filters = [
-    { id: 'all', label: 'All' },
-    { id: 'waiting', label: 'Waiting' },
-    { id: 'in-progress', label: 'In Progress' },
-    { id: 'completed', label: 'Completed' },
+    { id: 'all', label: t('common.all') },
+    { id: 'waiting', label: t('doctor.waiting') },
+    { id: 'in-progress', label: t('bookingStatus.inProgress') },
+    { id: 'completed', label: t('bookingStatus.completed') },
   ]
 
   // Filter patients based on selected filter
@@ -120,13 +122,13 @@ export default function PatientQueue() {
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8"
       >
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-text-heading mb-2">Patient Queue</h1>
-          <p className="text-text-muted">Manage today's consultations in real-time</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-text-heading mb-2">{t('doctor.patientQueue')}</h1>
+          <p className="text-text-muted">{t('doctor.manageConsultations')}</p>
         </div>
         <div className="p-2 px-3 bg-background-paper border border-border rounded-lg shadow-sm self-start sm:self-auto">
           <span className="text-sm font-medium text-text-muted flex items-center gap-2">
             <Users className="w-4 h-4" />
-            Total Patients: {patients.length}
+            {t('doctor.totalPatients')}: {patients.length}
           </span>
         </div>
       </motion.div>
@@ -160,7 +162,7 @@ export default function PatientQueue() {
             ) : sortedPatients.length === 0 ? (
               <div className="text-center py-12 bg-background-paper rounded-xl border border-dashed border-border">
                 <Users className="w-12 h-12 text-text-muted mx-auto mb-3 opacity-30" />
-                <p className="text-text-muted">No patients found within this filter.</p>
+                <p className="text-text-muted">{t('doctor.noPatientsFound')}</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -182,7 +184,7 @@ export default function PatientQueue() {
                 <ChevronLeft className="w-4 h-4" />
               </button>
               <span className="text-sm text-text-muted">
-                Page {pageIndex + 1} of {totalPages}
+                {t('common.page')} {pageIndex + 1} {t('common.of')} {totalPages}
               </span>
               <button
                 disabled={pageIndex >= totalPages - 1}
@@ -200,9 +202,9 @@ export default function PatientQueue() {
           <QueueStats stats={stats} />
 
           <div className="bg-primary/10 p-6 rounded-2xl border border-primary/20">
-            <h3 className="font-semibold text-text-heading mb-2">Doctor's Note</h3>
+            <h3 className="font-semibold text-text-heading mb-2">{t('doctor.doctorsNote')}</h3>
             <p className="text-sm text-text-muted">
-              Remember to complete patient notes within 15 minutes of session end.
+              {t('doctor.completeNotesReminder')}
             </p>
           </div>
         </div>

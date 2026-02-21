@@ -25,16 +25,18 @@ import {
 } from "lucide-react";
 
 import { api, authAPI } from "../../../lib/api";
+import { useLanguage } from "../../../contexts/LanguageContext";
 
 export default function PatientRegistration() {
   const navigate = useNavigate();
   const { login } = useAuth();
   const toast = useToast();
+  const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
 
   const steps = [
-    { id: 1, title: "Basic Info", subtitle: "Personal details", icon: User },
-    { id: 2, title: "Verification", subtitle: "Verify email", icon: Shield },
+    { id: 1, title: t('auth.basicInfo'), subtitle: t('auth.personalDetails'), icon: User },
+    { id: 2, title: t('auth.verification'), subtitle: t('auth.verifyEmail'), icon: Shield },
   ];
 
   const {
@@ -72,43 +74,43 @@ export default function PatientRegistration() {
     let isValid = true;
 
     if (!validateRequired(formData.firstName)) {
-      setFieldError("firstName", "First name is required");
+      setFieldError("firstName", t('errors.firstNameRequired'));
       isValid = false;
     }
 
     if (!validateRequired(formData.lastName)) {
-      setFieldError("lastName", "Last name is required");
+      setFieldError("lastName", t('errors.lastNameRequired'));
       isValid = false;
     }
 
     if (!validateEmail(formData.email)) {
-      setFieldError("email", "Please enter a valid email address");
+      setFieldError("email", t('errors.invalidEmail'));
       isValid = false;
     }
 
     if (!validateRequired(formData.password) || formData.password.length < 6) {
-      setFieldError("password", "Password must be at least 6 characters");
+      setFieldError("password", t('errors.passwordTooShort'));
       isValid = false;
     }
 
     if (!validatePhone(formData.phone)) {
-      setFieldError("phone", "Please enter a valid Egyptian phone number");
+      setFieldError("phone", t('errors.invalidPhone'));
       isValid = false;
     }
 
     if (!validateDate(formData.dateOfBirth)) {
-      setFieldError("dateOfBirth", "Please enter a valid date of birth");
+      setFieldError("dateOfBirth", t('errors.invalidDate'));
       isValid = false;
     } else {
       const age = calculateAge(formData.dateOfBirth);
       if (age < 13) {
-        setFieldError("dateOfBirth", "You must be at least 13 years old");
+        setFieldError("dateOfBirth", t('errors.minAge'));
         isValid = false;
       }
     }
 
     if (!validateRequired(formData.gender)) {
-      setFieldError("gender", "Please select your gender");
+      setFieldError("gender", t('errors.selectGender'));
       isValid = false;
     }
 
@@ -137,7 +139,7 @@ export default function PatientRegistration() {
         setOtpSent(true);
         setOtpTimer(60);
         toast.success(
-          response.Data?.Message || `OTP sent to ${formData.email}`,
+          response.Data?.Message || t('success.otpSent'),
         );
 
         // Countdown timer
@@ -156,7 +158,7 @@ export default function PatientRegistration() {
       } else {
         console.warn("⚠️ Server returned success=false for SendOtp");
         console.error("Error Message:", response.Message);
-        toast.error(response.Message || "Failed to send OTP");
+        toast.error(response.Message || t('errors.failedSendOtp'));
         console.groupEnd();
         return false;
       }
@@ -169,7 +171,7 @@ export default function PatientRegistration() {
       }
       toast.error(
         error.response?.data?.Message ||
-        "Failed to send OTP. Please try again.",
+        t('errors.failedSendOtp'),
       );
       console.groupEnd();
       return false;
@@ -181,7 +183,7 @@ export default function PatientRegistration() {
   // Step 2 Validation
   const validateStep2 = () => {
     if (!formData.otp || formData.otp.length !== 6) {
-      setFieldError("otp", "Please enter the 6-digit OTP");
+      setFieldError("otp", t('errors.otpRequired'));
       return false;
     }
     return true;
@@ -233,7 +235,7 @@ export default function PatientRegistration() {
         const errorMsg =
           registerResponse.data.Details ||
           registerResponse.data.Message ||
-          "Registration failed";
+          t('errors.somethingWentWrong');
         toast.error(errorMsg);
         console.groupEnd();
         return;
@@ -260,7 +262,7 @@ export default function PatientRegistration() {
           "❌ Registration failed (IsSuccess check):",
           registerResponse.data?.Message || registerResponse.data,
         );
-        toast.error(registerResponse.data?.Message || "Registration failed");
+        toast.error(registerResponse.data?.Message || t('errors.somethingWentWrong'));
       }
     } catch (error) {
       console.error("❌ Registration Threw Exception:", error);
@@ -271,7 +273,7 @@ export default function PatientRegistration() {
         error.response?.data?.Message ||
         error.response?.data?.message ||
         error.message ||
-        "Registration failed. Please try again.";
+        t('errors.somethingWentWrong');
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -289,19 +291,19 @@ export default function PatientRegistration() {
           // Register user first, then send OTP
           await handleRegisterUser();
         } else {
-          toast.error("Please fix the errors before continuing");
+          toast.error(t('errors.fixErrors'));
         }
       } else if (currentStep === 2) {
         isValid = validateStep2();
         if (isValid) {
           await handleSubmit();
         } else {
-          toast.error("Please fix the errors before continuing");
+          toast.error(t('errors.fixErrors'));
         }
       }
     } catch (error) {
       console.error("Unexpected error in handleNext:", error);
-      toast.error("An unexpected error occurred. Please try again.");
+      toast.error(t('errors.unexpectedError'));
       setLoading(false);
     }
   };
@@ -314,7 +316,7 @@ export default function PatientRegistration() {
       const otpResponse = await authAPI.verifyOtp(formData.email, formData.otp);
 
       if (!otpResponse.IsSuccess) {
-        toast.error(otpResponse.Message || "Invalid OTP");
+        toast.error(otpResponse.Message || t('errors.failedVerifyOtp'));
         setLoading(false);
         return;
       }
@@ -322,7 +324,7 @@ export default function PatientRegistration() {
       setLoading(false);
 
       // Registration and verification successful
-      toast.success("Registration successful! Please sign in.");
+      toast.success(t('success.registrationSuccess'));
       navigate("/auth/login");
     } catch (error) {
       console.error("OTP verification failed:", error);
@@ -331,7 +333,7 @@ export default function PatientRegistration() {
         error.response?.data?.Message ||
         error.response?.data?.message ||
         error.message ||
-        "Verification failed. Please try again.";
+        t('errors.failedVerifyOtp');
       toast.error(errorMessage);
     }
   };
@@ -367,17 +369,17 @@ export default function PatientRegistration() {
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold text-text-heading">
-                      Basic Information
+                      {t('auth.basicInformation')}
                     </h2>
                     <p className="text-sm text-text-muted">
-                      Tell us about yourself
+                      {t('auth.tellUsAboutYourself')}
                     </p>
                   </div>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-6">
                   <Input
-                    label="First Name"
+                    label={t('auth.firstName')}
                     value={formData.firstName}
                     onChange={(e) =>
                       handleFieldChange("firstName", e.target.value)
@@ -386,7 +388,7 @@ export default function PatientRegistration() {
                     placeholder="Ahmed"
                   />
                   <Input
-                    label="Last Name"
+                    label={t('auth.lastName')}
                     value={formData.lastName}
                     onChange={(e) =>
                       handleFieldChange("lastName", e.target.value)
@@ -398,7 +400,7 @@ export default function PatientRegistration() {
 
                 <div className="grid md:grid-cols-2 gap-6 mb-6">
                   <Input
-                    label="Email Address"
+                    label={t('auth.email')}
                     type="email"
                     value={formData.email}
                     onChange={(e) => handleFieldChange("email", e.target.value)}
@@ -406,7 +408,7 @@ export default function PatientRegistration() {
                     placeholder="you@example.com"
                   />
                   <Input
-                    label="Password"
+                    label={t('auth.password')}
                     type="password"
                     value={formData.password}
                     onChange={(e) =>
@@ -418,7 +420,7 @@ export default function PatientRegistration() {
                 </div>
 
                 <Input
-                  label="Phone Number"
+                  label={t('auth.phoneNumber')}
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => handleFieldChange("phone", e.target.value)}
@@ -428,7 +430,7 @@ export default function PatientRegistration() {
 
                 <div className="grid md:grid-cols-2 gap-6">
                   <Input
-                    label="Date of Birth"
+                    label={t('auth.dateOfBirth')}
                     type="date"
                     value={formData.dateOfBirth}
                     onChange={(e) =>
@@ -438,24 +440,24 @@ export default function PatientRegistration() {
                     max={new Date().toISOString().split("T")[0]}
                   />
                   <Select
-                    label="Gender"
+                    label={t('common.gender')}
                     value={formData.gender}
                     onChange={(e) =>
                       handleFieldChange("gender", e.target.value)
                     }
                     error={errors.gender}
                   >
-                    <option value="">Select gender</option>
-                    <option value="male">Male</option>
-                    <option value="female">Female</option>
-                    <option value="other">Other</option>
+                    <option value="">{t('common.selectGender')}</option>
+                    <option value="male">{t('common.male')}</option>
+                    <option value="female">{t('common.female')}</option>
+                    <option value="other">{t('common.other')}</option>
                   </Select>
                 </div>
 
                 {formData.dateOfBirth && validateDate(formData.dateOfBirth) && (
                   <div className="bg-primary/10 p-4 rounded-lg">
                     <p className="text-sm text-primary">
-                      Age: {calculateAge(formData.dateOfBirth)} years old
+                      {t('common.age')}: {calculateAge(formData.dateOfBirth)} {t('common.yearsOld')}
                     </p>
                   </div>
                 )}
@@ -477,17 +479,17 @@ export default function PatientRegistration() {
                   </div>
                   <div>
                     <h2 className="text-xl font-semibold text-clinical-darkGray">
-                      Email Verification
+                      {t('auth.emailVerification')}
                     </h2>
                     <p className="text-sm text-clinical-gray">
-                      Verify your email address
+                      {t('auth.verifyYourEmail')}
                     </p>
                   </div>
                 </div>
 
                 <div className="bg-primary/10 p-6 rounded-lg text-center">
                   <p className="text-text-heading mb-2">
-                    A verification code has been sent to:
+                    {t('auth.verificationSentTo')}
                   </p>
                   <p className="text-xl font-semibold text-primary">
                     {formData.email}
@@ -497,7 +499,7 @@ export default function PatientRegistration() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-text-heading mb-2">
-                      Enter 6-Digit Code
+                      {t('auth.enter6Digit')}
                     </label>
                     <input
                       type="text"
@@ -521,7 +523,7 @@ export default function PatientRegistration() {
                   <div className="text-center">
                     {otpTimer > 0 ? (
                       <p className="text-sm text-clinical-gray">
-                        Resend code in{" "}
+                        {t('auth.resendIn')}{" "}
                         <span className="font-semibold text-medical-blue">
                           {otpTimer}s
                         </span>
@@ -531,7 +533,7 @@ export default function PatientRegistration() {
                         onClick={handleSendOTP}
                         className="text-sm text-primary hover:underline"
                       >
-                        Resend verification code
+                        {t('auth.resendOtp')}
                       </button>
                     )}
                   </div>
@@ -548,23 +550,23 @@ export default function PatientRegistration() {
               disabled={isFirstStep || loading}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
+              {t('common.back')}
             </Button>
 
             <Button onClick={handleNext} disabled={loading}>
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Processing...</span>
+                  <span>{t('common.processing')}</span>
                 </div>
               ) : isLastStep ? (
                 <>
                   <CheckCircle className="w-4 h-4 mr-2" />
-                  Complete Registration
+                  {t('auth.completeRegistration')}
                 </>
               ) : (
                 <>
-                  Next
+                  {t('common.next')}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </>
               )}

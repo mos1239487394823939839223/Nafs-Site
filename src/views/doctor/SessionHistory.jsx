@@ -5,18 +5,19 @@ import Button from '../../components/ui/Button'
 import HistoryStats from '../../components/doctor/history/HistoryStats'
 import HistoryList from '../../components/doctor/history/HistoryList'
 import { doctorAPI } from '../../lib/api'
-
-// BookingStatus enum
-const BookingStatusMap = {
-  0: 'Pending',
-  1: 'Confirmed',
-  2: 'InProgress',
-  3: 'Completed',
-  4: 'Cancelled',
-  5: 'NoShow',
-}
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function SessionHistory() {
+  const { t } = useLanguage()
+
+  const BookingStatusMap = {
+    0: t('bookingStatus.pending'),
+    1: t('bookingStatus.confirmed'),
+    2: t('bookingStatus.inProgress'),
+    3: t('bookingStatus.completed'),
+    4: t('bookingStatus.cancelled'),
+    5: t('bookingStatus.noShow'),
+  }
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState(null) // null = all
@@ -92,17 +93,17 @@ export default function SessionHistory() {
         className="flex items-center justify-between mb-8"
       >
         <div>
-          <h1 className="text-3xl font-bold text-text mb-2">Session History</h1>
-          <p className="text-text-light">Archive of your past consultations and earnings</p>
+          <h1 className="text-3xl font-bold text-text mb-2">{t('doctor.sessionHistory')}</h1>
+          <p className="text-text-light">{t('doctor.sessionHistoryDesc')}</p>
         </div>
         <div className="flex gap-3">
           <Button variant="outline" className="gap-2">
             <Calendar className="w-4 h-4" />
-            This Month
+            {t('doctor.thisMonth')}
           </Button>
           <Button variant="outline" className="gap-2">
             <Download className="w-4 h-4" />
-            Export CSV
+            {t('doctor.exportCSV')}
           </Button>
         </div>
       </motion.div>
@@ -115,24 +116,24 @@ export default function SessionHistory() {
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-text-light text-sm font-medium">
             <Filter className="w-4 h-4" />
-            <span>Filter by:</span>
+            <span>{t('common.filterBy')}:</span>
           </div>
           <select
             value={statusFilter === null ? '' : statusFilter}
             onChange={(e) => handleStatusFilter(e.target.value === '' ? null : parseInt(e.target.value))}
             className="text-sm border border-border rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-primary/20 bg-background text-text font-medium cursor-pointer"
           >
-            <option value="">All Status</option>
-            <option value="0">Pending</option>
-            <option value="1">Confirmed</option>
-            <option value="2">In Progress</option>
-            <option value="3">Completed</option>
-            <option value="4">Cancelled</option>
-            <option value="5">No Show</option>
+            <option value="">{t('common.allStatus')}</option>
+            <option value="0">{t('bookingStatus.pending')}</option>
+            <option value="1">{t('bookingStatus.confirmed')}</option>
+            <option value="2">{t('bookingStatus.inProgress')}</option>
+            <option value="3">{t('bookingStatus.completed')}</option>
+            <option value="4">{t('bookingStatus.cancelled')}</option>
+            <option value="5">{t('bookingStatus.noShow')}</option>
           </select>
         </div>
         <div className="text-sm text-text-muted">
-          Showing <span className="font-semibold text-text-heading">{totalRecords}</span> results
+          {t('common.showing')} <span className="font-semibold text-text-heading">{totalRecords}</span> {t('common.results')}
         </div>
       </div>
 
@@ -155,10 +156,10 @@ export default function SessionHistory() {
                 onClick={() => setPageIndex(prev => Math.max(0, prev - 1))}
               >
                 <ChevronLeft className="w-4 h-4" />
-                Previous
+                {t('common.previous')}
               </Button>
               <span className="text-sm text-text-muted">
-                Page {pageIndex + 1} of {totalPages}
+                {t('common.page')} {pageIndex + 1} {t('common.of')} {totalPages}
               </span>
               <Button
                 variant="outline"
@@ -166,7 +167,7 @@ export default function SessionHistory() {
                 disabled={pageIndex >= totalPages - 1}
                 onClick={() => setPageIndex(prev => prev + 1)}
               >
-                Next
+                {t('common.next')}
                 <ChevronRight className="w-4 h-4" />
               </Button>
             </div>

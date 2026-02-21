@@ -12,11 +12,13 @@ import {
 import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { authAPI } from "../../lib/api";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function Login() {
   const navigate = useNavigate();
   const toast = useToast();
   const { login: authLogin } = useAuth();
+  const { t } = useLanguage();
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -41,11 +43,11 @@ export default function Login() {
     const newErrors = {};
 
     if (!validateEmail(formData.email)) {
-      newErrors.email = "Please enter a valid email address";
+      newErrors.email = t('errors.invalidEmail');
     }
 
     if (!formData.password) {
-      newErrors.password = "Password is required";
+      newErrors.password = t('errors.passwordRequired');
     }
 
     setErrors(newErrors);
@@ -59,7 +61,7 @@ export default function Login() {
 
     if (!validateForm()) {
       console.log("Validation failed", errors);
-      toast.error("Please fix the errors in the form");
+      toast.error(t('errors.fixFormErrors'));
       return;
     }
 
@@ -119,7 +121,7 @@ export default function Login() {
         // Update Auth Context
         authLogin(userData, userRole, token);
 
-        toast.success(response.Message || "Login successful!");
+        toast.success(response.Message || t('success.loginSuccess'));
 
         // Determine redirect path
         const targetPath = RoleDashboards[userRole];
@@ -135,17 +137,17 @@ export default function Login() {
         }
       } else {
         console.log("Login failed (IsSuccess false):", response.Message);
-        toast.error(response.Message || "Login failed");
+        toast.error(response.Message || t('errors.loginFailed'));
         setLoading(false);
       }
     } catch (error) {
       console.error("Login caught error:", error);
-      let errorMessage = "Login failed. Please check your credentials.";
+      let errorMessage = t('errors.loginFailed');
 
       if (error.code === 'ECONNABORTED') {
-        errorMessage = "Connection timed out. Please check your internet connection or try again later.";
+        errorMessage = t('errors.connectionTimeout');
       } else if (!error.response) {
-        errorMessage = "Network error. Please check your internet connection.";
+        errorMessage = t('errors.networkError');
       } else if (error.response?.data?.Message) {
         errorMessage = error.response.data.Message;
       }
@@ -164,16 +166,16 @@ export default function Login() {
       >
         {/* Logo */}
         <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary">Clinc</h1>
-          <p className="text-text-light mt-2">Telemedicine Platform</p>
+          <h1 className="text-4xl font-bold text-primary">{t('auth.platformName')}</h1>
+          <p className="text-text-light mt-2">{t('auth.platformTagline')}</p>
         </div>
 
         {/* Card */}
         <div className="bg-background-paper rounded-2xl shadow-xl p-8">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-text">Welcome Back</h2>
+            <h2 className="text-2xl font-bold text-text">{t('auth.signInTitle')}</h2>
             <p className="text-text-muted mt-2">
-              Sign in to continue to your account
+              {t('auth.signInSubtitle')}
             </p>
           </div>
 
@@ -183,7 +185,7 @@ export default function Login() {
               <Input
                 type="email"
                 name="email"
-                label="Email Address"
+                label={t('auth.email')}
                 value={formData.email}
                 onChange={handleChange}
                 error={errors.email}
@@ -194,7 +196,7 @@ export default function Login() {
             {/* Password */}
             <div>
               <label className="block text-sm font-medium text-text-muted mb-2">
-                Password
+                {t('auth.password')}
               </label>
               <div className="relative">
                 <input
@@ -228,10 +230,10 @@ export default function Login() {
               {loading ? (
                 <div className="flex items-center justify-center gap-2">
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Please wait...</span>
+                  <span>{t('common.pleaseWait')}</span>
                 </div>
               ) : (
-                "Sign In"
+                t('auth.login')
               )}
             </Button>
           </form>
@@ -243,20 +245,20 @@ export default function Login() {
               onClick={() => navigate("/auth/forgot-password")}
               className="text-sm text-primary hover:underline"
             >
-              Forgot your password?
+              {t('auth.forgotPassword')}
             </button>
           </div>
 
           {/* Toggle Login/Register */}
           <div className="mt-4 text-center">
             <p className="text-sm text-text-muted">
-              Don't have an account?{" "}
+              {t('auth.noAccount')}{" "}
               <button
                 type="button"
                 onClick={() => navigate("/auth/role-selection")}
                 className="text-primary font-medium hover:underline"
               >
-                Sign Up
+                {t('auth.register')}
               </button>
             </p>
           </div>

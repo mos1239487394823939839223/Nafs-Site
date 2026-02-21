@@ -20,18 +20,20 @@ import BookingModal from '../../components/modals/BookingModal'
 import HealthJourneyTimeline from '../../components/patient/HealthJourneyTimeline'
 import { useAuth } from '../../contexts/AuthContext'
 import { patientAPI } from '../../lib/api'
-
-const BookingStatusMap = {
-  0: 'Pending',
-  1: 'Confirmed',
-  2: 'In Progress',
-  3: 'Completed',
-  4: 'Cancelled',
-  5: 'No Show',
-}
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function PatientDashboard() {
   const { user } = useAuth()
+  const { t } = useLanguage()
+
+  const BookingStatusMap = {
+    0: t('bookingStatus.pending'),
+    1: t('bookingStatus.confirmed'),
+    2: t('bookingStatus.inProgress'),
+    3: t('bookingStatus.completed'),
+    4: t('bookingStatus.cancelled'),
+    5: t('bookingStatus.noShow'),
+  }
   const [showAI, setShowAI] = useState(false)
   const [showBooking, setShowBooking] = useState(false)
   const [bookings, setBookings] = useState([])
@@ -105,9 +107,9 @@ export default function PatientDashboard() {
         <Card className="bg-gradient-to-br from-primary to-primary-dark text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/80 text-sm">Heart Rate</p>
+              <p className="text-white/80 text-sm">{t('patient.heartRate')}</p>
               <p className="text-3xl font-bold mt-1">72 BPM</p>
-              <p className="text-white/60 text-xs mt-1">Normal</p>
+              <p className="text-white/60 text-xs mt-1">{t('patient.normal')}</p>
             </div>
             <Heart className="w-12 h-12 text-white/30" />
           </div>
@@ -116,9 +118,9 @@ export default function PatientDashboard() {
         <Card className="bg-gradient-to-br from-primary to-primary-dark text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/80 text-sm">Blood Pressure</p>
+              <p className="text-white/80 text-sm">{t('patient.bloodPressure')}</p>
               <p className="text-3xl font-bold mt-1">120/80</p>
-              <p className="text-white/60 text-xs mt-1">Optimal</p>
+              <p className="text-white/60 text-xs mt-1">{t('patient.optimal')}</p>
             </div>
             <Activity className="w-12 h-12 text-white/30" />
           </div>
@@ -127,10 +129,10 @@ export default function PatientDashboard() {
         <Card className="bg-gradient-to-br from-secondary to-secondary-dark text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/80 text-sm">Total Sessions</p>
+              <p className="text-white/80 text-sm">{t('patient.totalSessions')}</p>
               <p className="text-3xl font-bold mt-1">{bookings.length}</p>
               <p className="text-white/60 text-xs mt-1">
-                {bookings.filter(b => b.Status === 3).length} completed
+                {bookings.filter(b => b.Status === 3).length} {t('patient.completed')}
               </p>
             </div>
             <Thermometer className="w-12 h-12 text-white/30" />
@@ -140,12 +142,12 @@ export default function PatientDashboard() {
         <Card className="bg-gradient-to-br from-accent to-accent-dark text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/80 text-sm">Next Checkup</p>
+              <p className="text-white/80 text-sm">{t('patient.nextCheckup')}</p>
               <p className="text-2xl font-bold mt-1">
-                {daysUntilNext !== null ? `${daysUntilNext} Days` : 'None'}
+                {daysUntilNext !== null ? `${daysUntilNext} ${t('patient.days')}` : t('patient.none')}
               </p>
               <p className="text-white/60 text-xs mt-1">
-                {nextAppointment?.date || 'No upcoming'}
+                {nextAppointment?.date || t('patient.noUpcoming')}
               </p>
             </div>
             <Calendar className="w-12 h-12 text-white/30" />
@@ -157,7 +159,7 @@ export default function PatientDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Blood Pressure Trend</CardTitle>
+            <CardTitle>{t('patient.bloodPressureTrend')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -173,11 +175,11 @@ export default function PatientDashboard() {
             <div className="flex items-center justify-center gap-6 mt-4">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-primary rounded-full"></div>
-                <span className="text-sm text-text-muted">Systolic</span>
+                <span className="text-sm text-text-muted">{t('patient.systolic')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-secondary rounded-full"></div>
-                <span className="text-sm text-text-muted">Diastolic</span>
+                <span className="text-sm text-text-muted">{t('patient.diastolic')}</span>
               </div>
             </div>
           </CardContent>
@@ -185,7 +187,7 @@ export default function PatientDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Weekly Heart Rate</CardTitle>
+            <CardTitle>{t('patient.weeklyHeartRate')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -210,7 +212,7 @@ export default function PatientDashboard() {
         {/* Upcoming Sessions Summary */}
         <Card className="rounded-2xl shadow-sm">
           <CardHeader>
-            <CardTitle>Upcoming Sessions</CardTitle>
+            <CardTitle>{t('patient.upcomingSessions')}</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
@@ -239,11 +241,11 @@ export default function PatientDashboard() {
                     </div>
                   ))
                 ) : (
-                  <p className="text-center text-text-muted text-sm py-4">No upcoming sessions</p>
+                  <p className="text-center text-text-muted text-sm py-4">{t('patient.noUpcomingSessions')}</p>
                 )}
                 <Button className="w-full" size="sm" onClick={() => setShowBooking(true)}>
                   <Calendar className="w-4 h-4 mr-2" />
-                  Book New Session
+                  {t('patient.bookNewSession')}
                 </Button>
               </div>
             )}
@@ -254,10 +256,10 @@ export default function PatientDashboard() {
       {/* Upcoming Appointments */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Upcoming Appointments</CardTitle>
+          <CardTitle>{t('patient.upcomingAppointments')}</CardTitle>
           <Button onClick={() => setShowBooking(true)}>
             <Calendar className="w-4 h-4 mr-2" />
-            Book Appointment
+            {t('patient.bookAppointment')}
           </Button>
         </CardHeader>
         <CardContent>
@@ -293,7 +295,7 @@ export default function PatientDashboard() {
               ))}
             </div>
           ) : (
-            <p className="text-center text-text-muted py-8">No upcoming appointments. Book one now!</p>
+            <p className="text-center text-text-muted py-8">{t('patient.bookAppointmentNow')}</p>
           )}
         </CardContent>
       </Card>
@@ -305,8 +307,8 @@ export default function PatientDashboard() {
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
               <Calendar className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="font-semibold text-text-heading mt-4">Book Appointment</h3>
-            <p className="text-sm text-text-muted mt-2">Schedule a session with a doctor</p>
+            <h3 className="font-semibold text-text-heading mt-4">{t('patient.bookAppointment')}</h3>
+            <p className="text-sm text-text-muted mt-2">{t('patient.scheduleSession')}</p>
           </div>
         </Card>
 
@@ -315,8 +317,8 @@ export default function PatientDashboard() {
             <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto">
               <Video className="w-8 h-8 text-secondary" />
             </div>
-            <h3 className="font-semibold text-text-heading mt-4">Virtual Clinic</h3>
-            <p className="text-sm text-text-muted mt-2">Join video consultation</p>
+            <h3 className="font-semibold text-text-heading mt-4">{t('patient.virtualClinic')}</h3>
+            <p className="text-sm text-text-muted mt-2">{t('patient.joinVideoConsultation')}</p>
           </div>
         </Card>
 
@@ -325,8 +327,8 @@ export default function PatientDashboard() {
             <div className="w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center mx-auto">
               <Bot className="w-8 h-8 text-accent-dark" />
             </div>
-            <h3 className="font-semibold text-text-heading mt-4">AI Health Assistant</h3>
-            <p className="text-sm text-text-muted mt-2">Get instant health advice</p>
+            <h3 className="font-semibold text-text-heading mt-4">{t('patient.aiHealthAssistant')}</h3>
+            <p className="text-sm text-text-muted mt-2">{t('patient.getInstantHealthAdvice')}</p>
           </div>
         </Card>
       </div>

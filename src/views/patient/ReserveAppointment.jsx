@@ -32,20 +32,22 @@ import CalendarGrid from "../../components/doctor/schedule/CalendarGrid";
 import { useAuth } from "../../contexts/AuthContext";
 import { patientAPI } from "../../lib/api";
 import { useToast } from "../../components/ui/Toast";
-
-// BookingStatus enum
-const BookingStatusMap = {
-  0: { label: 'Pending', variant: 'warning' },
-  1: { label: 'Confirmed', variant: 'primary' },
-  2: { label: 'In Progress', variant: 'info' },
-  3: { label: 'Completed', variant: 'success' },
-  4: { label: 'Cancelled', variant: 'danger' },
-  5: { label: 'No Show', variant: 'danger' },
-};
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function ReserveAppointment() {
   const { user: currentUser } = useAuth();
   const toast = useToast();
+  const { t } = useLanguage();
+
+  // BookingStatus enum
+  const BookingStatusMap = {
+    0: { label: t('bookingStatus.pending'), variant: 'warning' },
+    1: { label: t('bookingStatus.confirmed'), variant: 'primary' },
+    2: { label: t('bookingStatus.inProgress'), variant: 'info' },
+    3: { label: t('bookingStatus.completed'), variant: 'success' },
+    4: { label: t('bookingStatus.cancelled'), variant: 'danger' },
+    5: { label: t('bookingStatus.noShow'), variant: 'danger' },
+  };
   const [step, setStep] = useState(1); // 1: Doctor List, 2: Calendar/Details, 3: Success
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -89,11 +91,11 @@ export default function ReserveAppointment() {
           totalRecords: response.Data.Records,
         });
       } else {
-        toast.error(response.Message || "Failed to load doctors");
+        toast.error(response.Message || t('errors.loadDoctorsFailed'));
       }
     } catch (error) {
       console.error("Error fetching doctors:", error);
-      toast.error("Network error while fetching doctors");
+      toast.error(t('errors.networkError'));
     } finally {
       setLoading(false);
     }
@@ -112,11 +114,11 @@ export default function ReserveAppointment() {
           totalPages: response.Data.Pages || 1,
         });
       } else {
-        toast.error(response?.Message || "Failed to load bookings");
+        toast.error(response?.Message || t('errors.loadBookingsFailed'));
       }
     } catch (error) {
       console.error("Error fetching bookings:", error);
-      toast.error("Failed to load your bookings");
+      toast.error(t('errors.loadBookingsFailed'));
     } finally {
       setBookingsLoading(false);
     }
@@ -176,14 +178,14 @@ export default function ReserveAppointment() {
           setSlots(mappedSlots);
           setStep(2);
         } else {
-          toast.error("Doctor details not found.");
+          toast.error(t('errors.doctorNotFound'));
         }
       } else {
-        toast.error(response.Message || "Failed to load doctor details");
+        toast.error(response.Message || t('errors.loadDoctorsFailed'));
       }
     } catch (error) {
       console.error("Error fetching doctor info:", error);
-      toast.error("Failed to load doctor profile and calendar");
+      toast.error(t('errors.loadDoctorsFailed'));
     } finally {
       setLoading(false);
     }
@@ -194,14 +196,14 @@ export default function ReserveAppointment() {
     try {
       const response = await patientAPI.cancelBooking(bookingId, "Cancelled by patient");
       if (response?.IsSuccess !== false) {
-        toast.success("Appointment cancelled successfully");
+        toast.success(t('success.appointmentCancelled'));
         // Refresh bookings
         fetchPatientBookings(bookingsPagination.pageIndex);
       } else {
-        toast.error(response?.Message || "Failed to cancel appointment");
+        toast.error(response?.Message || t('errors.cancelFailed'));
       }
     } catch (error) {
-      toast.error(error.response?.data?.Message || "Failed to cancel appointment");
+      toast.error(error.response?.data?.Message || t('errors.cancelFailed'));
     } finally {
       setCancellingId(null);
     }
@@ -256,13 +258,13 @@ export default function ReserveAppointment() {
       const response = await patientAPI.createBooking(bookingRequest);
       if (response.IsSuccess) {
         setStep(3);
-        toast.success("Booking confirmed successfully!");
+        toast.success(t('success.bookingConfirmed'));
       } else {
-        toast.error(response.Message || "Failed to book appointment");
+        toast.error(response.Message || t('errors.bookingFailed'));
       }
     } catch (error) {
       console.error("Booking error:", error);
-      toast.error("An error occurred while booking.");
+      toast.error(t('errors.bookingFailed'));
     } finally {
       setLoading(false);
     }
@@ -273,9 +275,9 @@ export default function ReserveAppointment() {
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
         <div>
-          <h1 className="text-3xl font-bold text-text-heading">Appointments</h1>
+          <h1 className="text-3xl font-bold text-text-heading">{t('patient.appointments')}</h1>
           <p className="text-text-muted">
-            Manage and book your health sessions
+            {t('patient.manageAndBookSessions')}
           </p>
         </div>
       </div>
@@ -289,7 +291,7 @@ export default function ReserveAppointment() {
             : "text-text-muted hover:text-text-heading"
             }`}
         >
-          Available Doctors
+          {t('patient.availableDoctors')}
           {mainTab === "reserve" && (
             <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />
           )}
@@ -301,7 +303,7 @@ export default function ReserveAppointment() {
             : "text-text-muted hover:text-text-heading"
             }`}
         >
-          My Reservation Status
+          {t('patient.myReservationStatus')}
           {mainTab === "status" && (
             <div className="absolute bottom-0 left-0 w-full h-0.5 bg-primary" />
           )}
@@ -317,7 +319,7 @@ export default function ReserveAppointment() {
                 onClick={() => setStep(step - 1)}
                 className="gap-2"
               >
-                <ArrowLeft className="w-4 h-4" /> Back to List
+                <ArrowLeft className="w-4 h-4" /> {t('common.backToList')}
               </Button>
             </div>
           )}
@@ -334,7 +336,7 @@ export default function ReserveAppointment() {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <h2 className="text-xl font-semibold flex items-center gap-2">
                     <Stethoscope className="w-5 h-5 text-primary" />
-                    Select a Doctor
+                    {t('patient.selectDoctor')}
                   </h2>
                   {/* Search can be implemented server-side later if API supports it */}
                   {/* <div className="relative w-full md:w-64">
@@ -360,10 +362,10 @@ export default function ReserveAppointment() {
                       <Table>
                         <TableHeader>
                           <TableRow hover={false}>
-                            <TableHead>Doctor</TableHead>
-                            <TableHead>Specialty</TableHead>
-                            <TableHead>Experience/Bio</TableHead>
-                            <TableHead className="text-right">Action</TableHead>
+                            <TableHead>{t('common.doctor')}</TableHead>
+                            <TableHead>{t('doctor.specialty')}</TableHead>
+                            <TableHead>{t('doctor.experienceBio')}</TableHead>
+                            <TableHead className="text-right">{t('common.action')}</TableHead>
                           </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -394,12 +396,12 @@ export default function ReserveAppointment() {
                                       ))}
                                     </div>
                                   ) : (
-                                    <span className="text-text-muted italic">General</span>
+                                    <span className="text-text-muted italic">{t('doctor.general')}</span>
                                   )}
                                 </TableCell>
                                 <TableCell>
                                   <p className="max-w-xs truncate text-text-muted" title={doctor.Description}>
-                                    {doctor.Description || "No description available"}
+                                    {doctor.Description || t('doctor.noDescription')}
                                   </p>
                                 </TableCell>
                                 <TableCell className="text-right">
@@ -407,7 +409,7 @@ export default function ReserveAppointment() {
                                     variant="ghost"
                                     size="sm"
                                     onClick={() => handleSelectDoctor(doctor.Id)}
-                                    title="View Calendar"
+                                    title={t('patient.viewCalendar')}
                                     className="text-primary hover:text-primary-dark hover:bg-primary/10"
                                   >
                                     <Eye className="w-5 h-5" />
@@ -418,7 +420,7 @@ export default function ReserveAppointment() {
                           ) : (
                             <TableRow>
                               <TableCell colSpan={4} className="text-center py-8 text-text-muted">
-                                No doctors found.
+                                {t('patient.noDoctorsFound')}
                               </TableCell>
                             </TableRow>
                           )}
@@ -429,7 +431,7 @@ export default function ReserveAppointment() {
                       {pagination.totalPages > 1 && (
                         <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-background-subtle/30">
                           <span className="text-sm text-text-muted">
-                            Page {pagination.pageIndex + 1} of {pagination.totalPages}
+                            {t('common.page')} {pagination.pageIndex + 1} {t('common.of')} {pagination.totalPages}
                           </span>
                           <div className="flex items-center gap-2">
                             <Button
@@ -438,7 +440,7 @@ export default function ReserveAppointment() {
                               disabled={pagination.pageIndex === 0}
                               onClick={() => handlePageChange(pagination.pageIndex - 1)}
                             >
-                              <ChevronLeft className="w-4 h-4 mr-1" /> Previous
+                              <ChevronLeft className="w-4 h-4 mr-1" /> {t('common.previous')}
                             </Button>
                             <Button
                               variant="outline"
@@ -446,7 +448,7 @@ export default function ReserveAppointment() {
                               disabled={pagination.pageIndex >= pagination.totalPages - 1}
                               onClick={() => handlePageChange(pagination.pageIndex + 1)}
                             >
-                              Next <ChevronRight className="w-4 h-4 ml-1" />
+                              {t('common.next')} <ChevronRight className="w-4 h-4 ml-1" />
                             </Button>
                           </div>
                         </div>
@@ -467,8 +469,8 @@ export default function ReserveAppointment() {
               >
                 <div className="lg:col-span-2">
                   <CardHeader className="px-0">
-                    <CardTitle>Select a Time Slot</CardTitle>
-                    <p className="text-text-muted">Booking with Dr. {selectedDoctor.Name}</p>
+                    <CardTitle>{t('patient.selectTimeSlot')}</CardTitle>
+                    <p className="text-text-muted">{t('patient.bookingWith')} {selectedDoctor.Name}</p>
                   </CardHeader>
                   <CalendarGrid
                     selectedDate={selectedDate}
@@ -479,7 +481,7 @@ export default function ReserveAppointment() {
                 </div>
                 <div className="space-y-6">
                   <Card className="p-6 border-l-4 border-l-primary">
-                    <h3 className="font-bold text-lg mb-4">Booking Summary</h3>
+                    <h3 className="font-bold text-lg mb-4">{t('patient.bookingSummary')}</h3>
                     <div className="space-y-4">
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -490,7 +492,7 @@ export default function ReserveAppointment() {
                           )}
                         </div>
                         <div>
-                          <p className="text-xs text-text-light">Doctor</p>
+                          <p className="text-xs text-text-light">{t('common.doctor')}</p>
                           <p className="font-medium">{selectedDoctor.Name}</p>
                         </div>
                       </div>
@@ -499,7 +501,7 @@ export default function ReserveAppointment() {
                         <div className="flex items-center gap-3">
                           <Stethoscope className="w-5 h-5 text-primary" />
                           <div>
-                            <p className="text-xs text-text-light">Specialty</p>
+                            <p className="text-xs text-text-light">{t('doctor.specialty')}</p>
                             <p className="font-medium text-sm">{selectedDoctor.Specialist.join(", ")}</p>
                           </div>
                         </div>
@@ -510,7 +512,7 @@ export default function ReserveAppointment() {
                           <Calendar className="w-5 h-5 text-primary" />
                           <div>
                             <p className="text-xs text-text-muted">
-                              Selected Time
+                              {t('patient.selectedTime')}
                             </p>
                             <p className="font-medium text-text-heading">
                               {bookedSlot.date.toLocaleDateString()} at{" "}
@@ -527,7 +529,7 @@ export default function ReserveAppointment() {
                       disabled={!bookedSlot}
                       onClick={confirmBooking}
                     >
-                      Confirm Appointment
+                      {t('patient.confirmAppointment')}
                     </Button>
                   </Card>
                 </div>
@@ -545,19 +547,17 @@ export default function ReserveAppointment() {
                   <CheckCircle className="w-12 h-12" />
                 </div>
                 <h2 className="text-3xl font-bold text-text-heading mb-4">
-                  Booking Confirmed!
+                  {t('patient.bookingConfirmedTitle')}
                 </h2>
                 <p className="text-text-muted mb-8">
-                  Your appointment with {selectedDoctor?.Name} has been
-                  successfully scheduled. You will receive a notification before
-                  the session starts.
+                  {t('patient.bookingConfirmedDesc')}
                 </p>
                 <Button className="w-full" onClick={() => {
                   setStep(1);
                   setSelectedDoctor(null);
                   setBookedSlot(null);
                 }}>
-                  Back to Doctors
+                  {t('patient.backToDoctors')}
                 </Button>
               </motion.div>
             )}
@@ -593,9 +593,9 @@ export default function ReserveAppointment() {
                             )}
                           </div>
                           <div>
-                            <h3 className="font-bold text-lg text-text-heading">{booking.DoctorName || 'Doctor'}</h3>
+                            <h3 className="font-bold text-lg text-text-heading">{booking.DoctorName || t('common.doctor')}</h3>
                             <p className="text-text-muted text-sm">
-                              {booking.DurationMinutes ? `${booking.DurationMinutes} min session` : 'Consultation'}
+                              {booking.DurationMinutes ? `${booking.DurationMinutes} ${t('patient.minSession')}` : t('patient.consultation')}
                             </p>
                           </div>
                         </div>
@@ -632,7 +632,7 @@ export default function ReserveAppointment() {
                                 className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
                                 onClick={() => handleCancelReservation(booking.Id)}
                                 disabled={cancellingId === booking.Id}
-                                title="Cancel Appointment"
+                                title={t('patient.cancelAppointment')}
                               >
                                 {cancellingId === booking.Id ? (
                                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -647,14 +647,14 @@ export default function ReserveAppointment() {
 
                       {booking.PatientNotes && (
                         <div className="mt-4 p-3 bg-primary/5 border border-primary/10 rounded-lg text-sm text-text-muted">
-                          <span className="font-bold text-text-heading">Notes:</span>{" "}
+                          <span className="font-bold text-text-heading">{t('patient.notes')}:</span>{" "}
                           {booking.PatientNotes}
                         </div>
                       )}
 
                       {booking.CancellationReason && booking.Status === 4 && (
                         <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 dark:text-red-400">
-                          <span className="font-bold">Reason for cancellation:</span>{" "}
+                          <span className="font-bold">{t('patient.cancellationReason')}:</span>{" "}
                           {booking.CancellationReason}
                         </div>
                       )}
@@ -665,17 +665,17 @@ export default function ReserveAppointment() {
                 <div className="text-center py-20 bg-background-subtle/20 rounded-2xl border-2 border-dashed border-border">
                   <Calendar className="w-16 h-16 text-text-muted mx-auto mb-4 opacity-20" />
                   <h3 className="text-xl font-medium text-text-muted">
-                    No reservations found
+                    {t('patient.noReservationsFound')}
                   </h3>
                   <p className="text-text-muted mt-2">
-                    You haven't booked any appointments yet.
+                    {t('patient.noReservationsDesc')}
                   </p>
                   <Button
                     className="mt-6"
                     variant="outline"
                     onClick={() => setMainTab("reserve")}
                   >
-                    Book Now
+                    {t('patient.bookNow')}
                   </Button>
                 </div>
               )}
@@ -684,7 +684,7 @@ export default function ReserveAppointment() {
               {bookingsPagination.totalPages > 1 && (
                 <div className="flex items-center justify-between pt-4">
                   <span className="text-sm text-text-muted">
-                    Page {bookingsPagination.pageIndex + 1} of {bookingsPagination.totalPages}
+                    {t('common.page')} {bookingsPagination.pageIndex + 1} {t('common.of')} {bookingsPagination.totalPages}
                   </span>
                   <div className="flex items-center gap-2">
                     <Button
@@ -693,7 +693,7 @@ export default function ReserveAppointment() {
                       disabled={bookingsPagination.pageIndex === 0}
                       onClick={() => fetchPatientBookings(bookingsPagination.pageIndex - 1)}
                     >
-                      <ChevronLeft className="w-4 h-4 mr-1" /> Previous
+                      <ChevronLeft className="w-4 h-4 mr-1" /> {t('common.previous')}
                     </Button>
                     <Button
                       variant="outline"
@@ -701,7 +701,7 @@ export default function ReserveAppointment() {
                       disabled={bookingsPagination.pageIndex >= bookingsPagination.totalPages - 1}
                       onClick={() => fetchPatientBookings(bookingsPagination.pageIndex + 1)}
                     >
-                      Next <ChevronRight className="w-4 h-4 ml-1" />
+                      {t('common.next')} <ChevronRight className="w-4 h-4 ml-1" />
                     </Button>
                   </div>
                 </div>
