@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Download, Filter, Calendar, Loader2, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Download, FilterList as Filter, CalendarToday as Calendar, Sync as Loader2, ChevronLeft, ChevronRight } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 import HistoryStats from '../../components/doctor/history/HistoryStats'
 import HistoryList from '../../components/doctor/history/HistoryList'
@@ -8,7 +8,7 @@ import { doctorAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function SessionHistory() {
-  const { t } = useLanguage()
+  const { t, isRTL } = useLanguage()
 
   const BookingStatusMap = {
     0: t('bookingStatus.pending'),
@@ -66,9 +66,9 @@ export default function SessionHistory() {
     time: formatTime(booking.SessionStartTime),
     patientName: booking.PatientName,
     patientId: `ID-${booking.PatientId}`,
-    type: 'Consultation',
+    type: t('patient.consultation', 'Consultation'),
     duration: booking.DurationMinutes || 0,
-    outcome: BookingStatusMap[booking.Status]?.toLowerCase() || 'unknown',
+    outcome: BookingStatusMap[booking.Status] || t('common.unknown', 'unknown'),
     paymentConfirmed: booking.PaymentConfirmed,
   }))
 
@@ -76,7 +76,7 @@ export default function SessionHistory() {
   const stats = {
     totalPatients: totalRecords,
     totalHours: Math.round(sessions.reduce((acc, s) => acc + s.duration, 0) / 60 * 10) / 10,
-    earnings: sessions.reduce((acc, s) => acc + (s.outcome === 'completed' ? 500 : 0), 0)
+    earnings: sessions.reduce((acc, s) => acc + (s.outcome === t('bookingStatus.completed') ? 500 : 0), 0)
   }
 
   const handleStatusFilter = (status) => {
@@ -85,7 +85,7 @@ export default function SessionHistory() {
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -155,7 +155,7 @@ export default function SessionHistory() {
                 disabled={pageIndex <= 1}
                 onClick={() => setPageIndex(prev => Math.max(1, prev - 1))}
               >
-                <ChevronLeft className="w-4 h-4" />
+                {isRTL ? <ChevronRight className="w-4 h-4 mr-1" /> : <ChevronLeft className="w-4 h-4 mr-1" />}
                 {t('common.previous')}
               </Button>
               <span className="text-sm text-text-muted">
@@ -168,7 +168,7 @@ export default function SessionHistory() {
                 onClick={() => setPageIndex(prev => prev + 1)}
               >
                 {t('common.next')}
-                <ChevronRight className="w-4 h-4" />
+                {isRTL ? <ChevronLeft className="w-4 h-4 ml-1" /> : <ChevronRight className="w-4 h-4 ml-1" />}
               </Button>
             </div>
           )}

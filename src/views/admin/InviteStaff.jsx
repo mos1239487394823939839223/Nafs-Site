@@ -6,7 +6,7 @@ import Table, { TableHeader, TableBody, TableRow, TableHead, TableCell } from '.
 import Badge from '../../components/ui/Badge'
 import { useToast } from '../../components/ui/Toast'
 import { validateEmail } from '../../lib/validation'
-import { Mail, Send, CheckCircle, Clock, XCircle, Loader2, UserPlus } from 'lucide-react'
+import { Mail, Send, CheckCircle, AccessTime as Clock, Cancel as XCircle, Sync as Loader2, PersonAdd as UserPlus } from '@mui/icons-material'
 import { authAPI, userAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 
@@ -26,9 +26,9 @@ export default function InviteStaff() {
   const [errors, setErrors] = useState({})
 
   const permissionLevels = [
-    { value: 'view-only', label: 'View Only', description: 'Can view tickets and patient information' },
-    { value: 'support-agent', label: 'Support Agent', description: 'Can respond to tickets and manage patient queries' },
-    { value: 'manager', label: 'Manager', description: 'Full access including team management and reporting' },
+    { value: 'view-only', label: t('admin.viewOnly'), description: t('admin.viewOnlyDesc') },
+    { value: 'support-agent', label: t('admin.supportAgent'), description: t('admin.supportAgentDesc') },
+    { value: 'manager', label: t('admin.manager'), description: t('admin.managerDesc') },
   ]
 
   // Fetch staff list from API
@@ -291,7 +291,7 @@ export default function InviteStaff() {
       {/* Info Box */}
       <div className="bg-primary/5 border border-primary/10 p-4 rounded-xl">
         <p className="text-sm text-primary">
-          <strong>Note:</strong> {t('admin.staffNote')}
+          <strong>{t('common.notes')}:</strong> {t('admin.staffNote')}
         </p>
       </div>
     </div>

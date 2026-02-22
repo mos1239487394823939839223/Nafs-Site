@@ -7,17 +7,7 @@ import ProgressStepper from '../../../components/forms/ProgressStepper'
 import Button from '../../../components/ui/Button'
 import Input, { Select, Textarea } from '../../../components/ui/Input'
 import { validateRequired, validateFileSize, validateFileType } from '../../../lib/validation'
-import {
-  ArrowLeft,
-  ArrowRight,
-  Stethoscope,
-  Upload,
-  Calendar,
-  FileText,
-  X,
-  CheckCircle,
-  Clock
-} from 'lucide-react'
+import { ArrowBack as ArrowLeft, ArrowForward as ArrowRight, MedicalServices as Stethoscope, Upload, CalendarToday as Calendar, Description as FileText, Close as X, CheckCircle, AccessTime as Clock } from '@mui/icons-material'
 
 import { useAuth } from '../../../contexts/AuthContext'
 import { api, authAPI } from '../../../lib/api'

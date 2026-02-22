@@ -1,17 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Search,
-  Stethoscope,
-  ChevronRight,
-  ArrowLeft,
-  User,
-  Headphones,
-  Clock,
-  Loader2,
-  MessageSquare,
-  RefreshCw,
-} from "lucide-react";
+import { Search, MedicalServices as Stethoscope, ChevronRight, ArrowBack as ArrowLeft, Person as User, Headphones, AccessTime as Clock, Sync as Loader2, ChatBubbleOutline as MessageSquare, Refresh as RefreshCw } from '@mui/icons-material';
 import Button from "../../components/ui/Button";
 import Card from "../../components/ui/Card";
 import ChatWindow from "../../components/chat/ChatWindow";
@@ -21,7 +10,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function PatientMessages() {
   const { user } = useAuth();
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
 
   const [mode, setMode] = useState("rooms"); // rooms, chat
   const [activeRoom, setActiveRoom] = useState(null);
@@ -58,7 +47,7 @@ export default function PatientMessages() {
         setMessages(response);
       }
       // Mark as read
-      await chatAPI.markAsRead(roomId).catch(() => {});
+      await chatAPI.markAsRead(roomId).catch(() => { });
     } catch (error) {
       console.error("Failed to fetch messages:", error);
     } finally {
@@ -105,20 +94,20 @@ export default function PatientMessages() {
   // Build conversation object for ChatWindow
   const currentConversation = activeRoom
     ? {
-        id: activeRoom.Id || activeRoom.id,
-        participant: {
-          name: activeRoom.OtherParticipantName || activeRoom.Name || "Chat",
-          avatar: activeRoom.OtherParticipantImage || null,
-          role: activeRoom.OtherParticipantRole || "doctor",
-          online: true,
-        },
-        messages: messages.map((msg) => ({
-          id: msg.Id || msg.id || Math.random(),
-          sender: msg.SenderId === (user?.ID || user?.id) ? "current-user" : "other",
-          content: msg.Content || msg.content || "",
-          timestamp: msg.CreatedAt || msg.timestamp || new Date().toISOString(),
-        })),
-      }
+      id: activeRoom.Id || activeRoom.id,
+      participant: {
+        name: activeRoom.OtherParticipantName || activeRoom.Name || "Chat",
+        avatar: activeRoom.OtherParticipantImage || null,
+        role: activeRoom.OtherParticipantRole || "doctor",
+        online: true,
+      },
+      messages: messages.map((msg) => ({
+        id: msg.Id || msg.id || Math.random(),
+        sender: msg.SenderId === (user?.ID || user?.id) ? "current-user" : "other",
+        content: msg.Content || msg.content || "",
+        timestamp: msg.CreatedAt || msg.timestamp || new Date().toISOString(),
+      })),
+    }
     : null;
 
   const filteredRooms = rooms.filter((r) => {
@@ -127,7 +116,7 @@ export default function PatientMessages() {
   });
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex flex-col">
+    <div className="h-[calc(100vh-8rem)] flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
       <AnimatePresence mode="wait">
         {mode === "rooms" && (
           <motion.div
@@ -143,21 +132,20 @@ export default function PatientMessages() {
                 <h1 className="text-2xl font-bold text-text-heading">{t('chat.messages')}</h1>
                 <p className="text-text-muted text-sm mt-1">{t('chat.yourConversations')}</p>
               </div>
-              <Button variant="outline" size="sm" onClick={fetchRooms} disabled={loading}>
-                <RefreshCw className={`w-4 h-4 mr-2 ${loading ? "animate-spin" : ""}`} />
+              <Button variant="outline" size="sm" onClick={fetchRooms} disabled={loading} className="gap-2">
+                <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                 {t('common.refresh')}
               </Button>
             </div>
-
             {/* Search */}
             <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light" />
+              <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-text-light`} />
               <input
                 type="text"
                 placeholder={t('chat.searchConversations')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-text"
+                className={`w-full ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-text`}
               />
             </div>
 
@@ -209,7 +197,7 @@ export default function PatientMessages() {
                           {room.LastMessage || t('chat.noMessagesYet')}
                         </p>
                       </div>
-                      <ChevronRight className="w-5 h-5 text-text-muted flex-shrink-0" />
+                      <ChevronRight className={`w-5 h-5 text-text-muted flex-shrink-0 ${isRTL ? 'rotate-180' : ''}`} />
                     </div>
                   </button>
                 ))}
@@ -243,6 +231,6 @@ export default function PatientMessages() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div>
+    </div >
   );
 }

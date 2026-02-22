@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Search, MessageSquare, Headphones, Stethoscope, Loader2, RefreshCw } from 'lucide-react'
+import { Search, ChatBubbleOutline as MessageSquare, Headphones, MedicalServices as Stethoscope, Sync as Loader2, Refresh as RefreshCw } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 import ChatWindow from '../../components/chat/ChatWindow'
 import { chatAPI } from '../../lib/api'

@@ -2,16 +2,7 @@ import { useState, useEffect } from 'react'
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import Table, { TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table'
 import Badge from '../../components/ui/Badge'
-import {
-  TrendingUp,
-  Users,
-  Activity,
-  Star,
-  Calendar,
-  Loader2,
-  Stethoscope,
-  ClipboardList
-} from 'lucide-react'
+import { TrendingUp, People as Users, ShowChart as Activity, Star, CalendarToday as Calendar, Sync as Loader2, MedicalServices as Stethoscope, Assignment as ClipboardList } from '@mui/icons-material'
 import KPICard from '../../components/admin/KPICard'
 import { adminAPI, userAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'

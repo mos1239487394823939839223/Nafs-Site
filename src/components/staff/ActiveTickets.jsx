@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import Badge from '../ui/Badge'
-import { Clock, User, AlertCircle, CheckCircle, MessageSquare, Loader2 } from 'lucide-react'
+import { AccessTime as Clock, Person as User, ErrorOutline as AlertCircle, CheckCircle, ChatBubbleOutline as MessageSquare, Sync as Loader2 } from '@mui/icons-material'
 import { chatAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Calendar as CalendarIcon, Save, Plus, Trash2, Ban, Loader2, ChevronLeft, ChevronRight, LayoutGrid, Clock, X } from 'lucide-react'
+import { CalendarToday as CalendarIcon, Save, Add as Plus, Delete as Trash2, Block as Ban, Sync as Loader2, ChevronLeft, ChevronRight, GridView as LayoutGrid, AccessTime as Clock, Close as X } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import Modal from '../../components/ui/Modal'

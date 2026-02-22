@@ -6,7 +6,7 @@ const getCSSVar = (varName) => {
     return getComputedStyle(document.documentElement).getPropertyValue(varName).trim()
 }
 
-export function createAppTheme(mode = 'light') {
+export function createAppTheme(mode = 'light', direction = 'ltr') {
     const isLight = mode === 'light'
 
     // Light mode colors
@@ -102,7 +102,7 @@ export function createAppTheme(mode = 'light') {
     const palette = isLight ? lightPalette : darkPalette
 
     return createTheme({
-        direction: 'ltr', // Will be overridden dynamically
+        direction,
         palette: {
             mode,
             ...palette,
@@ -313,10 +313,12 @@ export function createAppTheme(mode = 'light') {
                         letterSpacing: '0.05em',
                         color: palette.text.secondary,
                         backgroundColor: isLight ? 'rgba(237,245,240,0.7)' : 'rgba(21,34,29,0.7)',
+                        textAlign: 'start',
                     },
                     root: {
                         borderColor: isLight ? 'rgba(200,223,211,0.4)' : 'rgba(30,51,42,0.4)',
                         padding: '12px 16px',
+                        textAlign: 'start',
                     },
                 },
             },

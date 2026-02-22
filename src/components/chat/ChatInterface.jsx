@@ -2,9 +2,11 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ConsultationsList from './ConsultationsList'
 import ChatWindow from './ChatWindow'
-import { Menu, X } from 'lucide-react'
+import { Menu, Close as X } from '@mui/icons-material'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function ChatInterface({ consultations, currentUserId, onSendMessage }) {
+  const { t, isRTL } = useLanguage()
   const navigate = useNavigate()
   const [activeConsultationId, setActiveConsultationId] = useState(consultations[0]?.id || null)
   const [showConsultationsList, setShowConsultationsList] = useState(false)
@@ -30,8 +32,8 @@ export default function ChatInterface({ consultations, currentUserId, onSendMess
     <div className="h-full flex flex-col bg-background">
       {/* Mobile Header */}
       {!activeConsultationId || showConsultationsList ? (
-        <div className="lg:hidden flex items-center justify-between p-4 bg-background-paper border-b border-border">
-          <h1 className="text-lg font-bold text-primary italic uppercase tracking-tighter">Conversations</h1>
+        <div className={`lg:hidden flex items-center justify-between p-4 bg-background-paper border-b border-border ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <h1 className="text-lg font-bold text-primary italic uppercase tracking-tighter">{t('chat.conversations', 'Conversations')}</h1>
           <div className="w-10"></div>
         </div>
       ) : null}

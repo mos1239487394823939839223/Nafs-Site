@@ -1,11 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Paperclip, Smile, ArrowLeft, X } from 'lucide-react'
+import { Send, AttachFile as Paperclip, SentimentSatisfied as Smile, ArrowBack as ArrowLeft, Close as X } from '@mui/icons-material'
 import EmojiPicker from 'emoji-picker-react'
 import { useTheme } from '../../contexts/ThemeContext'
+import { useLanguage } from '../../contexts/LanguageContext'
 import MessageBubble from './MessageBubble'
 
 export default function ChatWindow({ conversation, onSendMessage, onBack }) {
   const { theme } = useTheme()
+  const { t, isRTL } = useLanguage()
   const [messageInput, setMessageInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [attachments, setAttachments] = useState([])
@@ -77,8 +79,8 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
           <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <Smile className="w-10 h-10 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold text-text mb-2">No conversation selected</h3>
-          <p className="text-text-light">Select a consultation to start chatting</p>
+          <h3 className="text-lg font-semibold text-text mb-2">{t('chat.noConversation', 'No conversation selected')}</h3>
+          <p className="text-text-light">{t('chat.selectToStart', 'Select a consultation to start chatting')}</p>
         </div>
       </div>
     )
@@ -92,7 +94,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
           {/* Back Button */}
           <button
             onClick={onBack}
-            className="p-2 hover:bg-background-gray rounded-xl transition-colors"
+            className={`p-2 hover:bg-background-gray rounded-xl transition-colors ${isRTL ? 'rotate-180' : ''}`}
           >
             <ArrowLeft className="w-5 h-5 text-text" />
           </button>
@@ -118,10 +120,10 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
           </div>
 
           {/* Info */}
-          <div>
+          <div className={isRTL ? 'text-right' : 'text-left'}>
             <h3 className="font-semibold text-text">{conversation.participant.name}</h3>
             <p className="text-xs text-text-light">
-              {conversation.participant.online ? 'Online' : 'Offline'}
+              {conversation.participant.online ? t('common.online', 'Online') : t('common.offline', 'Offline')}
             </p>
           </div>
         </div>
@@ -211,13 +213,13 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
+              placeholder={t('chat.typeMessage', 'Type your message...')}
               rows="1"
-              className="w-full px-4 py-3 pr-12 border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary resize-none max-h-32 bg-background text-text"
+              className={`w-full py-3 border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary resize-none max-h-32 bg-background text-text ${isRTL ? 'px-4 pl-12' : 'px-4 pr-12'}`}
             />
             <button
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="absolute right-3 bottom-3 text-text-light hover:text-text"
+              className={`absolute bottom-3 text-text-light hover:text-text ${isRTL ? 'left-3' : 'right-3'}`}
             >
               <Smile className="w-5 h-5" />
             </button>
@@ -241,7 +243,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
             disabled={!messageInput.trim() && attachments.length === 0}
             className="p-3 bg-primary text-white rounded-xl hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
           >
-            <Send className="w-5 h-5" />
+            <Send className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
           </button>
         </div>
       </div>

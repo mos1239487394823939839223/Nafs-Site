@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bell, Mail, Smartphone, Check, FileText } from 'lucide-react'
+import { Notifications as Bell, Mail, Smartphone, Check, Description as FileText } from '@mui/icons-material'
 import Button from '../../ui/Button'
 import { motion } from 'framer-motion'
 

@@ -2,18 +2,7 @@ import { useState, useEffect } from 'react'
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
-import {
-  Activity,
-  Heart,
-  Thermometer,
-  TrendingUp,
-  Calendar,
-  Clock,
-  Video,
-  MessageSquare,
-  Bot,
-  Loader2
-} from 'lucide-react'
+import { ShowChart as Activity, Favorite as Heart, Thermometer, TrendingUp, CalendarToday as Calendar, AccessTime as Clock, Video, ChatBubbleOutline as MessageSquare, SmartToy as Bot, Sync as Loader2 } from '@mui/icons-material'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import AIAssistant from '../../components/shared/AIAssistant'
 import BookingModal from '../../components/modals/BookingModal'
@@ -24,7 +13,7 @@ import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function PatientDashboard() {
   const { user } = useAuth()
-  const { t } = useLanguage()
+  const { t, isRTL } = useLanguage()
 
   const BookingStatusMap = {
     0: t('bookingStatus.pending'),
@@ -85,12 +74,12 @@ export default function PatientDashboard() {
       const sessionDate = booking.SessionStartTime ? new Date(booking.SessionStartTime) : null
       return {
         id: booking.Id,
-        doctor: booking.DoctorName ? `Dr. ${booking.DoctorName}` : 'Doctor',
-        specialty: 'Consultation',
-        date: sessionDate?.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) || 'N/A',
-        time: sessionDate?.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) || 'N/A',
-        type: 'Video',
-        status: BookingStatusMap[booking.Status] || 'Pending',
+        doctor: booking.DoctorName ? `${t('common.dr', 'Dr.')} ${booking.DoctorName}` : t('common.doctor', 'Doctor'),
+        specialty: t('patient.consultation', 'Consultation'),
+        date: sessionDate?.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }) || 'N/A',
+        time: sessionDate?.toLocaleTimeString(isRTL ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) || 'N/A',
+        type: t('patient.video', 'Video'),
+        status: BookingStatusMap[booking.Status] || t('bookingStatus.pending', 'Pending'),
       }
     })
 
@@ -101,14 +90,14 @@ export default function PatientDashboard() {
     : null
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="bg-gradient-to-br from-primary to-primary-dark text-white">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-white/80 text-sm">{t('patient.heartRate')}</p>
-              <p className="text-3xl font-bold mt-1">72 BPM</p>
+              <p className="text-3xl font-bold mt-1">72 {t('patient.bpm', 'BPM')}</p>
               <p className="text-white/60 text-xs mt-1">{t('patient.normal')}</p>
             </div>
             <Heart className="w-12 h-12 text-white/30" />
@@ -228,7 +217,7 @@ export default function PatientDashboard() {
                         <Video className="w-4 h-4 text-primary" />
                         <span className="text-sm font-medium text-text">{appointment.doctor}</span>
                       </div>
-                      <div className="text-xs text-text-muted">
+                      <div className={`text-xs text-text-muted ${isRTL ? 'text-right' : 'text-left'}`}>
                         <div className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
                           <span>{appointment.date}</span>
@@ -280,14 +269,14 @@ export default function PatientDashboard() {
                       <p className="text-sm text-text-muted">{appointment.specialty}</p>
                     </div>
                   </div>
-                  <div className="text-right">
+                  <div className={isRTL ? "text-left" : "text-right"}>
                     <div className="flex items-center gap-2 text-text-heading">
                       <Calendar className="w-4 h-4" />
-                      <span className="font-medium">{appointment.date}</span>
+                      <span className="font-medium" dir="ltr">{appointment.date}</span>
                     </div>
                     <div className="flex items-center gap-2 text-text-muted mt-1">
                       <Clock className="w-4 h-4" />
-                      <span className="text-sm">{appointment.time}</span>
+                      <span className="text-sm" dir="ltr">{appointment.time}</span>
                     </div>
                   </div>
                   <Badge variant="primary">{appointment.type}</Badge>

@@ -2,27 +2,8 @@ import { NavLink } from 'react-router-dom'
 import { useAuth, Roles } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import RoleBadge from '../ui/RoleBadge'
-import {
-  Home,
-  Calendar,
-  FileText,
-  MessageSquare,
-  Settings,
-  LogOut,
-  Users,
-  Activity,
-  DollarSign,
-  BarChart3,
-  UserPlus,
-  Pill,
-  TestTube,
-  FolderOpen,
-  Clock,
-  TrendingUp,
-  Headphones,
-  Phone,
-  TicketIcon,
-} from 'lucide-react'
+import { UserAvatar } from '../ui/Avatar'
+import { Home, CalendarToday as Calendar, Description as FileText, ChatBubbleOutline as MessageSquare, Settings, Logout as LogOut, People as Users, ShowChart as Activity, AttachMoney as DollarSign, BarChart as BarChart3, PersonAdd as UserPlus, Medication as Pill, Science as TestTube, FolderOpen, AccessTime as Clock, TrendingUp, Headphones, Phone, ConfirmationNumber as TicketIcon } from '@mui/icons-material'
 
 export default function DynamicSidebar({ isOpen, onClose }) {
   const { role, user, logout } = useAuth()
@@ -45,7 +26,6 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       { name: t('nav.profile'), path: '/dashboard/doctor/settings', icon: Settings },
     ],
     [Roles.ADMIN]: [
-      { name: t('nav.dashboard'), path: '/admin/dashboard', icon: Home },
       { name: t('nav.users'), path: '/admin/users', icon: Users },
       { name: t('nav.bookings'), path: '/admin/bookings', icon: Calendar },
       { name: t('nav.inviteStaff'), path: '/admin/invite-staff', icon: UserPlus },
@@ -81,8 +61,8 @@ export default function DynamicSidebar({ isOpen, onClose }) {
         className={`
           fixed top-0 h-full w-64 bg-background-paper
           transform transition-transform duration-300 ease-in-out z-50
-          ${isRTL 
-            ? `right-0 border-l border-border ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}` 
+          ${isRTL
+            ? `right-0 border-l border-border ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}`
             : `left-0 border-r border-border ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`
           }
         `}
@@ -98,14 +78,14 @@ export default function DynamicSidebar({ isOpen, onClose }) {
           {/* User Info */}
           <div className="p-4 border-b border-border">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                <span className="text-primary font-semibold">
-                  {user?.name?.charAt(0) || 'U'}
-                </span>
-              </div>
+              <UserAvatar
+                name={user?.name || user?.Name}
+                src={user?.image || user?.Image}
+                size="md"
+              />
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-text truncate">
-                  {user?.name || 'User'}
+                  {user?.name || user?.Name || 'User'}
                 </p>
                 <RoleBadge role={role} size="sm" />
               </div>

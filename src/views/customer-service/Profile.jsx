@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import ProfileSettings from '../../components/doctor/settings/ProfileSettings'
 import { userAPI } from '../../lib/api'
-import { Lock } from 'lucide-react'
+import { Lock } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 import { useLanguage } from '../../contexts/LanguageContext'
 

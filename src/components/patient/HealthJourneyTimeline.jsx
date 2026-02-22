@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
-import { Calendar, TestTube, Pill, FileText, CheckCircle, Clock, Loader2 } from 'lucide-react'
+import { CalendarToday as Calendar, Science as TestTube, Medication as Pill, Description as FileText, CheckCircle, AccessTime as Clock, Sync as Loader2 } from '@mui/icons-material'
 import { useAuth } from '../../contexts/AuthContext'
 import { patientAPI } from '../../lib/api'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 const BookingStatusMap = {
   0: 'Pending',
@@ -45,6 +46,7 @@ const eventTypeConfig = {
 
 export default function HealthJourneyTimeline() {
   const { user } = useAuth()
+  const { t, isRTL } = useLanguage()
   const [journeyEvents, setJourneyEvents] = useState([])
   const [loading, setLoading] = useState(true)
 
@@ -68,11 +70,11 @@ export default function HealthJourneyTimeline() {
           id: booking.Id,
           date: booking.SessionStartTime,
           type: 'appointment',
-          title: `Session with Dr. ${booking.DoctorName || 'Unknown'}`,
-          status: BookingStatusMap[booking.Status] || 'Unknown',
-          details: `${booking.DurationMinutes || 30} minute consultation${booking.DoctorSpecialist ? ` - ${booking.DoctorSpecialist}` : ''}`,
-          doctor: `Dr. ${booking.DoctorName || 'Unknown'}`,
-          duration: `${booking.DurationMinutes || 30} min`,
+          title: `${t('patient.sessionWith', 'Session with')} ${t('common.dr', 'Dr.')} ${booking.DoctorName || t('common.unknown')}`,
+          status: booking.Status !== undefined ? booking.Status : null, // keep the numeric or map later
+          details: `${booking.DurationMinutes || 30} ${t('common.minuteConsultation', 'minute consultation')}${booking.DoctorSpecialist ? ` - ${booking.DoctorSpecialist}` : ''}`,
+          doctor: `${t('common.dr', 'Dr.')} ${booking.DoctorName || t('common.unknown')}`,
+          duration: `${booking.DurationMinutes || 30} ${t('common.min', 'min')}`,
         }))
 
         // Sort by date descending
@@ -91,7 +93,7 @@ export default function HealthJourneyTimeline() {
   const formatDate = (dateString) => {
     const date = new Date(dateString)
     const options = { month: 'short', day: 'numeric', year: 'numeric' }
-    return date.toLocaleDateString('en-US', options)
+    return date.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', options)
   }
 
   const getRelativeTime = (dateString) => {
@@ -99,20 +101,30 @@ export default function HealthJourneyTimeline() {
     const now = new Date()
     const diffDays = Math.floor((now - date) / (1000 * 60 * 60 * 24))
 
-    if (diffDays === 0) return 'Today'
-    if (diffDays === 1) return 'Yesterday'
-    if (diffDays < 7) return `${diffDays} days ago`
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`
-    return `${Math.floor(diffDays / 30)} months ago`
+    if (diffDays === 0) return t('common.today', 'Today')
+    if (diffDays === 1) return t('common.yesterday', 'Yesterday')
+    if (diffDays < 7) return `${diffDays} ${t('common.daysAgo', 'days ago')}`
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} ${t('common.weeksAgo', 'weeks ago')}`
+    return `${Math.floor(diffDays / 30)} ${t('common.monthsAgo', 'months ago')}`
+  }
+
+  const getStatusText = (status) => {
+    if (status === 3) return t('bookingStatus.completed')
+    if (status === 2) return t('bookingStatus.inProgress')
+    if (status === 1) return t('bookingStatus.confirmed')
+    if (status === 0) return t('bookingStatus.pending')
+    if (status === 4) return t('bookingStatus.cancelled')
+    if (status === 5) return t('bookingStatus.noShow')
+    return t('common.unknown')
   }
 
   if (loading) {
     return (
       <div className="bg-background-paper rounded-2xl shadow-sm p-6">
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h2 className="text-xl font-bold text-text-heading">Health Journey</h2>
-            <p className="text-sm text-text-muted mt-1">Your medical history timeline</p>
+          <div className={isRTL ? 'text-right' : 'text-left'}>
+            <h2 className="text-xl font-bold text-text-heading">{t('patient.healthJourney', 'Health Journey')}</h2>
+            <p className="text-sm text-text-muted mt-1">{t('patient.healthJourneyDesc', 'Your medical history timeline')}</p>
           </div>
         </div>
         <div className="flex items-center justify-center py-12">
@@ -123,24 +135,24 @@ export default function HealthJourneyTimeline() {
   }
 
   return (
-    <div className="bg-background-paper rounded-2xl shadow-sm p-6">
+    <div className="bg-background-paper rounded-2xl shadow-sm p-6" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="flex items-center justify-between mb-6">
-        <div>
-          <h2 className="text-xl font-bold text-text-heading">Health Journey</h2>
-          <p className="text-sm text-text-muted mt-1">Your medical history timeline</p>
+        <div className={isRTL ? 'text-right' : 'text-left'}>
+          <h2 className="text-xl font-bold text-text-heading">{t('patient.healthJourney', 'Health Journey')}</h2>
+          <p className="text-sm text-text-muted mt-1">{t('patient.healthJourneyDesc', 'Your medical history timeline')}</p>
         </div>
       </div>
 
       {journeyEvents.length === 0 ? (
         <div className="text-center py-12">
           <Calendar className="w-12 h-12 text-text-muted mx-auto mb-3 opacity-30" />
-          <h3 className="text-lg font-semibold text-text-heading mb-1">No events yet</h3>
-          <p className="text-sm text-text-muted">Your health journey will appear here as you attend sessions.</p>
+          <h3 className="text-lg font-semibold text-text-heading mb-1">{t('patient.noEventsYet', 'No events yet')}</h3>
+          <p className="text-sm text-text-muted">{t('patient.noEventsDesc', 'Your health journey will appear here as you attend sessions.')}</p>
         </div>
       ) : (
         <div className="relative">
           {/* Timeline line */}
-          <div className="absolute left-6 top-0 bottom-0 w-0.5 bg-border"></div>
+          <div className={`absolute ${isRTL ? 'right-6' : 'left-6'} top-0 bottom-0 w-0.5 bg-border`}></div>
 
           {/* Timeline events */}
           <div className="space-y-6">
@@ -149,9 +161,9 @@ export default function HealthJourneyTimeline() {
               const Icon = config.icon
 
               return (
-                <div key={event.id} className="relative pl-16 group">
+                <div key={event.id} className={`relative group ${isRTL ? 'pr-16 text-right' : 'pl-16 text-left'}`}>
                   {/* Timeline dot */}
-                  <div className={`absolute left-0 w-12 h-12 ${config.bgColor} rounded-full flex items-center justify-center border-2 ${config.borderColor} bg-background-paper transition-transform group-hover:scale-110`}>
+                  <div className={`absolute ${isRTL ? 'right-0' : 'left-0'} w-12 h-12 ${config.bgColor} rounded-full flex items-center justify-center border-2 ${config.borderColor} bg-background-paper transition-transform group-hover:scale-110`}>
                     <Icon className={`w-6 h-6 ${config.textColor}`} />
                   </div>
 
@@ -160,26 +172,26 @@ export default function HealthJourneyTimeline() {
                     <div className="flex items-start justify-between mb-2">
                       <div className="flex-1">
                         <h3 className="font-semibold text-text">{event.title}</h3>
-                        <div className="flex items-center gap-3 mt-1">
+                        <div className={`flex items-center gap-3 mt-1 ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
                           <span className="text-sm text-text-muted">{formatDate(event.date)}</span>
                           <span className="text-xs text-text-muted">•</span>
                           <span className="text-sm text-text-muted">{getRelativeTime(event.date)}</span>
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {event.status === 'Completed' ? (
+                        {event.status === 3 ? (
                           <span className="flex items-center gap-1 text-xs font-medium text-green-600 dark:text-green-400 bg-green-500/10 px-2 py-1 rounded-full">
                             <CheckCircle className="w-3 h-3" />
-                            {event.status}
+                            {getStatusText(event.status)}
                           </span>
-                        ) : event.status === 'Confirmed' || event.status === 'InProgress' ? (
+                        ) : event.status === 1 || event.status === 2 ? (
                           <span className="flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
                             <Clock className="w-3 h-3" />
-                            {event.status}
+                            {getStatusText(event.status)}
                           </span>
                         ) : (
                           <span className="text-xs font-medium text-text-muted bg-background-subtle px-2 py-1 rounded-full">
-                            {event.status}
+                            {getStatusText(event.status)}
                           </span>
                         )}
                       </div>
@@ -187,10 +199,10 @@ export default function HealthJourneyTimeline() {
 
                     <p className="text-sm text-text-muted mb-2">{event.details}</p>
 
-                    <div className="flex items-center justify-between text-xs text-text-muted">
+                    <div className="flex items-center justify-between text-xs text-text-muted mt-2">
                       <span>{event.doctor}</span>
                       {event.duration && (
-                        <span className="text-accent-dark font-medium">Duration: {event.duration}</span>
+                        <span className="text-accent-dark font-medium">{t('common.duration', 'Duration')}: {event.duration}</span>
                       )}
                     </div>
                   </div>

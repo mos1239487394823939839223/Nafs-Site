@@ -208,20 +208,11 @@ function AppRoutes() {
           path="/admin"
           element={
             <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
-              <Navigate to="/admin/dashboard" replace />
+              <Navigate to="/admin/users" replace />
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/admin/dashboard"
-          element={
-            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
-              <Layout>
-                <AdminDashboard />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+
         <Route
           path="/admin/users"
           element={
@@ -299,13 +290,13 @@ function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <ThemeProvider>
-          <LanguageProvider>
+        <LanguageProvider>
+          <ThemeProvider>
             <ToastProvider>
               <AppRoutes />
             </ToastProvider>
-          </LanguageProvider>
-        </ThemeProvider>
+          </ThemeProvider>
+        </LanguageProvider>
       </AuthProvider>
     </BrowserRouter>
   )

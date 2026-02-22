@@ -1,4 +1,4 @@
-import { Check, CheckCheck } from 'lucide-react'
+import { Check, DoneAll as CheckCheck } from '@mui/icons-material'
 
 export default function MessageBubble({ message, isSent }) {
   const formatTime = (timestamp) => {

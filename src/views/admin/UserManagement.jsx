@@ -17,23 +17,7 @@ import { UserAvatar } from '../../components/ui/Avatar'
 import Spinner from '../../components/ui/Spinner'
 import Pagination from '../../components/ui/Pagination'
 import { useToast } from '../../components/ui/Toast'
-import {
-    Users,
-    UserPlus,
-    Search,
-    Mail,
-    Stethoscope,
-    User,
-    RefreshCw,
-    Phone,
-    Lock,
-    FileText,
-    ToggleLeft,
-    ToggleRight,
-    ShieldCheck,
-    Activity,
-    X,
-} from 'lucide-react'
+import { People as Users, PersonAdd as UserPlus, Search, Mail, MedicalServices as Stethoscope, Person as User, Refresh as RefreshCw, Phone, Lock, Description as FileText, ToggleOff as ToggleLeft, ToggleOn as ToggleRight, VerifiedUser as ShieldCheck, ShowChart as Activity, Close as X, PhotoCamera as Camera } from '@mui/icons-material'
 import { adminAPI, userAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 
@@ -63,7 +47,9 @@ export default function UserManagement() {
         password: '',
         phoneNumber: '',
         description: '',
-        specialist: ''
+        specialist: '',
+        image: null,
+        imagePreview: null
     })
 
     const fetchDoctors = useCallback(async () => {
@@ -138,9 +124,26 @@ export default function UserManagement() {
             })
 
             if (response?.IsSuccess !== false) {
+                const newDoctorId = response.Data || response.data?.Data
+
+                // If image is provided, upload it using the new endpoint /user/UpdateImage
+                if (formData.image && newDoctorId) {
+                    try {
+                        const reader = new FileReader()
+                        reader.onload = async () => {
+                            const base64 = reader.result.split(',')[1]
+                            await userAPI.updateImage(newDoctorId, base64)
+                        }
+                        reader.readAsDataURL(formData.image)
+                    } catch (err) {
+                        console.error('Failed to upload doctor image:', err)
+                        toast.error(t('errors.imageUploadFailed', 'Doctor created, but image upload failed'))
+                    }
+                }
+
                 toast.success(t('success.doctorAdded'))
                 setModalOpen(false)
-                setFormData({ name: '', email: '', password: '', phoneNumber: '', description: '', specialist: '' })
+                setFormData({ name: '', email: '', password: '', phoneNumber: '', description: '', specialist: '', image: null, imagePreview: null })
                 fetchDoctors()
             } else {
                 toast.error(response?.Message || t('errors.somethingWentWrong'))
@@ -274,7 +277,7 @@ export default function UserManagement() {
                                                 <TableRow key={doctor.Id || doctor.id || doctor.Email}>
                                                     <TableCell>
                                                         <div className="flex items-center gap-3">
-                                                            <UserAvatar name={doctor.Name || doctor.name} size="sm" />
+                                                            <UserAvatar name={doctor.Name || doctor.name} src={doctor.Image || doctor.image} size="sm" />
                                                             <span className="font-semibold text-text-heading">{doctor.Name || doctor.name}</span>
                                                         </div>
                                                     </TableCell>
@@ -369,6 +372,7 @@ export default function UserManagement() {
                                                         <div className="flex items-center gap-3">
                                                             <UserAvatar
                                                                 name={patient.Name || patient.name}
+                                                                src={patient.Image || patient.image}
                                                                 size="sm"
                                                                 className="ring-secondary/30"
                                                             />
@@ -434,9 +438,41 @@ export default function UserManagement() {
                             </DialogHeader>
 
                             <div className="p-6 space-y-5">
+                                {/* Doctor Image Upload */}
+                                <div className="flex flex-col items-center justify-center p-4 bg-background-subtle/30 rounded-2xl border border-dashed border-border mb-2">
+                                    <div className="relative group">
+                                        <div className="w-24 h-24 rounded-full border-2 border-primary/20 flex items-center justify-center overflow-hidden bg-background-paper">
+                                            {formData.imagePreview ? (
+                                                <img src={formData.imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                            ) : (
+                                                <User className="w-10 h-10 text-text-light/30" />
+                                            )}
+                                        </div>
+                                        <label className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full cursor-pointer hover:bg-primary-dark transition-all shadow-md">
+                                            <Camera className="w-4 h-4" />
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    const file = e.target.files[0]
+                                                    if (file) {
+                                                        setFormData(prev => ({
+                                                            ...prev,
+                                                            image: file,
+                                                            imagePreview: URL.createObjectURL(file)
+                                                        }))
+                                                    }
+                                                }}
+                                            />
+                                        </label>
+                                    </div>
+                                    <p className="text-xs text-text-muted mt-2">{t('settings.profilePhoto')}</p>
+                                </div>
+
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <Input
-                                        label={`${t('settings.fullName')} *`}
+                                        label={`${t('common.fullName')} *`}
                                         name="name"
                                         value={formData.name}
                                         onChange={handleInputChange}
@@ -445,7 +481,7 @@ export default function UserManagement() {
                                         icon={User}
                                     />
                                     <Input
-                                        label={`${t('settings.emailAddress')} *`}
+                                        label={`${t('common.emailAddress')} *`}
                                         type="email"
                                         name="email"
                                         value={formData.email}
@@ -465,7 +501,7 @@ export default function UserManagement() {
                                         icon={Lock}
                                     />
                                     <Input
-                                        label={t('settings.phoneNumber')}
+                                        label={t('common.phoneNumber')}
                                         name="phoneNumber"
                                         value={formData.phoneNumber}
                                         onChange={handleInputChange}

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Users, Filter, Loader2, ChevronLeft, ChevronRight, Clock } from 'lucide-react'
+import { People as Users, FilterList as Filter, Sync as Loader2, ChevronLeft, ChevronRight, AccessTime as Clock } from '@mui/icons-material'
 import { useToast } from '../../components/ui/Toast'
 
 import QueueItem from '../../components/doctor/queue/QueueItem'

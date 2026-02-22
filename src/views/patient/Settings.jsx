@@ -4,14 +4,14 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import ProfileSettings from '../../components/patient/settings/ProfileSettings'
 import { userAPI } from '../../lib/api'
-import { Eye, EyeOff, Lock } from 'lucide-react'
+import { Visibility as Eye, VisibilityOff as EyeOff, Lock } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function Settings() {
   const { user, updateProfile } = useAuth()
   const toast = useToast()
-  const { t } = useLanguage()
+  const { t, isRTL } = useLanguage()
 
   // Change password state
   const [showPasswordSection, setShowPasswordSection] = useState(false)
@@ -92,7 +92,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="min-h-screen bg-background p-6 md:p-10">
+    <div className="min-h-screen bg-background p-6 md:p-10" dir={isRTL ? 'rtl' : 'ltr'}>
       <div className="max-w-4xl mx-auto">
 
         {/* Header */}
@@ -138,7 +138,7 @@ export default function Settings() {
                 size="sm"
                 onClick={() => setShowPasswordSection(!showPasswordSection)}
               >
-                {showPasswordSection ? t('common.cancel') : t('common.change')}
+                {showPasswordSection ? t('common.cancel', 'Cancel') : t('common.change', 'Change')}
               </Button>
             </div>
 
@@ -164,9 +164,9 @@ export default function Settings() {
                     </div>
                   </div>
                 ))}
-                <div className="flex justify-end">
+                <div className="flex justify-end pt-4">
                   <Button onClick={handleChangePassword} disabled={passwordLoading}>
-                    {passwordLoading ? t('common.updating') : t('settings.updatePassword')}
+                    {passwordLoading ? t('common.updating', 'Updating...') : t('settings.updatePassword', 'Update Password')}
                   </Button>
                 </div>
               </motion.div>

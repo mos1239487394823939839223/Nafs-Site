@@ -9,7 +9,7 @@ import {
   validatePassword,
   getPasswordStrength,
 } from "../../lib/validation";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Visibility as Eye, VisibilityOff as EyeOff, Mail, Lock } from '@mui/icons-material';
 import { motion } from "framer-motion";
 import { authAPI } from "../../lib/api";
 import { useLanguage } from "../../contexts/LanguageContext";

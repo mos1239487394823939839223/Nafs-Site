@@ -14,20 +14,7 @@ import Table, {
   TableHeader,
   TableRow,
 } from "../../components/ui/Table";
-import {
-  Search,
-  Stethoscope,
-  Calendar,
-  Clock,
-  ChevronRight,
-  User,
-  ArrowLeft,
-  CheckCircle,
-  XCircle,
-  ChevronLeft,
-  Loader2,
-  Eye
-} from "lucide-react";
+import { Search, MedicalServices as Stethoscope, CalendarToday as Calendar, AccessTime as Clock, ChevronRight, Person as User, ArrowBack as ArrowLeft, CheckCircle, Cancel as XCircle, ChevronLeft, Sync as Loader2, Visibility as Eye, ViewList, GridView, Star } from '@mui/icons-material';
 import CalendarGrid from "../../components/doctor/schedule/CalendarGrid";
 import { useAuth } from "../../contexts/AuthContext";
 import { patientAPI } from "../../lib/api";
@@ -54,6 +41,7 @@ export default function ReserveAppointment() {
   const [bookedSlot, setBookedSlot] = useState(null);
   const [doctorSearch, setDoctorSearch] = useState("");
   const [mainTab, setMainTab] = useState("reserve"); // reserve, status
+  const [viewMode, setViewMode] = useState("list"); // list or grid
   const [slots, setSlots] = useState({});
   const [currentViewDate, setCurrentViewDate] = useState(new Date());
 
@@ -434,85 +422,167 @@ export default function ReserveAppointment() {
                       {t('patient.selectDoctor')}
                     </h2>
                   </div>
+                  <div className="flex items-center gap-2 bg-background-subtle p-1 rounded-lg border border-border mt-2 md:mt-0">
+                    <button
+                      onClick={() => setViewMode('list')}
+                      className={`p-2 rounded-md flex items-center justify-center transition-colors ${viewMode === 'list' ? 'bg-background-paper shadow-sm text-primary' : 'text-text-muted hover:text-text-heading'}`}
+                      title="List View"
+                    >
+                      <ViewList className="w-5 h-5" />
+                    </button>
+                    <button
+                      onClick={() => setViewMode('grid')}
+                      className={`p-2 rounded-md flex items-center justify-center transition-colors ${viewMode === 'grid' ? 'bg-background-paper shadow-sm text-primary' : 'text-text-muted hover:text-text-heading'}`}
+                      title="Grid View"
+                    >
+                      <GridView className="w-5 h-5" />
+                    </button>
+                  </div>
                 </div>
 
-                {/* Doctors Table */}
-                <div className="bg-background-paper rounded-xl border border-border overflow-hidden shadow-sm">
+                {/* Doctors Views */}
+                <div>
                   {loading ? (
                     <div className="p-12 flex justify-center items-center">
                       <Loader2 className="w-8 h-8 animate-spin text-primary" />
                     </div>
                   ) : (
                     <>
-                      <Table>
-                        <TableHeader>
-                          <TableRow hover={false}>
-                            <TableHead className="w-[30%]">{t('common.doctor')}</TableHead>
-                            <TableHead className="w-[20%]">{t('common.specialty')}</TableHead>
-                            <TableHead className="w-[35%]">{t('patient.experienceBio')}</TableHead>
-                            <TableHead className={`w-[15%] ${isRTL ? 'text-left' : 'text-right'}`}>{t('common.action')}</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
+                      {viewMode === 'list' ? (
+                        <div className="bg-background-paper rounded-xl border border-border overflow-hidden shadow-sm">
+                          <Table>
+                            <TableHeader>
+                              <TableRow hover={false}>
+                                <TableHead className="w-[30%]">{t('common.doctor')}</TableHead>
+                                <TableHead className="w-[20%]">{t('common.specialty')}</TableHead>
+                                <TableHead className="w-[35%]">{t('patient.experienceBio')}</TableHead>
+                                <TableHead className={`w-[15%] ${isRTL ? 'text-left' : 'text-right'}`}>{t('common.action')}</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {doctors.length > 0 ? (
+                                doctors.map((doctor) => (
+                                  <TableRow key={doctor.Id}>
+                                    <TableCell className="py-4">
+                                      <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm">
+                                          {doctor.Image ? (
+                                            <img src={doctor.Image} alt={doctor.Name} className="w-full h-full rounded-full object-cover" />
+                                          ) : (
+                                            <User className="w-6 h-6 text-primary" />
+                                          )}
+                                        </div>
+                                        <div>
+                                          <p className="font-bold text-text-heading text-base">{doctor.Name}</p>
+                                          <p className="text-xs text-text-muted">{t('common.doctor')}</p>
+                                        </div>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell className="py-4">
+                                      {doctor.Specialist && doctor.Specialist.length > 0 ? (
+                                        <div className="flex flex-wrap gap-1.5">
+                                          {doctor.Specialist.map((spec, idx) => (
+                                            <Badge key={idx} variant="secondary" className="text-xs px-2.5 py-1">
+                                              {spec}
+                                            </Badge>
+                                          ))}
+                                        </div>
+                                      ) : (
+                                        <Badge variant="outline" className="text-xs">{t('common.general')}</Badge>
+                                      )}
+                                    </TableCell>
+                                    <TableCell className="py-4">
+                                      <p className="max-w-xs line-clamp-2 text-text-muted text-sm leading-relaxed" title={doctor.Description}>
+                                        {doctor.Description || t('common.noDescription')}
+                                      </p>
+                                    </TableCell>
+                                    <TableCell className={`py-4 ${isRTL ? 'text-left' : 'text-right'}`}>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() => handleSelectDoctor(doctor.Id)}
+                                        className="gap-2 text-primary border-primary/30 hover:bg-primary hover:text-white transition-all"
+                                      >
+                                        <Eye className="w-4 h-4" />
+                                        <span className="hidden sm:inline">{t('common.view')}</span>
+                                      </Button>
+                                    </TableCell>
+                                  </TableRow>
+                                ))
+                              ) : (
+                                <TableRow>
+                                  <TableCell colSpan={4} className="text-center py-12 text-text-muted">
+                                    <User className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                                    <p className="font-medium">{t('patient.noDoctorsFound')}</p>
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                           {doctors.length > 0 ? (
                             doctors.map((doctor) => (
-                              <TableRow key={doctor.Id}>
-                                <TableCell className="py-4">
-                                  <div className="flex items-center gap-3">
-                                    <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm">
+                              <Card key={doctor.Id} className="hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1 cursor-pointer bg-[#15201b] border-[#1f2d26] rounded-2xl shadow-sm" onClick={() => handleSelectDoctor(doctor.Id)}>
+                                <CardContent className="p-5 flex flex-col h-full">
+                                  {/* Header: Image & Name */}
+                                  <div className="flex items-start gap-4 mb-3">
+                                    <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 bg-[#0f1714] flex items-center justify-center border border-[#1f2d26] shadow-inner ml-0 rtl:ml-3 mr-3 rtl:mr-0">
                                       {doctor.Image ? (
-                                        <img src={doctor.Image} alt={doctor.Name} className="w-full h-full rounded-full object-cover" />
+                                        <img src={doctor.Image} alt={doctor.Name} className="w-full h-full object-cover" />
                                       ) : (
-                                        <User className="w-6 h-6 text-primary" />
+                                        <User className="w-8 h-8 text-primary" />
                                       )}
                                     </div>
-                                    <div>
-                                      <p className="font-bold text-text-heading text-base">{doctor.Name}</p>
-                                      <p className="text-xs text-text-muted">{t('common.doctor')}</p>
+                                    <div className="flex-1 min-w-0 flex flex-col justify-center text-left rtl:text-right mt-1">
+                                      <h3 className="font-bold text-gray-100 text-base sm:text-lg truncate leading-tight mb-1">{doctor.Name}</h3>
+                                      <p className="text-xs sm:text-sm text-gray-400 truncate mb-1">{t('common.doctor')}</p>
+
+                                      {/* Rating */}
+                                      <div className="flex items-center gap-1.5 justify-start rtl:flex-row-reverse mb-1">
+                                        <div className="flex text-[#4ade80] rtl:flex-row-reverse">
+                                          <Star className="w-[14px] h-[14px]" />
+                                          <Star className="w-[14px] h-[14px]" />
+                                          <Star className="w-[14px] h-[14px]" />
+                                          <Star className="w-[14px] h-[14px]" />
+                                          <Star className="w-[14px] h-[14px]" />
+                                        </div>
+                                        <span className="text-[13px] font-semibold text-gray-300 mt-[1px]">4.8</span>
+                                      </div>
                                     </div>
                                   </div>
-                                </TableCell>
-                                <TableCell className="py-4">
-                                  {doctor.Specialist && doctor.Specialist.length > 0 ? (
-                                    <div className="flex flex-wrap gap-1.5">
-                                      {doctor.Specialist.map((spec, idx) => (
-                                        <Badge key={idx} variant="secondary" className="text-xs px-2.5 py-1">
-                                          {spec}
-                                        </Badge>
-                                      ))}
-                                    </div>
-                                  ) : (
-                                    <Badge variant="outline" className="text-xs">{t('common.general')}</Badge>
-                                  )}
-                                </TableCell>
-                                <TableCell className="py-4">
-                                  <p className="max-w-xs line-clamp-2 text-text-muted text-sm leading-relaxed" title={doctor.Description}>
+
+                                  {/* Description */}
+                                  <p className="text-xs sm:text-[13px] text-gray-300 leading-relaxed line-clamp-3 mb-5 mt-2 flex-grow text-left rtl:text-right" title={doctor.Description}>
                                     {doctor.Description || t('common.noDescription')}
                                   </p>
-                                </TableCell>
-                                <TableCell className={`py-4 ${isRTL ? 'text-left' : 'text-right'}`}>
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    onClick={() => handleSelectDoctor(doctor.Id)}
-                                    className="gap-2 text-primary border-primary/30 hover:bg-primary hover:text-white transition-all"
-                                  >
-                                    <Eye className="w-4 h-4" />
-                                    <span className="hidden sm:inline">{t('common.view')}</span>
-                                  </Button>
-                                </TableCell>
-                              </TableRow>
+
+                                  {/* Badges footer */}
+                                  <div className="flex flex-wrap gap-2 mt-auto justify-end rtl:justify-start">
+                                    {doctor.Specialist && doctor.Specialist.length > 0 ? (
+                                      doctor.Specialist.map((spec, idx) => (
+                                        <span key={idx} className="text-[10px] sm:text-xs px-2.5 py-1 font-medium rounded-md bg-[#0a0f0d] text-gray-400 border border-[#1f2d26]">
+                                          {spec}
+                                        </span>
+                                      ))
+                                    ) : (
+                                      <span className="text-[10px] sm:text-xs px-2.5 py-1 font-medium rounded-md bg-[#0a0f0d] text-gray-400 border border-[#1f2d26]">
+                                        {t('common.general')}
+                                      </span>
+                                    )}
+                                  </div>
+                                </CardContent>
+                              </Card>
                             ))
                           ) : (
-                            <TableRow>
-                              <TableCell colSpan={4} className="text-center py-12 text-text-muted">
-                                <User className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                                <p className="font-medium">{t('patient.noDoctorsFound')}</p>
-                              </TableCell>
-                            </TableRow>
+                            <div className="col-span-full py-12 text-center text-text-muted bg-background-paper rounded-xl border border-border shadow-sm">
+                              <User className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                              <p className="font-medium">{t('patient.noDoctorsFound')}</p>
+                            </div>
                           )}
-                        </TableBody>
-                      </Table>
+                        </div>
+                      )}
 
                       {/* Pagination Controls */}
                       {pagination.totalPages > 1 && (

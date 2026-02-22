@@ -15,14 +15,7 @@ import {
   formatPhone,
   validateEmail,
 } from "../../../lib/validation";
-import {
-  ArrowLeft,
-  ArrowRight,
-  CheckCircle,
-  User,
-  Heart,
-  Shield,
-} from "lucide-react";
+import { ArrowBack as ArrowLeft, ArrowForward as ArrowRight, CheckCircle, Person as User, Favorite as Heart, Security as Shield } from '@mui/icons-material';
 
 import { api, authAPI } from "../../../lib/api";
 import { useLanguage } from "../../../contexts/LanguageContext";

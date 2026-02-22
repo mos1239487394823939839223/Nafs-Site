@@ -2,16 +2,35 @@ import { useState } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useLanguage } from '../../contexts/LanguageContext'
-import { Bell, Search, User, Menu, Moon, Sun, Globe } from 'lucide-react'
+import { Menu as MuiMenu, MenuItem, ListItemIcon, ListItemText } from '@mui/material'
+import { Notifications as Bell, Search, Person as User, Menu as MenuIcon, DarkMode as Moon, LightMode as Sun, SettingsSystemDaydream as SystemIcon, Language as Globe, Check } from '@mui/icons-material'
 import Badge from '../ui/Badge'
 import RoleBadge from '../ui/RoleBadge'
 
 export default function Header({ onMenuClick }) {
   const { role, user } = useAuth()
-  const { theme, toggleTheme } = useTheme()
-  const { language, toggleLanguage, t, isRTL } = useLanguage()
+  const { theme, setTheme } = useTheme()
+  const { language, setLanguage, t, isRTL } = useLanguage()
   const [showNotifications, setShowNotifications] = useState(false)
   const [activeNotifTab, setActiveNotifTab] = useState('patient')
+
+  // Menu states
+  const [anchorElLang, setAnchorElLang] = useState(null)
+  const [anchorElTheme, setAnchorElTheme] = useState(null)
+
+  const handleLangClick = (event) => setAnchorElLang(event.currentTarget)
+  const handleLangClose = () => setAnchorElLang(null)
+  const handleLangChange = (lang) => {
+    setLanguage(lang)
+    handleLangClose()
+  }
+
+  const handleThemeClick = (event) => setAnchorElTheme(event.currentTarget)
+  const handleThemeClose = () => setAnchorElTheme(null)
+  const handleThemeChange = (newTheme) => {
+    setTheme(newTheme)
+    handleThemeClose()
+  }
 
   // Notifications placeholder (will be replaced with real API)
   const notifications = []
@@ -19,7 +38,7 @@ export default function Header({ onMenuClick }) {
   const roleLabels = {
     patient: t('nav.patientPortal'),
     doctor: t('nav.doctorWorkspace'),
-    admin: t('nav.adminDashboard'),
+    admin: t('nav.users'),
     staff: t('nav.customerService'),
   }
 
@@ -38,7 +57,7 @@ export default function Header({ onMenuClick }) {
             onClick={onMenuClick}
             className={`lg:hidden p-2 hover:bg-background-subtle rounded-xl transition-colors ${isRTL ? '-mr-2' : '-ml-2'}`}
           >
-            <Menu className="w-6 h-6 text-text" />
+            <MenuIcon className="w-6 h-6 text-text" />
           </button>
           <div className="flex items-center gap-3">
             <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-text truncate max-w-[120px] sm:max-w-none">
@@ -52,110 +71,70 @@ export default function Header({ onMenuClick }) {
 
         {/* Actions */}
         <div className="flex items-center gap-2 md:gap-4">
-          {/* Language Toggle */}
+          {/* Language Dropdown */}
           <button
-            onClick={toggleLanguage}
+            onClick={handleLangClick}
             className="p-2 hover:bg-background-subtle rounded-xl transition-colors text-text flex items-center gap-1"
-            title={language === 'en' ? 'التبديل إلى العربية' : 'Switch to English'}
+            title={t('common.language')}
           >
             <Globe className="w-5 h-5 md:w-6 md:h-6" />
-            <span className="text-xs font-bold hidden sm:inline">{language === 'en' ? 'AR' : 'EN'}</span>
+            <span className="text-xs font-bold hidden sm:inline">{language === 'en' ? 'EN' : 'AR'}</span>
           </button>
 
-          {/* Theme Toggle */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 hover:bg-background-subtle rounded-xl transition-colors text-text"
-            title={theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+          <MuiMenu
+            anchorEl={anchorElLang}
+            open={Boolean(anchorElLang)}
+            onClose={handleLangClose}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            PaperProps={{
+              sx: { mt: 1, minWidth: 150, borderRadius: '12px' }
+            }}
           >
-            {theme === 'dark' ? <Sun className="w-5 h-5 md:w-6 md:h-6" /> : <Moon className="w-5 h-5 md:w-6 md:h-6" />}
+            <MenuItem onClick={() => handleLangChange('en')} selected={language === 'en'}>
+              <ListItemIcon>
+                {language === 'en' && <Check fontSize="small" />}
+              </ListItemIcon>
+              <ListItemText>English</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={() => handleLangChange('ar')} selected={language === 'ar'}>
+              <ListItemIcon>
+                {language === 'ar' && <Check fontSize="small" />}
+              </ListItemIcon>
+              <ListItemText>العربية</ListItemText>
+            </MenuItem>
+          </MuiMenu>
+
+          {/* Theme Dropdown */}
+          <button
+            onClick={handleThemeClick}
+            className="p-2 hover:bg-background-subtle rounded-xl transition-colors text-text"
+            title={t('common.theme')}
+          >
+            {theme === 'dark' ? <Moon className="w-5 h-5 md:w-6 md:h-6" /> : <Sun className="w-5 h-5 md:w-6 md:h-6" />}
           </button>
 
-          {/* Search */}
-          <div className="relative hidden md:block">
-            <Search className={`absolute top-1/2 -translate-y-1/2 w-5 h-5 text-text-light ${isRTL ? 'right-3' : 'left-3'}`} />
-            <input
-              type="text"
-              placeholder={t('common.search') + '...'}
-              className={`py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary w-64 transition-all bg-background text-text ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
-            />
-          </div>
-
-          {/* Notifications */}
-          <div className="relative">
-            <button
-              onClick={() => setShowNotifications(!showNotifications)}
-              className="relative p-2 hover:bg-background-subtle rounded-xl transition-colors"
-            >
-              <Bell className="w-5 h-5 md:w-6 md:h-6 text-text" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
-
-            {/* Notification Dropdown */}
-            {showNotifications && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setShowNotifications(false)}
-                />
-
-                <div className={`absolute mt-2 w-[calc(100vw-2rem)] sm:w-80 bg-background-paper rounded-2xl shadow-xl border border-border z-50 overflow-hidden ${isRTL ? 'left-0' : 'right-0'}`}>
-                  <div className="p-4 border-b border-border flex items-center justify-between">
-                    <h3 className="font-bold text-text-heading font-black italic uppercase tracking-tighter">{t('common.notifications')}</h3>
-                    <Badge variant="outline">{notifications.length}</Badge>
-                  </div>
-
-                  {role === 'staff' && (
-                    <div className="flex bg-background border-b border-border">
-                      {notifTabs.map(tab => (
-                        <button
-                          key={tab.id}
-                          onClick={() => setActiveNotifTab(tab.id)}
-                          className={`flex-1 py-3 text-[10px] font-black uppercase tracking-widest italic transition-all
-                                    ${activeNotifTab === tab.id ? 'bg-background-paper text-primary' : 'text-text-muted hover:bg-background-paper/50'}`}
-                        >
-                          {tab.label}
-                        </button>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="max-h-96 overflow-y-auto">
-                    {notifications.length > 0 ? (
-                      notifications.map((notif) => (
-                        <div key={notif.id} className="p-4 border-b border-border hover:bg-background-subtle transition-colors cursor-pointer group">
-                          <div className="flex items-start gap-3">
-                            <div className="flex-1">
-                              <p className="text-sm text-text-heading leading-tight group-hover:text-primary transition-colors">{notif.message}</p>
-                              <p className="text-[10px] font-bold italic text-text-muted mt-1 uppercase">{notif.time} ago</p>
-                            </div>
-                            <Badge variant="primary" className="text-[9px] px-1 overflow-hidden">{notif.type}</Badge>
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="p-8 text-center text-text-light opacity-50">
-                        {t('common.noAlerts')}
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3 bg-background border-t border-border text-center">
-                    <button className="text-[10px] font-black uppercase italic text-primary hover:underline">{t('common.markAllRead')}</button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
+          <MuiMenu
+            anchorEl={anchorElTheme}
+            open={Boolean(anchorElTheme)}
+            onClose={handleThemeClose}
+            transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+            anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+            PaperProps={{
+              sx: { mt: 1, minWidth: 160, borderRadius: '12px' }
+            }}
+          >
+            <MenuItem onClick={() => handleThemeChange('light')} selected={theme === 'light'}>
+              <ListItemIcon><Sun fontSize="small" /></ListItemIcon>
+              <ListItemText>{t('common.lightMode') || 'Light'}</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={() => handleThemeChange('dark')} selected={theme === 'dark'}>
+              <ListItemIcon><Moon fontSize="small" /></ListItemIcon>
+              <ListItemText>{t('common.darkMode') || 'Dark'}</ListItemText>
+            </MenuItem>
+          </MuiMenu>
 
 
-          {/* User Profile */}
-          <button className="flex items-center gap-3 p-2 hover:bg-background-subtle rounded-xl transition-colors">
-            <div className="w-8 h-8 md:w-10 md:h-10 bg-primary rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-sm md:text-base">
-                {user?.name?.charAt(0) || 'U'}
-              </span>
-            </div>
-          </button>
         </div>
       </div>
     </header>

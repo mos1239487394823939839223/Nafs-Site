@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from '@mui/icons-material'
 
 export default function CalendarGrid({ selectedDate, onDateChange, slots, onSlotClick, mode = 'doctor', selectedSlot = null }) {
   const hours = Array.from({ length: 9 }, (_, i) => i + 9) // 9 AM to 5 PM

@@ -3,19 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
-import {
-  MessageSquare,
-  Users,
-  Stethoscope,
-  Calendar,
-  Clock,
-  Search,
-  Filter,
-  ChevronRight,
-  User,
-  ShieldAlert,
-  Loader2
-} from 'lucide-react'
+import { ChatBubbleOutline as MessageSquare, People as Users, MedicalServices as Stethoscope, CalendarToday as Calendar, AccessTime as Clock, Search, FilterList as Filter, ChevronRight, Person as User, Warning as ShieldAlert, Sync as Loader2 } from '@mui/icons-material'
 import ActiveTickets from '../../components/staff/ActiveTickets'
 import { chatAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'

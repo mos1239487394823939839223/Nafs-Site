@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Shield, Key } from 'lucide-react'
+import { Security as Shield, VpnKey as Key } from '@mui/icons-material'
 import Button from '../../ui/Button'
 import Input from '../../ui/Input'
 import { motion, AnimatePresence } from 'framer-motion'

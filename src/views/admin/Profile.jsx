@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import { userAPI } from '../../lib/api'
-import { Camera, User, Mail, Phone, Lock, Loader2 } from 'lucide-react'
+import { PhotoCamera as Camera, Person as User, Mail, Phone, Lock, Sync as Loader2 } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -161,18 +161,18 @@ export default function AdminProfile() {
                         {/* Personal Info */}
                         <div className="grid md:grid-cols-2 gap-x-6 gap-y-6">
                             <div className="md:col-span-2 pb-2 border-b border-border-light mb-2">
-                                <h3 className="font-semibold text-text">{t('settings.personalInfo')}</h3>
+                                <h3 className="font-semibold text-text">{t('settings.personalInformation')}</h3>
                             </div>
 
                             <Input
-                                label={t('settings.fullName')}
+                                label={t('common.fullName')}
                                 value={formData.name}
                                 onChange={(e) => handleChange('name', e.target.value)}
                                 icon={User}
                                 className="bg-background-gray/20"
                             />
                             <Input
-                                label={t('settings.emailAddress')}
+                                label={t('common.emailAddress')}
                                 value={formData.email}
                                 onChange={(e) => handleChange('email', e.target.value)}
                                 icon={Mail}
@@ -180,7 +180,7 @@ export default function AdminProfile() {
                                 disabled
                             />
                             <Input
-                                label={t('settings.phoneNumber')}
+                                label={t('common.phoneNumber')}
                                 value={formData.phone}
                                 onChange={(e) => handleChange('phone', e.target.value)}
                                 icon={Phone}

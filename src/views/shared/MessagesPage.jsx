@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useAuth, Roles } from '../../contexts/AuthContext'
 import { chatAPI } from '../../lib/api'
 import ChatWindow from '../../components/chat/ChatWindow'
-import { Search, MessageSquare, Loader2, RefreshCw, Stethoscope, User, Headphones } from 'lucide-react'
+import { Search, ChatBubbleOutline as MessageSquare, Sync as Loader2, Refresh as RefreshCw, MedicalServices as Stethoscope, Person as User, Headphones } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 import { useLanguage } from '../../contexts/LanguageContext'
 

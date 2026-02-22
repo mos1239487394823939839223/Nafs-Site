@@ -1,7 +1,9 @@
 import Chip from '@mui/material/Chip'
 import { Roles } from '../../contexts/AuthContext'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function RoleBadge({ role, size = 'md', sx }) {
+  const { t } = useLanguage()
   const sizeMap = {
     sm: 'small',
     md: 'medium',
@@ -9,10 +11,10 @@ export default function RoleBadge({ role, size = 'md', sx }) {
   }
 
   const roleConfig = {
-    [Roles.PATIENT]: { label: 'Patient', color: 'primary' },
-    [Roles.DOCTOR]: { label: 'Doctor', color: 'secondary' },
-    [Roles.ADMIN]: { label: 'Admin', color: 'warning' },
-    [Roles.STAFF]: { label: 'Support Staff', color: 'info' },
+    [Roles.PATIENT]: { label: t('auth.patient'), color: 'primary' },
+    [Roles.DOCTOR]: { label: t('auth.doctor'), color: 'secondary' },
+    [Roles.ADMIN]: { label: t('auth.admin'), color: 'warning' },
+    [Roles.STAFF]: { label: t('auth.staff'), color: 'info' },
   }
 
   const config = roleConfig[role] || { label: role, color: 'default' }
