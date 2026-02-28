@@ -94,7 +94,7 @@ export default {
     rememberMe: 'Remember me',
     noAccount: "Don't have an account?",
     hasAccount: 'Already have an account?',
-    signInTitle: 'Welcome Back',
+    signInTitle: 'Welcome Back To Out Site',
     signInSubtitle: 'Sign in to continue to your account',
     createAccount: 'Create Account',
     registerAsPatient: 'Register as Patient',
