@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Bell, Mail, Smartphone, Check, FileText } from 'lucide-react'
+import { Notifications as Bell, Mail, Smartphone, Check, Description as FileText } from '@mui/icons-material'
 import Button from '../../ui/Button'
 import { motion } from 'framer-motion'
 
@@ -29,27 +29,27 @@ export default function NotificationSettings({ onSave }) {
 
   return (
     <div className="space-y-8">
-      
+
       {/* Email Notifications */}
-      <NotificationSection 
-        title="Email Notifications" 
+      <NotificationSection
+        title="Email Notifications"
         icon={Mail}
-        className="border-b border-border-light pb-8"
+        className="border-b border-border pb-8"
       >
-        <ToggleRow 
-          label="Appointment Confirmations" 
+        <ToggleRow
+          label="Appointment Confirmations"
           desc="Receive emails when your appointments are confirmed or rescheduled."
           checked={settings.email.appointments}
           onChange={() => toggle('email', 'appointments')}
         />
-        <ToggleRow 
-          label="Lab Results" 
+        <ToggleRow
+          label="Lab Results"
           desc="Get notified when new test results are available."
           checked={settings.email.labResults}
           onChange={() => toggle('email', 'labResults')}
         />
-        <ToggleRow 
-          label="Clinic News" 
+        <ToggleRow
+          label="Clinic News"
           desc="Stay updated with clinic news and health tips."
           checked={settings.email.news}
           onChange={() => toggle('email', 'news')}
@@ -57,24 +57,24 @@ export default function NotificationSettings({ onSave }) {
       </NotificationSection>
 
       {/* Push Notifications */}
-      <NotificationSection 
-        title="Push Notifications" 
+      <NotificationSection
+        title="Push Notifications"
         icon={Bell}
       >
-        <ToggleRow 
-          label="Appointment Reminders" 
+        <ToggleRow
+          label="Appointment Reminders"
           desc="Receive a notification 1 hour before your appointment."
           checked={settings.push.reminders}
           onChange={() => toggle('push', 'reminders')}
         />
-        <ToggleRow 
-          label="Doctor Messages" 
+        <ToggleRow
+          label="Doctor Messages"
           desc="Get alerts when your doctor sends you a message."
           checked={settings.push.messages}
           onChange={() => toggle('push', 'messages')}
         />
-        <ToggleRow 
-          label="Prescription Updates" 
+        <ToggleRow
+          label="Prescription Updates"
           desc="Notifies you when a prescription is renewed."
           checked={settings.push.prescriptions}
           onChange={() => toggle('push', 'prescriptions')}
@@ -91,36 +91,36 @@ export default function NotificationSettings({ onSave }) {
 }
 
 function NotificationSection({ title, icon: Icon, children, className = '' }) {
-    return (
-        <section className={`space-y-6 ${className}`}>
-             <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-background-gray rounded-xl text-text">
-                    <Icon className="w-5 h-5" />
-                </div>
-                <h3 className="font-bold text-lg text-text">{title}</h3>
-            </div>
-            <div className="space-y-1">
-                {children}
-            </div>
-        </section>
-    )
+  return (
+    <section className={`space-y-6 ${className}`}>
+      <div className="flex items-center gap-3">
+        <div className="p-2.5 bg-background-subtle rounded-xl text-text-heading">
+          <Icon className="w-5 h-5" />
+        </div>
+        <h3 className="font-bold text-lg text-text-heading">{title}</h3>
+      </div>
+      <div className="space-y-1">
+        {children}
+      </div>
+    </section>
+  )
 }
 
 function ToggleRow({ label, desc, checked, onChange }) {
   return (
-    <div className="flex items-center justify-between p-4 hover:bg-background-gray/30 rounded-xl transition-colors cursor-pointer group" onClick={onChange}>
+    <div className="flex items-center justify-between p-4 hover:bg-background-subtle rounded-xl transition-colors cursor-pointer group" onClick={onChange}>
       <div>
-        <p className="font-semibold text-text text-sm group-hover:text-primary transition-colors">{label}</p>
-        <p className="text-xs text-text-light mt-0.5">{desc}</p>
+        <p className="font-semibold text-text-heading text-sm group-hover:text-primary transition-colors">{label}</p>
+        <p className="text-xs text-text-muted mt-0.5">{desc}</p>
       </div>
-      
+
       {/* Custom Switch */}
-      <div className={`w-12 h-7 rounded-full transition-colors relative flex items-center px-1 ${checked ? 'bg-primary' : 'bg-gray-200'}`}>
-        <motion.div 
-            layout
-            className="w-5 h-5 bg-white rounded-full shadow-sm"
-            animate={{ x: checked ? 20 : 0 }}
-            transition={{ type: "spring", stiffness: 500, damping: 30 }}
+      <div className={`w-12 h-7 rounded-full transition-colors relative flex items-center px-1 ${checked ? 'bg-primary' : 'bg-background-subtle border border-border'}`}>
+        <motion.div
+          layout
+          className="w-5 h-5 bg-background-paper rounded-full shadow-sm"
+          animate={{ x: checked ? 20 : 0 }}
+          transition={{ type: "spring", stiffness: 500, damping: 30 }}
         />
       </div>
     </div>

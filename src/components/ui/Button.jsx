@@ -1,34 +1,100 @@
-import { cn } from '../../lib/utils'
+import * as React from 'react'
+import MuiButton from '@mui/material/Button'
+import IconButton from '@mui/material/IconButton'
+import CircularProgress from '@mui/material/CircularProgress'
 
-export default function Button({ 
-  children, 
-  variant = 'primary', 
-  size = 'md', 
-  className, 
-  ...props 
-}) {
-  const baseStyles = 'inline-flex items-center justify-center font-medium rounded-lg transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed'
-  
-  const variants = {
-    primary: 'bg-medical-blue text-white hover:bg-medical-darkBlue focus:ring-medical-blue shadow-sm',
-    secondary: 'bg-medical-teal text-white hover:bg-green-600 focus:ring-medical-teal shadow-sm',
-    outline: 'border-2 border-medical-blue text-medical-blue hover:bg-medical-lightBlue focus:ring-medical-blue',
-    ghost: 'text-clinical-darkGray hover:bg-gray-100 focus:ring-gray-300',
-    danger: 'bg-red-500 text-white hover:bg-red-600 focus:ring-red-500 shadow-sm',
-  }
-  
-  const sizes = {
-    sm: 'px-3 py-1.5 text-sm',
-    md: 'px-4 py-2 text-base',
-    lg: 'px-6 py-3 text-lg',
-  }
-  
-  return (
-    <button
-      className={cn(baseStyles, variants[variant], sizes[size], className)}
-      {...props}
-    >
-      {children}
-    </button>
-  )
+// Map custom variants to MUI variants + color
+const variantMap = {
+  primary: { variant: 'contained', color: 'primary' },
+  secondary: { variant: 'outlined', color: 'primary' },
+  outline: { variant: 'outlined', color: 'inherit' },
+  ghost: { variant: 'text', color: 'inherit' },
+  danger: { variant: 'contained', color: 'error' },
+  glass: { variant: 'outlined', color: 'inherit' },
+  link: { variant: 'text', color: 'primary' },
 }
+
+const sizeMap = {
+  sm: 'small',
+  md: 'medium',
+  lg: 'large',
+  icon: 'medium',
+}
+
+const Button = React.forwardRef(
+  ({ className, variant = 'primary', size = 'md', asChild = false, isLoading, disabled, children, onClick, onPress, style, sx, ...props }, ref) => {
+    const mapped = variantMap[variant] || variantMap.primary
+    const muiSize = sizeMap[size] || 'medium'
+
+    // Handle icon-only button
+    if (size === 'icon') {
+      return (
+        <IconButton
+          ref={ref}
+          disabled={disabled || isLoading}
+          onClick={onPress || onClick}
+          color={mapped.color}
+          className={className}
+          sx={{
+            width: 40,
+            height: 40,
+            ...sx,
+          }}
+          {...props}
+        >
+          {isLoading ? <CircularProgress size={16} color="inherit" /> : children}
+        </IconButton>
+      )
+    }
+
+    // Glass variant gets special styling
+    const glassSx = variant === 'glass' ? {
+      backgroundColor: 'rgba(255,255,255,0.1)',
+      backdropFilter: 'blur(12px)',
+      borderColor: 'rgba(255,255,255,0.2)',
+      color: '#fff',
+      '&:hover': {
+        backgroundColor: 'rgba(255,255,255,0.2)',
+        borderColor: 'rgba(255,255,255,0.3)',
+      },
+    } : {}
+
+    // Link variant styling
+    const linkSx = variant === 'link' ? {
+      padding: 0,
+      height: 'auto',
+      minWidth: 'auto',
+      textDecoration: 'none',
+      '&:hover': {
+        textDecoration: 'underline',
+        backgroundColor: 'transparent',
+      },
+    } : {}
+
+    return (
+      <MuiButton
+        ref={ref}
+        variant={mapped.variant}
+        color={mapped.color}
+        size={muiSize}
+        disabled={disabled || isLoading}
+        onClick={onPress || onClick}
+        className={className}
+        startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
+        sx={{
+          ...glassSx,
+          ...linkSx,
+          ...sx,
+        }}
+        {...props}
+      >
+        {children}
+      </MuiButton>
+    )
+  }
+)
+
+Button.displayName = 'Button'
+
+export default Button
+export { Button }

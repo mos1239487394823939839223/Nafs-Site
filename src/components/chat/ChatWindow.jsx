@@ -1,9 +1,13 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Paperclip, Smile, ArrowLeft, X } from 'lucide-react'
+import { Send, AttachFile as Paperclip, SentimentSatisfied as Smile, ArrowBack as ArrowLeft, Close as X } from '@mui/icons-material'
 import EmojiPicker from 'emoji-picker-react'
+import { useTheme } from '../../contexts/ThemeContext'
+import { useLanguage } from '../../contexts/LanguageContext'
 import MessageBubble from './MessageBubble'
 
 export default function ChatWindow({ conversation, onSendMessage, onBack }) {
+  const { theme } = useTheme()
+  const { t, isRTL } = useLanguage()
   const [messageInput, setMessageInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
   const [attachments, setAttachments] = useState([])
@@ -75,22 +79,22 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
           <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
             <Smile className="w-10 h-10 text-primary" />
           </div>
-          <h3 className="text-lg font-semibold text-text mb-2">No conversation selected</h3>
-          <p className="text-text-light">Select a consultation to start chatting</p>
+          <h3 className="text-lg font-semibold text-text mb-2">{t('chat.noConversation', 'No conversation selected')}</h3>
+          <p className="text-text-light">{t('chat.selectToStart', 'Select a consultation to start chatting')}</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="h-full flex flex-col bg-white">
+    <div className="h-full flex flex-col bg-background-paper">
       {/* Header */}
-      <div className="px-4 md:px-6 py-4 border-b border-border bg-white">
+      <div className="px-4 md:px-6 py-4 border-b border-border bg-background-paper">
         <div className="flex items-center gap-3">
           {/* Back Button */}
-          <button 
+          <button
             onClick={onBack}
-            className="p-2 hover:bg-background-gray rounded-xl transition-colors"
+            className={`p-2 hover:bg-background-gray rounded-xl transition-colors ${isRTL ? 'rotate-180' : ''}`}
           >
             <ArrowLeft className="w-5 h-5 text-text" />
           </button>
@@ -99,8 +103,8 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
           <div className="relative">
             <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
               {conversation.participant.avatar ? (
-                <img 
-                  src={conversation.participant.avatar} 
+                <img
+                  src={conversation.participant.avatar}
                   alt={conversation.participant.name}
                   className="w-full h-full object-cover"
                 />
@@ -116,10 +120,10 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
           </div>
 
           {/* Info */}
-          <div>
+          <div className={isRTL ? 'text-right' : 'text-left'}>
             <h3 className="font-semibold text-text">{conversation.participant.name}</h3>
             <p className="text-xs text-text-light">
-              {conversation.participant.online ? 'Online' : 'Offline'}
+              {conversation.participant.online ? t('common.online', 'Online') : t('common.offline', 'Offline')}
             </p>
           </div>
         </div>
@@ -134,11 +138,11 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
             isSent={message.sender === 'current-user'}
           />
         ))}
-        
+
         {/* Typing Indicator */}
         {isTyping && (
           <div className="flex justify-start mb-4">
-            <div className="bg-gray-100 px-4 py-3 rounded-2xl">
+            <div className="bg-background-subtle px-4 py-3 rounded-2xl">
               <div className="flex gap-1">
                 <div className="w-2 h-2 bg-text-light rounded-full animate-bounce"></div>
                 <div className="w-2 h-2 bg-text-light rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
@@ -147,13 +151,13 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
             </div>
           </div>
         )}
-        
+
         <div ref={messagesEndRef} />
       </div>
 
       {/* Attachment Preview */}
       {attachments.length > 0 && (
-        <div className="px-4 md:px-6 py-3 border-t border-border bg-background-gray">
+        <div className="px-4 md:px-6 py-3 border-t border-border bg-background-subtle">
           <div className="flex gap-2 overflow-x-auto">
             {attachments.map((attachment, index) => (
               <div key={index} className="relative flex-shrink-0">
@@ -168,8 +172,8 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
                     </button>
                   </div>
                 ) : (
-                  <div className="relative p-3 bg-white rounded-xl border border-border">
-                    <p className="text-xs font-medium truncate max-w-[100px]">{attachment.name}</p>
+                  <div className="relative p-3 bg-background-paper rounded-xl border border-border">
+                    <p className="text-xs font-medium truncate max-w-[100px] text-text">{attachment.name}</p>
                     <button
                       onClick={() => removeAttachment(index)}
                       className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center"
@@ -185,7 +189,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
       )}
 
       {/* Input Area */}
-      <div className="px-4 md:px-6 py-4 border-t border-border bg-white">
+      <div className="px-4 md:px-6 py-4 border-t border-border bg-background-paper">
         <div className="flex items-end gap-2">
           {/* Attachment Button */}
           <button
@@ -209,13 +213,13 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              placeholder="Type your message..."
+              placeholder={t('chat.typeMessage', 'Type your message...')}
               rows="1"
-              className="w-full px-4 py-3 pr-12 border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary resize-none max-h-32"
+              className={`w-full py-3 border border-border rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary resize-none max-h-32 bg-background text-text ${isRTL ? 'px-4 pl-12' : 'px-4 pr-12'}`}
             />
-            <button 
+            <button
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className="absolute right-3 bottom-3 text-text-light hover:text-text"
+              className={`absolute bottom-3 text-text-light hover:text-text ${isRTL ? 'left-3' : 'right-3'}`}
             >
               <Smile className="w-5 h-5" />
             </button>
@@ -223,8 +227,9 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
             {/* Emoji Picker */}
             {showEmojiPicker && (
               <div ref={emojiPickerRef} className="absolute bottom-14 right-0 z-50">
-                <EmojiPicker 
+                <EmojiPicker
                   onEmojiClick={onEmojiClick}
+                  theme={theme}
                   width={320}
                   height={400}
                 />
@@ -238,7 +243,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
             disabled={!messageInput.trim() && attachments.length === 0}
             className="p-3 bg-primary text-white rounded-xl hover:bg-primary-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
           >
-            <Send className="w-5 h-5" />
+            <Send className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
           </button>
         </div>
       </div>

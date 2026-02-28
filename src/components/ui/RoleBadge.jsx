@@ -1,36 +1,40 @@
+import Chip from '@mui/material/Chip'
 import { Roles } from '../../contexts/AuthContext'
+import { useLanguage } from '../../contexts/LanguageContext'
 
-export default function RoleBadge({ role, size = 'md' }) {
-  const sizeClasses = {
-    sm: 'px-2 py-0.5 text-xs',
-    md: 'px-3 py-1 text-sm',
-    lg: 'px-4 py-2 text-base',
+export default function RoleBadge({ role, size = 'md', sx }) {
+  const { t } = useLanguage()
+  const sizeMap = {
+    sm: 'small',
+    md: 'medium',
+    lg: 'medium',
   }
 
-  const roleStyles = {
-    [Roles.PATIENT]: 'bg-primary/10 text-primary border-primary/20',
-    [Roles.DOCTOR]: 'bg-secondary/10 text-secondary border-secondary/20',
-    [Roles.ADMIN]: 'bg-accent/20 text-accent-dark border-accent/30',
-    [Roles.STAFF]: 'bg-secondary/10 text-secondary-dark border-secondary/20',
+  const roleConfig = {
+    [Roles.PATIENT]: { label: t('auth.patient'), color: 'primary' },
+    [Roles.DOCTOR]: { label: t('auth.doctor'), color: 'secondary' },
+    [Roles.ADMIN]: { label: t('auth.admin'), color: 'warning' },
+    [Roles.STAFF]: { label: t('auth.staff'), color: 'info' },
   }
 
-  const roleLabels = {
-    [Roles.PATIENT]: 'Patient',
-    [Roles.DOCTOR]: 'Doctor',
-    [Roles.ADMIN]: 'Admin',
-    [Roles.STAFF]: 'Support Staff',
-  }
+  const config = roleConfig[role] || { label: role, color: 'default' }
 
   return (
-    <span
-      className={`
-        inline-flex items-center justify-center
-        font-medium rounded-full border
-        ${sizeClasses[size]}
-        ${roleStyles[role] || 'bg-gray-100 text-gray-600 border-gray-200'}
-      `}
-    >
-      {roleLabels[role] || role}
-    </span>
+    <Chip
+      label={config.label}
+      color={config.color}
+      variant="outlined"
+      size={sizeMap[size] || 'medium'}
+      sx={{
+        borderRadius: '999px',
+        fontWeight: 500,
+        ...(size === 'lg' && {
+          fontSize: '1rem',
+          height: 36,
+          '& .MuiChip-label': { px: 2 },
+        }),
+        ...sx,
+      }}
+    />
   )
 }

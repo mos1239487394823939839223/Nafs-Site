@@ -1,6 +1,8 @@
 import { createContext, useContext, useState, useCallback } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { CheckCircle, XCircle, AlertCircle, Info, X } from 'lucide-react'
+import Snackbar from '@mui/material/Snackbar'
+import MuiAlert from '@mui/material/Alert'
+import Slide from '@mui/material/Slide'
+import React from 'react'
 
 const ToastContext = createContext()
 
@@ -12,18 +14,20 @@ export const useToast = () => {
   return context
 }
 
+const Alert = React.forwardRef(function Alert(props, ref) {
+  return <MuiAlert elevation={6} variant="filled" ref={ref} {...props} />
+})
+
+function SlideTransition(props) {
+  return <Slide {...props} direction="left" />
+}
+
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])
 
   const addToast = useCallback((message, type = 'info', duration = 3000) => {
     const id = Date.now()
     setToasts(prev => [...prev, { id, message, type, duration }])
-
-    if (duration > 0) {
-      setTimeout(() => {
-        removeToast(id)
-      }, duration)
-    }
   }, [])
 
   const removeToast = useCallback((id) => {
@@ -38,53 +42,36 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={{ success, error, warning, info }}>
       {children}
-      <ToastContainer toasts={toasts} onRemove={removeToast} />
+      {toasts.map((toast, index) => (
+        <Snackbar
+          key={toast.id}
+          open={true}
+          autoHideDuration={toast.duration > 0 ? toast.duration : null}
+          onClose={() => removeToast(toast.id)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          TransitionComponent={SlideTransition}
+          sx={{
+            mt: index * 8,
+            zIndex: 9999,
+          }}
+        >
+          <Alert
+            onClose={() => removeToast(toast.id)}
+            severity={toast.type}
+            sx={{
+              minWidth: 320,
+              maxWidth: 'md',
+              borderRadius: '12px',
+              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+              backdropFilter: 'blur(12px)',
+              fontWeight: 500,
+              fontSize: '0.875rem',
+            }}
+          >
+            {toast.message}
+          </Alert>
+        </Snackbar>
+      ))}
     </ToastContext.Provider>
-  )
-}
-
-function ToastContainer({ toasts, onRemove }) {
-  return (
-    <div className="fixed top-4 right-4 z-[9999] space-y-2">
-      <AnimatePresence>
-        {toasts.map(toast => (
-          <Toast key={toast.id} toast={toast} onRemove={onRemove} />
-        ))}
-      </AnimatePresence>
-    </div>
-  )
-}
-
-function Toast({ toast, onRemove }) {
-  const icons = {
-    success: <CheckCircle className="w-5 h-5" />,
-    error: <XCircle className="w-5 h-5" />,
-    warning: <AlertCircle className="w-5 h-5" />,
-    info: <Info className="w-5 h-5" />,
-  }
-
-  const styles = {
-    success: 'bg-green-50 text-green-800 border-green-200',
-    error: 'bg-red-50 text-red-800 border-red-200',
-    warning: 'bg-yellow-50 text-yellow-800 border-yellow-200',
-    info: 'bg-blue-50 text-blue-800 border-blue-200',
-  }
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: -20, scale: 0.95 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, x: 100, scale: 0.95 }}
-      className={`flex items-center gap-3 px-4 py-3 rounded-lg border shadow-lg min-w-[300px] max-w-md ${styles[toast.type]}`}
-    >
-      <div className="flex-shrink-0">{icons[toast.type]}</div>
-      <p className="flex-1 text-sm font-medium">{toast.message}</p>
-      <button
-        onClick={() => onRemove(toast.id)}
-        className="flex-shrink-0 p-1 hover:bg-black/5 rounded transition-colors"
-      >
-        <X className="w-4 h-4" />
-      </button>
-    </motion.div>
   )
 }

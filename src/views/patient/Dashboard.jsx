@@ -1,33 +1,52 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
-import { Select } from '../../components/ui/Input'
-import {
-  Activity,
-  Heart,
-  Thermometer,
-  TrendingUp,
-  Calendar,
-  Clock,
-  Video,
-  MessageSquare,
-  Bot
-} from 'lucide-react'
+import { ShowChart as Activity, Favorite as Heart, Thermometer, TrendingUp, CalendarToday as Calendar, AccessTime as Clock, Video, ChatBubbleOutline as MessageSquare, SmartToy as Bot, Sync as Loader2 } from '@mui/icons-material'
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import AIAssistant from '../../components/shared/AIAssistant'
 import BookingModal from '../../components/modals/BookingModal'
 import HealthJourneyTimeline from '../../components/patient/HealthJourneyTimeline'
-import { useClinic } from '../../contexts/ClinicContext'
 import { useAuth } from '../../contexts/AuthContext'
+import { patientAPI } from '../../lib/api'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function PatientDashboard() {
   const { user } = useAuth()
-  const { appointments } = useClinic()
+  const { t, isRTL } = useLanguage()
+
+  const BookingStatusMap = {
+    0: t('bookingStatus.pending'),
+    1: t('bookingStatus.confirmed'),
+    2: t('bookingStatus.inProgress'),
+    3: t('bookingStatus.completed'),
+    4: t('bookingStatus.cancelled'),
+    5: t('bookingStatus.noShow'),
+  }
   const [showAI, setShowAI] = useState(false)
   const [showBooking, setShowBooking] = useState(false)
+  const [bookings, setBookings] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  // Mock health data
+  // Fetch patient bookings from API
+  useEffect(() => {
+    const fetchBookings = async () => {
+      try {
+        setLoading(true)
+        const response = await patientAPI.getPatientBookings(1, 20)
+        if (response?.IsSuccess !== false && response?.Data) {
+          setBookings(response.Data.Items || response.Data || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch patient bookings:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchBookings()
+  }, [])
+
+  // Mock health data (these would come from health tracking APIs in the future)
   const bloodPressureData = [
     { date: 'Jan', systolic: 120, diastolic: 80 },
     { date: 'Feb', systolic: 118, diastolic: 78 },
@@ -46,28 +65,40 @@ export default function PatientDashboard() {
     { day: 'Sun', bpm: 69 },
   ]
 
-  const upcomingAppointments = appointments
-    .filter(app => (app.patientName === user?.name || app.patientId === user?.id || app.patientId === user?.email) && (app.status === 'confirmed' || app.status === 'waiting' || app.status === 'scheduled'))
-    .map(app => ({
-      id: app.id,
-      doctor: app.doctorName,
-      specialty: app.specialty,
-      date: app.date,
-      time: app.time,
-      type: 'Video'
-    }))
+  // Upcoming appointments from real API data
+  const upcomingAppointments = bookings
+    .filter(b => b.Status === 0 || b.Status === 1)
+    .sort((a, b) => new Date(a.SessionStartTime) - new Date(b.SessionStartTime))
     .slice(0, 3)
+    .map(booking => {
+      const sessionDate = booking.SessionStartTime ? new Date(booking.SessionStartTime) : null
+      return {
+        id: booking.Id,
+        doctor: booking.DoctorName ? `${t('common.dr', 'Dr.')} ${booking.DoctorName}` : t('common.doctor', 'Doctor'),
+        specialty: t('patient.consultation', 'Consultation'),
+        date: sessionDate?.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' }) || 'N/A',
+        time: sessionDate?.toLocaleTimeString(isRTL ? 'ar-EG' : 'en-US', { hour: '2-digit', minute: '2-digit', hour12: true }) || 'N/A',
+        type: t('patient.video', 'Video'),
+        status: BookingStatusMap[booking.Status] || t('bookingStatus.pending', 'Pending'),
+      }
+    })
+
+  // Next checkup calculation
+  const nextAppointment = upcomingAppointments[0]
+  const daysUntilNext = nextAppointment
+    ? Math.max(0, Math.ceil((new Date(bookings.find(b => b.Id === nextAppointment.id)?.SessionStartTime) - new Date()) / (1000 * 60 * 60 * 24)))
+    : null
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="bg-gradient-to-br from-primary to-primary-dark text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/80 text-sm">Heart Rate</p>
-              <p className="text-3xl font-bold mt-1">72 BPM</p>
-              <p className="text-white/60 text-xs mt-1">Normal</p>
+              <p className="text-white/80 text-sm">{t('patient.heartRate')}</p>
+              <p className="text-3xl font-bold mt-1">72 {t('patient.bpm', 'BPM')}</p>
+              <p className="text-white/60 text-xs mt-1">{t('patient.normal')}</p>
             </div>
             <Heart className="w-12 h-12 text-white/30" />
           </div>
@@ -76,9 +107,9 @@ export default function PatientDashboard() {
         <Card className="bg-gradient-to-br from-primary to-primary-dark text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/80 text-sm">Blood Pressure</p>
+              <p className="text-white/80 text-sm">{t('patient.bloodPressure')}</p>
               <p className="text-3xl font-bold mt-1">120/80</p>
-              <p className="text-white/60 text-xs mt-1">Optimal</p>
+              <p className="text-white/60 text-xs mt-1">{t('patient.optimal')}</p>
             </div>
             <Activity className="w-12 h-12 text-white/30" />
           </div>
@@ -87,9 +118,11 @@ export default function PatientDashboard() {
         <Card className="bg-gradient-to-br from-secondary to-secondary-dark text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/80 text-sm">Temperature</p>
-              <p className="text-3xl font-bold mt-1">36.8°C</p>
-              <p className="text-white/60 text-xs mt-1">Normal</p>
+              <p className="text-white/80 text-sm">{t('patient.totalSessions')}</p>
+              <p className="text-3xl font-bold mt-1">{bookings.length}</p>
+              <p className="text-white/60 text-xs mt-1">
+                {bookings.filter(b => b.Status === 3).length} {t('patient.completed')}
+              </p>
             </div>
             <Thermometer className="w-12 h-12 text-white/30" />
           </div>
@@ -98,9 +131,13 @@ export default function PatientDashboard() {
         <Card className="bg-gradient-to-br from-accent to-accent-dark text-white">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-white/80 text-sm">Next Checkup</p>
-              <p className="text-2xl font-bold mt-1">5 Days</p>
-              <p className="text-white/60 text-xs mt-1">Jan 30, 2026</p>
+              <p className="text-white/80 text-sm">{t('patient.nextCheckup')}</p>
+              <p className="text-2xl font-bold mt-1">
+                {daysUntilNext !== null ? `${daysUntilNext} ${t('patient.days')}` : t('patient.none')}
+              </p>
+              <p className="text-white/60 text-xs mt-1">
+                {nextAppointment?.date || t('patient.noUpcoming')}
+              </p>
             </div>
             <Calendar className="w-12 h-12 text-white/30" />
           </div>
@@ -111,7 +148,7 @@ export default function PatientDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Blood Pressure Trend</CardTitle>
+            <CardTitle>{t('patient.bloodPressureTrend')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -127,11 +164,11 @@ export default function PatientDashboard() {
             <div className="flex items-center justify-center gap-6 mt-4">
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-primary rounded-full"></div>
-                <span className="text-sm text-clinical-gray">Systolic</span>
+                <span className="text-sm text-text-muted">{t('patient.systolic')}</span>
               </div>
               <div className="flex items-center gap-2">
                 <div className="w-3 h-3 bg-secondary rounded-full"></div>
-                <span className="text-sm text-clinical-gray">Diastolic</span>
+                <span className="text-sm text-text-muted">{t('patient.diastolic')}</span>
               </div>
             </div>
           </CardContent>
@@ -139,7 +176,7 @@ export default function PatientDashboard() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Weekly Heart Rate</CardTitle>
+            <CardTitle>{t('patient.weeklyHeartRate')}</CardTitle>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={250}>
@@ -164,33 +201,43 @@ export default function PatientDashboard() {
         {/* Upcoming Sessions Summary */}
         <Card className="rounded-2xl shadow-sm">
           <CardHeader>
-            <CardTitle>Upcoming Sessions</CardTitle>
+            <CardTitle>{t('patient.upcomingSessions')}</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {upcomingAppointments.map((appointment) => (
-                <div key={appointment.id} className="p-3 bg-background rounded-xl border border-border hover:border-primary transition-colors">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Video className="w-4 h-4 text-primary" />
-                    <span className="text-sm font-medium text-text">{appointment.doctor}</span>
-                  </div>
-                  <div className="text-xs text-text-light">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="w-3 h-3" />
-                      <span>{appointment.date}</span>
+            {loading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 text-primary animate-spin" />
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {upcomingAppointments.length > 0 ? (
+                  upcomingAppointments.map((appointment) => (
+                    <div key={appointment.id} className="p-3 bg-background rounded-xl border border-border hover:border-primary transition-colors">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Video className="w-4 h-4 text-primary" />
+                        <span className="text-sm font-medium text-text">{appointment.doctor}</span>
+                      </div>
+                      <div className={`text-xs text-text-muted ${isRTL ? 'text-right' : 'text-left'}`}>
+                        <div className="flex items-center gap-1">
+                          <Calendar className="w-3 h-3" />
+                          <span>{appointment.date}</span>
+                        </div>
+                        <div className="flex items-center gap-1 mt-1">
+                          <Clock className="w-3 h-3" />
+                          <span>{appointment.time}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-1 mt-1">
-                      <Clock className="w-3 h-3" />
-                      <span>{appointment.time}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
-              <Button className="w-full" size="sm" onClick={() => setShowBooking(true)}>
-                <Calendar className="w-4 h-4 mr-2" />
-                Book New Session
-              </Button>
-            </div>
+                  ))
+                ) : (
+                  <p className="text-center text-text-muted text-sm py-4">{t('patient.noUpcomingSessions')}</p>
+                )}
+                <Button className="w-full" size="sm" onClick={() => setShowBooking(true)}>
+                  <Calendar className="w-4 h-4 mr-2" />
+                  {t('patient.bookNewSession')}
+                </Button>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -198,39 +245,47 @@ export default function PatientDashboard() {
       {/* Upcoming Appointments */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>Upcoming Appointments</CardTitle>
+          <CardTitle>{t('patient.upcomingAppointments')}</CardTitle>
           <Button onClick={() => setShowBooking(true)}>
             <Calendar className="w-4 h-4 mr-2" />
-            Book Appointment
+            {t('patient.bookAppointment')}
           </Button>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            {upcomingAppointments.map((appointment) => (
-              <div key={appointment.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary transition-colors">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                    <Video className="w-6 h-6 text-primary" />
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            </div>
+          ) : upcomingAppointments.length > 0 ? (
+            <div className="space-y-4">
+              {upcomingAppointments.map((appointment) => (
+                <div key={appointment.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:border-primary transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                      <Video className="w-6 h-6 text-primary" />
+                    </div>
+                    <div>
+                      <h4 className="font-semibold text-text-heading">{appointment.doctor}</h4>
+                      <p className="text-sm text-text-muted">{appointment.specialty}</p>
+                    </div>
                   </div>
-                  <div>
-                    <h4 className="font-semibold text-clinical-darkGray">{appointment.doctor}</h4>
-                    <p className="text-sm text-clinical-gray">{appointment.specialty}</p>
+                  <div className={isRTL ? "text-left" : "text-right"}>
+                    <div className="flex items-center gap-2 text-text-heading">
+                      <Calendar className="w-4 h-4" />
+                      <span className="font-medium" dir="ltr">{appointment.date}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-text-muted mt-1">
+                      <Clock className="w-4 h-4" />
+                      <span className="text-sm" dir="ltr">{appointment.time}</span>
+                    </div>
                   </div>
+                  <Badge variant="primary">{appointment.type}</Badge>
                 </div>
-                <div className="text-right">
-                  <div className="flex items-center gap-2 text-clinical-darkGray">
-                    <Calendar className="w-4 h-4" />
-                    <span className="font-medium">{appointment.date}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-clinical-gray mt-1">
-                    <Clock className="w-4 h-4" />
-                    <span className="text-sm">{appointment.time}</span>
-                  </div>
-                </div>
-                <Badge variant="primary">{appointment.type}</Badge>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-center text-text-muted py-8">{t('patient.bookAppointmentNow')}</p>
+          )}
         </CardContent>
       </Card>
 
@@ -241,8 +296,8 @@ export default function PatientDashboard() {
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto">
               <Calendar className="w-8 h-8 text-primary" />
             </div>
-            <h3 className="font-semibold text-clinical-darkGray mt-4">Book Appointment</h3>
-            <p className="text-sm text-clinical-gray mt-2">Schedule a session with a doctor</p>
+            <h3 className="font-semibold text-text-heading mt-4">{t('patient.bookAppointment')}</h3>
+            <p className="text-sm text-text-muted mt-2">{t('patient.scheduleSession')}</p>
           </div>
         </Card>
 
@@ -251,8 +306,8 @@ export default function PatientDashboard() {
             <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center mx-auto">
               <Video className="w-8 h-8 text-secondary" />
             </div>
-            <h3 className="font-semibold text-clinical-darkGray mt-4">Virtual Clinic</h3>
-            <p className="text-sm text-clinical-gray mt-2">Join video consultation</p>
+            <h3 className="font-semibold text-text-heading mt-4">{t('patient.virtualClinic')}</h3>
+            <p className="text-sm text-text-muted mt-2">{t('patient.joinVideoConsultation')}</p>
           </div>
         </Card>
 
@@ -261,8 +316,8 @@ export default function PatientDashboard() {
             <div className="w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center mx-auto">
               <Bot className="w-8 h-8 text-accent-dark" />
             </div>
-            <h3 className="font-semibold text-clinical-darkGray mt-4">AI Health Assistant</h3>
-            <p className="text-sm text-clinical-gray mt-2">Get instant health advice</p>
+            <h3 className="font-semibold text-text-heading mt-4">{t('patient.aiHealthAssistant')}</h3>
+            <p className="text-sm text-text-muted mt-2">{t('patient.getInstantHealthAdvice')}</p>
           </div>
         </Card>
       </div>

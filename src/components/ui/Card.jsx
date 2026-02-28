@@ -1,40 +1,118 @@
-import { cn } from '../../lib/utils'
+import * as React from 'react'
+import MuiCard from '@mui/material/Card'
+import MuiCardContent from '@mui/material/CardContent'
+import MuiCardActions from '@mui/material/CardActions'
+import Typography from '@mui/material/Typography'
+import Box from '@mui/material/Box'
 
-export default function Card({ children, className, hover = false, ...props }) {
-  return (
-    <div
-      className={cn(
-        'bg-white rounded-xl shadow-sm border border-gray-200 p-6',
-        hover && 'hover:shadow-md transition-shadow duration-200 cursor-pointer',
-        className
-      )}
-      {...props}
-    >
-      {children}
-    </div>
-  )
-}
+const Card = React.forwardRef(({ className, hover = false, children, sx, onClick, ...props }, ref) => (
+  <MuiCard
+    ref={ref}
+    className={className}
+    onClick={onClick}
+    elevation={1}
+    sx={{
+      borderRadius: '16px',
+      border: '1px solid',
+      borderColor: 'divider',
+      p: 2.5,
+      backdropFilter: 'blur(4px)',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      ...(hover && {
+        cursor: 'pointer',
+        '&:hover': {
+          elevation: 8,
+          boxShadow: (theme) => `0 20px 25px -5px ${theme.palette.primary.main}0D`,
+          transform: 'translateY(-4px)',
+          borderColor: (theme) => `${theme.palette.primary.main}4D`,
+        },
+      }),
+      ...(onClick && {
+        cursor: 'pointer',
+      }),
+      ...sx,
+    }}
+    {...props}
+  >
+    {children}
+  </MuiCard>
+))
+Card.displayName = 'Card'
 
-export function CardHeader({ children, className }) {
-  return (
-    <div className={cn('mb-4', className)}>
-      {children}
-    </div>
-  )
-}
+const CardHeader = React.forwardRef(({ className, title, action, children, sx, ...props }, ref) => (
+  <Box
+    ref={ref}
+    className={className}
+    sx={{
+      display: 'flex',
+      flexDirection: 'column',
+      gap: 0.75,
+      pb: 2,
+      ...sx,
+    }}
+    {...props}
+  >
+    {title ? (
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Typography variant="h6" sx={{ fontWeight: 600, fontSize: '1.25rem', lineHeight: 1 }}>
+          {title}
+        </Typography>
+        {action}
+      </Box>
+    ) : children}
+  </Box>
+))
+CardHeader.displayName = 'CardHeader'
 
-export function CardTitle({ children, className }) {
-  return (
-    <h3 className={cn('text-xl font-semibold text-clinical-darkGray', className)}>
-      {children}
-    </h3>
-  )
-}
+const CardTitle = React.forwardRef(({ className, children, sx, ...props }, ref) => (
+  <Typography
+    ref={ref}
+    variant="h6"
+    component="h3"
+    className={className}
+    sx={{
+      fontWeight: 600,
+      fontSize: '1.25rem',
+      lineHeight: 1,
+      letterSpacing: '-0.01em',
+      ...sx,
+    }}
+    {...props}
+  >
+    {children}
+  </Typography>
+))
+CardTitle.displayName = 'CardTitle'
 
-export function CardContent({ children, className }) {
-  return (
-    <div className={cn('text-clinical-gray', className)}>
-      {children}
-    </div>
-  )
-}
+const CardContent = React.forwardRef(({ className, children, sx, ...props }, ref) => (
+  <Box
+    ref={ref}
+    className={className}
+    sx={{
+      ...sx,
+    }}
+    {...props}
+  >
+    {children}
+  </Box>
+))
+CardContent.displayName = 'CardContent'
+
+const CardFooter = React.forwardRef(({ className, children, sx, ...props }, ref) => (
+  <MuiCardActions
+    ref={ref}
+    className={className}
+    sx={{
+      px: 0,
+      pt: 1,
+      ...sx,
+    }}
+    {...props}
+  >
+    {children}
+  </MuiCardActions>
+))
+CardFooter.displayName = 'CardFooter'
+
+export default Card
+export { Card, CardHeader, CardTitle, CardContent, CardFooter }

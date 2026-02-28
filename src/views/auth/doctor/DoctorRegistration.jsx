@@ -7,25 +7,16 @@ import ProgressStepper from '../../../components/forms/ProgressStepper'
 import Button from '../../../components/ui/Button'
 import Input, { Select, Textarea } from '../../../components/ui/Input'
 import { validateRequired, validateFileSize, validateFileType } from '../../../lib/validation'
-import {
-  ArrowLeft,
-  ArrowRight,
-  Stethoscope,
-  Upload,
-  Calendar,
-  FileText,
-  X,
-  CheckCircle,
-  Clock
-} from 'lucide-react'
+import { ArrowBack as ArrowLeft, ArrowForward as ArrowRight, MedicalServices as Stethoscope, Upload, CalendarToday as Calendar, Description as FileText, Close as X, CheckCircle, AccessTime as Clock } from '@mui/icons-material'
 
-import { useAuth, Roles } from '../../../contexts/AuthContext'
-import { useClinic } from '../../../contexts/ClinicContext'
+import { useAuth } from '../../../contexts/AuthContext'
+import { api, authAPI } from '../../../lib/api'
+import { useLanguage } from '../../../contexts/LanguageContext'
 
 export default function DoctorRegistration() {
   const navigate = useNavigate()
-  const { registerUser } = useClinic()
   const toast = useToast()
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState({
     license: null,
@@ -33,9 +24,9 @@ export default function DoctorRegistration() {
   })
 
   const steps = [
-    { id: 1, title: 'Professional Details', subtitle: 'Your expertise', icon: Stethoscope },
-    { id: 2, title: 'Documentation', subtitle: 'Verify credentials', icon: FileText },
-    { id: 3, title: 'Availability', subtitle: 'Set schedule', icon: Calendar },
+    { id: 1, title: t('doctorReg.professionalDetails'), subtitle: t('doctorReg.yourExpertise'), icon: Stethoscope },
+    { id: 2, title: t('doctorReg.documentation'), subtitle: t('doctorReg.verifyCredentials'), icon: FileText },
+    { id: 3, title: t('doctorReg.availability'), subtitle: t('doctorReg.setSchedule'), icon: Calendar },
   ]
 
   const {
@@ -90,27 +81,27 @@ export default function DoctorRegistration() {
     let isValid = true
 
     if (!validateRequired(formData.specialty)) {
-      setFieldError('specialty', 'Please select your specialty')
+      setFieldError('specialty', t('errors.selectSpecialty'))
       isValid = false
     }
 
     if (!validateRequired(formData.yearsOfExperience) || formData.yearsOfExperience < 0) {
-      setFieldError('yearsOfExperience', 'Please enter valid years of experience')
+      setFieldError('yearsOfExperience', t('errors.validExperience'))
       isValid = false
     }
 
     if (!validateRequired(formData.bio) || formData.bio.length < 50) {
-      setFieldError('bio', 'Bio must be at least 50 characters')
+      setFieldError('bio', t('errors.bioMinLength'))
       isValid = false
     }
 
     if (!validateRequired(formData.consultationFee) || formData.consultationFee < 100) {
-      setFieldError('consultationFee', 'Minimum consultation fee is 100 EGP')
+      setFieldError('consultationFee', t('errors.minFee'))
       isValid = false
     }
 
     if (!formData.languages || formData.languages.length === 0) {
-      setFieldError('languages', 'Please select at least one language')
+      setFieldError('languages', t('errors.selectLanguage'))
       isValid = false
     }
 
@@ -120,12 +111,12 @@ export default function DoctorRegistration() {
   // Step 2 Validation
   const validateStep2 = () => {
     if (!uploadedFiles.license) {
-      toast.error('Please upload your medical license')
+      toast.error(t('errors.uploadLicense'))
       return false
     }
 
     if (!validateRequired(formData.licenseNumber)) {
-      setFieldError('licenseNumber', 'License number is required')
+      setFieldError('licenseNumber', t('errors.licenseRequired'))
       return false
     }
 
@@ -136,7 +127,7 @@ export default function DoctorRegistration() {
   const validateStep3 = () => {
     const hasAvailability = Object.values(formData.availability).some(day => day.enabled)
     if (!hasAvailability) {
-      toast.error('Please set at least one day of availability')
+      toast.error(t('errors.setAvailability'))
       return false
     }
     return true
@@ -160,35 +151,62 @@ export default function DoctorRegistration() {
         nextStep()
       }
     } else {
-      toast.error('Please fix the errors before continuing')
+      toast.error(t('errors.fixErrors'))
     }
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setLoading(true)
 
-    // Get temporary credentials
-    const tempRegData = JSON.parse(sessionStorage.getItem('temp_reg_data') || '{}')
+    try {
+      // Get temporary credentials from sessionStorage
+      const tempRegData = JSON.parse(sessionStorage.getItem('temp_reg_data') || '{}')
 
-    // Simulate API call and Register User
-    setTimeout(() => {
-      setLoading(false)
-
-      const newUser = {
-        name: tempRegData.name || tempRegData.email.split('@')[0],
+      // Build the doctor registration payload for Admin/AddDoctor
+      const doctorPayload = {
+        name: tempRegData.name || `${tempRegData.firstName || ''} ${tempRegData.lastName || ''}`.trim(),
         email: tempRegData.email,
         password: tempRegData.password,
-        role: Roles.DOCTOR,
-        specialty: formData.specialty,
-        bio: formData.bio,
-        status: 'pending'
+        phoneNumber: tempRegData.phone || '',
+        description: formData.bio || null,
+        specialist: formData.specialty ? [formData.specialty] : null,
       }
 
-      registerUser(newUser)
+      // Try registering via the general Auth/Register first (as patient), 
+      // then the admin can approve as doctor. Or use Admin/AddDoctor if available.
+      // For self-registration, use Auth/Register and then navigate to pending approval.
+      const registerPayload = {
+        Name: doctorPayload.name,
+        PhoneNumber: doctorPayload.phoneNumber,
+        Email: doctorPayload.email,
+        Password: doctorPayload.password,
+        Gender: tempRegData.gender === 'female' ? 2 : 1,
+        Birthday: tempRegData.dateOfBirth ? new Date(tempRegData.dateOfBirth).toISOString() : null,
+      }
 
-      sessionStorage.removeItem('temp_reg_data')
-      navigate('/auth/pending-approval')
-    }, 2000)
+      const response = await api.post('/Auth/Register', registerPayload)
+
+      if (response.data?.IsSuccess !== false && response.status === 200) {
+        // Send OTP for email verification
+        try {
+          await authAPI.sendOtp(doctorPayload.email)
+        } catch (otpErr) {
+          console.warn('OTP send failed after doctor registration:', otpErr)
+        }
+
+        sessionStorage.removeItem('temp_reg_data')
+        toast.success(t('auth.registrationSubmitted'))
+        navigate('/auth/pending-approval')
+      } else {
+        toast.error(response.data?.Message || t('errors.somethingWentWrong'))
+      }
+    } catch (error) {
+      console.error('Doctor registration error:', error)
+      const errorMessage = error.response?.data?.Message || error.message || t('errors.somethingWentWrong')
+      toast.error(errorMessage)
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleFieldChange = (field, value) => {
@@ -209,24 +227,24 @@ export default function DoctorRegistration() {
 
     for (const file of files) {
       if (!validateFileSize(file, 5)) {
-        toast.error(`${file.name} is too large. Maximum size is 5MB`)
+        toast.error(`${file.name} ${t('errors.fileTooLarge')}`)
         continue
       }
 
       if (!validateFileType(file)) {
-        toast.error(`${file.name} has invalid format. Use PDF, JPG, or PNG`)
+        toast.error(`${file.name} ${t('errors.invalidFileFormat')}`)
         continue
       }
 
       if (type === 'license') {
         setUploadedFiles(prev => ({ ...prev, license: file }))
-        toast.success('Medical license uploaded')
+        toast.success(t('success.licenseUploaded'))
       } else {
         setUploadedFiles(prev => ({
           ...prev,
           certificates: [...prev.certificates, file]
         }))
-        toast.success(`Certificate uploaded: ${file.name}`)
+        toast.success(`${t('success.certificateUploaded')} ${file.name}`)
       }
     }
   }
@@ -265,19 +283,19 @@ export default function DoctorRegistration() {
   }
 
   return (
-    <div className="min-h-screen bg-clinical-white py-8 px-4">
+    <div className="min-h-screen bg-background py-8 px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-clinical-darkGray">Doctor Registration</h1>
-          <p className="text-clinical-gray mt-2">Join our network of healthcare professionals</p>
+          <h1 className="text-3xl font-bold text-text-heading">{t('doctorReg.title')}</h1>
+          <p className="text-text-muted mt-2">{t('doctorReg.subtitle')}</p>
         </div>
 
         {/* Progress Stepper */}
         <ProgressStepper steps={steps} currentStep={currentStep} />
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-lg p-8 mt-8">
+        <div className="bg-background-paper rounded-2xl shadow-lg p-8 mt-8 border border-border">
           <AnimatePresence mode="wait">
             {/* Step 1: Professional Details */}
             {currentStep === 1 && (
@@ -289,22 +307,22 @@ export default function DoctorRegistration() {
                 className="space-y-6"
               >
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 bg-medical-lightBlue rounded-full flex items-center justify-center">
-                    <Stethoscope className="w-6 h-6 text-medical-blue" />
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <Stethoscope className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-clinical-darkGray">Professional Details</h2>
-                    <p className="text-sm text-clinical-gray">Tell us about your medical expertise</p>
+                    <h2 className="text-xl font-semibold text-text-heading">{t('doctorReg.professionalDetails')}</h2>
+                    <p className="text-sm text-text-muted">{t('doctorReg.tellUsExpertise')}</p>
                   </div>
                 </div>
 
                 <Select
-                  label="Medical Specialty"
+                  label={t('doctorReg.medicalSpecialty')}
                   value={formData.specialty}
                   onChange={(e) => handleFieldChange('specialty', e.target.value)}
                   error={errors.specialty}
                 >
-                  <option value="">Select your specialty</option>
+                  <option value="">{t('doctorReg.selectSpecialty')}</option>
                   {specialties.map(spec => (
                     <option key={spec} value={spec}>{spec}</option>
                   ))}
@@ -312,7 +330,7 @@ export default function DoctorRegistration() {
 
                 <div className="grid md:grid-cols-2 gap-6">
                   <Input
-                    label="Years of Experience"
+                    label={t('doctorReg.yearsOfExperience')}
                     type="number"
                     min="0"
                     value={formData.yearsOfExperience}
@@ -321,7 +339,7 @@ export default function DoctorRegistration() {
                     placeholder="e.g., 10"
                   />
                   <Input
-                    label="Consultation Fee (EGP)"
+                    label={t('doctorReg.consultationFee')}
                     type="number"
                     min="100"
                     value={formData.consultationFee}
@@ -332,19 +350,19 @@ export default function DoctorRegistration() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-clinical-darkGray mb-3">
-                    Languages Spoken
+                  <label className="block text-sm font-medium text-text-muted mb-3">
+                    {t('doctorReg.languagesSpoken')}
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {languages.map((language) => (
-                      <label key={language} className="flex items-center gap-2 p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                      <label key={language} className="flex items-center gap-2 p-3 border border-border rounded-lg cursor-pointer hover:bg-background-subtle transition-colors">
                         <input
                           type="checkbox"
                           checked={(formData.languages || []).includes(language)}
                           onChange={() => toggleLanguage(language)}
-                          className="w-4 h-4 text-medical-blue border-gray-300 rounded focus:ring-medical-blue"
+                          className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
                         />
-                        <span className="text-sm text-clinical-darkGray">{language}</span>
+                        <span className="text-sm text-text-heading">{language}</span>
                       </label>
                     ))}
                   </div>
@@ -354,15 +372,15 @@ export default function DoctorRegistration() {
                 </div>
 
                 <Textarea
-                  label="Professional Bio"
+                  label={t('doctorReg.professionalBio')}
                   value={formData.bio}
                   onChange={(e) => handleFieldChange('bio', e.target.value)}
                   error={errors.bio}
-                  placeholder="Tell patients about your experience, approach to healthcare, and what makes you unique..."
+                  placeholder={t('doctorReg.bioPlaceholder')}
                   rows={6}
                 />
                 <p className="text-xs text-clinical-gray">
-                  {formData.bio.length}/50 characters minimum
+                  {formData.bio.length}/50 {t('doctorReg.bioMinChars')}
                 </p>
               </motion.div>
             )}
@@ -381,13 +399,13 @@ export default function DoctorRegistration() {
                     <FileText className="w-6 h-6 text-green-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-clinical-darkGray">Documentation</h2>
-                    <p className="text-sm text-clinical-gray">Upload your credentials for verification</p>
+                    <h2 className="text-xl font-semibold text-text-heading">{t('doctorReg.documentation')}</h2>
+                    <p className="text-sm text-text-muted">{t('doctorReg.uploadCredentials')}</p>
                   </div>
                 </div>
 
                 <Input
-                  label="Medical License Number"
+                  label={t('doctorReg.medicalLicenseNumber')}
                   value={formData.licenseNumber}
                   onChange={(e) => handleFieldChange('licenseNumber', e.target.value)}
                   error={errors.licenseNumber}
@@ -396,14 +414,14 @@ export default function DoctorRegistration() {
 
                 {/* Medical License Upload */}
                 <div>
-                  <label className="block text-sm font-medium text-clinical-darkGray mb-2">
-                    Medical License <span className="text-red-500">*</span>
+                  <label className="block text-sm font-medium text-text-muted mb-2">
+                    {t('doctorReg.medicalLicense')} <span className="text-red-500">*</span>
                   </label>
                   {!uploadedFiles.license ? (
-                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-medical-blue hover:bg-medical-lightBlue/30 transition-all">
-                      <Upload className="w-8 h-8 text-clinical-gray mb-2" />
-                      <p className="text-sm text-clinical-gray">Click to upload medical license</p>
-                      <p className="text-xs text-clinical-gray mt-1">PDF, JPG, or PNG (Max 5MB)</p>
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-primary/10 transition-all">
+                      <Upload className="w-8 h-8 text-text-muted mb-2" />
+                      <p className="text-sm text-text-light">{t('doctorReg.uploadLicense')}</p>
+                      <p className="text-xs text-text-muted mt-1">{t('doctorReg.fileFormats')}</p>
                       <input
                         type="file"
                         className="hidden"
@@ -416,8 +434,8 @@ export default function DoctorRegistration() {
                       <div className="flex items-center gap-3">
                         <CheckCircle className="w-5 h-5 text-green-600" />
                         <div>
-                          <p className="text-sm font-medium text-clinical-darkGray">{uploadedFiles.license.name}</p>
-                          <p className="text-xs text-clinical-gray">{(uploadedFiles.license.size / 1024).toFixed(2)} KB</p>
+                          <p className="text-sm font-medium text-text-heading">{uploadedFiles.license.name}</p>
+                          <p className="text-xs text-text-muted">{(uploadedFiles.license.size / 1024).toFixed(2)} KB</p>
                         </div>
                       </div>
                       <button
@@ -432,13 +450,13 @@ export default function DoctorRegistration() {
 
                 {/* Certificates Upload */}
                 <div>
-                  <label className="block text-sm font-medium text-clinical-darkGray mb-2">
-                    Additional Certificates (Optional)
+                  <label className="block text-sm font-medium text-text-muted mb-2">
+                    {t('doctorReg.additionalCertificates')}
                   </label>
-                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-medical-blue hover:bg-medical-lightBlue/30 transition-all">
-                    <Upload className="w-8 h-8 text-clinical-gray mb-2" />
-                    <p className="text-sm text-clinical-gray">Click to upload certificates</p>
-                    <p className="text-xs text-clinical-gray mt-1">Board certifications, training certificates, etc.</p>
+                  <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-border rounded-lg cursor-pointer hover:border-primary hover:bg-primary/10 transition-all">
+                    <Upload className="w-8 h-8 text-text-muted mb-2" />
+                    <p className="text-sm text-text-light">{t('doctorReg.uploadCertificates')}</p>
+                    <p className="text-xs text-text-muted mt-1">{t('doctorReg.certificateTypes')}</p>
                     <input
                       type="file"
                       className="hidden"
@@ -451,12 +469,12 @@ export default function DoctorRegistration() {
                   {uploadedFiles.certificates.length > 0 && (
                     <div className="mt-4 space-y-2">
                       {uploadedFiles.certificates.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
+                        <div key={index} className="flex items-center justify-between p-3 border border-border rounded-lg">
                           <div className="flex items-center gap-3">
-                            <FileText className="w-5 h-5 text-medical-blue" />
+                            <FileText className="w-5 h-5 text-primary" />
                             <div>
-                              <p className="text-sm font-medium text-clinical-darkGray">{file.name}</p>
-                              <p className="text-xs text-clinical-gray">{(file.size / 1024).toFixed(2)} KB</p>
+                              <p className="text-sm font-medium text-text-heading">{file.name}</p>
+                              <p className="text-xs text-text-muted">{(file.size / 1024).toFixed(2)} KB</p>
                             </div>
                           </div>
                           <button
@@ -471,9 +489,9 @@ export default function DoctorRegistration() {
                   )}
                 </div>
 
-                <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    <strong>Note:</strong> All documents will be reviewed by our admin team. You'll receive approval within 24-48 hours.
+                <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-lg">
+                  <p className="text-sm text-emerald-800">
+                    {t('doctorReg.documentReviewNote')}
                   </p>
                 </div>
               </motion.div>
@@ -493,23 +511,23 @@ export default function DoctorRegistration() {
                     <Calendar className="w-6 h-6 text-purple-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-clinical-darkGray">Set Your Availability</h2>
-                    <p className="text-sm text-clinical-gray">Choose your working days and hours</p>
+                    <h2 className="text-xl font-semibold text-text-heading">{t('doctorReg.setYourAvailability')}</h2>
+                    <p className="text-sm text-text-muted">{t('doctorReg.chooseWorkingDays')}</p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
                   {Object.entries(formData.availability).map(([day, schedule]) => (
-                    <div key={day} className={`p-4 border rounded-lg transition-all ${schedule.enabled ? 'border-medical-blue bg-medical-lightBlue/30' : 'border-gray-200'}`}>
+                    <div key={day} className={`p-4 border rounded-lg transition-all ${schedule.enabled ? 'border-primary bg-primary/10' : 'border-border'}`}>
                       <div className="flex items-center justify-between mb-3">
                         <label className="flex items-center gap-3 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={schedule.enabled}
                             onChange={() => toggleDayAvailability(day)}
-                            className="w-5 h-5 text-medical-blue border-gray-300 rounded focus:ring-medical-blue"
+                            className="w-5 h-5 text-primary border-border rounded focus:ring-primary"
                           />
-                          <span className="font-medium text-clinical-darkGray capitalize">{day}</span>
+                          <span className="font-medium text-text-heading capitalize">{day}</span>
                         </label>
                         {schedule.enabled && (
                           <div className="flex items-center gap-2 text-sm text-clinical-gray">
@@ -520,23 +538,23 @@ export default function DoctorRegistration() {
                       </div>
 
                       {schedule.enabled && (
-                        <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-gray-200">
+                        <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-border">
                           <div>
-                            <label className="block text-xs font-medium text-clinical-gray mb-1">Start Time</label>
+                            <label className="block text-xs font-medium text-text-muted mb-1">{t('doctorReg.startTime')}</label>
                             <input
                               type="time"
                               value={schedule.start}
                               onChange={(e) => updateDayTime(day, 'start', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-medical-blue text-sm"
+                              className="w-full px-3 py-2 border border-border bg-background rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text"
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-clinical-gray mb-1">End Time</label>
+                            <label className="block text-xs font-medium text-text-muted mb-1">{t('doctorReg.endTime')}</label>
                             <input
                               type="time"
                               value={schedule.end}
                               onChange={(e) => updateDayTime(day, 'end', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-medical-blue text-sm"
+                              className="w-full px-3 py-2 border border-border bg-background rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-sm text-text"
                             />
                           </div>
                         </div>
@@ -545,9 +563,9 @@ export default function DoctorRegistration() {
                   ))}
                 </div>
 
-                <div className="bg-medical-lightBlue p-4 rounded-lg">
-                  <p className="text-sm text-medical-blue">
-                    <strong>Tip:</strong> You can always update your availability later from your dashboard.
+                <div className="bg-primary/10 p-4 rounded-lg">
+                  <p className="text-sm text-primary-dark">
+                    {t('doctorReg.availabilityTip')}
                   </p>
                 </div>
               </motion.div>
@@ -562,7 +580,7 @@ export default function DoctorRegistration() {
               disabled={isFirstStep || loading}
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
+              {t('common.back')}
             </Button>
 
             <Button
@@ -572,16 +590,16 @@ export default function DoctorRegistration() {
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Submitting...</span>
+                  <span>{t('common.submitting')}</span>
                 </div>
               ) : isLastStep ? (
                 <>
                   <CheckCircle className="w-4 h-4 mr-2" />
-                  Submit for Approval
+                  {t('doctorReg.submitForApproval')}
                 </>
               ) : (
                 <>
-                  Next
+                  {t('common.next')}
                   <ArrowRight className="w-4 h-4 ml-2" />
                 </>
               )}

@@ -1,58 +1,43 @@
 import { NavLink } from 'react-router-dom'
 import { useAuth, Roles } from '../../contexts/AuthContext'
+import { useLanguage } from '../../contexts/LanguageContext'
 import RoleBadge from '../ui/RoleBadge'
-import {
-  Home,
-  Calendar,
-  FileText,
-  MessageSquare,
-  Settings,
-  LogOut,
-  Users,
-  Activity,
-  DollarSign,
-  BarChart3,
-  UserPlus,
-  Pill,
-  TestTube,
-  FolderOpen,
-  Clock,
-  TrendingUp,
-  Headphones,
-  Phone,
-  TicketIcon,
-} from 'lucide-react'
-
-// Navigation items for each role
-const navigationConfig = {
-  [Roles.PATIENT]: [
-    { name: 'Reserve Appointment', path: '/dashboard/patient/reserve', icon: Calendar },
-    { name: 'Messages', path: '/dashboard/patient/messages', icon: MessageSquare },
-    { name: 'Profile', path: '/dashboard/patient/profile', icon: Settings },
-  ],
-  [Roles.DOCTOR]: [
-    { name: 'Dashboard', path: '/dashboard/doctor', icon: Home },
-    { name: 'Patient Queue', path: '/dashboard/doctor/queue', icon: Users },
-    { name: 'Medical History', path: '/dashboard/doctor/medical-history', icon: FileText },
-    { name: 'My Schedule', path: '/dashboard/doctor/schedule', icon: Calendar },
-    { name: 'Session History', path: '/dashboard/doctor/history', icon: Activity },
-    { name: 'Messages', path: '/dashboard/doctor/messages', icon: MessageSquare },
-    { name: 'Profile', path: '/dashboard/doctor/settings', icon: Settings },
-  ],
-  [Roles.ADMIN]: [
-    { name: 'User Management', path: '/admin/users', icon: Users },
-    { name: 'Messages', path: '/admin/messages', icon: MessageSquare },
-    { name: 'Profile', path: '/admin/profile', icon: Settings },
-  ],
-  [Roles.STAFF]: [
-    { name: 'Dashboard', path: '/dashboard/staff', icon: Home },
-    { name: 'Messages', path: '/dashboard/staff/messages', icon: MessageSquare },
-    { name: 'Profile', path: '/dashboard/staff/profile', icon: Settings },
-  ],
-}
+import { UserAvatar } from '../ui/Avatar'
+import { Home, CalendarToday as Calendar, Description as FileText, ChatBubbleOutline as MessageSquare, Settings, Logout as LogOut, People as Users, ShowChart as Activity, AttachMoney as DollarSign, BarChart as BarChart3, PersonAdd as UserPlus, Medication as Pill, Science as TestTube, FolderOpen, AccessTime as Clock, TrendingUp, Headphones, Phone, ConfirmationNumber as TicketIcon } from '@mui/icons-material'
 
 export default function DynamicSidebar({ isOpen, onClose }) {
   const { role, user, logout } = useAuth()
+  const { t, isRTL } = useLanguage()
+
+  // Navigation items for each role
+  const navigationConfig = {
+    [Roles.PATIENT]: [
+      { name: t('nav.reserve'), path: '/dashboard/patient/reserve', icon: Calendar },
+      { name: t('nav.messages'), path: '/dashboard/patient/messages', icon: MessageSquare },
+      { name: t('nav.profile'), path: '/dashboard/patient/profile', icon: Settings },
+    ],
+    [Roles.DOCTOR]: [
+      { name: t('nav.dashboard'), path: '/dashboard/doctor', icon: Home },
+      { name: t('nav.queue'), path: '/dashboard/doctor/queue', icon: Users },
+      { name: t('nav.medicalHistory'), path: '/dashboard/doctor/medical-history', icon: FileText },
+      { name: t('nav.schedule'), path: '/dashboard/doctor/schedule', icon: Calendar },
+      { name: t('nav.history'), path: '/dashboard/doctor/history', icon: Activity },
+      { name: t('nav.messages'), path: '/dashboard/doctor/messages', icon: MessageSquare },
+      { name: t('nav.profile'), path: '/dashboard/doctor/settings', icon: Settings },
+    ],
+    [Roles.ADMIN]: [
+      { name: t('nav.users'), path: '/admin/users', icon: Users },
+      { name: t('nav.bookings'), path: '/admin/bookings', icon: Calendar },
+      { name: t('nav.inviteStaff'), path: '/admin/invite-staff', icon: UserPlus },
+      { name: t('nav.messages'), path: '/admin/messages', icon: MessageSquare },
+      { name: t('nav.profile'), path: '/admin/profile', icon: Settings },
+    ],
+    [Roles.STAFF]: [
+      { name: t('nav.dashboard'), path: '/dashboard/staff', icon: Home },
+      { name: t('nav.messages'), path: '/dashboard/staff/messages', icon: MessageSquare },
+      { name: t('nav.profile'), path: '/dashboard/staff/profile', icon: Settings },
+    ],
+  }
 
   const navItems = navigationConfig[role] || []
 
@@ -74,29 +59,33 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 left-0 h-full w-64 bg-white border-r border-border
+          fixed top-0 h-full w-64 bg-background-paper
           transform transition-transform duration-300 ease-in-out z-50
-          ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+          ${isRTL
+            ? `right-0 border-l border-border ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}`
+            : `left-0 border-r border-border ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`
+          }
         `}
+        dir={isRTL ? 'rtl' : 'ltr'}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="p-6 border-b border-border">
-            <h1 className="text-2xl font-bold text-primary">Clinc</h1>
-            <p className="text-sm text-text-light mt-1">Telemedicine Platform</p>
+            <h1 className="text-2xl font-bold text-primary">{t('auth.platformName')}</h1>
+            <p className="text-sm text-text-light mt-1">{t('auth.platformTagline')}</p>
           </div>
 
           {/* User Info */}
           <div className="p-4 border-b border-border">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                <span className="text-primary font-semibold">
-                  {user?.name?.charAt(0) || 'U'}
-                </span>
-              </div>
+              <UserAvatar
+                name={user?.name || user?.Name}
+                src={user?.image || user?.Image}
+                size="md"
+              />
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-text truncate">
-                  {user?.name || 'User'}
+                  {user?.name || user?.Name || 'User'}
                 </p>
                 <RoleBadge role={role} size="sm" />
               </div>
@@ -119,7 +108,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
                         ${isActive
-                          ? 'bg-primary/10 text-primary border-l-4 border-primary'
+                          ? `bg-primary/10 text-primary ${isRTL ? 'border-r-4' : 'border-l-4'} border-primary`
                           : 'text-text hover:bg-background-gray hover:text-primary'
                         }`
                       }
@@ -140,7 +129,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
               className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-text hover:bg-red-50 hover:text-red-600 transition-all duration-200"
             >
               <LogOut className="w-5 h-5" />
-              <span className="font-medium">Logout</span>
+              <span className="font-medium">{t('auth.logout')}</span>
             </button>
           </div>
         </div>

@@ -1,19 +1,21 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Clock, CheckCircle, Mail, Home } from 'lucide-react'
+import { AccessTime as Clock, CheckCircle, Mail, Home } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function PendingApproval() {
   const navigate = useNavigate()
+  const { t } = useLanguage()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-medical-lightBlue via-white to-clinical-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-2xl"
       >
-        <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12 text-center">
+        <div className="bg-background-paper rounded-2xl shadow-xl p-8 md:p-12 text-center border border-border">
           {/* Icon */}
           <motion.div
             initial={{ scale: 0 }}
@@ -25,26 +27,26 @@ export default function PendingApproval() {
           </motion.div>
 
           {/* Title */}
-          <h1 className="text-3xl font-bold text-clinical-darkGray mb-4">
-            Application Submitted Successfully!
+          <h1 className="text-3xl font-bold text-text-heading mb-4">
+            {t('auth.pendingApprovalTitle')}
           </h1>
 
           {/* Description */}
-          <p className="text-lg text-clinical-gray mb-8">
-            Thank you for registering as a doctor on our platform. Your application is currently under review by our admin team.
+          <p className="text-lg text-text-muted mb-8">
+            {t('auth.pendingApprovalDesc')}
           </p>
 
           {/* Status Timeline */}
-          <div className="bg-medical-lightBlue p-6 rounded-lg mb-8 text-left">
-            <h3 className="font-semibold text-clinical-darkGray mb-4">What happens next?</h3>
+          <div className="bg-background-subtle p-6 rounded-lg mb-8 text-left">
+            <h3 className="font-semibold text-text-heading mb-4">{t('auth.whatHappensNext')}</h3>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
                 <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
                   <CheckCircle className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="font-medium text-clinical-darkGray">Application Received</p>
-                  <p className="text-sm text-clinical-gray">Your documents have been successfully submitted</p>
+                  <p className="font-medium text-text-heading">{t('auth.applicationReceived')}</p>
+                  <p className="text-sm text-text-muted">{t('auth.applicationReceivedDesc')}</p>
                 </div>
               </div>
 
@@ -53,8 +55,8 @@ export default function PendingApproval() {
                   <Clock className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="font-medium text-clinical-darkGray">Under Review</p>
-                  <p className="text-sm text-clinical-gray">Our team is verifying your credentials (24-48 hours)</p>
+                  <p className="font-medium text-text-heading">{t('auth.underReview')}</p>
+                  <p className="text-sm text-text-muted">{t('auth.underReviewDesc')}</p>
                 </div>
               </div>
 
@@ -63,18 +65,17 @@ export default function PendingApproval() {
                   <Mail className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <p className="font-medium text-clinical-darkGray">Approval Notification</p>
-                  <p className="text-sm text-clinical-gray">You'll receive an email once approved</p>
+                  <p className="font-medium text-text-heading">{t('auth.approvalNotification')}</p>
+                  <p className="text-sm text-text-muted">{t('auth.approvalNotificationDesc')}</p>
                 </div>
               </div>
             </div>
           </div>
 
           {/* Info Box */}
-          <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-8">
-            <p className="text-sm text-blue-800">
-              <strong>Note:</strong> We'll send you an email notification once your application has been reviewed. 
-              Please check your inbox regularly.
+          <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-lg mb-8">
+            <p className="text-sm text-emerald-800">
+              {t('auth.pendingNote')}
             </p>
           </div>
 
@@ -85,19 +86,19 @@ export default function PendingApproval() {
               onClick={() => navigate('/')}
             >
               <Home className="w-4 h-4 mr-2" />
-              Back to Home
+              {t('auth.backToHome')}
             </Button>
             <Button
               onClick={() => navigate('/auth/login')}
             >
-              Go to Login
+              {t('auth.goToLogin')}
             </Button>
           </div>
 
           {/* Contact */}
-          <p className="text-sm text-clinical-gray mt-8">
-            Have questions? Contact us at{' '}
-            <a href="mailto:support@clinc.com" className="text-medical-blue hover:underline">
+          <p className="text-sm text-text-muted mt-8">
+            {t('auth.contactUs')}{' '}
+            <a href="mailto:support@clinc.com" className="text-primary hover:underline">
               support@clinc.com
             </a>
           </p>

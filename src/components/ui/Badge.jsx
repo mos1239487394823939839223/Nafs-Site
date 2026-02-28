@@ -1,24 +1,42 @@
-import { cn } from '../../lib/utils'
+import * as React from 'react'
+import Chip from '@mui/material/Chip'
 
-export default function Badge({ children, variant = 'default', className }) {
-  const variants = {
-    default: 'bg-gray-100 text-gray-800',
-    primary: 'bg-medical-lightBlue text-medical-blue',
-    success: 'bg-green-100 text-green-800',
-    warning: 'bg-yellow-100 text-yellow-800',
-    danger: 'bg-red-100 text-red-800',
-    info: 'bg-blue-100 text-blue-800',
-  }
+const colorMap = {
+  default: { color: 'default', variant: 'outlined' },
+  primary: { color: 'primary', variant: 'outlined' },
+  secondary: { color: 'secondary', variant: 'outlined' },
+  success: { color: 'success', variant: 'outlined' },
+  warning: { color: 'warning', variant: 'outlined' },
+  danger: { color: 'error', variant: 'outlined' },
+  info: { color: 'info', variant: 'outlined' },
+}
+
+const Badge = React.forwardRef(({ className, variant = 'default', children, sx, ...props }, ref) => {
+  const mapped = colorMap[variant] || colorMap.default
 
   return (
-    <span
-      className={cn(
-        'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-        variants[variant],
-        className
-      )}
-    >
-      {children}
-    </span>
+    <Chip
+      ref={ref}
+      label={children}
+      color={mapped.color}
+      variant={mapped.variant}
+      size="small"
+      className={className}
+      sx={{
+        fontWeight: 500,
+        fontSize: '0.75rem',
+        height: 'auto',
+        '& .MuiChip-label': {
+          px: 1.25,
+          py: 0.25,
+        },
+        ...sx,
+      }}
+      {...props}
+    />
   )
-}
+})
+Badge.displayName = 'Badge'
+
+export default Badge
+export { Badge }

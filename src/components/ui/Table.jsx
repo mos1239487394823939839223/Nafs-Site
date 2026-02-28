@@ -1,51 +1,88 @@
-import { cn } from '../../lib/utils'
+import * as React from 'react'
+import MuiTable from '@mui/material/Table'
+import MuiTableHead from '@mui/material/TableHead'
+import MuiTableBody from '@mui/material/TableBody'
+import MuiTableRow from '@mui/material/TableRow'
+import MuiTableCell from '@mui/material/TableCell'
+import TableContainer from '@mui/material/TableContainer'
+import Paper from '@mui/material/Paper'
 
-export default function Table({ children, className }) {
-  return (
-    <div className="w-full overflow-x-auto">
-      <table className={cn('w-full border-collapse', className)}>
-        {children}
-      </table>
-    </div>
-  )
-}
-
-export function TableHeader({ children, className }) {
-  return (
-    <thead className={cn('bg-gray-50 border-b border-gray-200', className)}>
+const Table = React.forwardRef(({ className, children, sx, ...props }, ref) => (
+  <TableContainer
+    component={Paper}
+    variant="outlined"
+    sx={{
+      borderRadius: '12px',
+      border: 1,
+      borderColor: 'divider',
+      ...sx,
+    }}
+  >
+    <MuiTable
+      ref={ref}
+      className={className}
+      size="medium"
+      {...props}
+    >
       {children}
-    </thead>
-  )
-}
+    </MuiTable>
+  </TableContainer>
+))
+Table.displayName = 'Table'
 
-export function TableBody({ children, className }) {
-  return (
-    <tbody className={cn('divide-y divide-gray-200', className)}>
-      {children}
-    </tbody>
-  )
-}
+const TableHeader = React.forwardRef(({ className, children, ...props }, ref) => (
+  <MuiTableHead ref={ref} className={className} {...props}>
+    {children}
+  </MuiTableHead>
+))
+TableHeader.displayName = 'TableHeader'
 
-export function TableRow({ children, className, hover = true }) {
-  return (
-    <tr className={cn(hover && 'hover:bg-gray-50 transition-colors', className)}>
-      {children}
-    </tr>
-  )
-}
+const TableBody = React.forwardRef(({ className, children, ...props }, ref) => (
+  <MuiTableBody ref={ref} className={className} {...props}>
+    {children}
+  </MuiTableBody>
+))
+TableBody.displayName = 'TableBody'
 
-export function TableHead({ children, className }) {
-  return (
-    <th className={cn('px-6 py-3 text-left text-xs font-semibold text-clinical-darkGray uppercase tracking-wider', className)}>
-      {children}
-    </th>
-  )
-}
+const TableRow = React.forwardRef(({ className, hover = true, children, ...props }, ref) => (
+  <MuiTableRow ref={ref} className={className} hover={hover} {...props}>
+    {children}
+  </MuiTableRow>
+))
+TableRow.displayName = 'TableRow'
 
-export function TableCell({ children, className }) {
-  return (
-    <td className={cn('px-6 py-4 text-sm text-clinical-gray', className)}>
-      {children}
-    </td>
-  )
-}
+const TableHead = React.forwardRef(({ className, children, ...props }, ref) => (
+  <MuiTableCell
+    ref={ref}
+    className={className}
+    component="th"
+    sx={{
+      fontWeight: 600,
+      fontSize: '0.75rem',
+      textTransform: 'uppercase',
+      letterSpacing: '0.05em',
+      color: 'text.secondary',
+    }}
+    {...props}
+  >
+    {children}
+  </MuiTableCell>
+))
+TableHead.displayName = 'TableHead'
+
+const TableCell = React.forwardRef(({ className, children, ...props }, ref) => (
+  <MuiTableCell
+    ref={ref}
+    className={className}
+    sx={{
+      fontSize: '0.875rem',
+    }}
+    {...props}
+  >
+    {children}
+  </MuiTableCell>
+))
+TableCell.displayName = 'TableCell'
+
+export default Table
+export { Table, TableHeader, TableBody, TableRow, TableHead, TableCell }

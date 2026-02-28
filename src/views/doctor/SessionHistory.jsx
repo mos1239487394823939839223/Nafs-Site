@@ -1,38 +1,91 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Download, Filter, Calendar } from 'lucide-react'
+import { Download, FilterList as Filter, CalendarToday as Calendar, Sync as Loader2, ChevronLeft, ChevronRight } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 import HistoryStats from '../../components/doctor/history/HistoryStats'
 import HistoryList from '../../components/doctor/history/HistoryList'
-
-import { useClinic } from '../../contexts/ClinicContext'
-import { useAuth } from '../../contexts/AuthContext'
+import { doctorAPI } from '../../lib/api'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function SessionHistory() {
-  const { user } = useAuth()
-  const { appointments } = useClinic()
+  const { t, isRTL } = useLanguage()
 
-  const sessions = appointments
-    .filter(app => (app.doctorId === 1 || app.doctorName === user?.name) && (app.status === 'completed' || app.status === 'cancelled'))
-    .map(app => ({
-      id: app.id,
-      date: app.date,
-      time: app.time,
-      patientName: app.patientName,
-      patientId: 'ID-' + app.id,
-      type: app.specialty || 'Consultation',
-      duration: app.status === 'completed' ? 45 : 0,
-      outcome: app.status
-    }))
+  const BookingStatusMap = {
+    0: t('bookingStatus.pending'),
+    1: t('bookingStatus.confirmed'),
+    2: t('bookingStatus.inProgress'),
+    3: t('bookingStatus.completed'),
+    4: t('bookingStatus.cancelled'),
+    5: t('bookingStatus.noShow'),
+  }
+  const [bookings, setBookings] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [statusFilter, setStatusFilter] = useState(null) // null = all
+  const [pageIndex, setPageIndex] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalRecords, setTotalRecords] = useState(0)
+  const pageSize = 20
 
+  // Fetch bookings from API
+  const fetchBookings = async () => {
+    try {
+      setLoading(true)
+      const response = await doctorAPI.getBookings(pageIndex, pageSize, statusFilter)
+      if (response.IsSuccess && response.Data) {
+        setBookings(response.Data.Items || [])
+        setTotalPages(response.Data.Pages || 1)
+        setTotalRecords(response.Data.Records || 0)
+      }
+    } catch (error) {
+      console.error('Failed to fetch bookings:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchBookings()
+  }, [pageIndex, statusFilter])
+
+  // Format booking data for display
+  const formatTime = (dateTimeStr) => {
+    if (!dateTimeStr) return ''
+    const date = new Date(dateTimeStr)
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+  }
+
+  const formatDate = (dateTimeStr) => {
+    if (!dateTimeStr) return ''
+    const date = new Date(dateTimeStr)
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+  }
+
+  const sessions = bookings.map(booking => ({
+    id: booking.Id,
+    date: formatDate(booking.SessionStartTime),
+    time: formatTime(booking.SessionStartTime),
+    patientName: booking.PatientName,
+    patientId: `ID-${booking.PatientId}`,
+    type: t('patient.consultation', 'Consultation'),
+    duration: booking.DurationMinutes || 0,
+    outcome: BookingStatusMap[booking.Status] || t('common.unknown', 'unknown'),
+    paymentConfirmed: booking.PaymentConfirmed,
+  }))
+
+  // Calculate stats
   const stats = {
-    totalPatients: sessions.filter(s => s.outcome === 'completed').length,
+    totalPatients: totalRecords,
     totalHours: Math.round(sessions.reduce((acc, s) => acc + s.duration, 0) / 60 * 10) / 10,
-    earnings: sessions.reduce((acc, s) => acc + (s.outcome === 'completed' ? 500 : 0), 0)
+    earnings: sessions.reduce((acc, s) => acc + (s.outcome === t('bookingStatus.completed') ? 500 : 0), 0)
+  }
+
+  const handleStatusFilter = (status) => {
+    setStatusFilter(status)
+    setPageIndex(1) // Reset to first page on filter change
   }
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-6 max-w-7xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -40,17 +93,17 @@ export default function SessionHistory() {
         className="flex items-center justify-between mb-8"
       >
         <div>
-          <h1 className="text-3xl font-bold text-text mb-2">Session History</h1>
-          <p className="text-text-light">Archive of your past consultations and earnings</p>
+          <h1 className="text-3xl font-bold text-text mb-2">{t('doctor.sessionHistory')}</h1>
+          <p className="text-text-light">{t('doctor.sessionHistoryDesc')}</p>
         </div>
         <div className="flex gap-3">
           <Button variant="outline" className="gap-2">
             <Calendar className="w-4 h-4" />
-            This Month
+            {t('doctor.thisMonth')}
           </Button>
           <Button variant="outline" className="gap-2">
             <Download className="w-4 h-4" />
-            Export CSV
+            {t('doctor.exportCSV')}
           </Button>
         </div>
       </motion.div>
@@ -59,33 +112,68 @@ export default function SessionHistory() {
       <HistoryStats stats={stats} />
 
       {/* Filter Bar */}
-      <div className="mb-6 flex items-center justify-between bg-white p-4 rounded-xl border border-border-light shadow-sm">
+      <div className="mb-6 flex items-center justify-between bg-background-paper p-4 rounded-xl border border-border shadow-sm">
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2 text-text-light text-sm font-medium">
             <Filter className="w-4 h-4" />
-            <span>Filter by:</span>
+            <span>{t('common.filterBy')}:</span>
           </div>
-          <select className="text-sm border-none focus:ring-0 bg-transparent text-text font-medium cursor-pointer">
-            <option>All Outcomes</option>
-            <option>Completed</option>
-            <option>Follow-up</option>
-            <option>Cancelled</option>
-          </select>
-          <div className="w-px h-4 bg-border-light"></div>
-          <select className="text-sm border-none focus:ring-0 bg-transparent text-text font-medium cursor-pointer">
-            <option>All Types</option>
-            <option>Consultation</option>
-            <option>Check-up</option>
-            <option>Emergency</option>
+          <select
+            value={statusFilter === null ? '' : statusFilter}
+            onChange={(e) => handleStatusFilter(e.target.value === '' ? null : parseInt(e.target.value))}
+            className="text-sm border border-border rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-primary/20 bg-background text-text font-medium cursor-pointer"
+          >
+            <option value="">{t('common.allStatus')}</option>
+            <option value="0">{t('bookingStatus.pending')}</option>
+            <option value="1">{t('bookingStatus.confirmed')}</option>
+            <option value="2">{t('bookingStatus.inProgress')}</option>
+            <option value="3">{t('bookingStatus.completed')}</option>
+            <option value="4">{t('bookingStatus.cancelled')}</option>
+            <option value="5">{t('bookingStatus.noShow')}</option>
           </select>
         </div>
-        <div className="text-sm text-text-light">
-          Showing <span className="font-semibold text-text">{sessions.length}</span> results
+        <div className="text-sm text-text-muted">
+          {t('common.showing')} <span className="font-semibold text-text-heading">{totalRecords}</span> {t('common.results')}
         </div>
       </div>
 
       {/* Main List */}
-      <HistoryList sessions={sessions} />
+      {loading ? (
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+        </div>
+      ) : (
+        <>
+          <HistoryList sessions={sessions} />
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-center gap-4 mt-6">
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={pageIndex <= 1}
+                onClick={() => setPageIndex(prev => Math.max(1, prev - 1))}
+              >
+                {isRTL ? <ChevronRight className="w-4 h-4 mr-1" /> : <ChevronLeft className="w-4 h-4 mr-1" />}
+                {t('common.previous')}
+              </Button>
+              <span className="text-sm text-text-muted">
+                {t('common.page')} {pageIndex} {t('common.of')} {totalPages}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                disabled={pageIndex >= totalPages}
+                onClick={() => setPageIndex(prev => prev + 1)}
+              >
+                {t('common.next')}
+                {isRTL ? <ChevronLeft className="w-4 h-4 ml-1" /> : <ChevronRight className="w-4 h-4 ml-1" />}
+              </Button>
+            </div>
+          )}
+        </>
+      )}
     </div>
   )
 }

@@ -1,100 +1,128 @@
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect } from "react";
+import { authAPI } from "../lib/api";
 
 // Role definitions
 export const Roles = {
-  PATIENT: 'patient',
-  DOCTOR: 'doctor',
-  ADMIN: 'admin',
-  STAFF: 'staff',
-}
+  PATIENT: "patient",
+  DOCTOR: "doctor",
+  ADMIN: "admin",
+  STAFF: "staff",
+};
 
 // Role display names
 export const RoleNames = {
-  [Roles.PATIENT]: 'Patient',
-  [Roles.DOCTOR]: 'Doctor',
-  [Roles.ADMIN]: 'Admin',
-  [Roles.STAFF]: 'Customer Service',
-}
+  [Roles.PATIENT]: "Patient",
+  [Roles.DOCTOR]: "Doctor",
+  [Roles.ADMIN]: "Admin",
+  [Roles.STAFF]: "Customer Service",
+};
 
 // Role-specific dashboard routes
 export const RoleDashboards = {
-  [Roles.PATIENT]: '/dashboard/patient',
-  [Roles.DOCTOR]: '/dashboard/doctor',
-  [Roles.ADMIN]: '/admin/users',
-  [Roles.STAFF]: '/dashboard/staff',
-}
+  [Roles.PATIENT]: "/dashboard/patient",
+  [Roles.DOCTOR]: "/dashboard/doctor",
+  [Roles.ADMIN]: "/admin/users",
+  [Roles.STAFF]: "/dashboard/staff",
+};
 
-const AuthContext = createContext(null)
+const AuthContext = createContext(null);
 
 export const useAuth = () => {
-  const context = useContext(AuthContext)
+  const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
+    throw new Error("useAuth must be used within an AuthProvider");
   }
-  return context
-}
+  return context;
+};
 
 export const AuthProvider = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [user, setUser] = useState(null)
-  const [role, setRole] = useState(null)
-  const [loading, setLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Load auth state from localStorage on mount
   useEffect(() => {
-    const storedAuth = localStorage.getItem('auth')
+    const storedAuth = localStorage.getItem("auth");
     if (storedAuth) {
       try {
-        const { user, role } = JSON.parse(storedAuth)
-        setUser(user)
-        setRole(role)
-        setIsAuthenticated(true)
+        const { user, role, token } = JSON.parse(storedAuth);
+        setUser(user);
+        setRole(role);
+        setIsAuthenticated(true);
       } catch (error) {
-        console.error('Failed to parse stored auth:', error)
-        localStorage.removeItem('auth')
+        console.error("Failed to parse stored auth:", error);
+        localStorage.removeItem("auth");
       }
     }
-    setLoading(false)
-  }, [])
+    setLoading(false);
+  }, []);
 
   // Login function
-  const login = (userData, userRole) => {
-    setUser(userData)
-    setRole(userRole)
-    setIsAuthenticated(true)
+  const login = (userData, userRole, token = null) => {
+    setUser(userData);
+    setRole(userRole);
+    setIsAuthenticated(true);
 
     // Persist to localStorage
-    localStorage.setItem('auth', JSON.stringify({ user: userData, role: userRole }))
-  }
+    localStorage.setItem(
+      "auth",
+      JSON.stringify({ user: userData, role: userRole, token }),
+    );
+  };
 
   // Logout function
-  const logout = () => {
-    setUser(null)
-    setRole(null)
-    setIsAuthenticated(false)
-    localStorage.removeItem('auth')
-  }
+  const logout = async () => {
+    try {
+      // Call logout API
+      await authAPI.logout();
+    } catch (error) {
+      console.error("Logout API error:", error);
+      // Continue with local logout even if API fails
+    }
+
+    setUser(null);
+    setRole(null);
+    setIsAuthenticated(false);
+    localStorage.removeItem("auth");
+  };
 
   // Get dashboard route for current role
   const getDashboardRoute = () => {
-    return role ? RoleDashboards[role] : '/auth/login'
-  }
+    return role ? RoleDashboards[role] : "/auth/login";
+  };
 
   // Check if user has specific role
   const hasRole = (requiredRole) => {
-    return role === requiredRole
-  }
+    return role === requiredRole;
+  };
 
   // Check if user has any of the specified roles
   const hasAnyRole = (requiredRoles) => {
-    return requiredRoles.includes(role)
-  }
+    return requiredRoles.includes(role);
+  };
 
   const updateProfile = (updatedData) => {
-    const newUser = { ...user, ...updatedData }
-    setUser(newUser)
-    localStorage.setItem('auth', JSON.stringify({ user: newUser, role }))
-  }
+    const newUser = { ...user, ...updatedData };
+    setUser(newUser);
+
+    // Preserve token when updating profile
+    const storedAuth = localStorage.getItem("auth");
+    let token = null;
+    if (storedAuth) {
+      try {
+        const { token: existingToken } = JSON.parse(storedAuth);
+        token = existingToken;
+      } catch (error) {
+        // Ignore parsing errors
+      }
+    }
+
+    localStorage.setItem(
+      "auth",
+      JSON.stringify({ user: newUser, role, token }),
+    );
+  };
 
   const value = {
     isAuthenticated,
@@ -107,7 +135,7 @@ export const AuthProvider = ({ children }) => {
     getDashboardRoute,
     hasRole,
     hasAnyRole,
-  }
+  };
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
-}
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};

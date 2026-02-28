@@ -1,7 +1,9 @@
 import { useState } from 'react'
-import { Search } from 'lucide-react'
+import { Search } from '@mui/icons-material'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function ConsultationsList({ consultations, activeId, onSelect }) {
+  const { t, isRTL } = useLanguage()
   const [searchQuery, setSearchQuery] = useState('')
 
   const formatTimestamp = (timestamp) => {
@@ -9,9 +11,9 @@ export default function ConsultationsList({ consultations, activeId, onSelect })
     const messageTime = new Date(timestamp)
     const diffMinutes = Math.floor((now - messageTime) / 60000)
 
-    if (diffMinutes < 1) return 'Just now'
-    if (diffMinutes < 60) return `${diffMinutes} min ago`
-    if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)} hr ago`
+    if (diffMinutes < 1) return t('common.justNow', 'Just now')
+    if (diffMinutes < 60) return `${diffMinutes} ${t('common.minAgo', 'min ago')}`
+    if (diffMinutes < 1440) return `${Math.floor(diffMinutes / 60)} ${t('common.hoursAgo', 'hr ago')}`
     return messageTime.toLocaleDateString()
   }
 
@@ -28,20 +30,20 @@ export default function ConsultationsList({ consultations, activeId, onSelect })
   })
 
   return (
-    <div className="h-full flex flex-col bg-white border-r border-border">
+    <div className={`h-full flex flex-col bg-background-paper border-border ${isRTL ? 'border-l' : 'border-r'}`} dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
       <div className="p-4 border-b border-border">
-        <h2 className="text-lg font-semibold text-text mb-3">Active Consultations</h2>
+        <h2 className="text-lg font-semibold text-text-heading mb-3">{t('chat.activeConsultations', 'Active Consultations')}</h2>
 
         {/* Search */}
         <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light" />
+          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted ${isRTL ? 'right-3' : 'left-3'}`} />
           <input
             type="text"
-            placeholder="Search conversations..."
+            placeholder={t('chat.searchConversations', 'Search conversations...')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm"
+            className={`w-full py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
           />
         </div>
       </div>
@@ -54,10 +56,10 @@ export default function ConsultationsList({ consultations, activeId, onSelect })
               key={consultation.id}
               onClick={() => onSelect(consultation.id)}
               className={`
-                w-full p-4 border-b border-border-light text-left transition-colors
+                w-full p-4 border-b border-border text-left transition-colors
                 ${activeId === consultation.id
-                  ? 'bg-primary/5 border-l-4 border-l-primary'
-                  : 'hover:bg-background-gray'
+                  ? (isRTL ? 'bg-primary/5 border-r-4 border-r-primary' : 'bg-primary/5 border-l-4 border-l-primary')
+                  : 'hover:bg-background-subtle'
                 }
               `}
             >
@@ -84,12 +86,12 @@ export default function ConsultationsList({ consultations, activeId, onSelect })
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 min-w-0">
+                <div className={`flex-1 min-w-0 ${isRTL ? 'text-right' : 'text-left'}`}>
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-semibold text-text truncate">
+                    <h3 className="font-semibold text-text-heading truncate">
                       {consultation.participant.name}
                     </h3>
-                    <span className="text-xs text-text-light flex-shrink-0 ml-2">
+                    <span className={`text-xs text-text-muted flex-shrink-0 ${isRTL ? 'mr-2' : 'ml-2'}`}>
                       {formatTimestamp(consultation.timestamp)}
                     </span>
                   </div>
@@ -99,11 +101,11 @@ export default function ConsultationsList({ consultations, activeId, onSelect })
                   </p>
 
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-text-light truncate flex-1">
+                    <p className={`text-sm text-text-light truncate flex-1 ${isRTL ? 'text-right' : 'text-left'}`}>
                       {consultation.lastMessage}
                     </p>
                     {consultation.unread > 0 && (
-                      <span className="ml-2 flex-shrink-0 w-5 h-5 bg-primary text-white text-xs rounded-full flex items-center justify-center">
+                      <span className={`flex-shrink-0 w-5 h-5 bg-primary text-white text-xs rounded-full flex items-center justify-center ${isRTL ? 'mr-2' : 'ml-2'}`}>
                         {consultation.unread}
                       </span>
                     )}
@@ -114,9 +116,9 @@ export default function ConsultationsList({ consultations, activeId, onSelect })
           ))
         ) : (
           <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-            <Search className="w-12 h-12 text-text-light mb-3" />
-            <p className="text-text-light text-sm">No conversations found</p>
-            <p className="text-text-light text-xs mt-1">Try a different search term</p>
+            <Search className="w-12 h-12 text-text-muted mb-3" />
+            <p className="text-text-muted text-sm">{t('chat.noConversationsFound', 'No conversations found')}</p>
+            <p className="text-text-muted text-xs mt-1">{t('chat.tryDifferentSearch', 'Try a different search term')}</p>
           </div>
         )}
       </div>

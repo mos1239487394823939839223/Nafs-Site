@@ -1,223 +1,247 @@
+import { useState, useEffect } from 'react'
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import Table, { TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table'
 import Badge from '../../components/ui/Badge'
-import {
-  TrendingUp,
-  Users,
-  DollarSign,
-  Activity,
-  Star,
-  Calendar
-} from 'lucide-react'
-import { BarChart, Bar, LineChart, Line, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { TrendingUp, People as Users, ShowChart as Activity, Star, CalendarToday as Calendar, Sync as Loader2, MedicalServices as Stethoscope, Assignment as ClipboardList } from '@mui/icons-material'
 import KPICard from '../../components/admin/KPICard'
-import { useClinic } from '../../contexts/ClinicContext'
+import { adminAPI, userAPI } from '../../lib/api'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function AdminDashboard() {
-  const { users, doctors, appointments } = useClinic()
+  const { t } = useLanguage()
+  const [doctors, setDoctors] = useState([])
+  const [bookings, setBookings] = useState([])
+  const [usersCount, setUsersCount] = useState(0)
+  const [loading, setLoading] = useState(true)
 
-  // Real stats from context
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      try {
+        const [doctorsRes, bookingsRes, usersRes] = await Promise.allSettled([
+          adminAPI.getDoctors(1, 50),
+          adminAPI.getBookings({ pageIndex: 0, pageSize: 50 }),
+          userAPI.getUsers({ pageIndex: 1, pageSize: 1 }), // Just to get count
+        ])
+
+        if (doctorsRes.status === 'fulfilled' && doctorsRes.value?.Data) {
+          const items = doctorsRes.value.Data.Items || doctorsRes.value.Data || []
+          setDoctors(Array.isArray(items) ? items : [])
+        }
+
+        if (bookingsRes.status === 'fulfilled' && bookingsRes.value?.Data) {
+          const items = bookingsRes.value.Data.Items || bookingsRes.value.Data || []
+          setBookings(Array.isArray(items) ? items : [])
+        }
+
+        if (usersRes.status === 'fulfilled' && usersRes.value?.Data) {
+          setUsersCount(usersRes.value.Data.Records || usersRes.value.Data.Items?.length || 0)
+        }
+      } catch (error) {
+        console.error('Error loading dashboard data:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
+
+  // Stats from real data
+  const completedBookings = bookings.filter(b => b.Status === 3).length
+  const activeBookings = bookings.filter(b => b.Status === 0 || b.Status === 1 || b.Status === 2).length
+  const activeDoctors = doctors.filter(d => d.IsActive !== false).length
+
   const platformStats = {
-    totalRevenue: appointments.filter(a => a.status === 'completed').length * 500, // Estimated
-    totalDoctors: doctors.length,
-    totalPatients: users.filter(u => u.role === 'patient').length,
-    activeSessions: appointments.filter(a => a.status === 'confirmed' || a.status === 'waiting' || a.status === 'scheduled').length
+    totalSessions: bookings.length,
+    totalDoctors: activeDoctors,
+    totalPatients: usersCount,
+    activeSessions: activeBookings,
   }
 
-  const topDoctors = doctors.map(d => ({
-    id: d.id || d.email,
-    name: d.name,
-    specialty: d.specialty || 'General',
-    rating: d.rating || 5.0,
-    sessions: appointments.filter(a => a.doctorId === (d.id || d.email)).length,
-    revenue: appointments.filter(a => a.doctorId === (d.id || d.email) && a.status === 'completed').length * 500,
-    status: 'Active'
-  })).sort((a, b) => b.sessions - a.sessions).slice(0, 5)
+  // Top Doctors by booking count
+  const doctorBookingCount = {}
+  bookings.forEach(b => {
+    const dName = b.DoctorName || 'Unknown'
+    const dId = b.DoctorId
+    if (!doctorBookingCount[dId]) {
+      doctorBookingCount[dId] = { name: dName, sessions: 0, completed: 0, id: dId }
+    }
+    doctorBookingCount[dId].sessions++
+    if (b.Status === 3) doctorBookingCount[dId].completed++
+  })
 
-  const revenueData = [
-    { month: 'Jan', revenue: appointments.filter(a => a.date.includes('-01-')).length * 500 },
-    { month: 'Feb', revenue: appointments.filter(a => a.date.includes('-02-')).length * 500 },
-    { month: 'Mar', revenue: appointments.filter(a => a.date.includes('-03-')).length * 500 },
-    { month: 'Apr', revenue: appointments.filter(a => a.date.includes('-04-')).length * 500 },
-    { month: 'May', revenue: appointments.filter(a => a.date.includes('-05-')).length * 500 },
-  ]
+  const topDoctors = Object.values(doctorBookingCount)
+    .sort((a, b) => b.sessions - a.sessions)
+    .slice(0, 5)
+    .map(d => {
+      const doctorInfo = doctors.find(doc => String(doc.Id) === String(d.id))
+      return {
+        id: d.id,
+        name: d.name,
+        specialty: doctorInfo?.Specialist?.join(', ') || 'General',
+        sessions: d.sessions,
+        completed: d.completed,
+        status: doctorInfo?.IsActive !== false ? 'Active' : 'Inactive',
+      }
+    })
 
-  const sessionTypeData = [
-    { name: 'Video', value: 65, color: '#7DAE9F' },
-    { name: 'Audio', value: 25, color: '#93B5C6' },
-    { name: 'Chat', value: 10, color: '#D3C5E5' },
-  ]
-  const patientRetention = [
-    { month: 'Jan', returning: 65, new: 35 },
-    { month: 'Feb', returning: 70, new: 30 },
-    { month: 'Mar', returning: 72, new: 28 },
-    { month: 'Apr', returning: 75, new: 25 },
-    { month: 'May', returning: 78, new: 22 },
-  ]
+  // Recent bookings
+  const recentBookings = [...bookings]
+    .sort((a, b) => new Date(b.SessionStartTime || 0) - new Date(a.SessionStartTime || 0))
+    .slice(0, 8)
 
-  // Sparkline data for KPIs
-  const revenueSparkline = [
-    { value: 18000 }, { value: 22000 }, { value: 25000 }, { value: 28000 }, { value: 32000 }, { value: 35000 }, { value: 38000 }
-  ]
+  const BookingStatusMap = {
+    0: { label: t('bookingStatus.pending'), variant: 'warning' },
+    1: { label: t('bookingStatus.confirmed'), variant: 'primary' },
+    2: { label: t('bookingStatus.inProgress'), variant: 'info' },
+    3: { label: t('bookingStatus.completed'), variant: 'success' },
+    4: { label: t('bookingStatus.cancelled'), variant: 'danger' },
+    5: { label: t('bookingStatus.noShow'), variant: 'danger' },
+  }
 
-  const sessionsSparkline = [
-    { value: 450 }, { value: 520 }, { value: 580 }, { value: 610 }, { value: 650 }, { value: 680 }, { value: 720 }
-  ]
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-32">
+        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
-      {/* Enhanced KPI Cards */}
+      {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <KPICard
-          title="Total Sessions"
-          value="720"
-          change="12.5"
+          title={t('admin.totalSessions')}
+          value={platformStats.totalSessions}
+          change={completedBookings > 0 ? Math.round((completedBookings / Math.max(1, platformStats.totalSessions)) * 100) : 0}
           trend="up"
-          sparklineData={sessionsSparkline}
+          sparklineData={[{ value: 10 }, { value: 20 }, { value: 30 }, { value: 40 }, { value: platformStats.totalSessions }]}
           icon={Calendar}
           color="primary"
         />
         <KPICard
-          title="Active Doctors"
+          title={t('admin.activeDoctors')}
           value={platformStats.totalDoctors}
-          change="8.3"
+          change=""
           trend="up"
-          sparklineData={[{ value: 38 }, { value: 40 }, { value: 42 }, { value: 43 }, { value: 44 }, { value: 45 }, { value: 45 }]}
+          sparklineData={[{ value: platformStats.totalDoctors }]}
           icon={Activity}
           color="primary"
         />
         <KPICard
-          title="Patient Retention"
-          value="78%"
-          change="5.2"
+          title={t('admin.activeBookings')}
+          value={platformStats.activeSessions}
+          change=""
           trend="up"
-          sparklineData={[{ value: 65 }, { value: 70 }, { value: 72 }, { value: 75 }, { value: 76 }, { value: 77 }, { value: 78 }]}
-          icon={Users}
+          sparklineData={[{ value: platformStats.activeSessions }]}
+          icon={ClipboardList}
           color="secondary"
         />
         <KPICard
-          title="Total Revenue"
-          value={`${platformStats.totalRevenue.toLocaleString()} EGP`}
-          change="15.8"
+          title={t('admin.totalUsers')}
+          value={platformStats.totalPatients}
+          change=""
           trend="up"
-          sparklineData={revenueSparkline}
-          icon={DollarSign}
+          sparklineData={[{ value: platformStats.totalPatients }]}
+          icon={Users}
           color="accent"
         />
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2">
+      {/* Top Doctors & Recent Bookings */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Top Doctors */}
+        <Card>
           <CardHeader>
-            <CardTitle>Revenue Trend</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Stethoscope className="w-5 h-5 text-primary" />
+              {t('admin.topDoctors')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={revenueData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-                <XAxis dataKey="month" stroke="#8993A4" />
-                <YAxis stroke="#8993A4" />
-                <Tooltip />
-                <Line type="monotone" dataKey="revenue" stroke="#7DAE9F" strokeWidth={3} dot={{ fill: '#7DAE9F', r: 5 }} />
-              </LineChart>
-            </ResponsiveContainer>
+            {topDoctors.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t('common.doctor')}</TableHead>
+                    <TableHead>{t('common.specialty')}</TableHead>
+                    <TableHead>{t('admin.sessions')}</TableHead>
+                    <TableHead>{t('common.status')}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {topDoctors.map((doctor) => (
+                    <TableRow key={doctor.id}>
+                      <TableCell className="font-medium text-text-heading">{doctor.name}</TableCell>
+                      <TableCell className="text-text-muted">{doctor.specialty}</TableCell>
+                      <TableCell>
+                        <Badge variant="primary">{doctor.sessions}</Badge>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={doctor.status === 'Active' ? 'success' : 'secondary'}>
+                          {doctor.status}
+                        </Badge>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-8 text-text-muted">
+                <Stethoscope className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p>{t('admin.noDoctorData')}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
+        {/* Recent Bookings */}
         <Card>
           <CardHeader>
-            <CardTitle>Session Types</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <Calendar className="w-5 h-5 text-primary" />
+              {t('admin.recentBookings')}
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  data={sessionTypeData}
-                  cx="50%"
-                  cy="50%"
-                  labelLine={false}
-                  label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                  outerRadius={80}
-                  fill="#8884d8"
-                  dataKey="value"
-                >
-                  {sessionTypeData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
+            {recentBookings.length > 0 ? (
+              <div className="space-y-3">
+                {recentBookings.map((booking) => {
+                  const statusInfo = BookingStatusMap[booking.Status] || { label: 'Unknown', variant: 'secondary' }
+                  const sessionDate = booking.SessionStartTime ? new Date(booking.SessionStartTime) : null
+                  return (
+                    <div key={booking.Id} className="flex items-center justify-between p-3 border border-border rounded-xl hover:bg-background-subtle/50 transition-colors">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <Users className="w-5 h-5 text-primary" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-medium text-text-heading text-sm truncate">
+                            {booking.PatientName || 'Patient'}
+                          </p>
+                          <p className="text-xs text-text-muted truncate">
+                            Dr. {booking.DoctorName || 'Doctor'}
+                            {sessionDate && ` • ${sessionDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant={statusInfo.variant} className="flex-shrink-0 ml-2">
+                        {statusInfo.label}
+                      </Badge>
+                    </div>
+                  )
+                })}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-text-muted">
+                <Calendar className="w-10 h-10 mx-auto mb-3 opacity-30" />
+                <p>{t('admin.noBookingsYet')}</p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
-
-      {/* Patient Retention */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Patient Retention & Frequency</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ResponsiveContainer width="100%" height={300}>
-            <BarChart data={patientRetention}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#E5E7EB" />
-              <XAxis dataKey="month" stroke="#8993A4" />
-              <YAxis stroke="#8993A4" />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="returning" fill="#7DAE9F" name="Returning Patients %" radius={[8, 8, 0, 0]} />
-              <Bar dataKey="new" fill="#93B5C6" name="New Patients %" radius={[8, 8, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </CardContent>
-      </Card>
-
-      {/* Top Doctors Table - ERP Style */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Top Performing Doctors</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Doctor Name</TableHead>
-                <TableHead>Specialty</TableHead>
-                <TableHead>Rating</TableHead>
-                <TableHead>Sessions</TableHead>
-                <TableHead>Revenue (EGP)</TableHead>
-                <TableHead>Status</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {topDoctors.map((doctor) => (
-                <TableRow key={doctor.id}>
-                  <TableCell>
-                    <div className="font-medium text-clinical-darkGray">{doctor.name}</div>
-                  </TableCell>
-                  <TableCell>{doctor.specialty}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                      <span className="font-medium">{doctor.rating}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="primary">{doctor.sessions}</Badge>
-                  </TableCell>
-                  <TableCell>
-                    <span className="font-semibold text-primary">{doctor.revenue.toLocaleString()}</span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge variant="success">Active</Badge>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
     </div>
   )
 }

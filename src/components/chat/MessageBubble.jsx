@@ -1,4 +1,4 @@
-import { Check, CheckCheck } from 'lucide-react'
+import { Check, DoneAll as CheckCheck } from '@mui/icons-material'
 
 export default function MessageBubble({ message, isSent }) {
   const formatTime = (timestamp) => {
@@ -14,9 +14,9 @@ export default function MessageBubble({ message, isSent }) {
       <div
         className={`
           max-w-[70%] px-4 py-3 rounded-2xl shadow-sm
-          ${isSent 
-            ? 'bg-primary text-white ml-auto' 
-            : 'bg-gray-100 text-text mr-auto'
+          ${isSent
+            ? 'bg-primary text-white ml-auto'
+            : 'bg-background-subtle text-text mr-auto'
           }
         `}
       >
@@ -33,7 +33,7 @@ export default function MessageBubble({ message, isSent }) {
                 key={index}
                 className={`
                   flex items-center gap-2 p-2 rounded-xl
-                  ${isSent ? 'bg-primary-dark/20' : 'bg-white'}
+                  ${isSent ? 'bg-primary-dark/20' : 'bg-background-paper'}
                 `}
               >
                 {attachment.type === 'image' ? (
@@ -53,7 +53,7 @@ export default function MessageBubble({ message, isSent }) {
                       <p className={`text-xs font-medium truncate ${isSent ? 'text-white' : 'text-text'}`}>
                         {attachment.name}
                       </p>
-                      <p className={`text-xs ${isSent ? 'text-white/70' : 'text-text-light'}`}>
+                      <p className={`text-xs ${isSent ? 'text-white/70' : 'text-text-muted'}`}>
                         {attachment.size}
                       </p>
                     </div>
@@ -66,7 +66,7 @@ export default function MessageBubble({ message, isSent }) {
 
         {/* Timestamp and Read Status */}
         <div className={`flex items-center gap-1 mt-2 ${isSent ? 'justify-end' : 'justify-start'}`}>
-          <span className={`text-xs ${isSent ? 'text-white/70' : 'text-text-light'}`}>
+          <span className={`text-xs ${isSent ? 'text-white/70' : 'text-text-muted'}`}>
             {formatTime(message.timestamp)}
           </span>
           {isSent && (

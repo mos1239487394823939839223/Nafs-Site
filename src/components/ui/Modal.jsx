@@ -1,59 +1,78 @@
-import { motion, AnimatePresence } from 'framer-motion'
-import { X } from 'lucide-react'
-import { cn } from '../../lib/utils'
+import * as React from 'react'
+import MuiDialog from '@mui/material/Dialog'
+import MuiDialogTitle from '@mui/material/DialogTitle'
+import MuiDialogContent from '@mui/material/DialogContent'
+import IconButton from '@mui/material/IconButton'
+import CloseIcon from '@mui/icons-material/Close'
+import Slide from '@mui/material/Slide'
 
-export default function Modal({ isOpen, onClose, title, children, className, size = 'md' }) {
-  const sizes = {
-    sm: 'max-w-md',
-    md: 'max-w-2xl',
-    lg: 'max-w-4xl',
-    xl: 'max-w-6xl',
-  }
+const sizeMap = {
+  sm: 'sm',
+  md: 'md',
+  lg: 'lg',
+  xl: 'xl',
+}
 
+const Transition = React.forwardRef(function Transition(props, ref) {
+  return <Slide direction="up" ref={ref} {...props} />
+})
+
+export default function Modal({ isOpen, onClose, title, children, className, size = 'md', sx }) {
   return (
-    <AnimatePresence>
-      {isOpen && (
-        <>
-          {/* Backdrop */}
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
-          />
-          
-          {/* Modal */}
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className={cn(
-                'bg-white rounded-2xl shadow-2xl w-full overflow-hidden',
-                sizes[size],
-                className
-              )}
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <h2 className="text-2xl font-semibold text-clinical-darkGray">{title}</h2>
-                <button
-                  onClick={onClose}
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                >
-                  <X className="w-5 h-5 text-clinical-gray" />
-                </button>
-              </div>
-              
-              {/* Content */}
-              <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-                {children}
-              </div>
-            </motion.div>
-          </div>
-        </>
-      )}
-    </AnimatePresence>
+    <MuiDialog
+      open={!!isOpen}
+      onClose={onClose}
+      maxWidth={sizeMap[size] || 'md'}
+      fullWidth
+      className={className}
+      TransitionComponent={Transition}
+      sx={{
+        '& .MuiDialog-paper': {
+          borderRadius: '16px',
+          overflow: 'hidden',
+        },
+        ...sx,
+      }}
+    >
+      {/* Header */}
+      <MuiDialogTitle
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          py: 2,
+          px: 3,
+          borderBottom: 1,
+          borderColor: 'divider',
+          fontSize: '1.5rem',
+          fontWeight: 600,
+        }}
+      >
+        {title}
+        <IconButton
+          onClick={onClose}
+          size="small"
+          sx={{
+            color: 'text.secondary',
+            '&:hover': {
+              bgcolor: 'action.hover',
+            },
+          }}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </MuiDialogTitle>
+
+      {/* Content */}
+      <MuiDialogContent
+        sx={{
+          p: 3,
+          maxHeight: 'calc(100vh - 200px)',
+          overflowY: 'auto',
+        }}
+      >
+        {children}
+      </MuiDialogContent>
+    </MuiDialog>
   )
 }

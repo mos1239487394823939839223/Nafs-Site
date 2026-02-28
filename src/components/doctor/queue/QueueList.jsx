@@ -1,7 +1,9 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import QueueItem from './QueueItem'
+import { useLanguage } from '../../../contexts/LanguageContext'
 
 export default function QueueList({ patients, filter, onAction }) {
+  const { t } = useLanguage()
   const filteredPatients = patients.filter(p => {
     if (filter === 'all') return true
     if (filter === 'waiting') return p.status === 'waiting' || p.status === 'confirmed'
@@ -24,7 +26,7 @@ export default function QueueList({ patients, filter, onAction }) {
   if (sortedPatients.length === 0) {
     return (
       <div className="text-center py-12 bg-background-gray/50 rounded-xl border border-dashed border-border-dark">
-        <p className="text-text-light">No patients found within this filter.</p>
+        <p className="text-text-light">{t('doctor.noPatientsFoundFilter', 'No patients found within this filter.')}</p>
       </div>
     )
   }
