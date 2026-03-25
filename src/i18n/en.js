@@ -217,6 +217,8 @@ export default {
     history: 'Session History',
     medicalHistory: 'Medical History',
     reserve: 'Reserve Appointment',
+    tests: 'My Tests',
+    articles: 'Articles',
     users: 'User Management',
     bookings: 'Bookings',
     inviteStaff: 'Add Staff',

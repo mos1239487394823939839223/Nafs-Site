@@ -8,7 +8,7 @@ import InputLabel from '@mui/material/InputLabel'
 import FormHelperText from '@mui/material/FormHelperText'
 
 const Input = React.forwardRef(
-  ({ className, type = 'text', label, error, icon: Icon, startContent, placeholder, value, onChange, name, required, disabled, sx, ...props }, ref) => {
+  ({ className, type = 'text', label, error, icon: Icon, startContent, placeholder, value, onChange, name, required, disabled, sx, slotProps: slotPropsProp, ...props }, ref) => {
     const startAdornment = (Icon || startContent) ? (
       <InputAdornment position="start">
         {Icon ? <Icon style={{ width: 18, height: 18, opacity: 0.6 }} /> : startContent}
@@ -34,7 +34,9 @@ const Input = React.forwardRef(
         slotProps={{
           input: {
             startAdornment,
+            ...(slotPropsProp?.input || {}),
           },
+          ...(slotPropsProp ? Object.fromEntries(Object.entries(slotPropsProp).filter(([k]) => k !== 'input')) : {}),
         }}
         sx={{
           '& .MuiOutlinedInput-root': {

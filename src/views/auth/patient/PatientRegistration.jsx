@@ -94,12 +94,6 @@ export default function PatientRegistration() {
     if (!validateDate(formData.dateOfBirth)) {
       setFieldError("dateOfBirth", t('errors.invalidDate'));
       isValid = false;
-    } else {
-      const age = calculateAge(formData.dateOfBirth);
-      if (age < 13) {
-        setFieldError("dateOfBirth", t('errors.minAge'));
-        isValid = false;
-      }
     }
 
     if (!validateRequired(formData.gender)) {
@@ -353,11 +347,6 @@ export default function PatientRegistration() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background-paper to-background py-12 px-4 flex items-center justify-center">
       <div className="w-full max-w-2xl">
-        {/* Progress Stepper */}
-        <div className="mb-8">
-          <ProgressStepper steps={steps} currentStep={currentStep} />
-        </div>
-
         {/* Form Card */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -450,6 +439,7 @@ export default function PatientRegistration() {
                     }
                     error={errors.dateOfBirth}
                     max={new Date().toISOString().split("T")[0]}
+                    slotProps={{ inputLabel: { shrink: true } }}
                   />
                   <Select
                     label={t('common.gender')}

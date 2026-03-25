@@ -14,12 +14,14 @@ import Table, {
   TableHeader,
   TableRow,
 } from "../../components/ui/Table";
-import { Search, MedicalServices as Stethoscope, CalendarToday as Calendar, AccessTime as Clock, ChevronRight, Person as User, ArrowBack as ArrowLeft, CheckCircle, Cancel as XCircle, ChevronLeft, Sync as Loader2, Visibility as Eye, ViewList, GridView, Star } from '@mui/icons-material';
-import CalendarGrid from "../../components/doctor/schedule/CalendarGrid";
+import { Search, MedicalServices as Stethoscope, CalendarToday as Calendar, AccessTime as Clock, ChevronRight, Person as User, ArrowBack as ArrowLeft, CheckCircle, Cancel as XCircle, ChevronLeft, Sync as Loader2, Visibility as Eye, ViewList, GridView, Star, Send, ThumbUp, Badge as BadgeIcon } from '@mui/icons-material';
+
 import { useAuth } from "../../contexts/AuthContext";
 import { patientAPI } from "../../lib/api";
 import { useToast } from "../../components/ui/Toast";
 import { useLanguage } from "../../contexts/LanguageContext";
+import DoctorDocumentsViewer from "../../components/patient/DoctorDocumentsViewer";
+import Modal from "../../components/ui/Modal";
 
 export default function ReserveAppointment() {
   const { user: currentUser } = useAuth();
@@ -41,7 +43,7 @@ export default function ReserveAppointment() {
   const [bookedSlot, setBookedSlot] = useState(null);
   const [doctorSearch, setDoctorSearch] = useState("");
   const [mainTab, setMainTab] = useState("reserve"); // reserve, status
-  const [viewMode, setViewMode] = useState("list"); // list or grid
+  const [viewMode, setViewMode] = useState("grid"); // list or grid
   const [slots, setSlots] = useState({});
   const [currentViewDate, setCurrentViewDate] = useState(new Date());
 
@@ -64,6 +66,19 @@ export default function ReserveAppointment() {
     totalPages: 0,
   });
   const [cancellingId, setCancellingId] = useState(null);
+
+  // Doctor reviews state
+  const [reviews, setReviews] = useState([
+    { id: 1, author: 'Ahmed M.', authorAr: 'أحمد م.', rating: 5, comment: 'Very professional and knowledgeable. Highly recommend!', commentAr: 'محترف جداً وعلى دراية واسعة. أنصح به بشدة!', date: '2025-01-08', liked: false },
+    { id: 2, author: 'Sara K.', authorAr: 'سارة ك.', rating: 4, comment: 'Great experience. The doctor listened carefully and gave clear advice.', commentAr: 'تجربة رائعة. الطبيب استمع بعناية وأعطى نصائح واضحة.', date: '2024-12-22', liked: false },
+    { id: 3, author: 'Mohamed A.', authorAr: 'محمد أ.', rating: 5, comment: 'Excellent doctor. Very patient and thorough in his explanations.', commentAr: 'طبيب ممتاز. صبور جداً ومفصّل في شرحه.', date: '2024-12-10', liked: false },
+  ]);
+  const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [selectedWeekStart, setSelectedWeekStart] = useState(new Date());
+  
+  // Documents modal state
+  const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
 
   // Fetch Doctors with Pagination
   const fetchDoctors = async (page = 1) => {
@@ -626,82 +641,322 @@ export default function ReserveAppointment() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="grid lg:grid-cols-3 gap-8"
+                className="space-y-8"
               >
-                <div className="lg:col-span-2">
-                  <CardHeader className="px-0">
-                    <CardTitle>{t('patient.selectTimeSlot')}</CardTitle>
-                    <p className="text-text-muted">{t('patient.bookingWith')} {selectedDoctor.Name}</p>
-                  </CardHeader>
-                  <CalendarGrid
-                    selectedDate={selectedDate}
-                    onDateChange={setSelectedDate}
-                    slots={slots}
-                    onSlotClick={handleSlotClick}
-                    mode="patient"
-                    selectedSlot={bookedSlot}
-                  />
-                  {Object.keys(slots).length === 0 && (
-                    <div className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-center">
-                      <Calendar className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-                      <p className="text-amber-700 font-medium">{t('patient.noSlotsAvailable') || 'No available slots for this week'}</p>
-                      <p className="text-amber-600 text-sm mt-1">{t('patient.trySlotsNextWeek') || 'Try navigating to the next week, or the doctor may not have set their schedule yet.'}</p>
-                    </div>
-                  )}
-                </div>
-                <div className="space-y-6">
-                  <Card className="p-6 border-l-4 border-l-primary">
-                    <h3 className="font-bold text-lg mb-4">{t('patient.bookingSummary')}</h3>
-                    <div className="space-y-4">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          {selectedDoctor.Image ? (
-                            <img src={selectedDoctor.Image} alt={selectedDoctor.Name} className="w-full h-full rounded-full object-cover" />
-                          ) : (
-                            <User className="w-5 h-5 text-primary" />
-                          )}
+                {/* ── Doctor Details Card ── */}
+                <Card className="overflow-hidden">
+                  <div className="h-2 bg-gradient-to-r from-primary via-secondary to-accent" />
+                  <CardContent className="p-6">
+                    <div className={`flex flex-col md:flex-row gap-6 ${isRTL ? 'md:flex-row-reverse' : ''}`}>
+                      {/* Avatar */}
+                      <div className="flex-shrink-0 flex flex-col items-center gap-3">
+                        <div className="w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center overflow-hidden border-2 border-primary/20 shadow">
+                          {selectedDoctor.Image
+                            ? <img src={selectedDoctor.Image} alt={selectedDoctor.Name} className="w-full h-full object-cover" />
+                            : <User className="w-12 h-12 text-primary" />}
                         </div>
-                        <div>
-                          <p className="text-xs text-text-light">{t('common.doctor')}</p>
-                          <p className="font-medium">{selectedDoctor.Name}</p>
+                        <div className="flex items-center gap-1">
+                          {[1,2,3,4,5].map(s => <Star key={s} className={`w-4 h-4 ${s <= 4 ? 'text-amber-400' : 'text-border'}`} />)}
+                          <span className="text-sm font-bold text-text-heading ms-1">4.8</span>
+                        </div>
+                        <span className="text-xs text-text-muted">{isRTL ? '(٢٤ مراجعة)' : '(24 reviews)'}</span>
+                      </div>
+                      {/* Info */}
+                      <div className={`flex-1 ${isRTL ? 'text-right' : 'text-left'}`}>
+                        <h2 className="text-2xl font-bold text-text-heading">{isRTL ? 'د.' : 'Dr.'} {selectedDoctor.Name}</h2>
+                        {selectedDoctor.Specialist && selectedDoctor.Specialist.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {selectedDoctor.Specialist.map((sp, i) => (
+                              <span key={i} className="text-xs px-3 py-1 bg-primary/10 text-primary rounded-full font-medium">{sp}</span>
+                            ))}
+                          </div>
+                        )}
+                        {selectedDoctor.Description && (
+                          <p className="text-sm text-text-muted mt-3 leading-relaxed">{selectedDoctor.Description}</p>
+                        )}
+                        <div className="grid grid-cols-2 gap-3 mt-4">
+                          <div className="p-3 bg-background-subtle rounded-xl">
+                            <p className="text-xs text-text-muted">{isRTL ? 'سنوات الخبرة' : 'Experience'}</p>
+                            <p className="font-bold text-text-heading">{selectedDoctor.YearsOfExperience || '—'} {isRTL ? 'سنة' : 'yrs'}</p>
+                          </div>
+                          <div className="p-3 bg-background-subtle rounded-xl">
+                            <p className="text-xs text-text-muted">{isRTL ? 'رسوم الاستشارة' : 'Consultation Fee'}</p>
+                            <p className="font-bold text-text-heading">{selectedDoctor.ConsultationFee ? `${selectedDoctor.ConsultationFee} EGP` : isRTL ? 'متاح' : 'Available'}</p>
+                          </div>
                         </div>
                       </div>
-
-                      {selectedDoctor.Specialist && (
-                        <div className="flex items-center gap-3">
-                          <Stethoscope className="w-5 h-5 text-primary" />
-                          <div>
-                            <p className="text-xs text-text-light">{t('common.specialty')}</p>
-                            <p className="font-medium text-sm">{selectedDoctor.Specialist.join(", ")}</p>
-                          </div>
-                        </div>
-                      )}
-
-                      {bookedSlot && (
-                        <div className="flex items-center gap-3">
-                          <Calendar className="w-5 h-5 text-primary" />
-                          <div>
-                            <p className="text-xs text-text-muted">
-                              {t('patient.selectedTime')}
-                            </p>
-                            <p className="font-medium text-text-heading">
-                              {bookedSlot.date.toLocaleDateString()} at{" "}
-                              {bookedSlot.hour > 12
-                                ? `${bookedSlot.hour - 12} PM`
-                                : `${bookedSlot.hour} AM`}
-                            </p>
-                          </div>
-                        </div>
-                      )}
                     </div>
-                    <Button
-                      className="w-full mt-8"
-                      disabled={!bookedSlot}
-                      onClick={confirmBooking}
-                    >
-                      {t('patient.confirmAppointment')}
+                  </CardContent>
+                </Card>
+
+                {/* ── Doctor Documents & Certificates Card ── */}
+                <Card className="overflow-hidden">
+                  <CardContent className={`p-4 md:p-6 flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                        <BadgeIcon className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className={isRTL ? 'text-right' : ''}>
+                        <h3 className="font-semibold text-text-heading">{t('doctor.docs.title', 'Documents & Certificates')}</h3>
+                        <p className="text-sm text-text-muted">{t('patient.viewDocs', 'View verified certificates and licenses')}</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={() => setIsDocsModalOpen(true)}>
+                      {isRTL ? 'عرض' : 'View'}
                     </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Documents Modal */}
+                <Modal
+                  isOpen={isDocsModalOpen}
+                  onClose={() => setIsDocsModalOpen(false)}
+                  title={t('doctor.docs.title', 'Documents & Certificates')}
+                  size="4xl"
+                >
+                  <DoctorDocumentsViewer doctorId={selectedDoctor.Id} />
+                </Modal>
+
+                {/* ── Slot Picker + Summary ── */}
+                <div className="grid lg:grid-cols-3 gap-6">
+                  {/* Slot Picker */}
+                  <div className="lg:col-span-2 space-y-4">
+                    <div>
+                      <h3 className="text-lg font-bold text-text-heading">{t('patient.selectTimeSlot')}</h3>
+                      <p className="text-text-muted text-sm">{t('patient.bookingWith')} {selectedDoctor.Name}</p>
+                    </div>
+
+                    {/* Week navigation */}
+                    <div className="flex items-center justify-between bg-background-paper border border-border rounded-xl p-3">
+                      <button
+                        onClick={() => { const d = new Date(selectedDate); d.setDate(d.getDate()-7); setSelectedDate(d); }}
+                        className="p-2 rounded-lg hover:bg-background-subtle transition-colors"
+                      >
+                        {isRTL ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+                      </button>
+                      <span className="font-semibold text-text-heading">
+                        {selectedDate.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { month: 'long', year: 'numeric' })}
+                      </span>
+                      <button
+                        onClick={() => { const d = new Date(selectedDate); d.setDate(d.getDate()+7); setSelectedDate(d); }}
+                        className="p-2 rounded-lg hover:bg-background-subtle transition-colors"
+                      >
+                        {isRTL ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                      </button>
+                    </div>
+
+                    {/* Days with slots */}
+                    {(() => {
+                      const weekDates = [];
+                      const base = new Date(selectedDate);
+                      base.setDate(base.getDate() - base.getDay());
+                      for (let i = 0; i < 7; i++) {
+                        const d = new Date(base);
+                        d.setDate(base.getDate() + i);
+                        weekDates.push(d);
+                      }
+                      const today = new Date(); today.setHours(0,0,0,0);
+                      const dayNames = isRTL
+                        ? ['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت']
+                        : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+                      return (
+                        <div className="space-y-3">
+                          {weekDates.map((date, di) => {
+                            const isPast = date < today;
+                            const yyyy = date.getFullYear();
+                            const mm = String(date.getMonth()+1).padStart(2,'0');
+                            const dd = String(date.getDate()).padStart(2,'0');
+                            const dateKey = `${yyyy}-${mm}-${dd}`;
+                            const daySlots = Object.entries(slots)
+                              .filter(([k]) => k.startsWith(dateKey) && slots[k] === 'available')
+                              .map(([k]) => parseInt(k.split('-').pop()));
+
+                            if (isPast && daySlots.length === 0) return null;
+
+                            return (
+                              <div key={di} className="bg-background-paper border border-border rounded-xl p-4">
+                                <div className={`flex items-center gap-2 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                                  <span className="font-semibold text-text-heading">{dayNames[date.getDay()]}</span>
+                                  <span className="text-sm text-text-muted">
+                                    {date.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' })}
+                                  </span>
+                                  {date.toDateString() === new Date().toDateString() && (
+                                    <span className="text-xs bg-primary text-white px-2 py-0.5 rounded-full">{isRTL ? 'اليوم' : 'Today'}</span>
+                                  )}
+                                </div>
+                                {daySlots.length > 0 ? (
+                                  <div className="flex flex-wrap gap-2">
+                                    {daySlots.sort((a,b)=>a-b).map(hour => {
+                                      const isSelected = bookedSlot && bookedSlot.date.toDateString() === date.toDateString() && bookedSlot.hour === hour;
+                                      const label = hour > 12 ? `${hour-12}:00 PM` : hour === 12 ? '12:00 PM' : `${hour}:00 AM`;
+                                      return (
+                                        <button
+                                          key={hour}
+                                          onClick={() => handleSlotClick(date, hour)}
+                                          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border-2 ${
+                                            isSelected
+                                              ? 'bg-primary text-white border-primary shadow-md scale-105'
+                                              : 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400'
+                                          }`}
+                                        >
+                                          {label}
+                                        </button>
+                                      );
+                                    })}
+                                  </div>
+                                ) : (
+                                  <p className="text-sm text-text-muted">{isRTL ? 'لا توجد مواعيد متاحة' : 'No available slots'}</p>
+                                )}
+                              </div>
+                            );
+                          })}
+                          {Object.keys(slots).length === 0 && (
+                            <div className="p-6 bg-amber-50 border border-amber-200 rounded-xl text-center">
+                              <Calendar className="w-8 h-8 text-amber-500 mx-auto mb-2" />
+                              <p className="text-amber-700 font-medium">{t('patient.noSlotsAvailable')}</p>
+                              <p className="text-amber-600 text-sm mt-1">{t('patient.trySlotsNextWeek')}</p>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+                  </div>
+
+                  {/* Booking Summary */}
+                  <div>
+                    <Card className="p-6 border-l-4 border-l-primary sticky top-4">
+                      <h3 className="font-bold text-lg mb-4">{t('patient.bookingSummary')}</h3>
+                      <div className="space-y-4">
+                        <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                            {selectedDoctor.Image
+                              ? <img src={selectedDoctor.Image} alt={selectedDoctor.Name} className="w-full h-full rounded-full object-cover" />
+                              : <User className="w-5 h-5 text-primary" />}
+                          </div>
+                          <div className={isRTL ? 'text-right' : ''}>
+                            <p className="text-xs text-text-light">{t('common.doctor')}</p>
+                            <p className="font-medium">{selectedDoctor.Name}</p>
+                          </div>
+                        </div>
+                        {selectedDoctor.Specialist && (
+                          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                            <Stethoscope className="w-5 h-5 text-primary flex-shrink-0" />
+                            <div className={isRTL ? 'text-right' : ''}>
+                              <p className="text-xs text-text-light">{t('common.specialty')}</p>
+                              <p className="font-medium text-sm">{selectedDoctor.Specialist.join(', ')}</p>
+                            </div>
+                          </div>
+                        )}
+                        {bookedSlot && (
+                          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                            <Calendar className="w-5 h-5 text-primary flex-shrink-0" />
+                            <div className={isRTL ? 'text-right' : ''}>
+                              <p className="text-xs text-text-muted">{t('patient.selectedTime')}</p>
+                              <p className="font-medium text-text-heading" dir="ltr">
+                                {bookedSlot.date.toLocaleDateString()} – {bookedSlot.hour > 12 ? `${bookedSlot.hour-12}:00 PM` : `${bookedSlot.hour}:00 AM`}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                      <Button className="w-full mt-6" disabled={!bookedSlot} onClick={confirmBooking}>
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+                        {t('patient.confirmAppointment')}
+                      </Button>
+                    </Card>
+                  </div>
+                </div>
+
+                {/* ── Reviews Section ── */}
+                <div className="space-y-5">
+                  <h3 className={`text-xl font-bold text-text-heading flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <Star className="w-6 h-6 text-amber-400" />
+                    {isRTL ? 'تقييمات الدكتور' : 'Doctor Reviews'}
+                  </h3>
+
+                  {/* Add Review */}
+                  <Card className="p-5">
+                    <h4 className={`font-semibold text-text-heading mb-3 ${isRTL ? 'text-right' : ''}`}>
+                      {isRTL ? 'أضف تقييمك' : 'Add Your Review'}
+                    </h4>
+                    <div className={`flex items-center gap-2 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      {[1,2,3,4,5].map(s => (
+                        <button key={s} onClick={() => setNewReview(r => ({...r, rating: s}))} className="transition-transform hover:scale-110">
+                          <Star className={`w-7 h-7 ${s <= newReview.rating ? 'text-amber-400' : 'text-border'}`} />
+                        </button>
+                      ))}
+                      <span className="text-sm text-text-muted ms-2">{newReview.rating}/5</span>
+                    </div>
+                    <textarea
+                      value={newReview.comment}
+                      onChange={e => setNewReview(r => ({...r, comment: e.target.value}))}
+                      placeholder={isRTL ? 'اكتب تجربتك مع الطبيب...' : 'Share your experience with this doctor...'}
+                      rows={3}
+                      className={`w-full p-3 border border-border rounded-xl bg-background text-text text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all ${isRTL ? 'text-right' : ''}`}
+                    />
+                    <div className={`flex ${isRTL ? 'justify-start' : 'justify-end'} mt-3`}>
+                      <Button
+                        size="sm"
+                        disabled={!newReview.comment.trim() || submittingReview}
+                        onClick={() => {
+                          if (!newReview.comment.trim()) return;
+                          setSubmittingReview(true);
+                          setTimeout(() => {
+                            setReviews(prev => [{
+                              id: Date.now(), author: isRTL ? 'أنت' : 'You', authorAr: 'أنت',
+                              rating: newReview.rating, comment: newReview.comment, commentAr: newReview.comment,
+                              date: new Date().toISOString().split('T')[0], liked: false,
+                            }, ...prev]);
+                            setNewReview({ rating: 5, comment: '' });
+                            setSubmittingReview(false);
+                          }, 800);
+                        }}
+                        className="gap-2"
+                      >
+                        {submittingReview ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                        {isRTL ? 'إرسال' : 'Submit'}
+                      </Button>
+                    </div>
                   </Card>
+
+                  {/* Reviews List */}
+                  <div className="space-y-4">
+                    {reviews.map(r => (
+                      <Card key={r.id} className="p-5">
+                        <div className={`flex items-start justify-between gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-sm flex-shrink-0">
+                              {(isRTL ? r.authorAr : r.author).charAt(0)}
+                            </div>
+                            <div className={isRTL ? 'text-right' : ''}>
+                              <p className="font-semibold text-text-heading text-sm">{isRTL ? r.authorAr : r.author}</p>
+                              <div className="flex items-center gap-1 mt-0.5">
+                                {[1,2,3,4,5].map(s => <Star key={s} className={`w-3.5 h-3.5 ${s <= r.rating ? 'text-amber-400' : 'text-border'}`} />)}
+                              </div>
+                            </div>
+                          </div>
+                          <span className="text-xs text-text-muted flex-shrink-0">
+                            {new Date(r.date).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </span>
+                        </div>
+                        <p className={`text-sm text-text-muted mt-3 leading-relaxed ${isRTL ? 'text-right' : ''}`}>
+                          {isRTL ? r.commentAr : r.comment}
+                        </p>
+                        <div className={`flex items-center gap-2 mt-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <button
+                            onClick={() => setReviews(prev => prev.map(rv => rv.id === r.id ? {...rv, liked: !rv.liked} : rv))}
+                            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors ${
+                              r.liked ? 'bg-primary/10 text-primary' : 'text-text-muted hover:bg-background-subtle'
+                            }`}
+                          >
+                            <ThumbUp className="w-3.5 h-3.5" />
+                            {isRTL ? 'مفيد' : 'Helpful'}
+                          </button>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
                 </div>
               </motion.div>
             )}

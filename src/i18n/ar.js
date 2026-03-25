@@ -254,6 +254,8 @@ export default {
     history: 'سجل الجلسات',
     medicalHistory: 'التاريخ الطبي',
     reserve: 'حجز موعد',
+    tests: 'تحاليلي',
+    articles: 'المقالات',
     users: 'إدارة المستخدمين',
     bookings: 'الحجوزات',
     inviteStaff: 'إضافة موظفين',

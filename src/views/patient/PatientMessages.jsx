@@ -1,17 +1,56 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, MedicalServices as Stethoscope, ChevronRight, ArrowBack as ArrowLeft, Person as User, Headphones, AccessTime as Clock, Sync as Loader2, ChatBubbleOutline as MessageSquare, Refresh as RefreshCw } from '@mui/icons-material';
+import {
+  Search,
+  MedicalServices as Stethoscope,
+  ChevronRight,
+  Person as User,
+  Headphones,
+  AccessTime as Clock,
+  Sync as Loader2,
+  ChatBubbleOutline as MessageSquare,
+  Refresh as RefreshCw,
+  Support as SupportAgent,
+  LocalHospital as HospitalIcon,
+} from '@mui/icons-material';
 import Button from "../../components/ui/Button";
-import Card from "../../components/ui/Card";
 import ChatWindow from "../../components/chat/ChatWindow";
 import { useAuth } from "../../contexts/AuthContext";
 import { chatAPI } from "../../lib/api";
 import { useLanguage } from "../../contexts/LanguageContext";
 
+// Contact type selector
+const CONTACT_TYPES = [
+  {
+    key: 'doctors',
+    icon: Stethoscope,
+    labelEn: 'Doctors',
+    labelAr: 'الأطباء',
+    descEn: 'Chat with your treating physicians',
+    descAr: 'تحدث مع الأطباء المعالجين',
+    color: 'from-primary/20 to-primary/5',
+    iconColor: 'text-primary',
+    borderColor: 'border-primary/40',
+  },
+  {
+    key: 'support',
+    icon: SupportAgent,
+    labelEn: 'Technical Team',
+    labelAr: 'الفريق التقني',
+    descEn: 'Get help with platform issues',
+    descAr: 'احصل على مساعدة بمشاكل المنصة',
+    color: 'from-secondary/20 to-secondary/5',
+    iconColor: 'text-secondary',
+    borderColor: 'border-secondary/40',
+  },
+];
+
 export default function PatientMessages() {
   const { user } = useAuth();
   const { t, isRTL } = useLanguage();
 
+  // contact type: null (selector), 'doctors', 'support'
+  const [contactType, setContactType] = useState(null);
   const [mode, setMode] = useState("rooms"); // rooms, chat
   const [activeRoom, setActiveRoom] = useState(null);
   const [rooms, setRooms] = useState([]);
@@ -46,7 +85,6 @@ export default function PatientMessages() {
       } else if (Array.isArray(response)) {
         setMessages(response);
       }
-      // Mark as read
       await chatAPI.markAsRead(roomId).catch(() => { });
     } catch (error) {
       console.error("Failed to fetch messages:", error);
@@ -56,8 +94,8 @@ export default function PatientMessages() {
   }, []);
 
   useEffect(() => {
-    fetchRooms();
-  }, [fetchRooms]);
+    if (contactType) fetchRooms();
+  }, [fetchRooms, contactType]);
 
   useEffect(() => {
     if (activeRoom) {
@@ -68,11 +106,9 @@ export default function PatientMessages() {
   const handleSendMessage = async (msgData) => {
     const roomId = activeRoom?.Id || activeRoom?.id;
     if (!roomId) return;
-
     try {
       const response = await chatAPI.sendMessage(roomId, msgData.content);
       if (response?.IsSuccess !== false) {
-        // Add message to local state immediately
         const newMessage = {
           id: Date.now(),
           sender: "current-user",
@@ -91,7 +127,6 @@ export default function PatientMessages() {
     setMode("chat");
   };
 
-  // Build conversation object for ChatWindow
   const currentConversation = activeRoom
     ? {
       id: activeRoom.Id || activeRoom.id,
@@ -110,10 +145,81 @@ export default function PatientMessages() {
     }
     : null;
 
-  const filteredRooms = rooms.filter((r) => {
+  // Filter rooms by contact type (doctor vs support)
+  const filteredByType = rooms.filter(r => {
+    if (!contactType) return true;
+    const role = (r.OtherParticipantRole || '').toLowerCase();
+    if (contactType === 'doctors') return role === 'doctor' || role === '1' || !role;
+    if (contactType === 'support') return role === 'staff' || role === 'admin' || role === 'support' || role === '2' || role === '3';
+    return true;
+  });
+
+  const filteredRooms = filteredByType.filter((r) => {
     const name = (r.OtherParticipantName || r.Name || "").toLowerCase();
     return name.includes(searchQuery.toLowerCase());
   });
+
+  // ─── Contact Type Selector ────────────────────────────────────────────────
+  if (!contactType) {
+    return (
+      <div className="flex flex-col h-[calc(100vh-8rem)]" dir={isRTL ? 'rtl' : 'ltr'}>
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-text-heading">{t('chat.messages')}</h1>
+          <p className="text-text-muted text-sm mt-1">
+            {isRTL ? 'كيف تريد التواصل؟' : 'Who would you like to contact?'}
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5 max-w-2xl mx-auto w-full">
+          {CONTACT_TYPES.map((type) => {
+            const Icon = type.icon;
+            return (
+              <motion.button
+                key={type.key}
+                whileHover={{ scale: 1.02, y: -4 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setContactType(type.key)}
+                className={`relative overflow-hidden group p-8 rounded-2xl border-2 bg-gradient-to-br text-left transition-all shadow-sm hover:shadow-lg ${type.color} ${type.borderColor}`}
+                dir={isRTL ? 'rtl' : 'ltr'}
+              >
+                {/* Decorative circle */}
+                <div className="absolute top-0 right-0 w-24 h-24 rounded-full bg-white/20 -translate-y-8 translate-x-8 group-hover:scale-150 transition-transform duration-500" />
+
+                <div className={`relative z-10 ${isRTL ? 'text-right' : 'text-left'}`}>
+                  <div className={`w-16 h-16 rounded-2xl bg-white/60 flex items-center justify-center mb-5 shadow-sm ${isRTL ? 'mr-auto' : ''}`}>
+                    <Icon className={`w-8 h-8 ${type.iconColor}`} />
+                  </div>
+                  <h3 className="text-xl font-bold text-text-heading mb-2">
+                    {isRTL ? type.labelAr : type.labelEn}
+                  </h3>
+                  <p className="text-sm text-text-muted">
+                    {isRTL ? type.descAr : type.descEn}
+                  </p>
+                  <div className={`flex items-center gap-2 mt-5 text-sm font-semibold ${type.iconColor} ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
+                    <span>{isRTL ? 'فتح المحادثات' : 'Open Conversations'}</span>
+                    <ChevronRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
+                  </div>
+                </div>
+              </motion.button>
+            );
+          })}
+        </div>
+
+        {/* Recent conversations quick access */}
+        <div className="mt-8 p-4 bg-background-subtle/50 rounded-xl border border-border text-center">
+          <p className="text-sm text-text-muted">
+            {isRTL
+              ? 'يمكنك التبديل بين الأطباء والفريق التقني في أي وقت'
+              : 'You can switch between Doctors and Technical Team at any time'}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Rooms List + Chat ────────────────────────────────────────────────────
+  const activeType = CONTACT_TYPES.find(t => t.key === contactType);
+  const TypeIcon = activeType?.icon || MessageSquare;
 
   return (
     <div className="h-[calc(100vh-8rem)] flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -127,16 +233,33 @@ export default function PatientMessages() {
             className="flex-1 flex flex-col overflow-hidden"
           >
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h1 className="text-2xl font-bold text-text-heading">{t('chat.messages')}</h1>
-                <p className="text-text-muted text-sm mt-1">{t('chat.yourConversations')}</p>
+            <div className={`flex items-center justify-between mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                {/* Back to type selector */}
+                <button
+                  onClick={() => { setContactType(null); setRooms([]); setSearchQuery(''); }}
+                  className="p-2 rounded-xl hover:bg-background-subtle transition-colors text-text-muted hover:text-text"
+                >
+                  <ChevronRight className={`w-5 h-5 ${isRTL ? '' : 'rotate-180'}`} />
+                </button>
+                <div className={`w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center`}>
+                  <TypeIcon className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-text-heading">
+                    {isRTL ? activeType?.labelAr : activeType?.labelEn}
+                  </h1>
+                  <p className="text-text-muted text-xs mt-0.5">
+                    {isRTL ? activeType?.descAr : activeType?.descEn}
+                  </p>
+                </div>
               </div>
               <Button variant="outline" size="sm" onClick={fetchRooms} disabled={loading} className="gap-2">
                 <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
                 {t('common.refresh')}
               </Button>
             </div>
+
             {/* Search */}
             <div className="relative mb-4">
               <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-text-light`} />
@@ -170,20 +293,18 @@ export default function PatientMessages() {
                     onClick={() => handleOpenRoom(room)}
                     className="w-full p-4 bg-background-paper border border-border rounded-xl text-left transition-all hover:border-primary/50 hover:bg-primary/5"
                   >
-                    <div className="flex items-center gap-3">
+                    <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         {room.OtherParticipantImage ? (
-                          <img
-                            src={room.OtherParticipantImage}
-                            alt=""
-                            className="w-full h-full rounded-full object-cover"
-                          />
+                          <img src={room.OtherParticipantImage} alt="" className="w-full h-full rounded-full object-cover" />
                         ) : (
-                          <Stethoscope className="w-6 h-6 text-primary" />
+                          contactType === 'support'
+                            ? <SupportAgent className="w-6 h-6 text-secondary" />
+                            : <Stethoscope className="w-6 h-6 text-primary" />
                         )}
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex justify-between items-start">
+                      <div className={`flex-1 min-w-0 ${isRTL ? 'text-right' : 'text-left'}`}>
+                        <div className={`flex justify-between items-start ${isRTL ? 'flex-row-reverse' : ''}`}>
                           <h4 className="font-bold text-text-heading truncate">
                             {room.OtherParticipantName || room.Name || "Chat"}
                           </h4>
@@ -231,6 +352,6 @@ export default function PatientMessages() {
           </motion.div>
         )}
       </AnimatePresence>
-    </div >
+    </div>
   );
 }

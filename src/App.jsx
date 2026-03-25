@@ -11,6 +11,8 @@ import Layout from './components/layout/Layout'
 import PatientSettings from './views/patient/Settings'
 import PatientMessages from './views/patient/PatientMessages'
 import ReserveAppointment from './views/patient/ReserveAppointment'
+import PatientTests from './views/patient/Tests'
+import PatientArticles from './views/patient/Articles'
 import DoctorDashboard from './views/doctor/Dashboard'
 import Schedule from './views/doctor/Schedule'
 import PatientQueue from './views/doctor/PatientQueue'
@@ -84,6 +86,26 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
               <Layout>
                 <PatientMessages />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/patient/tests"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
+              <Layout>
+                <PatientTests />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/patient/articles"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
+              <Layout>
+                <PatientArticles />
               </Layout>
             </ProtectedRoute>
           }
