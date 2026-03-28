@@ -42,15 +42,18 @@ export default function StaffProfile() {
         try {
             const reader = new FileReader()
             reader.onload = async () => {
-                const base64 = reader.result.split(',')[1]
-                const userId = user?.id || user?.Id
-                const response = await userAPI.updateImage(userId, base64)
+                try {
+                    const base64 = reader.result.split(',')[1]
+                    const response = await userAPI.updateCurrentUserImage(user, base64)
 
-                if (response?.IsSuccess !== false) {
-                    updateProfile({ image: reader.result })
-                    toast.success(t('success.imageUpdated'))
-                } else {
-                    toast.error(response?.Message || t('errors.somethingWentWrong'))
+                    if (response?.IsSuccess !== false) {
+                        updateProfile({ image: response.Data || reader.result })
+                        toast.success(t('success.imageUpdated'))
+                    } else {
+                        toast.error(response?.Message || t('errors.somethingWentWrong'))
+                    }
+                } catch (error) {
+                    toast.error(error?.response?.data?.Message || t('errors.somethingWentWrong'))
                 }
             }
             reader.readAsDataURL(file)

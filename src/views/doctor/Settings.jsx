@@ -1,9 +1,10 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useToast } from '../../components/ui/Toast'
 import ProfileSettings from '../../components/doctor/settings/ProfileSettings'
+import LocalDocumentsManager from '../../components/shared/LocalDocumentsManager'
 import { userAPI } from '../../lib/api'
 import { Lock } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
@@ -17,6 +18,10 @@ export default function Settings() {
   const [showPasswordSection, setShowPasswordSection] = useState(false)
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [passwordLoading, setPasswordLoading] = useState(false)
+  const doctorDocumentsStorageKey = useMemo(() => {
+    const userId = userAPI.resolveUserId(user) || 'doctor-current'
+    return `nafs:doctor:documents:${userId}`
+  }, [user])
 
   const handleSave = async (data) => {
     try {
@@ -42,13 +47,17 @@ export default function Settings() {
     try {
       const reader = new FileReader()
       reader.onload = async () => {
-        const base64 = reader.result.split(',')[1]
-        const response = await userAPI.updateImage(user?.ID || user?.id, base64)
-        if (response?.IsSuccess !== false) {
-          updateProfile({ image: response.Data || reader.result })
-          toast.success(t('success.photoUpdated', 'Profile photo updated'))
-        } else {
-          toast.error(response?.Message || t('errors.unexpectedError', 'Failed to update photo'))
+        try {
+          const base64 = reader.result.split(',')[1]
+          const response = await userAPI.updateCurrentUserImage(user, base64)
+          if (response?.IsSuccess !== false) {
+            updateProfile({ image: response.Data || reader.result })
+            toast.success(t('success.photoUpdated', 'Profile photo updated'))
+          } else {
+            toast.error(response?.Message || t('errors.unexpectedError', 'Failed to update photo'))
+          }
+        } catch (error) {
+          toast.error(error?.response?.data?.Message || t('errors.unexpectedError', 'Failed to update photo'))
         }
       }
       reader.readAsDataURL(file)
@@ -110,6 +119,21 @@ export default function Settings() {
 
           <div className="p-6 md:p-8">
             <ProfileSettings user={user} onSave={handleSave} onImageUpload={handleImageUpload} />
+          </div>
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05 }}
+          className="mt-8 bg-background-paper rounded-2xl shadow-lg border border-border overflow-hidden"
+        >
+          <div className="p-6 md:p-8">
+            <LocalDocumentsManager
+              storageKey={doctorDocumentsStorageKey}
+              title="Doctor Certificates & Documentation"
+              buttonLabel="Add Certificate && docementation"
+            />
           </div>
         </motion.div>
 

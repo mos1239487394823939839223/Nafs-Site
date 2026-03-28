@@ -36,6 +36,7 @@ import AdminMessages from './views/admin/Messages'
 import AdminBookings from './views/admin/Bookings'
 import AdminDashboard from './views/admin/Dashboard'
 import MessagesPage from './views/shared/MessagesPage'
+import DocumentViewer from './views/shared/DocumentViewer'
 
 function RootRedirect() {
   const { isAuthenticated, getDashboardRoute } = useAuth()
@@ -293,6 +294,15 @@ function AppRoutes() {
           element={
             <ProtectedRoute>
               <RootRedirect />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/document-viewer"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.PATIENT, Roles.DOCTOR, Roles.ADMIN, Roles.STAFF]}>
+              <DocumentViewer />
             </ProtectedRoute>
           }
         />

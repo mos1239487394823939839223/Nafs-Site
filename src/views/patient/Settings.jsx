@@ -44,13 +44,17 @@ export default function Settings() {
       // Convert file to base64
       const reader = new FileReader()
       reader.onload = async () => {
-        const base64 = reader.result.split(',')[1]
-        const response = await userAPI.updateImage(user?.ID || user?.id, base64)
-        if (response?.IsSuccess !== false) {
-          updateProfile({ image: response.Data || reader.result })
-          toast.success(t('success.photoUpdated'))
-        } else {
-          toast.error(response?.Message || t('errors.photoUpdateFailed'))
+        try {
+          const base64 = reader.result.split(',')[1]
+          const response = await userAPI.updateCurrentUserImage(user, base64)
+          if (response?.IsSuccess !== false) {
+            updateProfile({ image: response.Data || reader.result })
+            toast.success(t('success.photoUpdated'))
+          } else {
+            toast.error(response?.Message || t('errors.photoUpdateFailed'))
+          }
+        } catch (error) {
+          toast.error(error?.response?.data?.Message || t('errors.photoUpdateFailed'))
         }
       }
       reader.readAsDataURL(file)

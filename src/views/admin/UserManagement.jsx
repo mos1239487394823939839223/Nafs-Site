@@ -20,6 +20,9 @@ import { useToast } from '../../components/ui/Toast'
 import { People as Users, PersonAdd as UserPlus, Search, Mail, MedicalServices as Stethoscope, Person as User, Refresh as RefreshCw, Phone, Lock, Description as FileText, ToggleOff as ToggleLeft, ToggleOn as ToggleRight, VerifiedUser as ShieldCheck, ShowChart as Activity, Close as X, PhotoCamera as Camera } from '@mui/icons-material'
 import { adminAPI, userAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
+import LocalDocumentsManager from '../../components/shared/LocalDocumentsManager'
+
+const ADD_DOCTOR_DOCS_STORAGE_KEY = 'nafs:admin:add-doctor-documents'
 
 export default function UserManagement() {
     const toast = useToast()
@@ -142,6 +145,7 @@ export default function UserManagement() {
                 }
 
                 toast.success(t('success.doctorAdded'))
+                localStorage.removeItem(ADD_DOCTOR_DOCS_STORAGE_KEY)
                 setModalOpen(false)
                 setFormData({ name: '', email: '', password: '', phoneNumber: '', description: '', specialist: '', image: null, imagePreview: null })
                 fetchDoctors()
@@ -524,6 +528,12 @@ export default function UserManagement() {
                                     onChange={handleInputChange}
                                     placeholder={t('admin.professionalBio')}
                                     rows={3}
+                                />
+
+                                <LocalDocumentsManager
+                                    storageKey={ADD_DOCTOR_DOCS_STORAGE_KEY}
+                                    title="Doctor Certificates & Documentation"
+                                    buttonLabel="Add Certificate && docementation"
                                 />
                             </div>
 

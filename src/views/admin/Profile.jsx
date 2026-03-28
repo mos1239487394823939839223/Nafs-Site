@@ -39,15 +39,20 @@ export default function AdminProfile() {
             try {
                 const reader = new FileReader()
                 reader.onload = async () => {
-                    const base64 = reader.result.split(',')[1]
-                    const response = await userAPI.updateImage(user?.ID || user?.id, base64)
-                    if (response?.IsSuccess !== false) {
-                        updateProfile({ image: response.Data || reader.result })
-                        toast.success(t('success.photoUpdated'))
-                    } else {
-                        toast.error(response?.Message || t('errors.somethingWentWrong'))
+                    try {
+                        const base64 = reader.result.split(',')[1]
+                        const response = await userAPI.updateCurrentUserImage(user, base64)
+                        if (response?.IsSuccess !== false) {
+                            updateProfile({ image: response.Data || reader.result })
+                            toast.success(t('success.photoUpdated'))
+                        } else {
+                            toast.error(response?.Message || t('errors.somethingWentWrong'))
+                        }
+                    } catch (error) {
+                        toast.error(error?.response?.data?.Message || t('errors.somethingWentWrong'))
+                    } finally {
+                        setUploadingImage(false)
                     }
-                    setUploadingImage(false)
                 }
                 reader.readAsDataURL(file)
             } catch (error) {

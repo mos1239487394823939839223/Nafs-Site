@@ -39,6 +39,16 @@ api.interceptors.request.use((config) => {
     if (token) {
         config.headers.Authorization = `Bearer ${token}`;
     }
+
+    if (import.meta.env.DEV && config.url?.toLowerCase() === '/user/updateimage') {
+        const imageLength = config.data?.Image?.length || 0;
+        console.debug('[API] PUT /user/UpdateImage', {
+            baseURL: config.baseURL,
+            hasId: Boolean(config.data?.Id),
+            imageLength,
+        });
+    }
+
     return config;
 }, (error) => {
     return Promise.reject(error);
@@ -139,6 +149,21 @@ export const authAPI = {
 
 // ─── User API Functions ──────────────────────────────────────────────────────
 export const userAPI = {
+    // Resolve user id from different backend/frontend naming conventions
+    resolveUserId: (user) => {
+        const directId = user?.ID || user?.Id || user?.id;
+        if (directId) return directId;
+
+        try {
+            const storedAuth = localStorage.getItem('auth');
+            if (!storedAuth) return null;
+            const parsed = JSON.parse(storedAuth);
+            return parsed?.user?.ID || parsed?.user?.Id || parsed?.user?.id || null;
+        } catch {
+            return null;
+        }
+    },
+
     // Get current user info
     getCurrentUser: async () => {
         const response = await api.get('/user/GetCurrent');
@@ -178,6 +203,15 @@ export const userAPI = {
             Image: imageBase64,
         });
         return response.data;
+    },
+
+    // Update current user profile image regardless of role object shape
+    updateCurrentUserImage: async (user, imageBase64) => {
+        const userId = userAPI.resolveUserId(user);
+        if (!userId) {
+            throw new Error('USER_ID_NOT_FOUND');
+        }
+        return userAPI.updateImage(userId, imageBase64);
     },
 
     // Update language preference
