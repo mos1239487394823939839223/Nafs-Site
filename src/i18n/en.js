@@ -19,6 +19,8 @@ export default {
     ok: 'OK',
     close: 'Close',
     view: 'View',
+    download: 'Download',
+    remove: 'Remove',
     actions: 'Actions',
     status: 'Status',
     active: 'Active',
@@ -74,6 +76,7 @@ export default {
     none: 'None',
     emailAddress: 'Email Address',
     phoneNumber: 'Phone Number',
+    fullName: 'Full Name',
     total: 'Total',
     min: 'min',
   },
@@ -617,6 +620,26 @@ export default {
     resolveTicket: 'Resolve Ticket',
     staffProfile: 'Staff Profile',
     manageSupport: 'Manage your support account information.',
+  },
+
+  // Documents
+  documents: {
+    title: 'Doctor Certificates & Documentation',
+    addButton: 'Add Certificate && docementation',
+    empty: 'No uploaded certificates or documents yet.',
+    modalDescription: 'Upload and keep files in local storage until backend endpoint is ready.',
+    fileTooLarge2mb: 'is larger than 2MB and was skipped.',
+    filesUploadedLocally: 'file(s) uploaded locally.',
+    uploadFailed: 'Failed to upload selected files.',
+    filesCountSuffix: 'file(s)',
+    uploading: 'Uploading...',
+    clearAll: 'Clear All',
+    fileNotFoundDescription: 'Could not load this file from local storage. It may have been removed.',
+    closeTab: 'Close Tab',
+    openedInNewTab: 'Opened in new tab viewer',
+    previewNotAvailable: 'Preview Not Available',
+    previewNotAvailableDescription: 'This file type cannot be rendered inline. Use Download.',
+    docxRenderFailed: 'Failed to render this DOCX file. You can still download it.',
   },
 
   // Errors

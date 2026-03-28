@@ -131,8 +131,9 @@ export default function Settings() {
           <div className="p-6 md:p-8">
             <LocalDocumentsManager
               storageKey={doctorDocumentsStorageKey}
-              title="Doctor Certificates & Documentation"
-              buttonLabel="Add Certificate && docementation"
+              title={t('documents.title')}
+              buttonLabel={t('documents.addButton')}
+              emptyMessage={t('documents.empty')}
             />
           </div>
         </motion.div>

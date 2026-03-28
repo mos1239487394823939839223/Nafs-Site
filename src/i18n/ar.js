@@ -19,6 +19,7 @@ export default {
     ok: 'حسناً',
     close: 'إغلاق',
     view: 'عرض',
+    download: 'تنزيل',
     actions: 'إجراءات',
     status: 'الحالة',
     active: 'نشط',
@@ -629,6 +630,26 @@ export default {
     resolveTicket: 'حل التذكرة',
     staffProfile: 'ملف الموظف',
     manageSupport: 'إدارة معلومات حسابك كموظف دعم.',
+  },
+
+  // Documents
+  documents: {
+    title: 'شهادات ووثائق الطبيب',
+    addButton: 'إضافة الشهادات والوثائق',
+    empty: 'لا توجد شهادات أو مستندات مرفوعة بعد.',
+    modalDescription: 'قم برفع الملفات وحفظها محلياً لحين تجهيز نقطة الربط في الخلفية.',
+    fileTooLarge2mb: 'أكبر من 2 ميجابايت وتم تجاهله.',
+    filesUploadedLocally: 'ملف(ات) تم رفعها محلياً.',
+    uploadFailed: 'فشل رفع الملفات المحددة.',
+    filesCountSuffix: 'ملف',
+    uploading: 'جاري الرفع...',
+    clearAll: 'مسح الكل',
+    fileNotFoundDescription: 'تعذر تحميل هذا الملف من التخزين المحلي. ربما تم حذفه.',
+    closeTab: 'إغلاق التبويب',
+    openedInNewTab: 'تم الفتح في عارض تبويب جديد',
+    previewNotAvailable: 'المعاينة غير متاحة',
+    previewNotAvailableDescription: 'لا يمكن عرض هذا النوع من الملفات داخل الصفحة. استخدم التنزيل.',
+    docxRenderFailed: 'فشل عرض ملف DOCX. لا يزال بإمكانك تنزيله.',
   },
 
   // Errors

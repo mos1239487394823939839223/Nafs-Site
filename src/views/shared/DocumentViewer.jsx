@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom'
 import { Download, ArrowBack } from '@mui/icons-material'
 import { renderAsync } from 'docx-preview'
 import Button from '../../components/ui/Button'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 const readDocuments = (storageKey) => {
   try {
@@ -40,6 +41,7 @@ const downloadDataUrl = (dataUrl, fileName) => {
 }
 
 export default function DocumentViewer() {
+  const { t } = useLanguage()
   const [searchParams] = useSearchParams()
   const storageKey = searchParams.get('storageKey') || ''
   const docId = searchParams.get('docId') || ''
@@ -89,7 +91,7 @@ export default function DocumentViewer() {
         })
       } catch {
         if (!cancelled) {
-          setDocxError('Failed to render this DOCX file. You can still download or open it raw.')
+          setDocxError(t('documents.docxRenderFailed'))
         }
       }
     }
@@ -109,10 +111,10 @@ export default function DocumentViewer() {
       <div className="min-h-screen bg-background text-text flex items-center justify-center p-6">
         <div className="max-w-lg w-full rounded-2xl border border-border bg-background-paper p-8 text-center space-y-4">
           <h1 className="text-2xl font-bold text-text-heading">File Not Found</h1>
-          <p className="text-text-muted">Could not load this file from local storage. It may have been removed.</p>
+          <p className="text-text-muted">{t('documents.fileNotFoundDescription')}</p>
           <Button onClick={() => window.close()}>
             <ArrowBack className="w-4 h-4" />
-            Close Tab
+            {t('documents.closeTab')}
           </Button>
         </div>
       </div>
@@ -125,12 +127,12 @@ export default function DocumentViewer() {
         <div className="rounded-2xl border border-border bg-background-paper p-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
             <h1 className="text-xl md:text-2xl font-bold text-text-heading truncate">{documentItem.name}</h1>
-            <p className="text-sm text-text-muted">Opened in new tab viewer</p>
+            <p className="text-sm text-text-muted">{t('documents.openedInNewTab')}</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" onClick={() => downloadDataUrl(documentItem.dataUrl, documentItem.name)}>
               <Download className="w-4 h-4" />
-              Download
+              {t('common.download')}
             </Button>
           </div>
         </div>
@@ -153,12 +155,12 @@ export default function DocumentViewer() {
           ) : (
             <div className="h-[80vh] flex items-center justify-center text-center p-8">
               <div>
-                <h2 className="text-xl font-semibold text-text-heading mb-2">Preview Not Available</h2>
-                <p className="text-text-muted mb-4">This file type cannot be rendered inline. Use Download.</p>
+                <h2 className="text-xl font-semibold text-text-heading mb-2">{t('documents.previewNotAvailable')}</h2>
+                <p className="text-text-muted mb-4">{t('documents.previewNotAvailableDescription')}</p>
                 <div className="flex items-center justify-center gap-2">
                   <Button variant="outline" onClick={() => downloadDataUrl(documentItem.dataUrl, documentItem.name)}>
                     <Download className="w-4 h-4" />
-                    Download
+                    {t('common.download')}
                   </Button>
                 </div>
               </div>

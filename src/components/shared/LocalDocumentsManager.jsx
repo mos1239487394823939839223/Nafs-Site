@@ -3,6 +3,7 @@ import { UploadFile, Description as FileText, Visibility, DeleteOutline, FolderO
 import Button from '../ui/Button'
 import { useToast } from '../ui/Toast'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/Dialog'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 const ACCEPTED_DOCUMENT_TYPES = 'image/*,.pdf,.doc,.docx,.txt,.rtf,.xls,.xlsx,.ppt,.pptx'
 const DEFAULT_BUTTON_LABEL = 'Add Certificate && docementation'
@@ -45,6 +46,7 @@ export default function LocalDocumentsManager({
   emptyMessage = 'No uploaded certificates or documents yet.',
 }) {
   const toast = useToast()
+  const { t } = useLanguage()
   const fileInputRef = useRef(null)
   const [documents, setDocuments] = useState([])
   const [isUploading, setIsUploading] = useState(false)
@@ -71,7 +73,7 @@ export default function LocalDocumentsManager({
     try {
       const validFiles = files.filter((file) => {
         if (file.size > MAX_FILE_SIZE_BYTES) {
-          toast.error(`${file.name} is larger than 2MB and was skipped.`)
+          toast.error(`${file.name} ${t('documents.fileTooLarge2mb')}`)
           return false
         }
         return true
@@ -93,9 +95,9 @@ export default function LocalDocumentsManager({
 
       const nextDocuments = [...documents, ...uploaded]
       persistDocuments(nextDocuments)
-      toast.success(`${uploaded.length} file(s) uploaded locally.`)
+      toast.success(`${uploaded.length} ${t('documents.filesUploadedLocally')}`)
     } catch {
-      toast.error('Failed to upload selected files.')
+      toast.error(t('documents.uploadFailed'))
     } finally {
       event.target.value = ''
       setIsUploading(false)
@@ -136,7 +138,7 @@ export default function LocalDocumentsManager({
           <UploadFile className="w-4 h-4" />
           {buttonLabel}
         </Button>
-        <span className="text-xs text-text-muted">{documents.length} file(s)</span>
+        <span className="text-xs text-text-muted">{documents.length} {t('documents.filesCountSuffix')}</span>
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -144,7 +146,7 @@ export default function LocalDocumentsManager({
           <DialogHeader>
             <DialogTitle>{title}</DialogTitle>
             <DialogDescription>
-              Upload and keep files in local storage until backend endpoint is ready.
+              {t('documents.modalDescription')}
             </DialogDescription>
           </DialogHeader>
 
@@ -152,12 +154,12 @@ export default function LocalDocumentsManager({
             <div className="flex items-center gap-2">
               <Button size="sm" onClick={handleOpenFilePicker} disabled={isUploading}>
                 <UploadFile className="w-4 h-4" />
-                {isUploading ? 'Uploading...' : buttonLabel}
+                {isUploading ? t('documents.uploading') : buttonLabel}
               </Button>
               {documents.length > 0 && (
                 <Button variant="ghost" size="sm" onClick={handleClearAll}>
                   <DeleteOutline className="w-4 h-4" />
-                  Clear All
+                  {t('documents.clearAll')}
                 </Button>
               )}
             </div>
@@ -183,11 +185,11 @@ export default function LocalDocumentsManager({
                     <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" onClick={() => handleViewDocument(documentItem)}>
                         <Visibility className="w-4 h-4" />
-                        View
+                        {t('common.view')}
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleRemoveDocument(documentItem.id)}>
                         <DeleteOutline className="w-4 h-4" />
-                        Remove
+                        {t('common.remove')}
                       </Button>
                     </div>
                   </div>
@@ -199,7 +201,7 @@ export default function LocalDocumentsManager({
 
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsModalOpen(false)}>
-              Close
+              {t('common.close')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -427,91 +427,114 @@ export default function UserManagement() {
 
                 {/* Add Doctor Dialog */}
                 <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-                    <DialogContent>
-                        <form onSubmit={handleAddDoctor}>
-                            <DialogHeader>
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 border border-primary/10">
-                                        <UserPlus className="w-5 h-5 text-primary" />
-                                    </div>
-                                    <div>
-                                        <DialogTitle>{t('admin.addNewDoctor')}</DialogTitle>
-                                        <DialogDescription>{t('admin.manageDoctorsPatients')}</DialogDescription>
+                    <DialogContent maxWidth="md" sx={{ '& .MuiDialog-paper': { maxHeight: '88vh', overflowY: 'auto', overflowX: 'hidden' } }}>
+                        <form onSubmit={handleAddDoctor} className="flex flex-col">
+                            <DialogHeader sx={{ p: 0, borderBottom: 'none' }}>
+                                <div className="px-5 pt-5 pb-4 border-b border-border bg-gradient-to-r from-primary/10 via-secondary/5 to-transparent rounded-t-2xl">
+                                    <div className="flex items-center gap-3">
+                                        <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-background-paper border border-primary/15 shadow-sm">
+                                            <UserPlus className="w-6 h-6 text-primary" />
+                                        </div>
+                                        <div>
+                                            <DialogTitle className="text-2xl">{t('admin.addNewDoctor')}</DialogTitle>
+                                            <DialogDescription className="mt-1">{t('admin.manageDoctorsPatients')}</DialogDescription>
+                                        </div>
                                     </div>
                                 </div>
                             </DialogHeader>
 
-                            <div className="p-6 space-y-5">
-                                {/* Doctor Image Upload */}
-                                <div className="flex flex-col items-center justify-center p-4 bg-background-subtle/30 rounded-2xl border border-dashed border-border mb-2">
-                                    <div className="relative group">
-                                        <div className="w-24 h-24 rounded-full border-2 border-primary/20 flex items-center justify-center overflow-hidden bg-background-paper">
-                                            {formData.imagePreview ? (
-                                                <img src={formData.imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                                            ) : (
-                                                <User className="w-10 h-10 text-text-light/30" />
-                                            )}
+                            <div className="p-5 space-y-4 bg-gradient-to-b from-background to-background-subtle/20">
+                                <div className="rounded-2xl border border-primary/15 bg-background-paper p-5 shadow-sm">
+                                    <div className="flex flex-col md:flex-row md:items-center gap-5">
+                                        <div className="relative mx-auto md:mx-0">
+                                            <div className="w-28 h-28 rounded-full border-2 border-primary/20 flex items-center justify-center overflow-hidden bg-background-subtle">
+                                                {formData.imagePreview ? (
+                                                    <img src={formData.imagePreview} alt="Preview" className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <User className="w-12 h-12 text-text-light/40" />
+                                                )}
+                                            </div>
+                                            <label className="absolute -bottom-1 -right-1 p-2.5 bg-primary text-white rounded-full cursor-pointer hover:bg-primary-dark transition-all shadow-lg">
+                                                <Camera className="w-4 h-4" />
+                                                <input
+                                                    type="file"
+                                                    className="hidden"
+                                                    accept="image/*"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files[0]
+                                                        if (file) {
+                                                            setFormData(prev => ({
+                                                                ...prev,
+                                                                image: file,
+                                                                imagePreview: URL.createObjectURL(file)
+                                                            }))
+                                                        }
+                                                    }}
+                                                />
+                                            </label>
                                         </div>
-                                        <label className="absolute bottom-0 right-0 p-2 bg-primary text-white rounded-full cursor-pointer hover:bg-primary-dark transition-all shadow-md">
-                                            <Camera className="w-4 h-4" />
-                                            <input
-                                                type="file"
-                                                className="hidden"
-                                                accept="image/*"
-                                                onChange={(e) => {
-                                                    const file = e.target.files[0]
-                                                    if (file) {
-                                                        setFormData(prev => ({
-                                                            ...prev,
-                                                            image: file,
-                                                            imagePreview: URL.createObjectURL(file)
-                                                        }))
-                                                    }
-                                                }}
-                                            />
-                                        </label>
+
+                                        <div className="flex-1 text-center md:text-left">
+                                            <h3 className="text-lg font-semibold text-text-heading">{t('settings.profilePhoto')}</h3>
+                                            <p className="text-sm text-text-muted mt-1">Upload a clear professional photo for the doctor account.</p>
+                                            <p className="text-xs text-text-light mt-2">Recommended: JPG or PNG, square ratio.</p>
+                                        </div>
                                     </div>
-                                    <p className="text-xs text-text-muted mt-2">{t('settings.profilePhoto')}</p>
                                 </div>
 
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                                    <Input
-                                        label={`${t('common.fullName')} *`}
-                                        name="name"
-                                        value={formData.name}
-                                        onChange={handleInputChange}
-                                        placeholder="e.g. Dr. Ahmed Hassan"
-                                        required
-                                        icon={User}
-                                    />
-                                    <Input
-                                        label={`${t('common.emailAddress')} *`}
-                                        type="email"
-                                        name="email"
-                                        value={formData.email}
-                                        onChange={handleInputChange}
-                                        placeholder="name@example.com"
-                                        required
-                                        icon={Mail}
-                                    />
-                                    <Input
-                                        label={`${t('common.password')} *`}
-                                        type="password"
-                                        name="password"
-                                        value={formData.password}
-                                        onChange={handleInputChange}
-                                        placeholder={t('admin.minChars')}
-                                        required
-                                        icon={Lock}
-                                    />
-                                    <Input
-                                        label={t('common.phoneNumber')}
-                                        name="phoneNumber"
-                                        value={formData.phoneNumber}
-                                        onChange={handleInputChange}
-                                        placeholder="+201234567890"
-                                        icon={Phone}
-                                    />
+                                <div className="rounded-2xl border border-border bg-background-paper p-5 shadow-sm space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <User className="w-4 h-4 text-primary" />
+                                        <h3 className="font-semibold text-text-heading">Account Information</h3>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <Input
+                                            label={t('common.fullName')}
+                                            name="name"
+                                            value={formData.name}
+                                            onChange={handleInputChange}
+                                            placeholder="e.g. Dr. Ahmed Hassan"
+                                            required
+                                            icon={User}
+                                        />
+                                        <Input
+                                            label={t('common.emailAddress')}
+                                            type="email"
+                                            name="email"
+                                            value={formData.email}
+                                            onChange={handleInputChange}
+                                            placeholder="name@example.com"
+                                            required
+                                            icon={Mail}
+                                        />
+                                        <Input
+                                            label={t('common.password')}
+                                            type="password"
+                                            name="password"
+                                            value={formData.password}
+                                            onChange={handleInputChange}
+                                            placeholder={t('admin.minChars')}
+                                            required
+                                            icon={Lock}
+                                        />
+                                        <Input
+                                            label={t('common.phoneNumber')}
+                                            name="phoneNumber"
+                                            value={formData.phoneNumber}
+                                            onChange={handleInputChange}
+                                            placeholder="+201234567890"
+                                            icon={Phone}
+                                        />
+                                    </div>
+                                </div>
+
+                                <div className="rounded-2xl border border-border bg-background-paper p-5 shadow-sm space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <Stethoscope className="w-4 h-4 text-primary" />
+                                        <h3 className="font-semibold text-text-heading">Professional Details</h3>
+                                    </div>
+
                                     <Input
                                         label={t('common.specialty')}
                                         name="specialist"
@@ -520,28 +543,37 @@ export default function UserManagement() {
                                         placeholder="e.g. Psychiatry"
                                         icon={Stethoscope}
                                     />
-                                </div>
-                                <Textarea
-                                    label={t('common.description')}
-                                    name="description"
-                                    value={formData.description}
-                                    onChange={handleInputChange}
-                                    placeholder={t('admin.professionalBio')}
-                                    rows={3}
-                                />
 
-                                <LocalDocumentsManager
-                                    storageKey={ADD_DOCTOR_DOCS_STORAGE_KEY}
-                                    title="Doctor Certificates & Documentation"
-                                    buttonLabel="Add Certificate && docementation"
-                                />
+                                    <Textarea
+                                        label={t('common.description')}
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={handleInputChange}
+                                        placeholder={t('admin.professionalBio')}
+                                        rows={3}
+                                    />
+                                </div>
+
+                                <div className="rounded-2xl border border-border bg-background-paper p-5 shadow-sm space-y-3">
+                                    <div className="flex items-center gap-2">
+                                        <FileText className="w-4 h-4 text-primary" />
+                                        <h3 className="font-semibold text-text-heading">{t('documents.title')}</h3>
+                                    </div>
+                                    <p className="text-sm text-text-muted">Add certificates and documentation now. They will be stored locally until the endpoint is ready.</p>
+                                    <LocalDocumentsManager
+                                        storageKey={ADD_DOCTOR_DOCS_STORAGE_KEY}
+                                        title={t('documents.title')}
+                                        buttonLabel={t('documents.addButton')}
+                                        emptyMessage={t('documents.empty')}
+                                    />
+                                </div>
                             </div>
 
-                            <DialogFooter>
+                            <DialogFooter sx={{ position: 'sticky', bottom: 0, backgroundColor: 'background.paper', zIndex: 2, borderTop: '1px solid', borderColor: 'divider', boxShadow: '0 -8px 20px rgba(0,0,0,0.04)' }}>
                                 <Button variant="ghost" type="button" onClick={() => setModalOpen(false)}>
                                     {t('common.cancel')}
                                 </Button>
-                                <Button type="submit" isLoading={submitting}>
+                                <Button type="submit" isLoading={submitting} className="px-6">
                                     {!submitting && <UserPlus className="w-4 h-4" />}
                                     {submitting ? t('admin.creating') : t('admin.createDoctorAccount')}
                                 </Button>
