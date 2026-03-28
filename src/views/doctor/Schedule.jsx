@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { CalendarToday as CalendarIcon, Save, Add as Plus, Delete as Trash2, Block as Ban, Sync as Loader2, ChevronLeft, ChevronRight, GridView as LayoutGrid, AccessTime as Clock, Close as X } from '@mui/icons-material'
+import { CalendarToday as CalendarIcon, Save, Add as Plus, Delete as Trash2, EventBusy, Sync as Loader2, ChevronLeft, ChevronRight, GridView as LayoutGrid, AccessTime as Clock, Close as X } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import Modal from '../../components/ui/Modal'
+import DatePicker from '../../components/ui/DatePicker'
+import SelectDropdown from '../../components/ui/SelectDropdown'
 import { useToast } from '../../components/ui/Toast'
 import { useAuth } from '../../contexts/AuthContext'
 import { doctorAPI } from '../../lib/api'
@@ -43,6 +45,12 @@ const formatDateKey = (date) => {
   const m = String(date.getMonth() + 1).padStart(2, '0')
   const d = String(date.getDate()).padStart(2, '0')
   return `${y}-${m}-${d}`
+}
+
+// Normalize date strings from API - strips time part from ISO datetime (e.g. "2026-03-28T00:00:00" → "2026-03-28")
+const normalizeDateKey = (dateStr) => {
+  if (!dateStr) return null
+  return dateStr.split('T')[0]
 }
 
 export default function Schedule() {
@@ -229,10 +237,10 @@ export default function Schedule() {
     ))
   }
 
-  // Group availability by type (0=Blocked, 1=Weekly, 2=SpecificSlot)
+  // Group availability by type (1=Weekly, 2=SpecificSlot, 3=Blocked)
   const weeklyAvailability = availability.filter(a => a.AvailabilityType === 1)
   const specificSlots = availability.filter(a => a.AvailabilityType === 2)
-  const blockedSlots = availability.filter(a => a.AvailabilityType === 0)
+  const blockedSlots = availability.filter(a => a.AvailabilityType === 3)
 
   // Calendar helpers
   const calendarDays = getMonthDays(calendarYear, calendarMonth)
@@ -273,16 +281,16 @@ export default function Schedule() {
 
     // Specific slots
     specificSlots.forEach(slot => {
-      if (!slot.SpecificDate) return
-      const key = slot.SpecificDate
+      const key = normalizeDateKey(slot.SpecificDate)
+      if (!key) return
       if (!map[key]) map[key] = []
       map[key].push({ ...slot, _type: 'specific' })
     })
 
     // Blocked slots
     blockedSlots.forEach(slot => {
-      if (!slot.SpecificDate) return
-      const key = slot.SpecificDate
+      const key = normalizeDateKey(slot.SpecificDate)
+      if (!key) return
       if (!map[key]) map[key] = []
       map[key].push({ ...slot, _type: 'blocked' })
     })
@@ -315,8 +323,8 @@ export default function Schedule() {
             <Plus className="w-4 h-4" />
             {t('doctor.addSlot')}
           </Button>
-          <Button variant="outline" onClick={() => setIsBlockModalOpen(true)} className="gap-2 text-red-600 border-red-200 hover:bg-red-50">
-            <Ban className="w-4 h-4" />
+          <Button variant="outline" onClick={() => setIsBlockModalOpen(true)} className="gap-2 text-amber-600 border-amber-200 hover:bg-amber-50">
+            <EventBusy className="w-4 h-4" />
             {t('doctor.blockTime')}
           </Button>
         </div>
@@ -410,7 +418,7 @@ export default function Schedule() {
                       </button>
                     </div>
                     <div className="text-sm text-text-muted space-y-1">
-                      <p><strong>{t('doctor.date')}:</strong> {slot.SpecificDate || 'N/A'}</p>
+                      <p><strong>{t('doctor.date')}:</strong> {normalizeDateKey(slot.SpecificDate) || 'N/A'}</p>
                       <p><strong>{t('doctor.time')}:</strong> {slot.StartTime} - {slot.EndTime}</p>
                       <p><strong>{t('doctor.duration')}:</strong> {SlotDurationLabels[slot.SlotDuration] || `${slot.SlotDuration}`}</p>
                     </div>
@@ -431,7 +439,7 @@ export default function Schedule() {
             transition={{ delay: 0.2 }}
           >
             <h2 className="text-xl font-bold text-text-heading mb-4 flex items-center gap-2">
-              <Ban className="w-5 h-5 text-primary-dark opacity-60" />
+              <EventBusy className="w-5 h-5 text-amber-500" />
               {t('doctor.blockedTime')}
             </h2>
             {blockedSlots.length > 0 ? (
@@ -453,7 +461,7 @@ export default function Schedule() {
                       </button>
                     </div>
                     <div className="text-sm text-text-muted space-y-1">
-                      <p><strong>{t('doctor.date')}:</strong> {slot.SpecificDate || 'N/A'}</p>
+                      <p><strong>{t('doctor.date')}:</strong> {normalizeDateKey(slot.SpecificDate) || 'N/A'}</p>
                       <p><strong>{t('doctor.time')}:</strong> {slot.StartTime} - {slot.EndTime}</p>
                     </div>
                   </div>
@@ -479,16 +487,13 @@ export default function Schedule() {
           {weeklySchedules.map((row, index) => (
             <div key={index} className="flex flex-wrap items-end gap-3 p-4 bg-background rounded-xl border border-border">
               <div className="flex-1 min-w-[140px]">
-                <label className="text-xs font-semibold text-text-muted mb-1 block">{t('doctor.day')}</label>
-                <select
-                  value={row.DayOfWeek}
-                  onChange={(e) => updateWeeklyRow(index, 'DayOfWeek', e.target.value)}
-                  className="w-full p-2 border border-border rounded-lg bg-background-paper text-text text-sm"
-                >
-                  {DayOfWeekNames.map((day, i) => (
-                    <option key={i} value={i}>{day}</option>
-                  ))}
-                </select>
+              <SelectDropdown
+                label={t('doctor.day')}
+                value={String(row.DayOfWeek)}
+                onChange={(val) => updateWeeklyRow(index, 'DayOfWeek', val)}
+                size="sm"
+                options={DayOfWeekNames.map((day, i) => ({ value: String(i), label: day }))}
+              />
               </div>
               <div className="min-w-[110px]">
                 <label className="text-xs font-semibold text-text-muted mb-1 block">{t('doctor.start')}</label>
@@ -509,16 +514,13 @@ export default function Schedule() {
                 />
               </div>
               <div className="min-w-[120px]">
-                <label className="text-xs font-semibold text-text-muted mb-1 block">{t('doctor.slotDuration')}</label>
-                <select
-                  value={row.SlotDuration}
-                  onChange={(e) => updateWeeklyRow(index, 'SlotDuration', e.target.value)}
-                  className="w-full p-2 border border-border rounded-lg bg-background-paper text-text text-sm"
-                >
-                  {Object.entries(SlotDurationLabels).map(([key, label]) => (
-                    <option key={key} value={key}>{label}</option>
-                  ))}
-                </select>
+              <SelectDropdown
+                label={t('doctor.slotDuration')}
+                value={String(row.SlotDuration)}
+                onChange={(val) => updateWeeklyRow(index, 'SlotDuration', val)}
+                size="sm"
+                options={Object.entries(SlotDurationLabels).map(([key, label]) => ({ value: key, label }))}
+              />
               </div>
               {weeklySchedules.length > 1 && (
                 <button
@@ -565,15 +567,12 @@ export default function Schedule() {
         size="md"
       >
         <div className="space-y-4">
-          <div>
-            <label className="text-sm font-semibold text-text-muted mb-1 block">{t('doctor.date')}</label>
-            <input
-              type="date"
-              value={slotForm.SpecificDate}
-              onChange={(e) => setSlotForm({ ...slotForm, SpecificDate: e.target.value })}
-              className="w-full p-3 border border-border rounded-xl bg-background text-text"
-            />
-          </div>
+          <DatePicker
+            label={t('doctor.date')}
+            value={slotForm.SpecificDate}
+            onChange={(val) => setSlotForm({ ...slotForm, SpecificDate: val })}
+            placeholder={t('doctor.selectDate', 'Select a date')}
+          />
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-semibold text-text-muted mb-1 block">{t('doctor.startTime')}</label>
@@ -594,18 +593,12 @@ export default function Schedule() {
               />
             </div>
           </div>
-          <div>
-            <label className="text-sm font-semibold text-text-muted mb-1 block">{t('doctor.slotDuration')}</label>
-            <select
-              value={slotForm.SlotDuration}
-              onChange={(e) => setSlotForm({ ...slotForm, SlotDuration: parseInt(e.target.value) })}
-              className="w-full p-3 border border-border rounded-xl bg-background text-text"
-            >
-              {Object.entries(SlotDurationLabels).map(([key, label]) => (
-                <option key={key} value={key}>{label}</option>
-              ))}
-            </select>
-          </div>
+          <SelectDropdown
+            label={t('doctor.slotDuration')}
+            value={String(slotForm.SlotDuration)}
+            onChange={(val) => setSlotForm({ ...slotForm, SlotDuration: parseInt(val) })}
+            options={Object.entries(SlotDurationLabels).map(([key, label]) => ({ value: key, label }))}
+          />
           <div className="flex gap-3 pt-4 border-t border-border">
             <Button variant="outline" className="flex-1" onClick={() => setIsSlotModalOpen(false)}>
               {t('common.cancel')}
@@ -635,15 +628,12 @@ export default function Schedule() {
         size="md"
       >
         <div className="space-y-4">
-          <div>
-            <label className="text-sm font-semibold text-text-muted mb-1 block">{t('doctor.date')}</label>
-            <input
-              type="date"
-              value={blockForm.SpecificDate}
-              onChange={(e) => setBlockForm({ ...blockForm, SpecificDate: e.target.value })}
-              className="w-full p-3 border border-border rounded-xl bg-background text-text"
-            />
-          </div>
+          <DatePicker
+            label={t('doctor.date')}
+            value={blockForm.SpecificDate}
+            onChange={(val) => setBlockForm({ ...blockForm, SpecificDate: val })}
+            placeholder={t('doctor.selectDate', 'Select a date')}
+          />
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="text-sm font-semibold text-text-muted mb-1 block">{t('doctor.startTime')}</label>
@@ -668,7 +658,7 @@ export default function Schedule() {
             <Button variant="outline" className="flex-1" onClick={() => setIsBlockModalOpen(false)}>
               {t('common.cancel')}
             </Button>
-            <Button className="flex-1 gap-2 bg-red-600 hover:bg-red-700" onClick={handleBlockTime} disabled={saving}>
+            <Button className="flex-1 gap-2 bg-amber-500 hover:bg-amber-600" onClick={handleBlockTime} disabled={saving}>
               {saving ? (
                 <>
                   <Loader2 className="w-4 h-4 animate-spin" />
@@ -676,7 +666,7 @@ export default function Schedule() {
                 </>
               ) : (
                 <>
-                  <Ban className="w-4 h-4" />
+                  <EventBusy className="w-4 h-4" />
                   {t('doctor.blockTime')}
                 </>
               )}

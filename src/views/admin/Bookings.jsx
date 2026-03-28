@@ -3,6 +3,7 @@ import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Ca
 import Table, { TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table'
 import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
+import SelectDropdown from '../../components/ui/SelectDropdown'
 import { CalendarToday as Calendar, FilterList as Filter, Sync as Loader2, ChevronLeft, ChevronRight, People as Users, Search } from '@mui/icons-material'
 import { adminAPI } from '../../lib/api'
 import { useToast } from '../../components/ui/Toast'
@@ -106,22 +107,24 @@ export default function AdminBookings() {
             {/* Status filter */}
             <div className="flex items-center gap-2">
               <Filter className="w-4 h-4 text-text-muted" />
-              <select
-                value={statusFilter === null ? '' : statusFilter}
-                onChange={(e) => {
-                  setStatusFilter(e.target.value === '' ? null : parseInt(e.target.value))
+              <SelectDropdown
+                value={statusFilter === null ? '' : String(statusFilter)}
+                onChange={(val) => {
+                  setStatusFilter(val === '' ? null : parseInt(val))
                   setPageIndex(1)
                 }}
-                className={`border border-border rounded-xl px-3 py-2.5 bg-background text-text focus:ring-2 focus:ring-primary/20 outline-none text-sm ${isRTL ? 'pl-8' : 'pr-8'}`}
-              >
-                <option value="">{t('common.allStatus', 'All Status')}</option>
-                <option value="0">{t('bookingStatus.pending')}</option>
-                <option value="1">{t('bookingStatus.confirmed')}</option>
-                <option value="2">{t('bookingStatus.inProgress')}</option>
-                <option value="3">{t('bookingStatus.completed')}</option>
-                <option value="4">{t('bookingStatus.cancelled')}</option>
-                <option value="5">{t('bookingStatus.noShow')}</option>
-              </select>
+                size="sm"
+                options={[
+                  { value: '', label: t('common.allStatus', 'All Status') },
+                  { value: '0', label: t('bookingStatus.pending') },
+                  { value: '1', label: t('bookingStatus.confirmed') },
+                  { value: '2', label: t('bookingStatus.inProgress') },
+                  { value: '3', label: t('bookingStatus.completed') },
+                  { value: '4', label: t('bookingStatus.cancelled') },
+                  { value: '5', label: t('bookingStatus.noShow') },
+                ]}
+                className="w-48"
+              />
             </div>
           </div>
         </CardContent>

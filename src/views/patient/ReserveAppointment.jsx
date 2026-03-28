@@ -22,11 +22,13 @@ import { useToast } from "../../components/ui/Toast";
 import { useLanguage } from "../../contexts/LanguageContext";
 import DoctorDocumentsViewer from "../../components/patient/DoctorDocumentsViewer";
 import Modal from "../../components/ui/Modal";
+import { useSearchParams } from "react-router-dom";
 
 export default function ReserveAppointment() {
   const { user: currentUser } = useAuth();
   const toast = useToast();
   const { t, isRTL } = useLanguage();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // BookingStatus enum
   const BookingStatusMap = {
@@ -37,7 +39,7 @@ export default function ReserveAppointment() {
     4: { label: t('bookingStatus.cancelled'), variant: 'danger' },
     5: { label: t('bookingStatus.noShow'), variant: 'danger' },
   };
-  const [step, setStep] = useState(1); // 1: Doctor List, 2: Calendar/Details, 3: Success
+  const [step, setStep] = useState(searchParams.get("doctorId") ? 2 : 1); // 1: Doctor List, 2: Calendar/Details, 3: Success
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [bookedSlot, setBookedSlot] = useState(null);
@@ -68,12 +70,8 @@ export default function ReserveAppointment() {
   const [cancellingId, setCancellingId] = useState(null);
 
   // Doctor reviews state
-  const [reviews, setReviews] = useState([
-    { id: 1, author: 'Ahmed M.', authorAr: 'أحمد م.', rating: 5, comment: 'Very professional and knowledgeable. Highly recommend!', commentAr: 'محترف جداً وعلى دراية واسعة. أنصح به بشدة!', date: '2025-01-08', liked: false },
-    { id: 2, author: 'Sara K.', authorAr: 'سارة ك.', rating: 4, comment: 'Great experience. The doctor listened carefully and gave clear advice.', commentAr: 'تجربة رائعة. الطبيب استمع بعناية وأعطى نصائح واضحة.', date: '2024-12-22', liked: false },
-    { id: 3, author: 'Mohamed A.', authorAr: 'محمد أ.', rating: 5, comment: 'Excellent doctor. Very patient and thorough in his explanations.', commentAr: 'طبيب ممتاز. صبور جداً ومفصّل في شرحه.', date: '2024-12-10', liked: false },
-  ]);
-  const [newReview, setNewReview] = useState({ rating: 5, comment: '' });
+  const [reviews, setReviews] = useState([]);
+  const [newReview, setNewReview] = useState({ rating: 0, comment: '' });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [selectedWeekStart, setSelectedWeekStart] = useState(new Date());
   
@@ -130,6 +128,10 @@ export default function ReserveAppointment() {
   useEffect(() => {
     if (mainTab === "reserve") {
       fetchDoctors(1);
+      const doctorIdFromUrl = searchParams.get("doctorId");
+      if (doctorIdFromUrl) {
+        handleSelectDoctor(doctorIdFromUrl);
+      }
     } else if (mainTab === "status") {
       fetchPatientBookings(1);
     }
@@ -269,6 +271,8 @@ export default function ReserveAppointment() {
 
         if (doctorData) {
           setSelectedDoctor(doctorData);
+          setReviews(doctorData.Reviews || []);
+          setSearchParams({ doctorId: doctorId }); // Save to URL
 
           // Fetch available slots from dedicated API
           await fetchDoctorSlots(doctorId, selectedDate);
@@ -276,13 +280,19 @@ export default function ReserveAppointment() {
           setStep(2);
         } else {
           toast.error(t('errors.doctorNotFound'));
+          setStep(1);
+          setSearchParams({});
         }
       } else {
         toast.error(response.Message || t('errors.loadDoctorsFailed'));
+        setStep(1);
+        setSearchParams({});
       }
     } catch (error) {
       console.error("Error fetching doctor info:", error);
       toast.error(t('errors.loadDoctorsFailed'));
+      setStep(1);
+      setSearchParams({});
     } finally {
       setLoading(false);
     }
@@ -410,7 +420,11 @@ export default function ReserveAppointment() {
             <div className={`flex ${isRTL ? 'justify-end' : 'justify-start'}`}>
               <Button
                 variant="ghost"
-                onClick={() => setStep(step - 1)}
+                onClick={() => {
+                  setStep(1);
+                  setSelectedDoctor(null);
+                  setSearchParams({}); // Clear from URL
+                }}
                 className="gap-2 hover:bg-primary/10"
               >
                 {isRTL ? <ChevronRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
@@ -633,6 +647,12 @@ export default function ReserveAppointment() {
                   )}
                 </div>
               </motion.div>
+            )}
+
+            {step === 2 && !selectedDoctor && (
+              <div className="flex justify-center items-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
             )}
 
             {step === 2 && selectedDoctor && (
@@ -898,19 +918,39 @@ export default function ReserveAppointment() {
                     <div className={`flex ${isRTL ? 'justify-start' : 'justify-end'} mt-3`}>
                       <Button
                         size="sm"
-                        disabled={!newReview.comment.trim() || submittingReview}
-                        onClick={() => {
-                          if (!newReview.comment.trim()) return;
+                        disabled={!newReview.comment.trim() || newReview.rating === 0 || submittingReview}
+                        onClick={async () => {
+                          if (!newReview.comment.trim() || newReview.rating === 0) return;
                           setSubmittingReview(true);
-                          setTimeout(() => {
-                            setReviews(prev => [{
-                              id: Date.now(), author: isRTL ? 'أنت' : 'You', authorAr: 'أنت',
-                              rating: newReview.rating, comment: newReview.comment, commentAr: newReview.comment,
-                              date: new Date().toISOString().split('T')[0], liked: false,
-                            }, ...prev]);
-                            setNewReview({ rating: 5, comment: '' });
+                          
+                          try {
+                            const response = await patientAPI.addDoctorReview({
+                              DoctorId: selectedDoctor.Id,
+                              Rate: newReview.rating,
+                              Comment: newReview.comment,
+                            });
+                            
+                            if (response?.IsSuccess !== false) {
+                              toast.success(isRTL ? 'تمت إضافة التقييم بنجاح' : 'Review added successfully');
+                              
+                              // Optimistically update UI
+                              setReviews(prev => [{
+                                Id: Date.now(),
+                                ProfileImage: currentUser?.Image || null,
+                                Rate: newReview.rating,
+                                Comment: newReview.comment,
+                                CreatedAt: new Date().toISOString(),
+                              }, ...prev]);
+                            } else {
+                              toast.error(response?.Message || (isRTL ? 'حدث خطأ أثناء الإضافة' : 'Failed to add review'));
+                            }
+                          } catch (error) {
+                            console.error("Error adding review:", error);
+                            toast.error(error.response?.data?.Message || (isRTL ? 'حدث خطأ أثناء الإضافة' : 'Failed to add review'));
+                          } finally {
+                            setNewReview({ rating: 0, comment: '' });
                             setSubmittingReview(false);
-                          }, 800);
+                          }
                         }}
                         className="gap-2"
                       >
@@ -921,42 +961,44 @@ export default function ReserveAppointment() {
                   </Card>
 
                   {/* Reviews List */}
-                  <div className="space-y-4">
-                    {reviews.map(r => (
-                      <Card key={r.id} className="p-5">
-                        <div className={`flex items-start justify-between gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary text-sm flex-shrink-0">
-                              {(isRTL ? r.authorAr : r.author).charAt(0)}
-                            </div>
-                            <div className={isRTL ? 'text-right' : ''}>
-                              <p className="font-semibold text-text-heading text-sm">{isRTL ? r.authorAr : r.author}</p>
-                              <div className="flex items-center gap-1 mt-0.5">
-                                {[1,2,3,4,5].map(s => <Star key={s} className={`w-3.5 h-3.5 ${s <= r.rating ? 'text-amber-400' : 'text-border'}`} />)}
+                  {reviews.length > 0 ? (
+                    <div className="space-y-4">
+                      {reviews.map((r, i) => (
+                        <Card key={r.Id || i} className="p-5">
+                          <div className={`flex items-start justify-between gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                            <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                              <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0">
+                                {r.ProfileImage ? (
+                                  <img src={r.ProfileImage} alt="User" className="w-full h-full object-cover" />
+                                ) : (
+                                  <User className="w-5 h-5 text-primary" />
+                                )}
+                              </div>
+                              <div className={isRTL ? 'text-right' : ''}>
+                                <p className="font-semibold text-text-heading text-sm">{isRTL ? 'مريض' : 'Patient'}</p>
+                                <div className="flex items-center gap-1 mt-0.5">
+                                  {[1,2,3,4,5].map(s => <Star key={s} className={`w-3.5 h-3.5 ${s <= r.Rate ? 'text-amber-400' : 'text-border'}`} />)}
+                                </div>
                               </div>
                             </div>
+                            {r.CreatedAt && (
+                              <span className="text-xs text-text-muted flex-shrink-0">
+                                {new Date(r.CreatedAt).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                              </span>
+                            )}
                           </div>
-                          <span className="text-xs text-text-muted flex-shrink-0">
-                            {new Date(r.date).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                          </span>
-                        </div>
-                        <p className={`text-sm text-text-muted mt-3 leading-relaxed ${isRTL ? 'text-right' : ''}`}>
-                          {isRTL ? r.commentAr : r.comment}
-                        </p>
-                        <div className={`flex items-center gap-2 mt-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                          <button
-                            onClick={() => setReviews(prev => prev.map(rv => rv.id === r.id ? {...rv, liked: !rv.liked} : rv))}
-                            className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-lg transition-colors ${
-                              r.liked ? 'bg-primary/10 text-primary' : 'text-text-muted hover:bg-background-subtle'
-                            }`}
-                          >
-                            <ThumbUp className="w-3.5 h-3.5" />
-                            {isRTL ? 'مفيد' : 'Helpful'}
-                          </button>
-                        </div>
-                      </Card>
-                    ))}
-                  </div>
+                          <p className={`text-sm text-text-muted mt-3 leading-relaxed ${isRTL ? 'text-right' : ''}`}>
+                            {r.Comment}
+                          </p>
+                        </Card>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8 text-text-muted bg-background-paper border rounded-xl shadow-sm">
+                      <Star className="w-10 h-10 mx-auto text-amber-200 mb-2" />
+                      <p>{isRTL ? 'لا توجد تقييمات حتى الآن' : 'No reviews yet'}</p>
+                    </div>
+                  )}
                 </div>
               </motion.div>
             )}
@@ -981,6 +1023,7 @@ export default function ReserveAppointment() {
                   setStep(1);
                   setSelectedDoctor(null);
                   setBookedSlot(null);
+                  setSearchParams({});
                 }}>
                   {t('patient.backToDoctors')}
                 </Button>

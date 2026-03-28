@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react'
 import Modal from '../ui/Modal'
 import Button from '../ui/Button'
-import Input, { Select } from '../ui/Input'
+import Input from '../ui/Input'
 import Badge from '../ui/Badge'
+import DatePicker from '../ui/DatePicker'
 import { Search, CalendarToday as Calendar, AccessTime as Clock, Star, Sync as Loader2, MedicalServices as Stethoscope } from '@mui/icons-material'
 import { patientAPI } from '../../lib/api'
 import { useToast } from '../ui/Toast'
@@ -217,16 +218,16 @@ export default function BookingModal({ isOpen, onClose }) {
         {step === 2 && (
           <div>
             <div className="mb-6">
-              <Input
-                type="date"
-                label="Select Date"
-                value={selectedDate}
-                onChange={(e) => {
-                  setSelectedDate(e.target.value)
-                  setSelectedTime('')
-                }}
-                min={new Date().toISOString().split('T')[0]}
-              />
+            <DatePicker
+              label="Select Date"
+              value={selectedDate}
+              onChange={(val) => {
+                setSelectedDate(val)
+                setSelectedTime('')
+              }}
+              minDate={new Date()}
+              placeholder="Pick a date…"
+            />
             </div>
 
             <div>

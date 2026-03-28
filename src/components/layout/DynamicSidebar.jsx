@@ -3,7 +3,7 @@ import { useAuth, Roles } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import RoleBadge from '../ui/RoleBadge'
 import { UserAvatar } from '../ui/Avatar'
-import { Home, CalendarToday as Calendar, Description as FileText, ChatBubbleOutline as MessageSquare, Settings, Logout as LogOut, People as Users, ShowChart as Activity, AttachMoney as DollarSign, BarChart as BarChart3, PersonAdd as UserPlus, Medication as Pill, Science as TestTube, FolderOpen, AccessTime as Clock, TrendingUp, Headphones, Phone, ConfirmationNumber as TicketIcon } from '@mui/icons-material'
+import { Home, CalendarToday as Calendar, Description as FileText, ChatBubbleOutline as MessageSquare, Settings, Logout as LogOut, People as Users, ShowChart as Activity, AttachMoney as DollarSign, BarChart as BarChart3, PersonAdd as UserPlus, Medication as Pill, Science as TestTube, FolderOpen, AccessTime as Clock, TrendingUp, Headphones, Phone, ConfirmationNumber as TicketIcon, Article as ArticleIcon } from '@mui/icons-material'
 
 export default function DynamicSidebar({ isOpen, onClose }) {
   const { role, user, logout } = useAuth()
@@ -14,6 +14,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
     [Roles.PATIENT]: [
       { name: t('nav.reserve'), path: '/dashboard/patient/reserve', icon: Calendar },
       { name: t('nav.messages'), path: '/dashboard/patient/messages', icon: MessageSquare },
+      { name: t('nav.blogs'), path: '/dashboard/patient/blogs', icon: ArticleIcon },
       { name: t('nav.profile'), path: '/dashboard/patient/profile', icon: Settings },
     ],
     [Roles.DOCTOR]: [
@@ -29,6 +30,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       { name: t('nav.users'), path: '/admin/users', icon: Users },
       { name: t('nav.bookings'), path: '/admin/bookings', icon: Calendar },
       { name: t('nav.inviteStaff'), path: '/admin/invite-staff', icon: UserPlus },
+      { name: t('nav.blogs'), path: '/admin/blogs', icon: ArticleIcon },
       { name: t('nav.messages'), path: '/admin/messages', icon: MessageSquare },
       { name: t('nav.profile'), path: '/admin/profile', icon: Settings },
     ],

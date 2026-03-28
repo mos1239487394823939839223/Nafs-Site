@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Download, FilterList as Filter, CalendarToday as Calendar, Sync as Loader2, ChevronLeft, ChevronRight } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
+import SelectDropdown from '../../components/ui/SelectDropdown'
 import HistoryStats from '../../components/doctor/history/HistoryStats'
 import HistoryList from '../../components/doctor/history/HistoryList'
 import { doctorAPI } from '../../lib/api'
@@ -118,19 +119,21 @@ export default function SessionHistory() {
             <Filter className="w-4 h-4" />
             <span>{t('common.filterBy')}:</span>
           </div>
-          <select
-            value={statusFilter === null ? '' : statusFilter}
-            onChange={(e) => handleStatusFilter(e.target.value === '' ? null : parseInt(e.target.value))}
-            className="text-sm border border-border rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-primary/20 bg-background text-text font-medium cursor-pointer"
-          >
-            <option value="">{t('common.allStatus')}</option>
-            <option value="0">{t('bookingStatus.pending')}</option>
-            <option value="1">{t('bookingStatus.confirmed')}</option>
-            <option value="2">{t('bookingStatus.inProgress')}</option>
-            <option value="3">{t('bookingStatus.completed')}</option>
-            <option value="4">{t('bookingStatus.cancelled')}</option>
-            <option value="5">{t('bookingStatus.noShow')}</option>
-          </select>
+          <SelectDropdown
+            value={statusFilter === null ? '' : String(statusFilter)}
+            onChange={(val) => handleStatusFilter(val === '' ? null : parseInt(val))}
+            size="sm"
+            options={[
+              { value: '', label: t('common.allStatus') },
+              { value: '0', label: t('bookingStatus.pending') },
+              { value: '1', label: t('bookingStatus.confirmed') },
+              { value: '2', label: t('bookingStatus.inProgress') },
+              { value: '3', label: t('bookingStatus.completed') },
+              { value: '4', label: t('bookingStatus.cancelled') },
+              { value: '5', label: t('bookingStatus.noShow') },
+            ]}
+            className="w-48"
+          />
         </div>
         <div className="text-sm text-text-muted">
           {t('common.showing')} <span className="font-semibold text-text-heading">{totalRecords}</span> {t('common.results')}

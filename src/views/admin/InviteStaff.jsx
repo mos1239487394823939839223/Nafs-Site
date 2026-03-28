@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react'
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
-import Input, { Select, MenuItem } from '../../components/ui/Input'
+import Input from '../../components/ui/Input'
+import SelectDropdown from '../../components/ui/SelectDropdown'
 import Table, { TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table'
 import Badge from '../../components/ui/Badge'
 import { useToast } from '../../components/ui/Toast'
@@ -185,19 +186,13 @@ export default function InviteStaff() {
               />
             </div>
 
-            <Select
+            <SelectDropdown
               label={t('admin.permissionLevel')}
-              name="permissions"
               value={formData.permissions}
-              onChange={handleChange}
+              onChange={(val) => setFormData(prev => ({ ...prev, permissions: val }))}
               error={errors.permissions}
-            >
-              {permissionLevels.map(level => (
-                <MenuItem key={level.value} value={level.value}>
-                  {level.label}
-                </MenuItem>
-              ))}
-            </Select>
+              options={permissionLevels.map(level => ({ value: level.value, label: level.label }))}
+            />
 
             {/* Permission Description */}
             {formData.permissions && (

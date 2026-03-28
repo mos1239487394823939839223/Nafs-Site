@@ -5,7 +5,8 @@ import { useMultiStepForm } from '../../../hooks/useMultiStepForm'
 import { useToast } from '../../../components/ui/Toast'
 import ProgressStepper from '../../../components/forms/ProgressStepper'
 import Button from '../../../components/ui/Button'
-import Input, { Select, Textarea } from '../../../components/ui/Input'
+import Input, { Textarea } from '../../../components/ui/Input'
+import SelectDropdown from '../../../components/ui/SelectDropdown'
 import { validateRequired, validateFileSize, validateFileType } from '../../../lib/validation'
 import { ArrowBack as ArrowLeft, ArrowForward as ArrowRight, MedicalServices as Stethoscope, Upload, CalendarToday as Calendar, Description as FileText, Close as X, CheckCircle, AccessTime as Clock } from '@mui/icons-material'
 
@@ -316,17 +317,16 @@ export default function DoctorRegistration() {
                   </div>
                 </div>
 
-                <Select
+                <SelectDropdown
                   label={t('doctorReg.medicalSpecialty')}
                   value={formData.specialty}
-                  onChange={(e) => handleFieldChange('specialty', e.target.value)}
+                  onChange={(val) => handleFieldChange('specialty', val)}
                   error={errors.specialty}
-                >
-                  <option value="">{t('doctorReg.selectSpecialty')}</option>
-                  {specialties.map(spec => (
-                    <option key={spec} value={spec}>{spec}</option>
-                  ))}
-                </Select>
+                  placeholder={t('doctorReg.selectSpecialty')}
+                  options={[
+                    ...specialties.map(spec => ({ value: spec, label: spec }))
+                  ]}
+                />
 
                 <div className="grid md:grid-cols-2 gap-6">
                   <Input

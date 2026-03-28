@@ -35,6 +35,8 @@ import InviteStaff from './views/admin/InviteStaff'
 import AdminMessages from './views/admin/Messages'
 import AdminBookings from './views/admin/Bookings'
 import AdminDashboard from './views/admin/Dashboard'
+import AdminBlogs from './views/admin/Blogs'
+import PatientBlogs from './views/patient/Blogs'
 import MessagesPage from './views/shared/MessagesPage'
 import DocumentViewer from './views/shared/DocumentViewer'
 
@@ -107,6 +109,16 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
               <Layout>
                 <PatientArticles />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/patient/blogs"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
+              <Layout>
+                <PatientBlogs />
               </Layout>
             </ProtectedRoute>
           }
@@ -272,6 +284,16 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
               <Layout>
                 <AdminMessages />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/blogs"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+              <Layout>
+                <AdminBlogs />
               </Layout>
             </ProtectedRoute>
           }

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { PhotoCamera as Camera, Person as User, Mail, Phone, LocationOn as MapPin, CalendarToday as Calendar, Favorite as Heart, Sync as Loader2 } from '@mui/icons-material'
 import Button from '../../ui/Button'
 import Input from '../../ui/Input'
+import DatePicker from '../../ui/DatePicker'
 import { useLanguage } from '../../../contexts/LanguageContext'
 
 export default function ProfileSettings({ user, onSave, onImageUpload }) {
@@ -117,13 +118,12 @@ export default function ProfileSettings({ user, onSave, onImageUpload }) {
           icon={MapPin}
           className="bg-background-gray/20"
         />
-        <Input
+        <DatePicker
           label={t('common.dateOfBirth', 'Date of Birth')}
-          type="date"
           value={formData.dob}
-          onChange={(e) => handleChange('dob', e.target.value)}
+          onChange={(val) => handleChange('dob', val)}
+          maxDate={new Date()}
           icon={Calendar}
-          className="bg-background-gray/20"
         />
         <Input
           label={t('settings.emergencyContact', 'Emergency Contact')}

@@ -6,7 +6,9 @@ import { useAuth, Roles } from "../../../contexts/AuthContext";
 import { useToast } from "../../../components/ui/Toast";
 import ProgressStepper from "../../../components/forms/ProgressStepper";
 import Button from "../../../components/ui/Button";
-import Input, { Select, Textarea } from "../../../components/ui/Input";
+import Input, { Textarea } from "../../../components/ui/Input";
+import DatePicker from "../../../components/ui/DatePicker";
+import SelectDropdown from "../../../components/ui/SelectDropdown";
 import {
   validateRequired,
   validatePhone,
@@ -430,30 +432,26 @@ export default function PatientRegistration() {
                 />
 
                 <div className="grid md:grid-cols-2 gap-6">
-                  <Input
+                  <DatePicker
                     label={t('auth.dateOfBirth')}
-                    type="date"
                     value={formData.dateOfBirth}
-                    onChange={(e) =>
-                      handleFieldChange("dateOfBirth", e.target.value)
-                    }
+                    onChange={(val) => handleFieldChange("dateOfBirth", val)}
+                    maxDate={new Date()}
                     error={errors.dateOfBirth}
-                    max={new Date().toISOString().split("T")[0]}
-                    slotProps={{ inputLabel: { shrink: true } }}
+                    placeholder="YYYY-MM-DD"
                   />
-                  <Select
+                  <SelectDropdown
                     label={t('common.gender')}
                     value={formData.gender}
-                    onChange={(e) =>
-                      handleFieldChange("gender", e.target.value)
-                    }
+                    onChange={(val) => handleFieldChange("gender", val)}
                     error={errors.gender}
-                  >
-                    <option value="">{t('common.selectGender')}</option>
-                    <option value="male">{t('common.male')}</option>
-                    <option value="female">{t('common.female')}</option>
-                    <option value="other">{t('common.other')}</option>
-                  </Select>
+                    placeholder={t('common.selectGender')}
+                    options={[
+                      { value: 'male',   label: t('common.male') },
+                      { value: 'female', label: t('common.female') },
+                      { value: 'other',  label: t('common.other') },
+                    ]}
+                  />
                 </div>
 
                 {formData.dateOfBirth && validateDate(formData.dateOfBirth) && (

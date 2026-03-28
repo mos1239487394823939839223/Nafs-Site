@@ -1,8 +1,9 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AccessTime as Clock, CalendarToday as Calendar, ErrorOutline as AlertCircle, Sync as Loader2 } from '@mui/icons-material'
 import Button from '../ui/Button'
 import Badge from '../ui/Badge'
+import DatePicker from '../ui/DatePicker'
 import { doctorAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 
@@ -33,8 +34,8 @@ export default function DailyAgenda() {
     })
   }
 
-  const handleDateChange = (e) => {
-    setSelectedDate(new Date(e.target.value))
+  const handleDateChange = (dateStr) => {
+    if (dateStr) setSelectedDate(new Date(dateStr + 'T00:00:00'))
   }
 
   // Fetch bookings from API
@@ -126,24 +127,11 @@ export default function DailyAgenda() {
           <h2 className="text-xl font-bold text-text-heading">{t('doctor.dailyAgenda', 'Daily Agenda')}</h2>
           <p className="text-sm text-text-muted mt-1" dir="auto">{formatDateDisplay(selectedDate)}</p>
         </div>
-        <div className="relative inline-block">
-          <input
-            ref={dateInputRef}
-            type="date"
+        <DatePicker
             value={selectedDate.toISOString().split('T')[0]}
             onChange={handleDateChange}
-            className="absolute top-full right-0 mt-2 opacity-0 w-0 h-0"
+            customTrigger
           />
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => dateInputRef.current?.showPicker()}
-            className={isRTL ? 'flex-row-reverse' : ''}
-          >
-            <Calendar className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
-            {t('common.changeDate', 'Change Date')}
-          </Button>
-        </div>
       </div>
 
       {loading ? (

@@ -307,6 +307,13 @@ export const patientAPI = {
         });
         return response.data;
     },
+
+    // Add Doctor Review
+    addDoctorReview: async (reviewData) => {
+        // reviewData should contain { DoctorId: 0, Rate: 0, Comment: "string" }
+        const response = await api.post('/Doctor/AddReview', reviewData);
+        return response.data;
+    },
 };
 
 // ─── Doctor API Functions ────────────────────────────────────────────────────
