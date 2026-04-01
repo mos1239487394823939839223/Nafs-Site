@@ -32,6 +32,10 @@ export default function UserManagement() {
     const [searchTerm, setSearchTerm] = useState('')
     const [loading, setLoading] = useState(false)
     const [submitting, setSubmitting] = useState(false)
+    const [resetModalOpen, setResetModalOpen] = useState(false)
+    const [resetTarget, setResetTarget] = useState(null)
+    const [resetPasswordValue, setResetPasswordValue] = useState('')
+    const [resetSubmitting, setResetSubmitting] = useState(false)
 
     // Doctors data
     const [doctors, setDoctors] = useState([])
@@ -173,6 +177,41 @@ export default function UserManagement() {
         }
     }
 
+    const openResetPasswordModal = (userItem) => {
+        setResetTarget(userItem)
+        setResetPasswordValue('')
+        setResetModalOpen(true)
+    }
+
+    const handleResetPassword = async () => {
+        const userId = resetTarget?.Id || resetTarget?.ID || resetTarget?.id
+        if (!userId) {
+            toast.error(t('errors.somethingWentWrong'))
+            return
+        }
+        if (!resetPasswordValue || resetPasswordValue.length < 6) {
+            toast.error(t('errors.passwordTooShort'))
+            return
+        }
+
+        setResetSubmitting(true)
+        try {
+            const response = await userAPI.resetPassword(resetPasswordValue, userId)
+            if (response?.IsSuccess !== false) {
+                toast.success(t('success.passwordReset'))
+                setResetModalOpen(false)
+                setResetTarget(null)
+                setResetPasswordValue('')
+            } else {
+                toast.error(response?.Message || t('errors.somethingWentWrong'))
+            }
+        } catch (error) {
+            toast.error(error?.response?.data?.Message || t('errors.somethingWentWrong'))
+        } finally {
+            setResetSubmitting(false)
+        }
+    }
+
     const filteredDoctors = useMemo(() =>
         doctors.filter(d => {
             const name = (d.Name || d.name || '').toLowerCase()
@@ -304,23 +343,39 @@ export default function UserManagement() {
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell className="text-center">
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <button
-                                                                    onClick={() => handleToggleDoctor(doctor.Id || doctor.id)}
-                                                                    className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors"
-                                                                >
-                                                                    {doctor.IsActive !== false ? (
-                                                                        <ToggleRight className="w-5 h-5 text-emerald-500" />
-                                                                    ) : (
-                                                                        <ToggleLeft className="w-5 h-5 text-text-muted" />
-                                                                    )}
-                                                                </button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>
-                                                                {doctor.IsActive !== false ? t('common.inactive') : t('common.active')}
-                                                            </TooltipContent>
-                                                        </Tooltip>
+                                                        <div className="flex items-center justify-center gap-2">
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <button
+                                                                        onClick={() => handleToggleDoctor(doctor.Id || doctor.id)}
+                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors"
+                                                                    >
+                                                                        {doctor.IsActive !== false ? (
+                                                                            <ToggleRight className="w-5 h-5 text-emerald-500" />
+                                                                        ) : (
+                                                                            <ToggleLeft className="w-5 h-5 text-text-muted" />
+                                                                        )}
+                                                                    </button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    {doctor.IsActive !== false ? t('common.inactive') : t('common.active')}
+                                                                </TooltipContent>
+                                                            </Tooltip>
+
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <button
+                                                                        onClick={() => openResetPasswordModal(doctor)}
+                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors"
+                                                                    >
+                                                                        <Lock className="w-4 h-4 text-primary" />
+                                                                    </button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    {t('auth.resetPassword')}
+                                                                </TooltipContent>
+                                                            </Tooltip>
+                                                        </div>
                                                     </TableCell>
                                                 </TableRow>
                                             ))
@@ -366,6 +421,7 @@ export default function UserManagement() {
                                             <TableHead>{t('common.phone')}</TableHead>
                                             <TableHead>{t('common.role')}</TableHead>
                                             <TableHead>{t('common.status')}</TableHead>
+                                            <TableHead className="text-center">{t('common.actions')}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -396,11 +452,26 @@ export default function UserManagement() {
                                                             {patient.IsActive !== false ? t('common.active') : t('common.inactive')}
                                                         </Badge>
                                                     </TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <button
+                                                                    onClick={() => openResetPasswordModal(patient)}
+                                                                    className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors"
+                                                                >
+                                                                    <Lock className="w-4 h-4 text-primary" />
+                                                                </button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                {t('auth.resetPassword')}
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TableCell>
                                                 </TableRow>
                                             ))
                                         ) : (
                                             <TableRow hover={false}>
-                                                <TableCell colSpan={5} className="text-center py-12">
+                                                <TableCell colSpan={6} className="text-center py-12">
                                                     <div className="flex flex-col items-center gap-3">
                                                         <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
                                                             <Users className="w-7 h-7 text-text-muted" />
@@ -559,9 +630,10 @@ export default function UserManagement() {
                                         <FileText className="w-4 h-4 text-primary" />
                                         <h3 className="font-semibold text-text-heading">{t('documents.title')}</h3>
                                     </div>
-                                    <p className="text-sm text-text-muted">Add certificates and documentation now. They will be stored locally until the endpoint is ready.</p>
+                                    <p className="text-sm text-text-muted">Add certificates and documentation and classify each file type before upload.</p>
                                     <LocalDocumentsManager
                                         storageKey={ADD_DOCTOR_DOCS_STORAGE_KEY}
+                                        allowDocumentTypeSelection
                                         title={t('documents.title')}
                                         buttonLabel={t('documents.addButton')}
                                         emptyMessage={t('documents.empty')}
@@ -579,6 +651,37 @@ export default function UserManagement() {
                                 </Button>
                             </DialogFooter>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog open={resetModalOpen} onOpenChange={setResetModalOpen}>
+                    <DialogContent maxWidth="sm">
+                        <DialogHeader>
+                            <DialogTitle>{t('auth.resetPassword')}</DialogTitle>
+                            <DialogDescription>
+                                {`Reset password for ${resetTarget?.Name || resetTarget?.name || resetTarget?.Email || ''}`}
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="space-y-4">
+                            <Input
+                                label={t('auth.newPassword')}
+                                type="password"
+                                value={resetPasswordValue}
+                                onChange={(e) => setResetPasswordValue(e.target.value)}
+                                placeholder="Minimum 6 characters"
+                                icon={Lock}
+                            />
+                        </div>
+
+                        <DialogFooter>
+                            <Button variant="ghost" onClick={() => setResetModalOpen(false)}>
+                                {t('common.cancel')}
+                            </Button>
+                            <Button onClick={handleResetPassword} isLoading={resetSubmitting}>
+                                {t('auth.resetPassword')}
+                            </Button>
+                        </DialogFooter>
                     </DialogContent>
                 </Dialog>
             </div>

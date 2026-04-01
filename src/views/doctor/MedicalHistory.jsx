@@ -9,6 +9,7 @@ import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import { doctorAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { medicalAPI } from '../../lib/api'
 
 export default function MedicalHistory() {
     const { user } = useAuth()
@@ -21,8 +22,40 @@ export default function MedicalHistory() {
     const [newRecord, setNewRecord] = useState({ summary: '', medications: '' })
     const [loading, setLoading] = useState(true)
     const [bookings, setBookings] = useState([])
-    // Local medical records (in-memory only — no backend API exists yet for clinical notes)
-    const [localRecords, setLocalRecords] = useState([])
+    const [patientHistory, setPatientHistory] = useState([])
+    const [historyLoading, setHistoryLoading] = useState(false)
+    const [testTypes, setTestTypes] = useState([])
+    const [selectedTestTypeId, setSelectedTestTypeId] = useState('')
+    const [creatingType, setCreatingType] = useState(false)
+    const [updatingResultId, setUpdatingResultId] = useState(null)
+
+    const fetchPatientHistory = async (patientId) => {
+        if (!patientId) {
+            setPatientHistory([])
+            return
+        }
+
+        try {
+            setHistoryLoading(true)
+            const response = await medicalAPI.getPatientHistory(patientId, 1, 100)
+            const records = response?.Data?.Items || []
+            const mapped = records.map((record) => ({
+                id: String(record.RecordID),
+                date: record.TestDate ? new Date(record.TestDate).toISOString().split('T')[0] : '',
+                doctorName: record.DoctorName || user?.name || user?.Name || 'Doctor',
+                testTypeName: record.TestTypeName || 'Test',
+                examNotes: record.ExamNotes || '',
+                result: record.Result || '',
+                medications: [],
+            }))
+            setPatientHistory(mapped)
+        } catch {
+            toast.error(t('errors.loadFailed'))
+            setPatientHistory([])
+        } finally {
+            setHistoryLoading(false)
+        }
+    }
 
     // Fetch bookings from API to extract patient list
     useEffect(() => {
@@ -42,6 +75,26 @@ export default function MedicalHistory() {
         }
         fetchBookings()
     }, [])
+
+    useEffect(() => {
+        const loadTestTypes = async () => {
+            try {
+                const response = await medicalAPI.getTestTypes(1, 100)
+                const items = response?.Data?.Items || []
+                setTestTypes(items)
+                if (items.length > 0) {
+                    setSelectedTestTypeId(String(items[0].ID))
+                }
+            } catch {
+                setTestTypes([])
+            }
+        }
+        loadTestTypes()
+    }, [])
+
+    useEffect(() => {
+        fetchPatientHistory(selectedPatient?.id)
+    }, [selectedPatient, toast, t, user])
 
     // Extract unique patients from bookings
     const myPatients = []
@@ -74,29 +127,100 @@ export default function MedicalHistory() {
         p.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
-    const patientHistory = localRecords.filter(h => h.patientId === selectedPatient?.id)
-
     const handleAddRecord = () => {
         if (!newRecord.summary) {
             toast.error(t('errors.enterSummary'))
             return
         }
 
-        const record = {
-            id: Date.now().toString(),
-            patientId: selectedPatient.id,
-            patientName: selectedPatient.name,
-            date: new Date().toISOString().split('T')[0],
-            doctorName: user?.name || user?.Name || 'Doctor',
-            summary: newRecord.summary,
-            medications: newRecord.medications.split(',').map(m => m.trim()).filter(m => m)
+        const saveRecord = async () => {
+            try {
+                if (!selectedTestTypeId) {
+                    toast.error(t('errors.unexpectedError'))
+                    return
+                }
+
+                const response = await medicalAPI.addPatientTest({
+                    PatientID: selectedPatient.id,
+                    TestTypeID: Number(selectedTestTypeId),
+                    ScanUrl: null,
+                    ExamNotes: newRecord.summary,
+                    TestDate: new Date().toISOString(),
+                })
+
+                if (response?.IsSuccess === false) {
+                    toast.error(response?.Message || t('errors.unexpectedError'))
+                    return
+                }
+
+                toast.success(t('success.recordAdded'))
+                setIsAddModalOpen(false)
+                setNewRecord({ summary: '', medications: '' })
+
+                await fetchPatientHistory(selectedPatient.id)
+            } catch {
+                toast.error(t('errors.unexpectedError'))
+            }
         }
 
-        setLocalRecords(prev => [record, ...prev])
+        saveRecord()
+    }
 
-        toast.success(t('success.recordAdded'))
-        setIsAddModalOpen(false)
-        setNewRecord({ summary: '', medications: '' })
+    const handleUpdateResult = async (record) => {
+        const entered = window.prompt('Enter test result', record.result || '')
+        if (entered === null) return
+
+        const value = entered.trim()
+        if (!value) {
+            toast.error(t('errors.required'))
+            return
+        }
+
+        setUpdatingResultId(record.id)
+        try {
+            const response = await medicalAPI.updatePatientTestResult(record.id, value)
+            if (response?.IsSuccess === false) {
+                toast.error(response?.Message || t('errors.unexpectedError'))
+                return
+            }
+            toast.success(t('success.infoUpdated'))
+            await fetchPatientHistory(selectedPatient?.id)
+        } catch {
+            toast.error(t('errors.unexpectedError'))
+        } finally {
+            setUpdatingResultId(null)
+        }
+    }
+
+    const handleCreateTestType = async () => {
+        const entered = window.prompt('Enter new test type name')
+        if (!entered) return
+        const name = entered.trim()
+        if (!name) return
+
+        setCreatingType(true)
+        try {
+            const response = await medicalAPI.createTestType({
+                Name: name,
+                Description: null,
+                RelatedTagIDs: null,
+            })
+            if (response?.IsSuccess === false) {
+                toast.error(response?.Message || t('errors.unexpectedError'))
+                return
+            }
+
+            const reload = await medicalAPI.getTestTypes(1, 100)
+            const items = reload?.Data?.Items || []
+            setTestTypes(items)
+            const created = items.find((item) => item.Name?.toLowerCase() === name.toLowerCase())
+            if (created?.ID) setSelectedTestTypeId(String(created.ID))
+            toast.success(t('success.infoUpdated'))
+        } catch {
+            toast.error(t('errors.unexpectedError'))
+        } finally {
+            setCreatingType(false)
+        }
     }
 
     if (loading) {
@@ -257,7 +381,9 @@ export default function MedicalHistory() {
                         {/* Clinical Notes */}
                         <div className="space-y-6">
                             <h3 className="text-lg font-bold text-text-heading">{t('doctor.clinicalNotes')}</h3>
-                            {patientHistory.length > 0 ? (
+                            {historyLoading ? (
+                                <div className="text-center py-12 text-text-muted">{t('common.loading')}</div>
+                            ) : patientHistory.length > 0 ? (
                                 patientHistory.map((record) => (
                                     <Card key={record.id} className="overflow-hidden border-border/50">
                                         <div className="bg-background px-4 md:px-6 py-3 border-b border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -271,11 +397,21 @@ export default function MedicalHistory() {
                                                     {record.doctorName}
                                                 </div>
                                             </div>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleUpdateResult(record)}
+                                                disabled={updatingResultId === record.id}
+                                            >
+                                                {updatingResultId === record.id ? t('common.updating') : 'Update Result'}
+                                            </Button>
                                         </div>
                                         <div className="p-6 space-y-4">
                                             <div>
                                                 <h4 className="text-xs font-black italic uppercase tracking-widest text-text-muted mb-2">{t('doctor.sessionSummary')}</h4>
-                                                <p className="text-text-heading leading-relaxed">{record.summary}</p>
+                                                <p className="text-text-heading leading-relaxed">{record.testTypeName}</p>
+                                                {!!record.examNotes && <p className="text-text-muted mt-2">{record.examNotes}</p>}
+                                                {!!record.result && <p className="text-primary mt-2">Result: {record.result}</p>}
                                             </div>
                                             {record.medications && record.medications.length > 0 && (
                                                 <div>
@@ -311,6 +447,27 @@ export default function MedicalHistory() {
                 size="lg"
             >
                 <div className="space-y-6">
+                    <div className="space-y-2">
+                        <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Test Type</label>
+                        <div className="flex gap-2">
+                            <select
+                                value={selectedTestTypeId}
+                                onChange={(e) => setSelectedTestTypeId(e.target.value)}
+                                className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
+                            >
+                                {testTypes.length === 0 ? (
+                                    <option value="">No test types available</option>
+                                ) : (
+                                    testTypes.map((type) => (
+                                        <option key={type.ID} value={String(type.ID)}>{type.Name}</option>
+                                    ))
+                                )}
+                            </select>
+                            <Button variant="outline" onClick={handleCreateTestType} disabled={creatingType}>
+                                {creatingType ? t('common.saving') : 'Create'}
+                            </Button>
+                        </div>
+                    </div>
                     <div className="space-y-2">
                         <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.sessionSummary')}</label>
                         <textarea

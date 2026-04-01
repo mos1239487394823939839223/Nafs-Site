@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Article as ArticleIcon,
@@ -17,6 +17,7 @@ import Badge from '../../components/ui/Badge'
 import { useToast } from '../../components/ui/Toast'
 import { useBlogsStore } from '../../hooks/useBlogsStore'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { blogAPI } from '../../lib/api'
 
 const TAG_SUGGESTIONS = [
   'الصحة النفسية', 'العلاج النفسي', 'القلق', 'الاكتئاب', 'التوعية',
@@ -26,10 +27,11 @@ const TAG_SUGGESTIONS = [
 
 const EMPTY_FORM = { title: '', description: '', tags: [] }
 
-function BlogFormModal({ isOpen, onClose, onSave, initial }) {
+function BlogFormModal({ isOpen, onClose, onSave, initial, availableTags = [] }) {
   const { t, isRTL } = useLanguage()
   const [form, setForm] = useState(initial ? { title: initial.title, description: initial.description, tags: [...initial.tags] } : EMPTY_FORM)
   const [tagInput, setTagInput] = useState('')
+  const [selectedTag, setSelectedTag] = useState('')
   const [errors, setErrors] = useState({})
 
   const validate = () => {
@@ -60,6 +62,7 @@ function BlogFormModal({ isOpen, onClose, onSave, initial }) {
   const handleClose = () => {
     setForm(initial ? { title: initial.title, description: initial.description, tags: [...initial.tags] } : EMPTY_FORM)
     setTagInput('')
+    setSelectedTag('')
     setErrors({})
     onClose()
   }
@@ -111,6 +114,31 @@ function BlogFormModal({ isOpen, onClose, onSave, initial }) {
           <label className="block text-sm font-semibold text-text-heading mb-1.5">
             {t('blogs.tagsLabel')} <span className="text-red-500">{t('blogs.required')}</span>
           </label>
+
+          <div className={`flex gap-2 mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <select
+              value={selectedTag}
+              onChange={(e) => setSelectedTag(e.target.value)}
+              className="flex-1 px-3 py-2 border border-border rounded-xl bg-background text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            >
+              <option value="">{isRTL ? 'اختر وسم من القائمة' : 'Choose a tag from list'}</option>
+              {availableTags.map((tag) => (
+                <option key={tag} value={tag}>{tag}</option>
+              ))}
+            </select>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                if (!selectedTag) return
+                addTag(selectedTag)
+                setSelectedTag('')
+              }}
+              disabled={!selectedTag}
+            >
+              {isRTL ? 'إضافة' : 'Add'}
+            </Button>
+          </div>
 
           <div className={`flex gap-2 p-1 rounded-xl border bg-background transition-all ${errors.tags ? 'border-red-400' : 'border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20'}`}>
             <input
@@ -248,22 +276,57 @@ function BlogCard({ blog, onEdit, onDelete }) {
 }
 
 export default function AdminBlogs() {
-  const { blogs, addBlog, updateBlog, deleteBlog } = useBlogsStore()
+  const { blogs, blogLoadError, addBlog, updateBlog, deleteBlog } = useBlogsStore()
   const { t, isRTL } = useLanguage()
   const toast = useToast()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingBlog, setEditingBlog] = useState(null)
   const [search, setSearch] = useState('')
+  const [newTagName, setNewTagName] = useState('')
+  const [preferredTags, setPreferredTags] = useState([])
+  const [selectedPreferredTagIds, setSelectedPreferredTagIds] = useState([])
+  const [tagsLoading, setTagsLoading] = useState(false)
+  const [savingTags, setSavingTags] = useState(false)
+  const [creatingTag, setCreatingTag] = useState(false)
+  const [createdTagNames, setCreatedTagNames] = useState([])
 
-  const handleSave = (data) => {
-    if (editingBlog?.id) {
-      updateBlog(editingBlog.id, data)
-      toast.success(t('success.blogUpdated'))
-    } else {
-      addBlog(data)
-      toast.success(t('success.blogAdded'))
+  useEffect(() => {
+    if (!blogLoadError) return
+    toast.error(isRTL ? 'فشل تحميل المقالات من الخادم' : 'Failed to load blogs from server')
+  }, [blogLoadError, toast, isRTL])
+
+  const loadPreferredTags = async () => {
+    setTagsLoading(true)
+    try {
+      const response = await blogAPI.getPreferredTags()
+      const tagItems = response?.Data || []
+      setPreferredTags(tagItems)
+      setSelectedPreferredTagIds(tagItems.map((tag) => tag.TagID))
+    } catch {
+      setPreferredTags([])
+      setSelectedPreferredTagIds([])
+    } finally {
+      setTagsLoading(false)
     }
-    setEditingBlog(null)
+  }
+
+  useEffect(() => {
+    loadPreferredTags()
+  }, [])
+
+  const handleSave = async (data) => {
+    try {
+      if (editingBlog?.id) {
+        await updateBlog(editingBlog.id, data)
+        toast.success(t('success.blogUpdated'))
+      } else {
+        await addBlog(data)
+        toast.success(t('success.blogAdded'))
+      }
+      setEditingBlog(null)
+    } catch {
+      toast.error(t('errors.unexpectedError'))
+    }
   }
 
   const handleEdit = (blog) => {
@@ -271,15 +334,93 @@ export default function AdminBlogs() {
     setIsModalOpen(true)
   }
 
-  const handleDelete = (id) => {
-    deleteBlog(id)
-    toast.success(t('success.blogDeleted'))
+  const handleDelete = async (id) => {
+    try {
+      await deleteBlog(id)
+      toast.success(t('success.blogDeleted'))
+    } catch {
+      toast.error(t('errors.unexpectedError'))
+    }
   }
 
   const handleOpenAdd = () => {
     setEditingBlog(null)
     setIsModalOpen(true)
   }
+
+  const handleCreateTag = async () => {
+    const name = newTagName.trim()
+    if (!name) return
+
+    setCreatingTag(true)
+    try {
+      const createResponse = await blogAPI.createTag(name)
+      if (createResponse?.IsSuccess === false) {
+        toast.error(createResponse?.Message || t('errors.unexpectedError'))
+        return
+      }
+
+      setCreatedTagNames((prev) => (
+        prev.some((tag) => tag.toLowerCase() === name.toLowerCase()) ? prev : [...prev, name]
+      ))
+
+      setNewTagName('')
+      await loadPreferredTags()
+      toast.success(isRTL ? 'تم إنشاء الوسم' : 'Tag created')
+    } catch {
+      toast.error(isRTL ? 'فشل إنشاء الوسم' : 'Failed to create tag')
+    } finally {
+      setCreatingTag(false)
+    }
+  }
+
+  const togglePreferredTag = (tagId) => {
+    setSelectedPreferredTagIds((prev) => (
+      prev.includes(tagId)
+        ? prev.filter((id) => id !== tagId)
+        : [...prev, tagId]
+    ))
+  }
+
+  const handleSavePreferredTags = async () => {
+    setSavingTags(true)
+    try {
+      const response = await blogAPI.setPreferredTags(selectedPreferredTagIds)
+      if (response?.IsSuccess === false) {
+        toast.error(response?.Message || t('errors.unexpectedError'))
+        return
+      }
+      toast.success(isRTL ? 'تم حفظ الوسوم المفضلة' : 'Preferred tags saved')
+      await loadPreferredTags()
+    } catch {
+      toast.error(isRTL ? 'فشل حفظ الوسوم المفضلة' : 'Failed to save preferred tags')
+    } finally {
+      setSavingTags(false)
+    }
+  }
+
+  const tagsUsage = useMemo(() => {
+    const counts = new Map()
+    blogs.forEach((blog) => {
+      ;(blog.tags || []).forEach((tag) => {
+        counts.set(tag, (counts.get(tag) || 0) + 1)
+      })
+    })
+    return [...counts.entries()]
+      .map(([name, count]) => ({ name, count }))
+      .sort((a, b) => b.count - a.count)
+  }, [blogs])
+
+  const availableTagNames = useMemo(() => {
+    const names = [
+      ...preferredTags.map((tag) => tag?.Name).filter(Boolean),
+      ...tagsUsage.map((item) => item.name).filter(Boolean),
+      ...createdTagNames,
+      ...TAG_SUGGESTIONS,
+    ]
+
+    return [...new Set(names.map((name) => String(name).trim()).filter(Boolean))]
+  }, [preferredTags, tagsUsage, createdTagNames])
 
   const filtered = blogs.filter(b =>
     !search || b.title.toLowerCase().includes(search.toLowerCase()) ||
@@ -326,6 +467,72 @@ export default function AdminBlogs() {
         />
       </div>
 
+      {/* Tag Management */}
+      <div className="rounded-2xl border border-border bg-background-paper p-5 space-y-4">
+        <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <h2 className="text-lg font-bold text-text-heading">{isRTL ? 'إدارة الوسوم' : 'Tag Management'}</h2>
+          <Button variant="outline" size="sm" onClick={handleSavePreferredTags} disabled={savingTags || tagsLoading}>
+            {savingTags ? (isRTL ? 'جاري الحفظ...' : 'Saving...') : (isRTL ? 'حفظ الوسوم المفضلة' : 'Save Preferred Tags')}
+          </Button>
+        </div>
+
+        <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <input
+            type="text"
+            value={newTagName}
+            onChange={(e) => setNewTagName(e.target.value)}
+            placeholder={isRTL ? 'أدخل اسم وسم جديد' : 'Enter new tag name'}
+            className="flex-1 px-4 py-2 border border-border rounded-xl bg-background text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+          <Button onClick={handleCreateTag} disabled={creatingTag || !newTagName.trim()}>
+            {creatingTag ? (isRTL ? 'جاري الإنشاء...' : 'Creating...') : (isRTL ? 'إنشاء وسم' : 'Create Tag')}
+          </Button>
+        </div>
+
+        {tagsLoading ? (
+          <p className="text-sm text-text-muted">{isRTL ? 'جاري تحميل الوسوم...' : 'Loading tags...'}</p>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-text-muted">{isRTL ? 'اختر الوسوم المفضلة:' : 'Choose preferred tags:'}</p>
+            <div className="flex flex-wrap gap-2">
+              {preferredTags.length > 0 ? (
+                preferredTags.map((tag) => {
+                  const selected = selectedPreferredTagIds.includes(tag.TagID)
+                  return (
+                    <button
+                      key={tag.TagID}
+                      onClick={() => togglePreferredTag(tag.TagID)}
+                      className={`px-3 py-1.5 text-sm rounded-full border transition-all ${
+                        selected
+                          ? 'bg-primary/10 text-primary border-primary/30'
+                          : 'bg-background-subtle text-text-muted border-border hover:text-text-heading'
+                      }`}
+                    >
+                      {tag.Name}
+                    </button>
+                  )
+                })
+              ) : (
+                <p className="text-sm text-text-muted">{isRTL ? 'لا توجد وسوم بعد' : 'No tags found yet'}</p>
+              )}
+            </div>
+
+            {tagsUsage.length > 0 && (
+              <div>
+                <p className="text-sm text-text-muted mb-2">{isRTL ? 'استخدام الوسوم في المقالات:' : 'Tag usage across articles:'}</p>
+                <div className="flex flex-wrap gap-2">
+                  {tagsUsage.map((item) => (
+                    <span key={item.name} className="text-xs px-2.5 py-1 rounded-full bg-background-subtle border border-border text-text-muted">
+                      {item.name} ({item.count})
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
       {/* Grid */}
       {filtered.length === 0 ? (
         <motion.div
@@ -368,6 +575,7 @@ export default function AdminBlogs() {
         onClose={() => { setIsModalOpen(false); setEditingBlog(null) }}
         onSave={handleSave}
         initial={editingBlog}
+        availableTags={availableTagNames}
         key={editingBlog?.id || 'new'}
       />
     </div>

@@ -22,6 +22,7 @@ export default function Settings() {
     const userId = userAPI.resolveUserId(user) || 'doctor-current'
     return `nafs:doctor:documents:${userId}`
   }, [user])
+  const doctorUserId = useMemo(() => userAPI.resolveUserId(user), [user])
 
   const handleSave = async (data) => {
     try {
@@ -131,6 +132,9 @@ export default function Settings() {
           <div className="p-6 md:p-8">
             <LocalDocumentsManager
               storageKey={doctorDocumentsStorageKey}
+              ownerUserId={doctorUserId}
+              documentType={0}
+              allowDocumentTypeSelection
               title={t('documents.title')}
               buttonLabel={t('documents.addButton')}
               emptyMessage={t('documents.empty')}

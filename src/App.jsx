@@ -18,6 +18,7 @@ import Schedule from './views/doctor/Schedule'
 import PatientQueue from './views/doctor/PatientQueue'
 import SessionHistory from './views/doctor/SessionHistory'
 import MedicalHistory from './views/doctor/MedicalHistory'
+import DoctorTests from './views/doctor/Tests'
 import Settings from './views/doctor/Settings'
 import UserManagement from './views/admin/UserManagement'
 import AdminProfile from './views/admin/Profile'
@@ -36,6 +37,7 @@ import AdminMessages from './views/admin/Messages'
 import AdminBookings from './views/admin/Bookings'
 import AdminDashboard from './views/admin/Dashboard'
 import AdminBlogs from './views/admin/Blogs'
+import AdminTests from './views/admin/Tests'
 import PatientBlogs from './views/patient/Blogs'
 import MessagesPage from './views/shared/MessagesPage'
 import DocumentViewer from './views/shared/DocumentViewer'
@@ -176,6 +178,16 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/dashboard/doctor/tests"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
+              <Layout>
+                <DoctorTests />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/dashboard/doctor/history"
 
           element={
@@ -294,6 +306,16 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
               <Layout>
                 <AdminBlogs />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/tests"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+              <Layout>
+                <AdminTests />
               </Layout>
             </ProtectedRoute>
           }

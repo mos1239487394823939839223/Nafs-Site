@@ -41,6 +41,24 @@ const Input = React.forwardRef(
         sx={{
           '& .MuiOutlinedInput-root': {
             borderRadius: '12px',
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              boxShadow: (theme) => `0 0 0 4px ${theme.palette.primary.main}1F`,
+            },
+          },
+          '& .MuiOutlinedInput-input': {
+            '&:-webkit-autofill': {
+              WebkitBoxShadow: (theme) => `0 0 0 1000px ${theme.palette.background.paper} inset`,
+              WebkitTextFillColor: (theme) => theme.palette.text.primary,
+              caretColor: (theme) => theme.palette.text.primary,
+              borderRadius: 'inherit',
+              transition: 'background-color 9999s ease-out 0s',
+            },
+            '&:-webkit-autofill:hover': {
+              WebkitBoxShadow: (theme) => `0 0 0 1000px ${theme.palette.background.paper} inset`,
+            },
+            '&:-webkit-autofill:focus': {
+              WebkitBoxShadow: (theme) => `0 0 0 1000px ${theme.palette.background.paper} inset`,
+            },
           },
           ...sx,
         }}

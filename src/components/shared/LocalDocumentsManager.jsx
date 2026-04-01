@@ -4,6 +4,7 @@ import Button from '../ui/Button'
 import { useToast } from '../ui/Toast'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/Dialog'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { documentsAPI } from '../../lib/api'
 
 const ACCEPTED_DOCUMENT_TYPES = 'image/*,.pdf,.doc,.docx,.txt,.rtf,.xls,.xlsx,.ppt,.pptx'
 const DEFAULT_BUTTON_LABEL = 'Add Certificate && docementation'
@@ -41,6 +42,9 @@ const formatBytes = (value) => {
 
 export default function LocalDocumentsManager({
   storageKey,
+  ownerUserId,
+  documentType = 0,
+  allowDocumentTypeSelection = false,
   title = 'Certificates & Documentation',
   buttonLabel = DEFAULT_BUTTON_LABEL,
   emptyMessage = 'No uploaded certificates or documents yet.',
@@ -51,14 +55,43 @@ export default function LocalDocumentsManager({
   const [documents, setDocuments] = useState([])
   const [isUploading, setIsUploading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [selectedDocumentType, setSelectedDocumentType] = useState(documentType)
+  const isRemoteMode = Boolean(ownerUserId)
 
   useEffect(() => {
-    setDocuments(safeReadLocalDocuments(storageKey))
-  }, [storageKey])
+    const loadDocuments = async () => {
+      if (isRemoteMode) {
+        try {
+          const response = await documentsAPI.getDocumentsByOwner(ownerUserId, 1, 100)
+          if (response?.IsSuccess !== false && response?.Data?.Items) {
+            const mapped = response.Data.Items.map((item) => ({
+              id: String(item.DocumentID),
+              name: item.FileName || item.Title,
+              title: item.Title,
+              type: '',
+              size: 0,
+              uploadedAt: item.UploadedAt,
+              fileUrl: item.FileUrl,
+            }))
+            setDocuments(mapped)
+            return
+          }
+        } catch {
+          // If API fails, fallback to local storage to avoid blocking UI.
+        }
+      }
+
+      setDocuments(safeReadLocalDocuments(storageKey))
+    }
+
+    loadDocuments()
+  }, [storageKey, isRemoteMode, ownerUserId])
 
   const persistDocuments = (nextDocuments) => {
     setDocuments(nextDocuments)
-    localStorage.setItem(storageKey, JSON.stringify(nextDocuments))
+    if (!isRemoteMode) {
+      localStorage.setItem(storageKey, JSON.stringify(nextDocuments))
+    }
   }
 
   const handleOpenFilePicker = () => {
@@ -79,23 +112,52 @@ export default function LocalDocumentsManager({
         return true
       })
 
-      const uploaded = await Promise.all(validFiles.map(async (file) => {
-        const dataUrl = await toDataUrl(file)
-        return {
-          id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
-          name: file.name,
-          type: file.type || 'application/octet-stream',
-          size: file.size,
-          uploadedAt: new Date().toISOString(),
-          dataUrl,
-        }
-      }))
+      let uploaded = []
+
+      if (isRemoteMode) {
+        uploaded = await Promise.all(validFiles.map(async (file) => {
+          const response = await documentsAPI.uploadDocument({
+            file,
+            ownerUserId,
+            title: file.name,
+            documentType: selectedDocumentType,
+          })
+
+          if (response?.IsSuccess === false) {
+            throw new Error(response?.Message || 'DOCUMENT_UPLOAD_FAILED')
+          }
+
+          return {
+            id: String(response?.Data?.DocumentID || `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`),
+            name: response?.Data?.FileName || file.name,
+            title: file.name,
+            documentType: selectedDocumentType,
+            type: file.type || 'application/octet-stream',
+            size: file.size,
+            uploadedAt: new Date().toISOString(),
+            fileUrl: response?.Data?.FileUrl,
+          }
+        }))
+      } else {
+        uploaded = await Promise.all(validFiles.map(async (file) => {
+          const dataUrl = await toDataUrl(file)
+          return {
+            id: `${Date.now()}-${Math.random().toString(36).slice(2, 10)}`,
+            name: file.name,
+            documentType: selectedDocumentType,
+            type: file.type || 'application/octet-stream',
+            size: file.size,
+            uploadedAt: new Date().toISOString(),
+            dataUrl,
+          }
+        }))
+      }
 
       if (uploaded.length === 0) return
 
       const nextDocuments = [...documents, ...uploaded]
       persistDocuments(nextDocuments)
-      toast.success(`${uploaded.length} ${t('documents.filesUploadedLocally')}`)
+      toast.success(`${uploaded.length} ${isRemoteMode ? (t('documents.filesUploaded') || 'files uploaded') : t('documents.filesUploadedLocally')}`)
     } catch {
       toast.error(t('documents.uploadFailed'))
     } finally {
@@ -105,6 +167,11 @@ export default function LocalDocumentsManager({
   }
 
   const handleViewDocument = (documentItem) => {
+    if (documentItem.fileUrl) {
+      window.open(documentItem.fileUrl, '_blank', 'noopener,noreferrer')
+      return
+    }
+
     const query = new URLSearchParams({
       storageKey,
       docId: documentItem.id,
@@ -113,7 +180,20 @@ export default function LocalDocumentsManager({
     window.open(`/document-viewer?${query}`, '_blank', 'noopener,noreferrer')
   }
 
-  const handleRemoveDocument = (documentId) => {
+  const handleRemoveDocument = async (documentId) => {
+    if (isRemoteMode) {
+      try {
+        const response = await documentsAPI.deleteDocument(documentId)
+        if (response?.IsSuccess === false) {
+          toast.error(response?.Message || t('documents.deleteFailed'))
+          return
+        }
+      } catch {
+        toast.error(t('documents.deleteFailed'))
+        return
+      }
+    }
+
     const nextDocuments = documents.filter((doc) => doc.id !== documentId)
     persistDocuments(nextDocuments)
   }
@@ -151,6 +231,24 @@ export default function LocalDocumentsManager({
           </DialogHeader>
 
           <div className="p-6 space-y-4">
+            {allowDocumentTypeSelection && (
+              <div className="space-y-1">
+                <label className="text-sm font-medium text-text-muted">
+                  {t('documents.typeLabel') || 'Document Type'}
+                </label>
+                <select
+                  value={selectedDocumentType}
+                  onChange={(e) => setSelectedDocumentType(Number(e.target.value))}
+                  className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                >
+                  <option value={0}>{t('documents.typeCertificates') || 'Certificates'}</option>
+                  <option value={1}>{t('documents.typeLicenses') || 'Licenses'}</option>
+                  <option value={2}>{t('documents.typeMedical') || 'Medical Papers'}</option>
+                  <option value={3}>{t('documents.typeOther') || 'Other'}</option>
+                </select>
+              </div>
+            )}
+
             <div className="flex items-center gap-2">
               <Button size="sm" onClick={handleOpenFilePicker} disabled={isUploading}>
                 <UploadFile className="w-4 h-4" />

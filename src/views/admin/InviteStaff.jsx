@@ -7,7 +7,18 @@ import Table, { TableHeader, TableBody, TableRow, TableHead, TableCell } from '.
 import Badge from '../../components/ui/Badge'
 import { useToast } from '../../components/ui/Toast'
 import { validateEmail } from '../../lib/validation'
-import { Mail, Send, CheckCircle, AccessTime as Clock, Cancel as XCircle, Sync as Loader2, PersonAdd as UserPlus } from '@mui/icons-material'
+import {
+  Mail,
+  Send,
+  CheckCircle,
+  Cancel as XCircle,
+  Sync as Loader2,
+  PersonAdd as UserPlus,
+  PersonOutline,
+  LockOutlined,
+  PhoneOutlined,
+  SupervisorAccount,
+} from '@mui/icons-material'
 import { authAPI, userAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 
@@ -27,10 +38,12 @@ export default function InviteStaff() {
   const [errors, setErrors] = useState({})
 
   const permissionLevels = [
-    { value: 'view-only', label: t('admin.viewOnly'), description: t('admin.viewOnlyDesc') },
     { value: 'support-agent', label: t('admin.supportAgent'), description: t('admin.supportAgentDesc') },
     { value: 'manager', label: t('admin.manager'), description: t('admin.managerDesc') },
   ]
+
+  const activeStaffCount = staffList.filter(member => member.IsActive !== false).length
+  const selectedPermission = permissionLevels.find(level => level.value === formData.permissions)
 
   // Fetch staff list from API
   useEffect(() => {
@@ -130,13 +143,37 @@ export default function InviteStaff() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h2 className="text-2xl font-bold text-text-heading">{t('admin.addStaff')}</h2>
-        <p className="text-text-muted mt-1">{t('admin.registerTeamMembers')}</p>
+      <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-transparent to-secondary/10 p-6 md:p-7">
+        <div className="absolute -top-16 -right-16 h-44 w-44 rounded-full bg-primary/20 blur-3xl" aria-hidden="true" />
+        <div className="absolute -bottom-20 left-20 h-44 w-44 rounded-full bg-secondary/20 blur-3xl" aria-hidden="true" />
+
+        <div className="relative z-10">
+          <h2 className="text-2xl font-bold text-text-heading">{t('admin.addStaff')}</h2>
+          <p className="text-text-muted mt-1">{t('admin.registerTeamMembers')}</p>
+
+          <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1.5 text-text-heading">
+              <SupervisorAccount className="h-4 w-4 text-primary" />
+              <span>{t('admin.currentStaffMembers')}: {staffList.length}</span>
+            </div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-secondary/35 bg-secondary/10 px-3 py-1.5 text-text-heading">
+              <CheckCircle className="h-4 w-4 text-primary" />
+              <span>{t('common.active')}: {activeStaffCount}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Registration Form */}
-      <Card>
+      <Card
+        sx={{
+          background: theme => theme.palette.mode === 'dark'
+            ? 'linear-gradient(150deg, rgba(13,22,18,0.95), rgba(13,22,18,0.85))'
+            : 'linear-gradient(145deg, rgba(255,255,255,0.97), rgba(248,252,250,0.98))',
+          borderColor: 'primary.main',
+          borderWidth: 1,
+        }}
+      >
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <UserPlus className="w-5 h-5 text-primary" />
@@ -154,6 +191,7 @@ export default function InviteStaff() {
                 onChange={handleChange}
                 error={errors.name}
                 placeholder="John Doe"
+                icon={PersonOutline}
               />
 
               <Input
@@ -164,6 +202,7 @@ export default function InviteStaff() {
                 onChange={handleChange}
                 error={errors.email}
                 placeholder="staff@nafs.com"
+                icon={Mail}
               />
 
               <Input
@@ -174,6 +213,7 @@ export default function InviteStaff() {
                 onChange={handleChange}
                 error={errors.password}
                 placeholder={t('admin.minChars')}
+                icon={LockOutlined}
               />
 
               <Input
@@ -183,6 +223,7 @@ export default function InviteStaff() {
                 value={formData.phoneNumber}
                 onChange={handleChange}
                 placeholder="+20 xxx xxxx xxx"
+                icon={PhoneOutlined}
               />
             </div>
 
@@ -196,15 +237,15 @@ export default function InviteStaff() {
 
             {/* Permission Description */}
             {formData.permissions && (
-              <div className="bg-primary/5 p-4 rounded-xl border border-primary/10">
-                <p className="text-sm text-primary">
-                  <strong>{permissionLevels.find(p => p.value === formData.permissions)?.label}:</strong>{' '}
-                  {permissionLevels.find(p => p.value === formData.permissions)?.description}
+              <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-secondary/10 p-4 rounded-xl border border-primary/20">
+                <p className="text-sm text-primary leading-relaxed">
+                  <strong>{selectedPermission?.label}:</strong>{' '}
+                  {selectedPermission?.description}
                 </p>
               </div>
             )}
 
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={loading} sx={{ minWidth: 220 }}>
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

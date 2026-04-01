@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from "react";
-import { authAPI } from "../lib/api";
+import { authAPI, userAPI } from "../lib/api";
 
 // Role definitions
 export const Roles = {
@@ -43,19 +43,39 @@ export const AuthProvider = ({ children }) => {
 
   // Load auth state from localStorage on mount
   useEffect(() => {
-    const storedAuth = localStorage.getItem("auth");
-    if (storedAuth) {
-      try {
-        const { user, role, token } = JSON.parse(storedAuth);
-        setUser(user);
-        setRole(role);
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error("Failed to parse stored auth:", error);
-        localStorage.removeItem("auth");
+    const initializeAuth = async () => {
+      const storedAuth = localStorage.getItem("auth");
+      if (storedAuth) {
+        try {
+          const { user, role, token } = JSON.parse(storedAuth);
+          setUser(user);
+          setRole(role);
+          setIsAuthenticated(true);
+
+          if (token) {
+            try {
+              const response = await userAPI.getCurrentUser();
+              if (response?.IsSuccess !== false && response?.Data) {
+                const refreshedUser = response.Data;
+                setUser(refreshedUser);
+                localStorage.setItem(
+                  "auth",
+                  JSON.stringify({ user: refreshedUser, role, token }),
+                );
+              }
+            } catch {
+              // Keep local user data if refresh endpoint fails.
+            }
+          }
+        } catch (error) {
+          console.error("Failed to parse stored auth:", error);
+          localStorage.removeItem("auth");
+        }
       }
-    }
-    setLoading(false);
+      setLoading(false);
+    };
+
+    initializeAuth();
   }, []);
 
   // Login function

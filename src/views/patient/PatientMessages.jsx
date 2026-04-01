@@ -16,7 +16,7 @@ import {
 import Button from "../../components/ui/Button";
 import ChatWindow from "../../components/chat/ChatWindow";
 import { useAuth } from "../../contexts/AuthContext";
-import { chatAPI } from "../../lib/api";
+import { chatAPI, filesAPI } from "../../lib/api";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 // Contact type selector
@@ -107,16 +107,38 @@ export default function PatientMessages() {
     const roomId = activeRoom?.Id || activeRoom?.id;
     if (!roomId) return;
     try {
-      const response = await chatAPI.sendMessage(roomId, msgData.content);
-      if (response?.IsSuccess !== false) {
-        const newMessage = {
-          id: Date.now(),
-          sender: "current-user",
-          content: msgData.content,
-          timestamp: new Date().toISOString(),
-        };
-        setMessages((prev) => [...prev, newMessage]);
+      const outgoingAttachments = msgData.attachments || [];
+
+      if (outgoingAttachments.length === 0) {
+        const response = await chatAPI.sendMessage(roomId, msgData.content);
+        if (response?.IsSuccess !== false) {
+          const newMessage = {
+            id: Date.now(),
+            sender: "current-user",
+            content: msgData.content,
+            timestamp: new Date().toISOString(),
+          };
+          setMessages((prev) => [...prev, newMessage]);
+        }
+        return;
       }
+
+      for (let i = 0; i < outgoingAttachments.length; i += 1) {
+        const attachment = outgoingAttachments[i];
+        const uploadResponse = await filesAPI.uploadFile(attachment.file);
+        const url = uploadResponse?.Data?.PublicUrl;
+        const name = uploadResponse?.Data?.FileName || attachment.name;
+
+        await chatAPI.sendMessage(
+          roomId,
+          i === 0 ? (msgData.content || '') : '',
+          1,
+          url || attachment.url,
+          name,
+        );
+      }
+
+      await fetchMessages(roomId);
     } catch (error) {
       console.error("Failed to send message:", error);
     }
@@ -141,6 +163,14 @@ export default function PatientMessages() {
         sender: msg.SenderId === (user?.ID || user?.id) ? "current-user" : "other",
         content: msg.Content || msg.content || "",
         timestamp: msg.CreatedAt || msg.timestamp || new Date().toISOString(),
+        attachments: msg.AttachmentUrl
+          ? [{
+              name: msg.AttachmentName || 'Attachment',
+              url: msg.AttachmentUrl,
+              type: (msg.AttachmentUrl || '').match(/\.(png|jpg|jpeg|gif|webp)$/i) ? 'image' : 'file',
+              size: '',
+            }]
+          : [],
       })),
     }
     : null;

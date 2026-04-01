@@ -17,7 +17,7 @@ import Table, {
 import { Search, MedicalServices as Stethoscope, CalendarToday as Calendar, AccessTime as Clock, ChevronRight, Person as User, ArrowBack as ArrowLeft, CheckCircle, Cancel as XCircle, ChevronLeft, Sync as Loader2, Visibility as Eye, ViewList, GridView, Star, Send, ThumbUp, Badge as BadgeIcon } from '@mui/icons-material';
 
 import { useAuth } from "../../contexts/AuthContext";
-import { patientAPI } from "../../lib/api";
+import { patientAPI, paymentAPI } from "../../lib/api";
 import { useToast } from "../../components/ui/Toast";
 import { useLanguage } from "../../contexts/LanguageContext";
 import DoctorDocumentsViewer from "../../components/patient/DoctorDocumentsViewer";
@@ -77,6 +77,8 @@ export default function ReserveAppointment() {
   
   // Documents modal state
   const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
+  const [selectedPaymentProvider, setSelectedPaymentProvider] = useState(1);
+  const [paymentLoading, setPaymentLoading] = useState(false);
 
   // Fetch Doctors with Pagination
   const fetchDoctors = async (page = 1) => {
@@ -316,6 +318,75 @@ export default function ReserveAppointment() {
     }
   };
 
+  const initiatePaymentForBooking = async (bookingId, amount) => {
+    if (!bookingId) return;
+    const safeAmount = Number(amount || 0);
+    if (safeAmount <= 0) {
+      toast.error(isRTL ? 'لا يمكن بدء الدفع بدون قيمة صحيحة' : 'Cannot initiate payment without a valid amount');
+      return;
+    }
+
+    setPaymentLoading(true);
+    try {
+      const response = await paymentAPI.initiatePayment({
+        BookingId: bookingId,
+        Provider: selectedPaymentProvider,
+        Amount: safeAmount,
+      });
+
+      if (response?.IsSuccess === false) {
+        toast.error(response?.Message || t('errors.unexpectedError'));
+        return;
+      }
+
+      const paymentUrl = response?.Data?.PaymentUrl;
+      if (paymentUrl) {
+        window.open(paymentUrl, '_blank', 'noopener,noreferrer');
+      }
+      toast.success(isRTL ? 'تم بدء عملية الدفع' : 'Payment initiated successfully');
+      fetchPatientBookings(bookingsPagination.pageIndex);
+    } catch (error) {
+      toast.error(error?.response?.data?.Message || (isRTL ? 'فشل بدء عملية الدفع' : 'Failed to initiate payment'));
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const checkBookingPaymentStatus = async (bookingId) => {
+    if (!bookingId) return;
+    setPaymentLoading(true);
+    try {
+      const response = await paymentAPI.getPaymentStatus(bookingId);
+      if (response?.IsSuccess === false || !response?.Data) {
+        toast.error(response?.Message || t('errors.unexpectedError'));
+        return;
+      }
+
+      const paid = Number(response.Data.Status) === 2;
+      toast.success(
+        paid
+          ? (isRTL ? 'تم تأكيد الدفع' : 'Payment confirmed')
+          : (isRTL ? 'الدفع غير مكتمل بعد' : 'Payment is not completed yet')
+      );
+
+      fetchPatientBookings(bookingsPagination.pageIndex);
+    } catch (error) {
+      toast.error(error?.response?.data?.Message || (isRTL ? 'فشل التحقق من الدفع' : 'Failed to check payment status'));
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  const handlePayNowFromStatus = async (bookingId) => {
+    const amountInput = window.prompt(isRTL ? 'أدخل مبلغ الدفع (EGP)' : 'Enter payment amount (EGP)');
+    const amount = Number(amountInput);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      toast.error(isRTL ? 'يرجى إدخال مبلغ صحيح' : 'Please enter a valid payment amount');
+      return;
+    }
+    await initiatePaymentForBooking(bookingId, amount);
+  };
+
   const handleSlotClick = (date, hour) => {
     // Consistent date formatting
     const year = date.getFullYear();
@@ -366,6 +437,13 @@ export default function ReserveAppointment() {
 
       const response = await patientAPI.createBooking(bookingRequest);
       if (response.IsSuccess) {
+        const bookingId = response?.Data?.BookingId;
+        const doctorFee = Number(selectedDoctor?.ConsultationFee || 0);
+
+        if (bookingId && doctorFee > 0) {
+          await initiatePaymentForBooking(bookingId, doctorFee);
+        }
+
         setStep(3);
         toast.success(t('success.bookingConfirmed'));
       } else {
@@ -879,6 +957,25 @@ export default function ReserveAppointment() {
                             </div>
                           </div>
                         )}
+
+                        <div className={`space-y-2 ${isRTL ? 'text-right' : ''}`}>
+                          <p className="text-xs text-text-muted">{isRTL ? 'مزود الدفع' : 'Payment Provider'}</p>
+                          <select
+                            value={selectedPaymentProvider}
+                            onChange={(e) => setSelectedPaymentProvider(Number(e.target.value))}
+                            className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                          >
+                            <option value={0}>Fawry</option>
+                            <option value={1}>Paymob</option>
+                          </select>
+                        </div>
+
+                        <div className={`space-y-1 ${isRTL ? 'text-right' : ''}`}>
+                          <p className="text-xs text-text-muted">{isRTL ? 'قيمة الجلسة' : 'Session Fee'}</p>
+                          <p className="font-semibold text-text-heading">
+                            {selectedDoctor?.ConsultationFee ? `${selectedDoctor.ConsultationFee} EGP` : (isRTL ? 'غير محدد' : 'Not specified')}
+                          </p>
+                        </div>
                       </div>
                       <Button className="w-full mt-6" disabled={!bookedSlot} onClick={confirmBooking}>
                         {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
@@ -1092,6 +1189,28 @@ export default function ReserveAppointment() {
                             <Badge variant={statusInfo.variant}>
                               {statusInfo.label}
                             </Badge>
+
+                            {!booking.PaymentConfirmed && booking.Status !== 4 && booking.Status !== 5 && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handlePayNowFromStatus(booking.Id)}
+                                disabled={paymentLoading}
+                              >
+                                {isRTL ? 'ادفع الآن' : 'Pay Now'}
+                              </Button>
+                            )}
+
+                            {!booking.PaymentConfirmed && (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => checkBookingPaymentStatus(booking.Id)}
+                                disabled={paymentLoading}
+                              >
+                                {isRTL ? 'تحقق من الدفع' : 'Check Payment'}
+                              </Button>
+                            )}
 
                             {canCancel && (
                               <Button

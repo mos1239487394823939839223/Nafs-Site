@@ -12,6 +12,7 @@ import {
   Close as X,
 } from '@mui/icons-material'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { documentsAPI } from '../../lib/api'
 
 const DOCUMENT_CATEGORIES = [
   { key: 'certificates', labelKey: 'doctor.docs.certificates', icon: GraduationCap, color: 'text-blue-500', bg: 'bg-blue-500/10' },
@@ -53,24 +54,54 @@ export default function DoctorDocumentsViewer({ doctorId }) {
   }
 
   useEffect(() => {
-    // Currently relying on localStorage simulation
-    // In actual production, this would be an API call fetching documents by doctorId
-    try {
-      const raw = localStorage.getItem('doctor_documents_meta')
-      if (raw) {
-        const parsed = JSON.parse(raw)
-        setDocs(parsed)
-        // Set first category with items as active
+    const mapCategory = (documentType) => {
+      const value = Number(documentType)
+      if (value === 0) return 'certificates'
+      if (value === 1) return 'licenses'
+      if (value === 2) return 'medical'
+      return 'other'
+    }
+
+    const fetchDocs = async () => {
+      if (!doctorId) return
+
+      const grouped = {
+        certificates: [],
+        licenses: [],
+        medical: [],
+        other: [],
+      }
+
+      try {
+        const response = await documentsAPI.getDocumentsByOwner(doctorId, 1, 100)
+        const items = response?.Data?.Items || []
+
+        items.forEach((item) => {
+          const categoryKey = mapCategory(item.DocumentType)
+          grouped[categoryKey].push({
+            id: String(item.DocumentID),
+            name: item.FileName || item.Title,
+            size: 0,
+            type: '',
+            dataUrl: item.FileUrl,
+            uploadedAt: item.UploadedAt,
+          })
+        })
+
+        setDocs(grouped)
+
         for (const cat of DOCUMENT_CATEGORIES) {
-          if (parsed[cat.key]?.length > 0) {
+          if (grouped[cat.key]?.length > 0) {
             setActiveCategory(cat.key)
             break
           }
         }
+      } catch {
+        setDocs(grouped)
       }
-    } catch {
-      // Ignore
     }
+
+    fetchDocs()
   }, [doctorId])
 
   const totalCount = Object.values(docs).reduce((acc, arr) => acc + (arr?.length || 0), 0)

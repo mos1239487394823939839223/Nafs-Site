@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Article as ArticleIcon,
@@ -11,6 +11,8 @@ import Select from 'react-select'
 import { useLanguage } from '../../contexts/LanguageContext'
 import Badge from '../../components/ui/Badge'
 import { useBlogsStore } from '../../hooks/useBlogsStore'
+import { blogAPI } from '../../lib/api'
+import { useToast } from '../../components/ui/Toast'
 
 /* ──── Article Card ──────────────────────────────────────────────────────── */
 function BlogCard({ blog, onClick, t, isRTL }) {
@@ -165,11 +167,43 @@ function BlogModal({ blog, onClose, t, isRTL }) {
 
 /* ──── Main Page ─────────────────────────────────────────────────────────── */
 export default function PatientBlogs() {
-  const { blogs } = useBlogsStore()
+  const { blogs, blogLoadError } = useBlogsStore()
   const { t, isRTL } = useLanguage()
+  const toast = useToast()
   const [search, setSearch] = useState('')
   const [activeTag, setActiveTag] = useState('all')
   const [selected, setSelected] = useState(null)
+  const [loadingBlogId, setLoadingBlogId] = useState(null)
+
+  useEffect(() => {
+    if (!blogLoadError) return
+    toast.error(isRTL ? 'فشل تحميل المقالات من الخادم' : 'Failed to load blogs from server')
+  }, [blogLoadError, toast, isRTL])
+
+  const handleSelectBlog = async (blog) => {
+    setSelected(blog)
+    if (!blog?.id) return
+
+    setLoadingBlogId(blog.id)
+    try {
+      const response = await blogAPI.getBlogById(blog.id)
+      const item = response?.Data
+      if (response?.IsSuccess !== false && item) {
+        setSelected((prev) => ({
+          ...prev,
+          title: item.Title || prev?.title,
+          description: item.Body || prev?.description,
+          createdAt: item.CreatedAt || prev?.createdAt,
+          author: item.AuthorName || prev?.author,
+          tags: (item.Tags || []).map((tag) => tag.Name),
+        }))
+      }
+    } catch {
+      // Keep summary data already available in UI if details fetch fails.
+    } finally {
+      setLoadingBlogId(null)
+    }
+  }
 
   const allTags = useMemo(() => {
     const tagSet = new Set()
@@ -314,7 +348,7 @@ export default function PatientBlogs() {
               <BlogCard
                 key={b.id}
                 blog={b}
-                onClick={setSelected}
+                onClick={handleSelectBlog}
                 t={t}
                 isRTL={isRTL}
               />
@@ -325,6 +359,12 @@ export default function PatientBlogs() {
 
       {/* Detail modal */}
       {selected && <BlogModal blog={selected} onClose={() => setSelected(null)} t={t} isRTL={isRTL} />}
+
+      {loadingBlogId && (
+        <p className={`text-xs text-text-muted ${isRTL ? 'text-right' : 'text-left'}`}>
+          {isRTL ? 'جاري تحميل تفاصيل المقال...' : 'Loading article details...'}
+        </p>
+      )}
     </div>
   )
 }

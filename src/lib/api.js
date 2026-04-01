@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Default API URL. Can be overridden by VITE_BASE_URL environment variable.
-const API_BASE_URL = import.meta.env.VITE_BASE_URL || 'https://app.nafas-site.tech/';
+const API_BASE_URL = import.meta.env.VITE_BASE_URL || 'https://api.nafas-site.tech/';
 
 export const api = axios.create({
     baseURL: API_BASE_URL,
@@ -468,6 +468,171 @@ export const chatAPI = {
     // Mark messages in a room as read
     markAsRead: async (roomId) => {
         const response = await api.post(`/Chat/Room/${roomId}/MarkAsRead`);
+        return response.data;
+    },
+};
+
+// ─── Blog API Functions ──────────────────────────────────────────────────────
+export const blogAPI = {
+    getBlogs: async (pageIndex = 1, pageSize = 20, tagId = null) => {
+        const params = { pageIndex, pageSize };
+        if (tagId !== null && tagId !== undefined) params.tagId = tagId;
+        const response = await api.get('/blog/blogs', { params });
+        return response.data;
+    },
+
+    getPersonalizedBlogs: async (pageIndex = 1, pageSize = 20) => {
+        const response = await api.get('/blog/blogs/personalized', {
+            params: { pageIndex, pageSize },
+        });
+        return response.data;
+    },
+
+    getBlogById: async (blogId) => {
+        const response = await api.get(`/blog/blogs/${blogId}`);
+        return response.data;
+    },
+
+    createBlog: async (payload) => {
+        const response = await api.post('/blog/blogs', payload);
+        return response.data;
+    },
+
+    updateBlog: async (blogId, payload) => {
+        const response = await api.put(`/blog/blogs/${blogId}`, payload);
+        return response.data;
+    },
+
+    deleteBlog: async (blogId) => {
+        const response = await api.delete(`/blog/blogs/${blogId}`);
+        return response.data;
+    },
+
+    createTag: async (name) => {
+        const response = await api.post('/blog/tags', { Name: name });
+        return response.data;
+    },
+
+    getPreferredTags: async () => {
+        const response = await api.get('/blog/my-preferred-tags');
+        return response.data;
+    },
+
+    setPreferredTags: async (tagIds) => {
+        const response = await api.put('/blog/my-preferred-tags', { TagIDs: tagIds });
+        return response.data;
+    },
+};
+
+// ─── Medical API Functions ───────────────────────────────────────────────────
+export const medicalAPI = {
+    getTestTypes: async (pageIndex = 1, pageSize = 50) => {
+        const response = await api.get('/medical/test-types', {
+            params: { pageIndex, pageSize },
+        });
+        return response.data;
+    },
+
+    createTestType: async (payload) => {
+        const response = await api.post('/medical/test-types', payload);
+        return response.data;
+    },
+
+    getMyHistory: async (pageIndex = 1, pageSize = 20) => {
+        const response = await api.get('/medical/my-history', {
+            params: { pageIndex, pageSize },
+        });
+        return response.data;
+    },
+
+    getPatientHistory: async (patientId, pageIndex = 1, pageSize = 20) => {
+        const response = await api.get(`/medical/patients/${patientId}/history`, {
+            params: { pageIndex, pageSize },
+        });
+        return response.data;
+    },
+
+    addPatientTest: async (payload) => {
+        const response = await api.post('/medical/patient-tests', payload);
+        return response.data;
+    },
+
+    updatePatientTestResult: async (recordId, result) => {
+        const response = await api.put(`/medical/patient-tests/${recordId}/result`, {
+            Result: result,
+        });
+        return response.data;
+    },
+};
+
+// ─── Documents API Functions ─────────────────────────────────────────────────
+export const documentsAPI = {
+    uploadDocument: async ({ file, ownerUserId, title, documentType = 0 }) => {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('ownerUserId', String(ownerUserId));
+        formData.append('title', title);
+        formData.append('documentType', String(documentType));
+
+        const response = await api.post('/documents/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return response.data;
+    },
+
+    getDocumentsByOwner: async (ownerUserId, pageIndex = 1, pageSize = 20) => {
+        const response = await api.get(`/documents/${ownerUserId}`, {
+            params: { pageIndex, pageSize },
+        });
+        return response.data;
+    },
+
+    deleteDocument: async (documentId) => {
+        const response = await api.delete(`/documents/${documentId}`);
+        return response.data;
+    },
+};
+
+// ─── Files API Functions ─────────────────────────────────────────────────────
+export const filesAPI = {
+    uploadFile: async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
+
+        const response = await api.post('/files/upload', formData, {
+            headers: { 'Content-Type': 'multipart/form-data' },
+        });
+        return response.data;
+    },
+};
+
+// ─── Payment API Functions ───────────────────────────────────────────────────
+export const paymentAPI = {
+    initiatePayment: async (payload) => {
+        const response = await api.post('/Patient/Payment/Initiate', payload);
+        return response.data;
+    },
+
+    getPaymentStatus: async (bookingId) => {
+        const response = await api.get(`/Patient/Payment/${bookingId}/Status`);
+        return response.data;
+    },
+};
+
+// ─── Utility/Misc API Functions ──────────────────────────────────────────────
+export const miscAPI = {
+    sendEmail: async (payload) => {
+        const response = await api.post('/Mail/sendEmail', payload);
+        return response.data;
+    },
+
+    paymentCallbackFawry: async () => {
+        const response = await api.post('/Payment/Callback/Fawry');
+        return response.data;
+    },
+
+    paymentCallbackPaymob: async () => {
+        const response = await api.post('/Payment/Callback/Paymob');
         return response.data;
     },
 };

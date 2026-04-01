@@ -6,7 +6,7 @@ import { useLanguage } from '../../contexts/LanguageContext'
 import { Science, OpenInNew } from '@mui/icons-material'
 import { getAvailableTests } from '../../lib/testsStorage'
 
-export default function PatientTests() {
+export default function DoctorTests() {
   const { isRTL } = useLanguage()
   const [search, setSearch] = useState('')
   const [selectedTag, setSelectedTag] = useState('all')
@@ -42,8 +42,8 @@ export default function PatientTests() {
         </h1>
         <p className="text-text-muted mt-2">
           {isRTL
-            ? 'يمكنك استعراض الاختبارات التي أضافها الطبيب ومعرفة تفاصيل كل اختبار.'
-            : 'Browse the tests your doctor has made available and review each test details.'}
+            ? 'يمكنك استعراض الاختبارات المتاحة ومشاركة الروابط مع المرضى أثناء المتابعة.'
+            : 'Browse available tests and share links with patients during follow-up.'}
         </p>
       </div>
 

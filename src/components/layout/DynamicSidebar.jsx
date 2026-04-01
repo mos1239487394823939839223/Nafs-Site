@@ -13,6 +13,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
   const navigationConfig = {
     [Roles.PATIENT]: [
       { name: t('nav.reserve'), path: '/dashboard/patient/reserve', icon: Calendar },
+      { name: t('nav.tests'), path: '/dashboard/patient/tests', icon: TestTube },
       { name: t('nav.messages'), path: '/dashboard/patient/messages', icon: MessageSquare },
       { name: t('nav.profile'), path: '/dashboard/patient/profile', icon: Settings },
     ],
@@ -20,6 +21,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       { name: t('nav.dashboard'), path: '/dashboard/doctor', icon: Home },
       { name: t('nav.queue'), path: '/dashboard/doctor/queue', icon: Users },
       { name: t('nav.medicalHistory'), path: '/dashboard/doctor/medical-history', icon: FileText },
+      { name: t('nav.tests'), path: '/dashboard/doctor/tests', icon: TestTube },
       { name: t('nav.schedule'), path: '/dashboard/doctor/schedule', icon: Calendar },
       { name: t('nav.history'), path: '/dashboard/doctor/history', icon: Activity },
       { name: t('nav.messages'), path: '/dashboard/doctor/messages', icon: MessageSquare },
@@ -29,6 +31,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       { name: t('nav.users'), path: '/admin/users', icon: Users },
       { name: t('nav.bookings'), path: '/admin/bookings', icon: Calendar },
       { name: t('nav.blogs'), path: '/admin/blogs', icon: ArticleIcon },
+      { name: isRTL ? 'الاختبارات' : 'Tests', path: '/admin/tests', icon: TestTube },
       { name: t('nav.inviteStaff'), path: '/admin/invite-staff', icon: UserPlus },
       { name: t('nav.messages'), path: '/admin/messages', icon: MessageSquare },
       { name: t('nav.profile'), path: '/admin/profile', icon: Settings },

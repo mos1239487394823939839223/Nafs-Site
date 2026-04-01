@@ -60,6 +60,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files)
     const newAttachments = files.map(file => ({
+      file,
       name: file.name,
       size: `${(file.size / 1024).toFixed(1)} KB`,
       type: file.type.startsWith('image/') ? 'image' : 'file',
