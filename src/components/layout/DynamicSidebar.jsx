@@ -14,7 +14,6 @@ export default function DynamicSidebar({ isOpen, onClose }) {
     [Roles.PATIENT]: [
       { name: t('nav.reserve'), path: '/dashboard/patient/reserve', icon: Calendar },
       { name: t('nav.messages'), path: '/dashboard/patient/messages', icon: MessageSquare },
-      { name: t('nav.blogs'), path: '/dashboard/patient/blogs', icon: ArticleIcon },
       { name: t('nav.profile'), path: '/dashboard/patient/profile', icon: Settings },
     ],
     [Roles.DOCTOR]: [
@@ -29,8 +28,8 @@ export default function DynamicSidebar({ isOpen, onClose }) {
     [Roles.ADMIN]: [
       { name: t('nav.users'), path: '/admin/users', icon: Users },
       { name: t('nav.bookings'), path: '/admin/bookings', icon: Calendar },
-      { name: t('nav.inviteStaff'), path: '/admin/invite-staff', icon: UserPlus },
       { name: t('nav.blogs'), path: '/admin/blogs', icon: ArticleIcon },
+      { name: t('nav.inviteStaff'), path: '/admin/invite-staff', icon: UserPlus },
       { name: t('nav.messages'), path: '/admin/messages', icon: MessageSquare },
       { name: t('nav.profile'), path: '/admin/profile', icon: Settings },
     ],
