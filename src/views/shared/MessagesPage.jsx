@@ -5,6 +5,7 @@ import ChatWindow from '../../components/chat/ChatWindow'
 import { Search, ChatBubbleOutline as MessageSquare, Sync as Loader2, Refresh as RefreshCw, MedicalServices as Stethoscope, Person as User, Headphones } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { startChatConnection } from '../../lib/signalr'
 
 export default function MessagesPage() {
   const { user } = useAuth()
@@ -53,6 +54,50 @@ export default function MessagesPage() {
   useEffect(() => {
     fetchRooms()
   }, [fetchRooms])
+
+  // SignalR Real-time Integration
+  useEffect(() => {
+    let connection = null
+
+    const setupSignalR = async () => {
+      try {
+        connection = await startChatConnection()
+        
+        // Listen for new messages
+        connection.on('ReceiveMessage', (roomId, message) => {
+          // If the message belongs to the current active room, add it to the state
+          if (String(activeRoom?.Id || activeRoom?.id) === String(roomId)) {
+            // Transform backend message to UI format
+            const uiMessage = {
+              id: message.Id || message.id || Date.now(),
+              sender: message.SenderId === (user?.ID || user?.id) ? 'current-user' : 'other',
+              content: message.Content || message.content || '',
+              timestamp: message.CreatedAt || message.timestamp || new Date().toISOString(),
+              attachments: message.AttachmentUrl ? [{
+                name: message.AttachmentName || 'Attachment',
+                url: message.AttachmentUrl,
+                type: (message.AttachmentUrl || '').match(/\.(png|jpg|jpeg|gif|webp)$/i) ? 'image' : 'file'
+              }] : []
+            }
+            setMessages(prev => [...prev, uiMessage])
+          }
+          
+          // Always refresh rooms to show latest message snippet/unread count in sidebar
+          fetchRooms()
+        })
+      } catch (err) {
+        console.error('SignalR Setup Error:', err)
+      }
+    }
+
+    setupSignalR()
+
+    return () => {
+      if (connection) {
+        connection.off('ReceiveMessage')
+      }
+    }
+  }, [activeRoom, user, fetchRooms])
 
   useEffect(() => {
     if (activeRoom) {

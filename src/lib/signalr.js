@@ -1,6 +1,7 @@
 import * as signalR from '@microsoft/signalr';
 
-const HUB_URL = `${import.meta.env.VITE_BASE_URL || 'https://api.nafas-site.tech'}/hubs/chat`;
+const BASE_URL = (import.meta.env.VITE_BASE_URL || 'https://api.nafas-site.tech').replace(/\/$/, '');
+const HUB_URL = `${BASE_URL}/hubs/chat`;
 
 // ─── Token helper (same logic as api.js) ─────────────────────────────────────
 function getAuthToken() {
@@ -32,11 +33,9 @@ export function getChatConnection() {
   _connection = new signalR.HubConnectionBuilder()
     .withUrl(HUB_URL, {
       accessTokenFactory: () => getAuthToken(),
-      // Prefer WebSockets, fall back to SSE then long-polling
-      transport:
-        signalR.HttpTransportType.WebSockets |
-        signalR.HttpTransportType.ServerSentEvents |
-        signalR.HttpTransportType.LongPolling,
+      // Skip negotiation to avoid CORS issues if server allows it
+      skipNegotiation: true,
+      transport: signalR.HttpTransportType.WebSockets,
     })
     .withAutomaticReconnect([0, 2000, 5000, 10000, 30000])
     .configureLogging(
