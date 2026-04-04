@@ -5,7 +5,7 @@ import Badge from '../../components/ui/Badge'
 import Button from '../../components/ui/Button'
 import SelectDropdown from '../../components/ui/SelectDropdown'
 import { CalendarToday as Calendar, FilterList as Filter, Sync as Loader2, ChevronLeft, ChevronRight, People as Users, Search } from '@mui/icons-material'
-import { adminAPI } from '../../lib/api'
+import { adminAPI, extractErrorMessage } from '../../lib/api'
 import { useToast } from '../../components/ui/Toast'
 import { useLanguage } from '../../contexts/LanguageContext'
 
@@ -41,14 +41,14 @@ export default function AdminBookings() {
         params.status = statusFilter
       }
       const response = await adminAPI.getBookings(params)
-      if (response?.IsSuccess !== false && response?.Data) {
+      if (response?.IsSuccess === true && response?.Data) {
         setBookings(response.Data.Items || response.Data || [])
         setTotalPages(response.Data.Pages || 1)
         setTotalRecords(response.Data.Records || 0)
       }
     } catch (error) {
       console.error('Failed to fetch bookings:', error)
-      toast.error(t('errors.failedLoadBookings'))
+      toast.error(extractErrorMessage(error, t('errors.failedLoadBookings')))
     } finally {
       setLoading(false)
     }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PhotoCamera as Camera, Person as User, Mail, Phone, LocationOn as MapPin, CalendarToday as Calendar, Favorite as Heart, Sync as Loader2 } from '@mui/icons-material'
 import Button from '../../ui/Button'
 import Input from '../../ui/Input'
@@ -19,6 +19,12 @@ export default function ProfileSettings({ user, onSave, onImageUpload }) {
   const [avatar, setAvatar] = useState(user?.image || user?.Image || null)
   const [saving, setSaving] = useState(false)
   const [uploadingImage, setUploadingImage] = useState(false)
+
+  // Sync avatar when user image changes (e.g. after upload updates AuthContext)
+  useEffect(() => {
+    const img = user?.image || user?.Image || null
+    if (img) setAvatar(img)
+  }, [user?.image, user?.Image])
 
   const handleChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }))

@@ -1,9 +1,21 @@
-import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/ui/Toast'
-import { userAPI } from '../../lib/api'
-import { PhotoCamera as Camera, Person as User, Mail, Phone, Lock, Sync as Loader2 } from '@mui/icons-material'
+import { userAPI, filesAPI, extractErrorMessage } from '../../lib/api'
+import {
+    PhotoCamera as Camera,
+    Person as User,
+    Mail,
+    Phone,
+    Lock,
+    Sync as Loader2,
+    Edit,
+    Close as X,
+    AdminPanelSettings as ShieldCheck,
+    CheckCircle as CheckCircle2,
+    CalendarToday as Calendar,
+} from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -21,9 +33,22 @@ export default function AdminProfile() {
     const [avatar, setAvatar] = useState(user?.image || user?.Image || null)
     const [saving, setSaving] = useState(false)
     const [uploadingImage, setUploadingImage] = useState(false)
+    const [editModalOpen, setEditModalOpen] = useState(false)
+    const [passwordModalOpen, setPasswordModalOpen] = useState(false)
 
-    // Change password state
-    const [showPasswordSection, setShowPasswordSection] = useState(false)
+    useEffect(() => {
+        const img = user?.image || user?.Image || null
+        if (img) setAvatar(img)
+    }, [user?.image, user?.Image])
+
+    useEffect(() => {
+        setFormData({
+            name: user?.name || user?.Name || '',
+            email: user?.email || user?.Email || '',
+            phone: user?.phone || user?.PhoneNumber || '',
+        })
+    }, [user])
+
     const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
     const [passwordLoading, setPasswordLoading] = useState(false)
 
@@ -37,26 +62,24 @@ export default function AdminProfile() {
             setAvatar(URL.createObjectURL(file))
             setUploadingImage(true)
             try {
-                const reader = new FileReader()
-                reader.onload = async () => {
-                    try {
-                        const base64 = reader.result.split(',')[1]
-                        const response = await userAPI.updateCurrentUserImage(user, base64)
-                        if (response?.IsSuccess !== false) {
-                            updateProfile({ image: response.Data || reader.result })
-                            toast.success(t('success.photoUpdated'))
-                        } else {
-                            toast.error(response?.Message || t('errors.somethingWentWrong'))
-                        }
-                    } catch (error) {
-                        toast.error(error?.response?.data?.Message || t('errors.somethingWentWrong'))
-                    } finally {
-                        setUploadingImage(false)
-                    }
+                const uploadResponse = await filesAPI.uploadFile(file)
+                const imageUrl = uploadResponse?.Data?.PublicUrl || uploadResponse?.Data
+                if (!imageUrl) {
+                    toast.error(t('errors.somethingWentWrong'))
+                    setUploadingImage(false)
+                    return
                 }
-                reader.readAsDataURL(file)
+                const response = await userAPI.updateCurrentUserImage(user, imageUrl)
+                if (response?.IsSuccess === true) {
+                    setAvatar(imageUrl)
+                    updateProfile({ image: imageUrl })
+                    toast.success(t('success.photoUpdated'))
+                } else {
+                    toast.error(response?.Message || t('errors.somethingWentWrong'))
+                }
             } catch (error) {
-                toast.error(t('errors.somethingWentWrong'))
+                toast.error(extractErrorMessage(error, t('errors.somethingWentWrong')))
+            } finally {
                 setUploadingImage(false)
             }
         }
@@ -70,15 +93,15 @@ export default function AdminProfile() {
                 phoneNumber: formData.phone,
                 email: formData.email,
             })
-
-            if (response?.IsSuccess !== false) {
+            if (response?.IsSuccess === true) {
                 updateProfile(formData)
                 toast.success(t('success.profileUpdated'))
+                setEditModalOpen(false)
             } else {
                 toast.error(response?.Message || t('errors.somethingWentWrong'))
             }
         } catch (error) {
-            toast.error(error.response?.data?.Message || t('errors.somethingWentWrong'))
+            toast.error(extractErrorMessage(error, t('errors.somethingWentWrong')))
         } finally {
             setSaving(false)
         }
@@ -97,171 +120,332 @@ export default function AdminProfile() {
             toast.error(t('errors.passwordMismatch'))
             return
         }
-
         setPasswordLoading(true)
         try {
             const response = await userAPI.changePassword(passwordData.currentPassword, passwordData.newPassword)
-            if (response?.IsSuccess !== false) {
+            if (response?.IsSuccess === true) {
                 toast.success(t('success.passwordChanged'))
                 setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
-                setShowPasswordSection(false)
+                setPasswordModalOpen(false)
             } else {
                 toast.error(response?.Message || t('errors.somethingWentWrong'))
             }
         } catch (error) {
-            toast.error(error.response?.data?.Message || t('errors.somethingWentWrong'))
+            toast.error(extractErrorMessage(error, t('errors.somethingWentWrong')))
         } finally {
             setPasswordLoading(false)
         }
     }
 
-    return (
-        <div className="min-h-screen bg-background p-6 md:p-10">
-            <div className="max-w-4xl mx-auto">
+    const displayName = formData.name || user?.name || user?.Name || 'Admin'
+    const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-text-heading mb-2">{t('admin.adminProfile')}</h1>
-                    <p className="text-text-muted">{t('admin.manageAccount')}</p>
+    return (
+        <div className="min-h-screen bg-background">
+            {/* ─── Cover + Avatar Hero ─── */}
+            <div className="relative">
+                {/* Cover Photo */}
+                <div className="h-56 md:h-72 w-full overflow-hidden relative">
+                    <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-secondary" />
+                    {/* Geometric pattern overlay */}
+                    <svg className="absolute inset-0 w-full h-full opacity-10" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1" />
+                            </pattern>
+                        </defs>
+                        <rect width="100%" height="100%" fill="url(#grid)" />
+                    </svg>
+                    {/* Blur circles */}
+                    <div className="absolute top-8 left-1/4 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
+                    <div className="absolute bottom-0 right-1/3 w-64 h-64 bg-secondary/30 rounded-full blur-3xl" />
                 </div>
 
-                {/* Main Content Card */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-background-paper rounded-2xl shadow-lg border border-border overflow-hidden"
-                >
-                    {/* Decorative Top Bar */}
-                    <div className="h-1.5 w-full bg-gradient-to-r from-primary via-secondary to-sage-light" />
-
-                    <div className="p-6 md:p-8 space-y-10">
-                        {/* Avatar Section */}
-                        <div className="flex flex-col md:flex-row items-center gap-8 p-6 bg-background-gray/30 rounded-2xl border border-dashed border-border">
-                            <div className="relative group">
-                                <div className="w-32 h-32 rounded-full border-4 border-white shadow-md flex items-center justify-center overflow-hidden bg-primary/5">
-                                    {uploadingImage ? (
-                                        <Loader2 className="w-8 h-8 text-primary animate-spin" />
-                                    ) : avatar ? (
-                                        <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
-                                    ) : (
-                                        <span className="text-4xl font-bold text-primary">{formData.name.charAt(0)}</span>
-                                    )}
-                                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-                                        <Camera className="w-8 h-8 text-white" />
-                                    </div>
-                                </div>
-                                <label className="absolute bottom-0 right-0 p-2.5 bg-primary text-white rounded-full cursor-pointer hover:bg-primary-dark transition-transform hover:scale-105 shadow-lg">
-                                    <Camera className="w-4 h-4" />
-                                    <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-                                </label>
-                            </div>
-                            <div className="text-center md:text-left space-y-2">
-                                <h3 className="text-lg font-semibold text-text">{t('settings.profilePhoto')}</h3>
-                                <p className="text-sm text-text-light max-w-xs">
-                                    {t('admin.uploadProfessionalPhoto')}
-                                </p>
-                            </div>
+                {/* Avatar anchored to cover bottom */}
+                <div className="absolute left-1/2 md:left-16 -translate-x-1/2 md:translate-x-0 -bottom-16 z-10">
+                    <div className="relative group">
+                        <div className="w-32 h-32 md:w-36 md:h-36 rounded-full border-4 border-background-paper shadow-2xl flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/20">
+                            {uploadingImage ? (
+                                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                            ) : avatar ? (
+                                <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="text-4xl font-bold text-primary">{initials}</span>
+                            )}
                         </div>
-
-                        {/* Personal Info */}
-                        <div className="grid md:grid-cols-2 gap-x-6 gap-y-6">
-                            <div className="md:col-span-2 pb-2 border-b border-border-light mb-2">
-                                <h3 className="font-semibold text-text">{t('settings.personalInformation')}</h3>
-                            </div>
-
-                            <Input
-                                label={t('common.fullName')}
-                                value={formData.name}
-                                onChange={(e) => handleChange('name', e.target.value)}
-                                icon={User}
-                                className="bg-background-gray/20"
-                            />
-                            <Input
-                                label={t('common.emailAddress')}
-                                value={formData.email}
-                                onChange={(e) => handleChange('email', e.target.value)}
-                                icon={Mail}
-                                className="bg-background-gray/50"
-                                disabled
-                            />
-                            <Input
-                                label={t('common.phoneNumber')}
-                                value={formData.phone}
-                                onChange={(e) => handleChange('phone', e.target.value)}
-                                icon={Phone}
-                                className="bg-background-gray/20"
-                            />
-                        </div>
-
-                        <div className="flex justify-end pt-6">
-                            <Button size="lg" className="w-full md:w-auto px-8" onClick={handleSave} disabled={saving}>
-                                {saving ? (
-                                    <div className="flex items-center gap-2">
-                                        <Loader2 className="w-4 h-4 animate-spin" />
-                                        {t('common.saving')}
-                                    </div>
-                                ) : t('common.save')}
-                            </Button>
-                        </div>
+                        {/* Camera overlay */}
+                        <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer">
+                            <Camera className="w-7 h-7 text-white" />
+                            <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+                        </label>
+                        {/* Online indicator */}
+                        <div className="absolute bottom-2 right-2 w-4 h-4 bg-emerald-400 rounded-full border-2 border-background-paper shadow" />
                     </div>
-                </motion.div>
+                </div>
+            </div>
 
-                {/* Change Password Section */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.1 }}
-                    className="mt-8 bg-background-paper rounded-2xl shadow-lg border border-border overflow-hidden"
-                >
-                    <div className="p-6 md:p-8">
-                        <div className="flex items-center justify-between mb-4">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                                    <Lock className="w-5 h-5 text-primary" />
-                                </div>
-                                <div>
-                                    <h3 className="font-semibold text-text">{t('settings.changePassword')}</h3>
-                                    <p className="text-sm text-text-muted">{t('settings.updateAccountPassword')}</p>
-                                </div>
-                            </div>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setShowPasswordSection(!showPasswordSection)}
-                            >
-                                {showPasswordSection ? t('common.cancel') : t('settings.change')}
-                            </Button>
+            {/* ─── Profile Info Bar ─── */}
+            <div className="max-w-4xl mx-auto px-4 md:px-6">
+                {/* Spacer for avatar */}
+                <div className="pt-20 md:pt-6 md:pl-48 flex flex-col md:flex-row items-center md:items-end justify-between gap-4 pb-6 border-b border-border">
+                    <div className="text-center md:text-left">
+                        <h1 className="text-2xl md:text-3xl font-bold text-text-heading">{displayName}</h1>
+                        <div className="flex items-center justify-center md:justify-start gap-2 mt-1.5 flex-wrap">
+                            <span className="inline-flex items-center gap-1.5 text-sm text-primary font-medium bg-primary/10 px-3 py-1 rounded-full">
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                                Admin
+                            </span>
+                            <span className="inline-flex items-center gap-1.5 text-sm text-emerald-600 font-medium bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                {t('common.active', 'Active')}
+                            </span>
                         </div>
+                        <p className="text-sm text-text-muted mt-1.5 flex items-center justify-center md:justify-start gap-1.5">
+                            <Mail className="w-3.5 h-3.5" />
+                            {formData.email}
+                        </p>
+                    </div>
 
-                        {showPasswordSection && (
-                            <motion.div
-                                initial={{ opacity: 0, height: 0 }}
-                                animate={{ opacity: 1, height: 'auto' }}
-                                className="space-y-4 pt-4 border-t border-border"
-                            >
-                                {['currentPassword', 'newPassword', 'confirmPassword'].map((field) => (
-                                    <div key={field}>
-                                        <label className="block text-sm font-medium text-text-muted mb-2">
-                                            {field === 'currentPassword' ? t('auth.currentPassword') : field === 'newPassword' ? t('auth.newPassword') : t('auth.confirmNewPassword')}
-                                        </label>
+                    {/* Action Buttons */}
+                    <div className="flex items-center gap-3">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPasswordModalOpen(true)}
+                            className="flex items-center gap-2"
+                        >
+                            <Lock className="w-4 h-4" />
+                            {t('settings.changePassword', 'Change Password')}
+                        </Button>
+                        <Button
+                            size="sm"
+                            onClick={() => setEditModalOpen(true)}
+                            className="flex items-center gap-2"
+                        >
+                            <Edit className="w-4 h-4" />
+                            {t('admin.editDetails', 'Edit Details')}
+                        </Button>
+                    </div>
+                </div>
+
+                {/* ─── Stats Row ─── */}
+                <div className="grid grid-cols-3 gap-4 py-6 border-b border-border">
+                    {[
+                        { label: t('admin.role', 'Role'), value: 'Admin' },
+                        { label: t('common.phoneNumber', 'Phone'), value: formData.phone || '—' },
+                        { label: t('admin.accountStatus', 'Status'), value: t('common.active', 'Active') },
+                    ].map((stat, i) => (
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.08 }}
+                            className="text-center p-4 rounded-2xl bg-background-paper border border-border hover:border-primary/30 hover:shadow-sm transition-all duration-200"
+                        >
+                            <p className="text-lg md:text-xl font-bold text-text-heading">{stat.value}</p>
+                            <p className="text-xs text-text-muted mt-1">{stat.label}</p>
+                        </motion.div>
+                    ))}
+                </div>
+
+                {/* ─── Info Cards ─── */}
+                <div className="py-6 grid md:grid-cols-2 gap-4">
+                    {/* Contact Info Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.1 }}
+                        className="bg-background-paper rounded-2xl border border-border p-5 hover:shadow-md transition-shadow duration-200"
+                    >
+                        <h3 className="font-semibold text-text-heading mb-4 flex items-center gap-2">
+                            <User className="w-4 h-4 text-primary" />
+                            {t('settings.personalInformation', 'Personal Information')}
+                        </h3>
+                        <div className="space-y-3">
+                            <InfoRow icon={User} label={t('common.fullName', 'Full Name')} value={displayName} />
+                            <InfoRow icon={Mail} label={t('common.emailAddress', 'Email')} value={formData.email} />
+                            <InfoRow icon={Phone} label={t('common.phoneNumber', 'Phone')} value={formData.phone || '—'} />
+                        </div>
+                    </motion.div>
+
+                    {/* Account Info Card */}
+                    <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.15 }}
+                        className="bg-background-paper rounded-2xl border border-border p-5 hover:shadow-md transition-shadow duration-200"
+                    >
+                        <h3 className="font-semibold text-text-heading mb-4 flex items-center gap-2">
+                            <ShieldCheck className="w-4 h-4 text-primary" />
+                            {t('admin.accountInfo', 'Account Info')}
+                        </h3>
+                        <div className="space-y-3">
+                            <InfoRow icon={ShieldCheck} label={t('admin.role', 'Role')} value="Administrator" />
+                            <InfoRow icon={CheckCircle2} label={t('admin.accountStatus', 'Status')} value={t('common.active', 'Active')} valueClass="text-emerald-500" />
+                            <InfoRow icon={Lock} label={t('settings.changePassword', 'Password')} value="••••••••••" />
+                        </div>
+                    </motion.div>
+                </div>
+            </div>
+
+            {/* ─── Edit Details Modal ─── */}
+            <AnimatePresence>
+                {editModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                            onClick={() => setEditModalOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="relative w-full max-w-md bg-background-paper rounded-2xl shadow-2xl border border-border overflow-hidden z-10"
+                        >
+                            {/* Modal Header */}
+                            <div className="px-6 pt-6 pb-4 bg-gradient-to-r from-primary/10 to-secondary/5 border-b border-border flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                                        <Edit className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg font-bold text-text-heading">{t('admin.editDetails', 'Edit Details')}</h2>
+                                        <p className="text-xs text-text-muted">{t('admin.updateYourInfo', 'Update your personal information')}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setEditModalOpen(false)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-background-subtle transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-text-muted" />
+                                </button>
+                            </div>
+
+                            {/* Modal Body */}
+                            <div className="p-6 space-y-4">
+                                <Input
+                                    label={t('common.fullName', 'Full Name')}
+                                    value={formData.name}
+                                    onChange={(e) => handleChange('name', e.target.value)}
+                                    icon={User}
+                                />
+                                <Input
+                                    label={t('common.emailAddress', 'Email Address')}
+                                    value={formData.email}
+                                    onChange={(e) => handleChange('email', e.target.value)}
+                                    icon={Mail}
+                                    disabled
+                                />
+                                <Input
+                                    label={t('common.phoneNumber', 'Phone Number')}
+                                    value={formData.phone}
+                                    onChange={(e) => handleChange('phone', e.target.value)}
+                                    icon={Phone}
+                                />
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="px-6 pb-6 flex gap-3 justify-end">
+                                <Button variant="ghost" onClick={() => setEditModalOpen(false)}>
+                                    {t('common.cancel', 'Cancel')}
+                                </Button>
+                                <Button onClick={handleSave} isLoading={saving} className="px-6">
+                                    {!saving && <CheckCircle2 className="w-4 h-4" />}
+                                    {saving ? t('common.saving', 'Saving...') : t('common.saveChanges', 'Save Changes')}
+                                </Button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* ─── Change Password Modal ─── */}
+            <AnimatePresence>
+                {passwordModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                            onClick={() => setPasswordModalOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="relative w-full max-w-md bg-background-paper rounded-2xl shadow-2xl border border-border overflow-hidden z-10"
+                        >
+                            {/* Modal Header */}
+                            <div className="px-6 pt-6 pb-4 bg-gradient-to-r from-primary/10 to-secondary/5 border-b border-border flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                                        <Lock className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg font-bold text-text-heading">{t('settings.changePassword', 'Change Password')}</h2>
+                                        <p className="text-xs text-text-muted">{t('settings.updateAccountPassword', 'Update your account password')}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setPasswordModalOpen(false)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-background-subtle transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-text-muted" />
+                                </button>
+                            </div>
+
+                            {/* Modal Body */}
+                            <div className="p-6 space-y-4">
+                                {[
+                                    { key: 'currentPassword', label: t('auth.currentPassword', 'Current Password') },
+                                    { key: 'newPassword', label: t('auth.newPassword', 'New Password') },
+                                    { key: 'confirmPassword', label: t('auth.confirmNewPassword', 'Confirm New Password') },
+                                ].map(({ key, label }) => (
+                                    <div key={key}>
+                                        <label className="block text-sm font-medium text-text-muted mb-1.5">{label}</label>
                                         <input
                                             type="password"
-                                            value={passwordData[field]}
-                                            onChange={(e) => setPasswordData(prev => ({ ...prev, [field]: e.target.value }))}
-                                            className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-text"
+                                            value={passwordData[key]}
+                                            onChange={(e) => setPasswordData(prev => ({ ...prev, [key]: e.target.value }))}
+                                            className="w-full px-4 py-2.5 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-text transition-all"
                                             placeholder="••••••••"
                                         />
                                     </div>
                                 ))}
-                                <div className="flex justify-end">
-                                    <Button onClick={handleChangePassword} disabled={passwordLoading}>
-                                        {passwordLoading ? t('common.updating') : t('settings.updatePassword')}
-                                    </Button>
-                                </div>
-                            </motion.div>
-                        )}
+                            </div>
+
+                            {/* Modal Footer */}
+                            <div className="px-6 pb-6 flex gap-3 justify-end">
+                                <Button variant="ghost" onClick={() => setPasswordModalOpen(false)}>
+                                    {t('common.cancel', 'Cancel')}
+                                </Button>
+                                <Button onClick={handleChangePassword} isLoading={passwordLoading} className="px-6">
+                                    {!passwordLoading && <Lock className="w-4 h-4" />}
+                                    {passwordLoading ? t('common.updating', 'Updating...') : t('settings.updatePassword', 'Update Password')}
+                                </Button>
+                            </div>
+                        </motion.div>
                     </div>
-                </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    )
+}
+
+// ─── Helper Component ───
+function InfoRow({ icon: Icon, label, value, valueClass = '' }) {
+    return (
+        <div className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
+            <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
+                <Icon className="w-4 h-4 text-primary" />
+            </div>
+            <div className="min-w-0 flex-1">
+                <p className="text-xs text-text-muted">{label}</p>
+                <p className={`text-sm font-medium text-text-heading truncate ${valueClass}`}>{value}</p>
             </div>
         </div>
     )

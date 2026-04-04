@@ -39,10 +39,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -76,10 +76,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -103,10 +103,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -186,10 +186,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -213,10 +213,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -250,10 +250,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -277,10 +277,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -304,10 +304,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -341,10 +341,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -383,10 +383,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -438,10 +438,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -480,10 +480,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -542,10 +542,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -602,10 +602,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -639,10 +639,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -691,10 +691,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -746,10 +746,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       },
@@ -781,10 +781,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -830,10 +830,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -885,10 +885,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -950,10 +950,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -987,10 +987,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -1024,10 +1024,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -1069,10 +1069,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -1084,54 +1084,9 @@
         ],
         "requestBody": {
           "content": {
-            "multipart/form-data": {
+            "application/json": {
               "schema": {
-                "required": [
-                  "file",
-                  "ownerUserId",
-                  "title",
-                  "documentType"
-                ],
-                "type": "object",
-                "allOf": [
-                  {
-                    "type": "object",
-                    "properties": {
-                      "file": {
-                        "$ref": "#/components/schemas/IFormFile"
-                      }
-                    }
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "ownerUserId": {
-                        "pattern": "^-?(?:0|[1-9]\\d*)$",
-                        "type": [
-                          "integer",
-                          "string"
-                        ],
-                        "format": "int64"
-                      }
-                    }
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "title": {
-                        "type": "string"
-                      }
-                    }
-                  },
-                  {
-                    "type": "object",
-                    "properties": {
-                      "documentType": {
-                        "$ref": "#/components/schemas/DocumentType"
-                      }
-                    }
-                  }
-                ]
+                "$ref": "#/components/schemas/UploadDocumentRequest"
               }
             }
           },
@@ -1151,10 +1106,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -1216,10 +1171,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -1255,10 +1210,77 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/Doctor/SessionHistory": {
+      "get": {
+        "tags": [
+          "Doctor"
+        ],
+        "parameters": [
+          {
+            "name": "PageIndex",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "PatientId",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfPagingDtoOfSessionHistoryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          },
+          {
+            "Bearer": []
           }
         ]
       }
@@ -1317,10 +1339,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -1354,10 +1376,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -1381,10 +1403,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -1401,10 +1423,7 @@
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int64"
             }
           }
@@ -1423,10 +1442,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -1460,10 +1479,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -1497,10 +1516,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -1517,10 +1536,7 @@
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int64"
             }
           }
@@ -1549,10 +1565,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -1569,10 +1585,7 @@
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int64"
             }
           }
@@ -1591,10 +1604,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -1618,10 +1631,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -1686,15 +1699,75 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
     },
     "/blog/tags": {
+      "get": {
+        "tags": [
+          "Blog"
+        ],
+        "parameters": [
+          {
+            "name": "PageIndex",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "Name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfPagingDtoOfTagDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          },
+          {
+            "Bearer": []
+          }
+        ]
+      },
       "post": {
         "tags": [
           "Blog"
@@ -1723,10 +1796,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -1760,10 +1833,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       },
@@ -1785,10 +1858,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -1834,10 +1907,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       },
@@ -1871,10 +1944,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       },
@@ -1908,10 +1981,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -1963,10 +2036,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -2030,10 +2103,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       },
@@ -2065,10 +2138,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -2102,10 +2175,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -2139,10 +2212,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -2166,10 +2239,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -2203,10 +2276,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -2241,10 +2314,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -2279,10 +2352,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -2309,10 +2382,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -2339,10 +2412,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -2369,10 +2442,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -2386,7 +2459,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/ChangePaswordRequest"
+                "$ref": "#/components/schemas/ChangePasswordRequest"
               }
             }
           },
@@ -2406,10 +2479,47 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
+          }
+        ]
+      }
+    },
+    "/Admin/AddUser": {
+      "post": {
+        "tags": [
+          "Admin"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddUserAdminRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfAddUserByAdminResponse"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": []
+          },
+          {
+            "Bearer": []
           }
         ]
       }
@@ -2426,10 +2536,7 @@
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int64"
             }
           }
@@ -2458,10 +2565,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -2495,10 +2602,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -2557,10 +2664,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -2577,10 +2684,7 @@
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int64"
             }
           }
@@ -2599,10 +2703,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -2689,10 +2793,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -2726,10 +2830,10 @@
         },
         "security": [
           {
-            "Bearer": [ ]
+            "Bearer": []
           },
           {
-            "Bearer": [ ]
+            "Bearer": []
           }
         ]
       }
@@ -2816,6 +2920,66 @@
           },
           "SlotDuration": {
             "$ref": "#/components/schemas/SlotDuration"
+          }
+        }
+      },
+      "AddUserAdminRequest": {
+        "type": "object",
+        "properties": {
+          "Name": {
+            "type": "string"
+          },
+          "Email": {
+            "type": "string"
+          },
+          "Password": {
+            "type": "string"
+          },
+          "PhoneNumber": {
+            "type": "string"
+          },
+          "Role": {
+            "$ref": "#/components/schemas/ApplicationRole"
+          },
+          "Description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "Specialist": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "Gender": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Gender"
+              }
+            ]
+          },
+          "DateOfBirth": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
+      "AddUserByAdminResponse": {
+        "type": "object",
+        "properties": {
+          "UserId": {
+            "format": "int64"
           }
         }
       },
@@ -2942,11 +3106,6 @@
         "type": "object",
         "properties": {
           "BlogID": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
             "format": "int64"
           },
           "Title": {
@@ -2983,11 +3142,6 @@
         "type": "object",
         "properties": {
           "BlogID": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
             "format": "int64"
           },
           "Title": {
@@ -3166,10 +3320,7 @@
           }
         }
       },
-      "ChangePasswordResponse": {
-        "type": "object"
-      },
-      "ChangePaswordRequest": {
+      "ChangePasswordRequest": {
         "type": "object",
         "properties": {
           "CurrentPassword": {
@@ -3179,6 +3330,9 @@
             "type": "string"
           }
         }
+      },
+      "ChangePasswordResponse": {
+        "type": "object"
       },
       "ChatMessageDto": {
         "type": "object",
@@ -3395,19 +3549,11 @@
               "string"
             ]
           },
-          "RelatedTagIDs": {
+          "Url": {
             "type": [
               "null",
-              "array"
-            ],
-            "items": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int64"
-            }
+              "string"
+            ]
           }
         }
       },
@@ -3506,6 +3652,40 @@
       },
       "EditMainInfoResponse": {
         "type": "object"
+      },
+      "EndPointResponseOfAddUserByAdminResponse": {
+        "required": [
+          "Data",
+          "IsSuccess",
+          "Message",
+          "ErrorCode",
+          "IsAuthorized"
+        ],
+        "type": "object",
+        "properties": {
+          "Data": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AddUserByAdminResponse"
+              }
+            ]
+          },
+          "IsSuccess": {
+            "type": "boolean"
+          },
+          "Message": {
+            "type": "string"
+          },
+          "ErrorCode": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "IsAuthorized": {
+            "type": "boolean"
+          }
+        }
       },
       "EndPointResponseOfBlogDetailDto": {
         "required": [
@@ -4259,6 +4439,74 @@
               },
               {
                 "$ref": "#/components/schemas/PagingDtoOfPatientTestRecordDto"
+              }
+            ]
+          },
+          "IsSuccess": {
+            "type": "boolean"
+          },
+          "Message": {
+            "type": "string"
+          },
+          "ErrorCode": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "IsAuthorized": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EndPointResponseOfPagingDtoOfSessionHistoryDto": {
+        "required": [
+          "Data",
+          "IsSuccess",
+          "Message",
+          "ErrorCode",
+          "IsAuthorized"
+        ],
+        "type": "object",
+        "properties": {
+          "Data": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PagingDtoOfSessionHistoryDto"
+              }
+            ]
+          },
+          "IsSuccess": {
+            "type": "boolean"
+          },
+          "Message": {
+            "type": "string"
+          },
+          "ErrorCode": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "IsAuthorized": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EndPointResponseOfPagingDtoOfTagDto": {
+        "required": [
+          "Data",
+          "IsSuccess",
+          "Message",
+          "ErrorCode",
+          "IsAuthorized"
+        ],
+        "type": "object",
+        "properties": {
+          "Data": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PagingDtoOfTagDto"
               }
             ]
           },
@@ -5246,6 +5494,106 @@
           }
         }
       },
+      "PagingDtoOfSessionHistoryDto": {
+        "required": [
+          "PageSize",
+          "PageIndex",
+          "Records",
+          "Pages",
+          "Items"
+        ],
+        "type": "object",
+        "properties": {
+          "PageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "PageIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Records": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Pages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/SessionHistoryDto"
+            }
+          }
+        }
+      },
+      "PagingDtoOfTagDto": {
+        "required": [
+          "PageSize",
+          "PageIndex",
+          "Records",
+          "Pages",
+          "Items"
+        ],
+        "type": "object",
+        "properties": {
+          "PageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "PageIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Records": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Pages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TagDto"
+            }
+          }
+        }
+      },
       "PagingDtoOfTestTypeDto": {
         "required": [
           "PageSize",
@@ -5400,11 +5748,6 @@
         "type": "object",
         "properties": {
           "RecordID": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
             "format": "int64"
           },
           "TestTypeName": {
@@ -5439,11 +5782,6 @@
             "format": "date-time"
           },
           "DoctorID": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
             "format": "int64"
           },
           "DoctorName": {
@@ -5728,6 +6066,61 @@
           }
         }
       },
+      "SessionHistoryDto": {
+        "type": "object",
+        "properties": {
+          "Id": {
+            "format": "int64"
+          },
+          "PatientId": {
+            "format": "int64"
+          },
+          "PatientName": {
+            "type": "string"
+          },
+          "SessionStartTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "SessionEndTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "DurationMinutes": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Status": {
+            "$ref": "#/components/schemas/BookingStatus"
+          },
+          "DoctorNotes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "CancellationReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "PatientNotes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "CreatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "SetPreferredTagsRequest": {
         "type": "object",
         "properties": {
@@ -5786,11 +6179,6 @@
         "type": "object",
         "properties": {
           "TagID": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
             "format": "int64"
           },
           "Name": {
@@ -5802,11 +6190,6 @@
         "type": "object",
         "properties": {
           "ID": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
             "format": "int64"
           },
           "Name": {
@@ -5818,19 +6201,11 @@
               "string"
             ]
           },
-          "RelatedTagIDs": {
+          "Url": {
             "type": [
               "null",
-              "array"
-            ],
-            "items": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
-              "format": "int64"
-            }
+              "string"
+            ]
           }
         }
       },
@@ -5935,15 +6310,35 @@
           }
         }
       },
-      "UploadDocumentResponse": {
+      "UploadDocumentRequest": {
         "type": "object",
         "properties": {
-          "DocumentID": {
+          "OwnerUserID": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
               "integer",
               "string"
             ],
+            "format": "int64"
+          },
+          "Title": {
+            "type": "string"
+          },
+          "DocumentType": {
+            "$ref": "#/components/schemas/DocumentType"
+          },
+          "FileUrl": {
+            "type": "string"
+          },
+          "FileName": {
+            "type": "string"
+          }
+        }
+      },
+      "UploadDocumentResponse": {
+        "type": "object",
+        "properties": {
+          "DocumentID": {
             "format": "int64"
           },
           "FileUrl": {
@@ -6004,11 +6399,6 @@
         "type": "object",
         "properties": {
           "DocumentID": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
             "format": "int64"
           },
           "Title": {
@@ -6028,11 +6418,6 @@
             "format": "date-time"
           },
           "UploaderUserID": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
             "format": "int64"
           },
           "UploaderName": {

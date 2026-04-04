@@ -11,7 +11,7 @@ import { validateRequired, validateFileSize, validateFileType } from '../../../l
 import { ArrowBack as ArrowLeft, ArrowForward as ArrowRight, MedicalServices as Stethoscope, Upload, CalendarToday as Calendar, Description as FileText, Close as X, CheckCircle, AccessTime as Clock } from '@mui/icons-material'
 
 import { useAuth } from '../../../contexts/AuthContext'
-import { api, authAPI } from '../../../lib/api'
+import { api, authAPI, extractErrorMessage } from '../../../lib/api'
 import { useLanguage } from '../../../contexts/LanguageContext'
 
 export default function DoctorRegistration() {
@@ -187,7 +187,7 @@ export default function DoctorRegistration() {
 
       const response = await api.post('/Auth/Register', registerPayload)
 
-      if (response.data?.IsSuccess !== false && response.status === 200) {
+      if (response.data?.IsSuccess === true && response.status === 200) {
         // Send OTP for email verification
         try {
           await authAPI.sendOtp(doctorPayload.email)
@@ -203,8 +203,7 @@ export default function DoctorRegistration() {
       }
     } catch (error) {
       console.error('Doctor registration error:', error)
-      const errorMessage = error.response?.data?.Message || error.message || t('errors.somethingWentWrong')
-      toast.error(errorMessage)
+      toast.error(extractErrorMessage(error, t('errors.somethingWentWrong')))
     } finally {
       setLoading(false)
     }

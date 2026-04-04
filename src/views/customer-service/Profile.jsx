@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import ProfileSettings from '../../components/doctor/settings/ProfileSettings'
-import { userAPI } from '../../lib/api'
+import { userAPI, filesAPI, extractErrorMessage } from '../../lib/api'
 import { Lock } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -26,7 +26,7 @@ export default function StaffProfile() {
                 email: data.email,
             })
 
-            if (response?.IsSuccess !== false) {
+            if (response?.IsSuccess === true) {
                 updateProfile(data)
                 toast.success(t('success.infoUpdated'))
             } else {
@@ -34,32 +34,30 @@ export default function StaffProfile() {
             }
         } catch (error) {
             console.error('Save settings error:', error)
-            toast.error(error.response?.data?.Message || t('errors.somethingWentWrong'))
+            toast.error(extractErrorMessage(error, t('errors.somethingWentWrong')))
         }
     }
 
     const handleImageUpload = async (file) => {
         try {
-            const reader = new FileReader()
-            reader.onload = async () => {
-                try {
-                    const base64 = reader.result.split(',')[1]
-                    const response = await userAPI.updateCurrentUserImage(user, base64)
-
-                    if (response?.IsSuccess !== false) {
-                        updateProfile({ image: response.Data || reader.result })
-                        toast.success(t('success.imageUpdated'))
-                    } else {
-                        toast.error(response?.Message || t('errors.somethingWentWrong'))
-                    }
-                } catch (error) {
-                    toast.error(error?.response?.data?.Message || t('errors.somethingWentWrong'))
-                }
+            // 1. Upload file to get a URL
+            const uploadResponse = await filesAPI.uploadFile(file)
+            const imageUrl = uploadResponse?.Data?.PublicUrl || uploadResponse?.Data
+            if (!imageUrl) {
+                toast.error(t('errors.somethingWentWrong'))
+                return
             }
-            reader.readAsDataURL(file)
+            // 2. Send URL to UpdateImage
+            const response = await userAPI.updateCurrentUserImage(user, imageUrl)
+            if (response?.IsSuccess === true) {
+                updateProfile({ image: imageUrl })
+                toast.success(t('success.imageUpdated'))
+            } else {
+                toast.error(response?.Message || t('errors.somethingWentWrong'))
+            }
         } catch (error) {
             console.error('Image upload error:', error)
-            toast.error(t('errors.somethingWentWrong'))
+            toast.error(extractErrorMessage(error, t('errors.somethingWentWrong')))
         }
     }
 
@@ -76,7 +74,7 @@ export default function StaffProfile() {
         setPasswordLoading(true)
         try {
             const response = await userAPI.changePassword(passwordData.currentPassword, passwordData.newPassword)
-            if (response?.IsSuccess !== false) {
+            if (response?.IsSuccess === true) {
                 toast.success(t('success.passwordChanged'))
                 setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
                 setShowPasswordSection(false)
@@ -85,7 +83,7 @@ export default function StaffProfile() {
             }
         } catch (error) {
             console.error('Password change error:', error)
-            toast.error(error.response?.data?.Message || t('errors.somethingWentWrong'))
+            toast.error(extractErrorMessage(error, t('errors.somethingWentWrong')))
         } finally {
             setPasswordLoading(false)
         }

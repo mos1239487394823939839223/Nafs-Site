@@ -34,7 +34,7 @@ export default function PatientDashboard() {
       try {
         setLoading(true)
         const response = await patientAPI.getPatientBookings(1, 20)
-        if (response?.IsSuccess !== false && response?.Data) {
+        if (response?.IsSuccess === true && response?.Data) {
           setBookings(response.Data.Items || response.Data || [])
         }
       } catch (error) {

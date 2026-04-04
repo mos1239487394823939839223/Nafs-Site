@@ -6,7 +6,7 @@ import Input from '../../components/ui/Input'
 import { useToast } from '../../components/ui/Toast'
 import { validateEmail } from '../../lib/validation'
 import { Mail, ArrowBack as ArrowLeft, Security as Shield, Lock, CheckCircle, Visibility as Eye, VisibilityOff as EyeOff } from '@mui/icons-material'
-import { authAPI } from '../../lib/api'
+import { authAPI, extractErrorMessage } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function ForgotPassword() {
@@ -37,7 +37,7 @@ export default function ForgotPassword() {
 
     try {
       const response = await authAPI.forgotPassword(email)
-      if (response?.IsSuccess !== false) {
+      if (response?.IsSuccess === true) {
         toast.success(t('success.otpSent'))
         setStep(2)
         setOtpTimer(60)
@@ -54,7 +54,7 @@ export default function ForgotPassword() {
         toast.error(response?.Message || t('errors.failedSendOtp'))
       }
     } catch (error) {
-      toast.error(error.response?.data?.Message || t('errors.failedSendOtp'))
+      toast.error(extractErrorMessage(error, t('errors.failedSendOtp')))
     } finally {
       setLoading(false)
     }
@@ -71,7 +71,7 @@ export default function ForgotPassword() {
 
     try {
       const response = await authAPI.confirmOTPForChangePassword(email, otp)
-      if (response?.IsSuccess !== false) {
+      if (response?.IsSuccess === true) {
         // The response might contain a token for password change
         const token = response?.Data?.Token || response?.Data
         setResetToken(token)
@@ -81,7 +81,7 @@ export default function ForgotPassword() {
         toast.error(response?.Message || t('errors.failedVerifyOtp'))
       }
     } catch (error) {
-      toast.error(error.response?.data?.Message || t('errors.failedVerifyOtp'))
+      toast.error(extractErrorMessage(error, t('errors.failedVerifyOtp')))
     } finally {
       setLoading(false)
     }
@@ -105,14 +105,14 @@ export default function ForgotPassword() {
 
     try {
       const response = await authAPI.changePasswordByToken(resetToken, newPassword)
-      if (response?.IsSuccess !== false) {
+      if (response?.IsSuccess === true) {
         toast.success(t('success.passwordReset'))
         navigate('/auth/login')
       } else {
         toast.error(response?.Message || t('errors.failedResetPassword'))
       }
     } catch (error) {
-      toast.error(error.response?.data?.Message || t('errors.failedResetPassword'))
+      toast.error(extractErrorMessage(error, t('errors.failedResetPassword')))
     } finally {
       setLoading(false)
     }
@@ -123,7 +123,7 @@ export default function ForgotPassword() {
     setLoading(true)
     try {
       const response = await authAPI.forgotPassword(email)
-      if (response?.IsSuccess !== false) {
+      if (response?.IsSuccess === true) {
         toast.success(t('success.otpResent'))
         setOtpTimer(60)
         const interval = setInterval(() => {
@@ -139,7 +139,7 @@ export default function ForgotPassword() {
         toast.error(response?.Message || t('errors.failedSendOtp'))
       }
     } catch (error) {
-      toast.error(error.response?.data?.Message || t('errors.failedSendOtp'))
+      toast.error(extractErrorMessage(error, t('errors.failedSendOtp')))
     } finally {
       setLoading(false)
     }

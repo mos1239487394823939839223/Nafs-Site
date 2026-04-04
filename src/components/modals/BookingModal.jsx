@@ -5,7 +5,7 @@ import Input from '../ui/Input'
 import Badge from '../ui/Badge'
 import DatePicker from '../ui/DatePicker'
 import { Search, CalendarToday as Calendar, AccessTime as Clock, Star, Sync as Loader2, MedicalServices as Stethoscope } from '@mui/icons-material'
-import { patientAPI } from '../../lib/api'
+import { patientAPI, extractErrorMessage } from '../../lib/api'
 import { useToast } from '../ui/Toast'
 import { useLanguage } from '../../contexts/LanguageContext'
 
@@ -40,7 +40,7 @@ export default function BookingModal({ isOpen, onClose }) {
     try {
       setLoading(true)
       const response = await patientAPI.getAllDoctors(1, 50)
-      if (response?.IsSuccess !== false && response?.Data) {
+      if (response?.IsSuccess === true && response?.Data) {
         const items = response.Data.Items || response.Data || []
         setDoctors(Array.isArray(items) ? items : [])
       }
@@ -56,7 +56,7 @@ export default function BookingModal({ isOpen, onClose }) {
       setSlotsLoading(true)
       const doctorId = selectedDoctor?.Id || selectedDoctor?.id
       const response = await patientAPI.getDoctorSlots(doctorId, selectedDate, selectedDate)
-      if (response?.IsSuccess !== false && response?.Data) {
+      if (response?.IsSuccess === true && response?.Data) {
         const slots = response.Data || []
         setAvailableSlots(Array.isArray(slots) ? slots : [])
       } else {
@@ -89,7 +89,7 @@ export default function BookingModal({ isOpen, onClose }) {
 
       const response = await patientAPI.createBooking(bookingData)
 
-      if (response?.IsSuccess !== false) {
+      if (response?.IsSuccess === true) {
         toast.success('Appointment booked successfully!')
         onClose()
         setStep(1)
@@ -101,7 +101,7 @@ export default function BookingModal({ isOpen, onClose }) {
       }
     } catch (error) {
       console.error('Booking error:', error)
-      toast.error(error.response?.data?.Message || 'Failed to book appointment')
+      toast.error(extractErrorMessage(error, 'Failed to book appointment'))
     } finally {
       setBookingLoading(false)
     }

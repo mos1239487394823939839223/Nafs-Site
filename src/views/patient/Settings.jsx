@@ -3,7 +3,7 @@ import { motion } from 'framer-motion'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import ProfileSettings from '../../components/patient/settings/ProfileSettings'
-import { userAPI } from '../../lib/api'
+import { userAPI, filesAPI, extractErrorMessage } from '../../lib/api'
 import { Visibility as Eye, VisibilityOff as EyeOff, Lock } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -27,7 +27,7 @@ export default function Settings() {
         email: data.email,
       })
 
-      if (response?.IsSuccess !== false) {
+      if (response?.IsSuccess === true) {
         updateProfile(data)
         toast.success(t('success.settingsSaved'))
       } else {
@@ -35,32 +35,30 @@ export default function Settings() {
       }
     } catch (error) {
       console.error('Save settings error:', error)
-      toast.error(error.response?.data?.Message || t('errors.saveFailed'))
+      toast.error(extractErrorMessage(error, t('errors.saveFailed')))
     }
   }
 
   const handleImageUpload = async (file) => {
     try {
-      // Convert file to base64
-      const reader = new FileReader()
-      reader.onload = async () => {
-        try {
-          const base64 = reader.result.split(',')[1]
-          const response = await userAPI.updateCurrentUserImage(user, base64)
-          if (response?.IsSuccess !== false) {
-            updateProfile({ image: response.Data || reader.result })
-            toast.success(t('success.photoUpdated'))
-          } else {
-            toast.error(response?.Message || t('errors.photoUpdateFailed'))
-          }
-        } catch (error) {
-          toast.error(error?.response?.data?.Message || t('errors.photoUpdateFailed'))
-        }
+      // 1. Upload file to get a URL
+      const uploadResponse = await filesAPI.uploadFile(file)
+      const imageUrl = uploadResponse?.Data?.PublicUrl || uploadResponse?.Data
+      if (!imageUrl) {
+        toast.error(t('errors.photoUpdateFailed'))
+        return
       }
-      reader.readAsDataURL(file)
+      // 2. Send URL to UpdateImage
+      const response = await userAPI.updateCurrentUserImage(user, imageUrl)
+      if (response?.IsSuccess === true) {
+        updateProfile({ image: imageUrl })
+        toast.success(t('success.photoUpdated'))
+      } else {
+        toast.error(response?.Message || t('errors.photoUpdateFailed'))
+      }
     } catch (error) {
       console.error('Image upload error:', error)
-      toast.error(t('errors.photoUpdateFailed'))
+      toast.error(extractErrorMessage(error, t('errors.photoUpdateFailed')))
     }
   }
 
@@ -81,7 +79,7 @@ export default function Settings() {
     setPasswordLoading(true)
     try {
       const response = await userAPI.changePassword(passwordData.currentPassword, passwordData.newPassword)
-      if (response?.IsSuccess !== false) {
+      if (response?.IsSuccess === true) {
         toast.success(t('success.passwordChanged'))
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
         setShowPasswordSection(false)
@@ -89,7 +87,7 @@ export default function Settings() {
         toast.error(response?.Message || t('errors.passwordChangeFailed'))
       }
     } catch (error) {
-      toast.error(error.response?.data?.Message || t('errors.passwordChangeFailed'))
+      toast.error(extractErrorMessage(error, t('errors.passwordChangeFailed')))
     } finally {
       setPasswordLoading(false)
     }
