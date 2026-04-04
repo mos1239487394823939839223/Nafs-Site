@@ -37,6 +37,7 @@ import AdminMessages from './views/admin/Messages'
 import AdminBookings from './views/admin/Bookings'
 import AdminDashboard from './views/admin/Dashboard'
 import AdminBlogs from './views/admin/Blogs'
+import BlogDetail from './views/admin/BlogDetail'
 import AdminTests from './views/admin/Tests'
 import PatientBlogs from './views/patient/Blogs'
 import MessagesPage from './views/shared/MessagesPage'
@@ -106,21 +107,21 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/dashboard/patient/articles"
+          path="/dashboard/patient/blogs"
           element={
             <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
               <Layout>
-                <PatientArticles />
+                <AdminBlogs />
               </Layout>
             </ProtectedRoute>
           }
         />
         <Route
-          path="/dashboard/patient/blogs"
+          path="/dashboard/patient/blogs/:id"
           element={
             <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
               <Layout>
-                <PatientBlogs />
+                <BlogDetail />
               </Layout>
             </ProtectedRoute>
           }
@@ -218,6 +219,26 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/dashboard/doctor/blogs"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
+              <Layout>
+                <AdminBlogs />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/doctor/blogs/:id"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
+              <Layout>
+                <BlogDetail />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Protected Staff Routes */}
         <Route
@@ -246,6 +267,26 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={[Roles.STAFF]}>
               <Layout>
                 <StaffProfile />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/staff/blogs"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.STAFF]}>
+              <Layout>
+                <AdminBlogs />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/staff/blogs/:id"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.STAFF]}>
+              <Layout>
+                <BlogDetail />
               </Layout>
             </ProtectedRoute>
           }
@@ -306,6 +347,16 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
               <Layout>
                 <AdminBlogs />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/blogs/:blogId"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.ADMIN, Roles.PATIENT, Roles.DOCTOR, Roles.STAFF]}>
+              <Layout>
+                <BlogDetail />
               </Layout>
             </ProtectedRoute>
           }

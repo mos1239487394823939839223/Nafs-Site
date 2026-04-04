@@ -14,6 +14,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
     [Roles.PATIENT]: [
       { name: t('nav.reserve'), path: '/dashboard/patient/reserve', icon: Calendar },
       { name: t('nav.tests'), path: '/dashboard/patient/tests', icon: TestTube },
+      { name: t('nav.blogs'), path: '/dashboard/patient/blogs', icon: ArticleIcon },
       { name: t('nav.messages'), path: '/dashboard/patient/messages', icon: MessageSquare },
       { name: t('nav.profile'), path: '/dashboard/patient/profile', icon: Settings },
     ],
@@ -22,6 +23,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       { name: t('nav.queue'), path: '/dashboard/doctor/queue', icon: Users },
       { name: t('nav.medicalHistory'), path: '/dashboard/doctor/medical-history', icon: FileText },
       { name: t('nav.tests'), path: '/dashboard/doctor/tests', icon: TestTube },
+      { name: t('nav.blogs'), path: '/dashboard/doctor/blogs', icon: ArticleIcon },
       { name: t('nav.schedule'), path: '/dashboard/doctor/schedule', icon: Calendar },
       { name: t('nav.history'), path: '/dashboard/doctor/history', icon: Activity },
       { name: t('nav.messages'), path: '/dashboard/doctor/messages', icon: MessageSquare },
@@ -38,6 +40,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
     ],
     [Roles.STAFF]: [
       { name: t('nav.dashboard'), path: '/dashboard/staff', icon: Home },
+      { name: t('nav.blogs'), path: '/dashboard/staff/blogs', icon: ArticleIcon },
       { name: t('nav.messages'), path: '/dashboard/staff/messages', icon: MessageSquare },
       { name: t('nav.profile'), path: '/dashboard/staff/profile', icon: Settings },
     ],
