@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   Article as ArticleIcon,
@@ -10,6 +10,9 @@ import {
   Close as X,
   Save,
   Search,
+  FilterList as Filter,
+  Image as ImageIcon,
+  CloudUpload,
 } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 import Modal from '../../components/ui/Modal'
@@ -17,61 +20,97 @@ import Badge from '../../components/ui/Badge'
 import { useToast } from '../../components/ui/Toast'
 import { useBlogsStore } from '../../hooks/useBlogsStore'
 import { useLanguage } from '../../contexts/LanguageContext'
-import { blogAPI } from '../../lib/api'
+import { blogAPI, extractErrorMessage } from '../../lib/api'
 
-const TAG_SUGGESTIONS = [
-  'الصحة النفسية', 'العلاج النفسي', 'القلق', 'الاكتئاب', 'التوعية',
-  'نصائح', 'صحة عامة', 'تطوير الذات', 'العلاقات', 'الأسرة',
-  'Mental Health', 'Therapy', 'Anxiety', 'Wellness', 'Tips',
-]
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const EMPTY_FORM = { title: '', description: '', tags: [] }
+function pickData(payload) {
+  return payload?.Data ?? payload?.data ?? null
+}
 
-function BlogFormModal({ isOpen, onClose, onSave, initial, availableTags = [] }) {
+function pickItems(payload) {
+  const data = pickData(payload)
+  if (Array.isArray(data?.Items)) return data.Items
+  if (Array.isArray(data?.items)) return data.items
+  if (Array.isArray(data)) return data
+  if (Array.isArray(payload?.Items)) return payload.Items
+  if (Array.isArray(payload?.items)) return payload.items
+  return []
+}
+
+// ─── Create / Edit Article Modal ──────────────────────────────────────────────
+
+function ArticleFormModal({ isOpen, onClose, onSave, initial, allTags = [], isSaving }) {
   const { t, isRTL } = useLanguage()
-  const [form, setForm] = useState(initial ? { title: initial.title, description: initial.description, tags: [...initial.tags] } : EMPTY_FORM)
-  const [tagInput, setTagInput] = useState('')
-  const [selectedTag, setSelectedTag] = useState('')
+  const [form, setForm] = useState({
+    title: '',
+    body: '',
+    images: [],
+    tagIds: [],
+  })
   const [errors, setErrors] = useState({})
+  const [selectedTagId, setSelectedTagId] = useState('')
+
+  // reset form when initial changes or modal opens
+  useEffect(() => {
+    if (isOpen) {
+      if (initial) {
+        setForm({
+          title: initial.title || initial.Title || '',
+          body: initial.description || initial.Body || initial.body || initial.Summary || initial.summary || '',
+          images: initial.images || initial.Images || [],
+          tagIds: initial.tagIds || (initial.tagItems || []).map((ti) => ti.id) || [],
+        })
+      } else {
+        setForm({ title: '', body: '', images: [], tagIds: [] })
+      }
+      setErrors({})
+      setSelectedTagId('')
+    }
+  }, [isOpen, initial])
 
   const validate = () => {
     const e = {}
     if (!form.title.trim()) e.title = t('blogs.titleRequired')
-    if (!form.description.trim()) e.description = t('blogs.contentRequired')
-    if (form.tags.length === 0) e.tags = t('blogs.tagsRequired')
+    if (!form.body.trim()) e.body = t('blogs.contentRequired')
+    if (form.tagIds.length === 0) e.tags = t('blogs.tagsRequired')
     setErrors(e)
     return Object.keys(e).length === 0
   }
 
-  const addTag = (tag) => {
-    const trimmed = tag.trim()
-    if (!trimmed || form.tags.includes(trimmed)) return
-    setForm(f => ({ ...f, tags: [...f.tags, trimmed] }))
-    setTagInput('')
-    if (errors.tags) setErrors(e => ({ ...e, tags: '' }))
+  const handleAddTag = () => {
+    if (!selectedTagId) return
+    const id = Number(selectedTagId)
+    if (form.tagIds.includes(id)) return
+    setForm((f) => ({ ...f, tagIds: [...f.tagIds, id] }))
+    setSelectedTagId('')
+    if (errors.tags) setErrors((e) => ({ ...e, tags: '' }))
   }
 
-  const removeTag = (t) => setForm(f => ({ ...f, tags: f.tags.filter(x => x !== t) }))
+  const handleRemoveTag = (id) => {
+    setForm((f) => ({ ...f, tagIds: f.tagIds.filter((tid) => tid !== id) }))
+  }
 
   const handleSave = () => {
     if (!validate()) return
-    onSave({ title: form.title.trim(), description: form.description.trim(), tags: form.tags })
-    onClose()
+    onSave({
+      Title: form.title.trim(),
+      Body: form.body.trim(),
+      Images: form.images.length > 0 ? form.images : null,
+      TagIDs: form.tagIds,
+    })
   }
 
-  const handleClose = () => {
-    setForm(initial ? { title: initial.title, description: initial.description, tags: [...initial.tags] } : EMPTY_FORM)
-    setTagInput('')
-    setSelectedTag('')
-    setErrors({})
-    onClose()
-  }
+  const selectedTagNames = form.tagIds.map((id) => {
+    const tag = allTags.find((t) => t.TagID === id || t.tagID === id || t.id === id)
+    return { id, name: tag?.Name || tag?.name || `Tag #${id}` }
+  })
 
   return (
     <Modal
       isOpen={isOpen}
-      onClose={handleClose}
-      title={initial?.id ? t('blogs.editArticle') : `✨ ${t('blogs.addNew')}`}
+      onClose={onClose}
+      title={initial ? t('blogs.editArticle') : `✨ ${t('blogs.addNew')}`}
       size="lg"
     >
       <div className="space-y-5" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -84,86 +123,75 @@ function BlogFormModal({ isOpen, onClose, onSave, initial, availableTags = [] })
             className={`w-full px-4 py-3 rounded-xl border bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all text-sm ${errors.title ? 'border-red-400' : 'border-border focus:border-primary'}`}
             placeholder={t('blogs.titlePlaceholder')}
             value={form.title}
-            onChange={e => { setForm(f => ({ ...f, title: e.target.value })); if (errors.title) setErrors(er => ({ ...er, title: '' })) }}
+            onChange={(e) => {
+              setForm((f) => ({ ...f, title: e.target.value }))
+              if (errors.title) setErrors((er) => ({ ...er, title: '' }))
+            }}
           />
           {errors.title && <p className="text-xs text-red-500 mt-1">{errors.title}</p>}
         </div>
 
-        {/* Description */}
+        {/* Body */}
         <div>
           <label className="block text-sm font-semibold text-text-heading mb-1.5">
             {t('blogs.content')} <span className="text-red-500">{t('blogs.required')}</span>
           </label>
           <textarea
             rows={6}
-            className={`w-full px-4 py-3 rounded-xl border bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all text-sm resize-none leading-relaxed ${errors.description ? 'border-red-400' : 'border-border focus:border-primary'}`}
+            className={`w-full px-4 py-3 rounded-xl border bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all text-sm resize-none leading-relaxed ${errors.body ? 'border-red-400' : 'border-border focus:border-primary'}`}
             placeholder={t('blogs.contentPlaceholder')}
-            value={form.description}
-            onChange={e => { setForm(f => ({ ...f, description: e.target.value })); if (errors.description) setErrors(er => ({ ...er, description: '' })) }}
+            value={form.body}
+            onChange={(e) => {
+              setForm((f) => ({ ...f, body: e.target.value }))
+              if (errors.body) setErrors((er) => ({ ...er, body: '' }))
+            }}
           />
           <div className="flex justify-between items-center mt-1">
-            {errors.description
-              ? <p className="text-xs text-red-500">{errors.description}</p>
-              : <span />}
-            <span className="text-xs text-text-muted">{form.description.length} {t('blogs.charCount')}</span>
+            {errors.body ? <p className="text-xs text-red-500">{errors.body}</p> : <span />}
+            <span className="text-xs text-text-muted">{form.body.length} {t('blogs.charCount')}</span>
           </div>
         </div>
 
-        {/* Tags */}
+        {/* Tags Dropdown */}
         <div>
           <label className="block text-sm font-semibold text-text-heading mb-1.5">
             {t('blogs.tagsLabel')} <span className="text-red-500">{t('blogs.required')}</span>
           </label>
 
-          <div className={`flex gap-2 mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
             <select
-              value={selectedTag}
-              onChange={(e) => setSelectedTag(e.target.value)}
-              className="flex-1 px-3 py-2 border border-border rounded-xl bg-background text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              value={selectedTagId}
+              onChange={(e) => setSelectedTagId(e.target.value)}
+              className="flex-1 px-3 py-2.5 border border-border rounded-xl bg-background text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
               <option value="">{isRTL ? 'اختر وسم من القائمة' : 'Choose a tag from list'}</option>
-              {availableTags.map((tag) => (
-                <option key={tag} value={tag}>{tag}</option>
-              ))}
+              {allTags
+                .filter((tag) => !form.tagIds.includes(tag.TagID ?? tag.tagID ?? tag.id))
+                .map((tag) => (
+                  <option key={tag.TagID ?? tag.tagID ?? tag.id} value={tag.TagID ?? tag.tagID ?? tag.id}>
+                    {tag.Name ?? tag.name}
+                  </option>
+                ))}
             </select>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                if (!selectedTag) return
-                addTag(selectedTag)
-                setSelectedTag('')
-              }}
-              disabled={!selectedTag}
-            >
+            <Button type="button" variant="outline" onClick={handleAddTag} disabled={!selectedTagId}>
               {isRTL ? 'إضافة' : 'Add'}
             </Button>
           </div>
 
-          <div className={`flex gap-2 p-1 rounded-xl border bg-background transition-all ${errors.tags ? 'border-red-400' : 'border-border focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20'}`}>
-            <input
-              className="flex-1 px-3 py-2 bg-transparent text-sm text-text outline-none placeholder:text-text-muted"
-              placeholder={t('blogs.tagsPlaceholder')}
-              value={tagInput}
-              onChange={e => setTagInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput) } }}
-            />
-            <button
-              type="button"
-              onClick={() => addTag(tagInput)}
-              className="px-3 py-1.5 bg-primary text-white rounded-lg text-sm font-semibold hover:bg-primary-dark transition-colors"
-            >
-              <Plus style={{ width: 16, height: 16 }} />
-            </button>
-          </div>
-
-          {form.tags.length > 0 && (
-            <div className="flex flex-wrap gap-2 mt-2">
-              {form.tags.map(tag => (
-                <span key={tag} className="flex items-center gap-1 text-xs px-3 py-1 bg-primary/10 text-primary rounded-full font-medium border border-primary/20">
+          {/* Selected tags */}
+          {selectedTagNames.length > 0 && (
+            <div className="flex flex-wrap gap-2 mt-2.5">
+              {selectedTagNames.map((tag) => (
+                <span
+                  key={tag.id}
+                  className="flex items-center gap-1 text-xs px-3 py-1.5 bg-primary/10 text-primary rounded-full font-medium border border-primary/20"
+                >
                   <TagIcon style={{ width: 12, height: 12 }} />
-                  {tag}
-                  <button onClick={() => removeTag(tag)} className={`${isRTL ? 'mr-1' : 'ml-1'} hover:text-red-500 transition-colors`}>
+                  {tag.name}
+                  <button
+                    onClick={() => handleRemoveTag(tag.id)}
+                    className={`${isRTL ? 'mr-1' : 'ml-1'} hover:text-red-500 transition-colors`}
+                  >
                     <X style={{ width: 12, height: 12 }} />
                   </button>
                 </span>
@@ -175,10 +203,12 @@ function BlogFormModal({ isOpen, onClose, onSave, initial, availableTags = [] })
 
         {/* Actions */}
         <div className="flex gap-3 pt-2 border-t border-border">
-          <Button variant="outline" className="flex-1" onClick={handleClose}>{t('blogs.cancel')}</Button>
-          <Button className="flex-1 gap-2" onClick={handleSave}>
+          <Button variant="outline" className="flex-1" onClick={onClose}>
+            {t('blogs.cancel')}
+          </Button>
+          <Button className="flex-1 gap-2" onClick={handleSave} disabled={isSaving} isLoading={isSaving}>
             <Save style={{ width: 16, height: 16 }} />
-            {initial?.id ? t('blogs.saveChanges') : t('blogs.publish')}
+            {initial ? t('blogs.saveChanges') : t('blogs.publish')}
           </Button>
         </div>
       </div>
@@ -186,14 +216,77 @@ function BlogFormModal({ isOpen, onClose, onSave, initial, availableTags = [] })
   )
 }
 
+// ─── Create Tag Modal ─────────────────────────────────────────────────────────
+
+function CreateTagModal({ isOpen, onClose, onSave, isCreating }) {
+  const { isRTL } = useLanguage()
+  const [name, setName] = useState('')
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    if (isOpen) {
+      setName('')
+      setError('')
+    }
+  }, [isOpen])
+
+  const handleSave = () => {
+    if (!name.trim()) {
+      setError(isRTL ? 'اسم الوسم مطلوب' : 'Tag name is required')
+      return
+    }
+    onSave(name.trim())
+  }
+
+  return (
+    <Modal isOpen={isOpen} onClose={onClose} title={isRTL ? '✨ إنشاء وسم جديد' : '✨ Create New Tag'} size="sm">
+      <div className="space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>
+        <div>
+          <label className="block text-sm font-semibold text-text-heading mb-1.5">
+            {isRTL ? 'اسم الوسم' : 'Tag Name'} <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => {
+              setName(e.target.value)
+              if (error) setError('')
+            }}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSave()
+            }}
+            placeholder={isRTL ? 'مثال: الصحة النفسية' : 'e.g. Mental Health'}
+            className={`w-full px-4 py-3 rounded-xl border bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all text-sm ${error ? 'border-red-400' : 'border-border focus:border-primary'}`}
+          />
+          {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+        </div>
+
+        <div className="flex gap-3 pt-2 border-t border-border">
+          <Button variant="outline" className="flex-1" onClick={onClose}>
+            {isRTL ? 'إلغاء' : 'Cancel'}
+          </Button>
+          <Button className="flex-1 gap-2" onClick={handleSave} disabled={isCreating} isLoading={isCreating}>
+            <Plus style={{ width: 16, height: 16 }} />
+            {isRTL ? 'إنشاء' : 'Create'}
+          </Button>
+        </div>
+      </div>
+    </Modal>
+  )
+}
+
+// ─── Article Card ─────────────────────────────────────────────────────────────
+
 function BlogCard({ blog, onEdit, onDelete }) {
   const { t, isRTL } = useLanguage()
   const [confirmDelete, setConfirmDelete] = useState(false)
 
-  const formatDate = (iso) => new Date(iso).toLocaleDateString(
-    isRTL ? 'ar-EG' : 'en-US',
-    { year: 'numeric', month: 'long', day: 'numeric' }
-  )
+  const formatDate = (iso) =>
+    new Date(iso).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    })
 
   return (
     <motion.div
@@ -219,8 +312,11 @@ function BlogCard({ blog, onEdit, onDelete }) {
         </p>
 
         <div className={`flex flex-wrap gap-1.5 ${isRTL ? 'justify-end' : 'justify-start'}`}>
-          {blog.tags.slice(0, 4).map(tag => (
-            <span key={tag} className="text-xs px-2.5 py-0.5 bg-primary/8 border border-primary/15 text-primary rounded-full font-medium flex items-center gap-1">
+          {blog.tags.slice(0, 4).map((tag) => (
+            <span
+              key={tag}
+              className="text-xs px-2.5 py-0.5 bg-primary/8 border border-primary/15 text-primary rounded-full font-medium flex items-center gap-1"
+            >
               <TagIcon style={{ width: 11, height: 11 }} />
               {tag}
             </span>
@@ -251,13 +347,20 @@ function BlogCard({ blog, onEdit, onDelete }) {
             {confirmDelete ? (
               <div className="flex items-center gap-1">
                 <button
-                  onClick={() => { onDelete(blog.id); setConfirmDelete(false) }}
+                  onClick={() => {
+                    onDelete(blog.id)
+                    setConfirmDelete(false)
+                  }}
                   className="px-2.5 py-1 text-xs bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
-                >{t('blogs.confirmDelete')}</button>
+                >
+                  {t('blogs.confirmDelete')}
+                </button>
                 <button
                   onClick={() => setConfirmDelete(false)}
                   className="px-2.5 py-1 text-xs bg-background-subtle text-text-muted rounded-lg hover:bg-border transition-colors"
-                >{t('blogs.confirmNo')}</button>
+                >
+                  {t('blogs.confirmNo')}
+                </button>
               </div>
             ) : (
               <button
@@ -275,63 +378,149 @@ function BlogCard({ blog, onEdit, onDelete }) {
   )
 }
 
+// ─── Tag Card ─────────────────────────────────────────────────────────────────
+
+function TagCard({ tag, isRTL, articleCount }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      className="bg-background-paper border border-border rounded-xl p-4 flex items-center justify-between hover:shadow-sm transition-shadow"
+    >
+      <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
+          <TagIcon className="text-primary" style={{ width: 18, height: 18 }} />
+        </div>
+        <div>
+          <h4 className="font-semibold text-text-heading text-sm">{tag.Name ?? tag.name}</h4>
+          <p className="text-xs text-text-muted mt-0.5">
+            ID: {tag.TagID ?? tag.tagID ?? tag.id}
+          </p>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// ─── Main Page Component ──────────────────────────────────────────────────────
+
 export default function AdminBlogs() {
   const { blogs, blogLoadError, addBlog, updateBlog, deleteBlog } = useBlogsStore()
   const { t, isRTL } = useLanguage()
   const toast = useToast()
+
+  // Tab state
+  const [activeTab, setActiveTab] = useState('articles')
+
+  // Articles state
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [editingBlog, setEditingBlog] = useState(null)
   const [search, setSearch] = useState('')
-  const [newTagName, setNewTagName] = useState('')
-  const [preferredTags, setPreferredTags] = useState([])
-  const [selectedPreferredTagIds, setSelectedPreferredTagIds] = useState([])
-  const [tagsLoading, setTagsLoading] = useState(false)
-  const [savingTags, setSavingTags] = useState(false)
-  const [creatingTag, setCreatingTag] = useState(false)
-  const [createdTagNames, setCreatedTagNames] = useState([])
+  const [filterTagId, setFilterTagId] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
 
+  // Tags state
+  const [allTags, setAllTags] = useState([])
+  const [tagsLoading, setTagsLoading] = useState(false)
+  const [isCreateTagOpen, setIsCreateTagOpen] = useState(false)
+  const [isCreatingTag, setIsCreatingTag] = useState(false)
+
+  // Show blog load error
   useEffect(() => {
     if (!blogLoadError) return
     toast.error(isRTL ? 'فشل تحميل المقالات من الخادم' : 'Failed to load blogs from server')
   }, [blogLoadError, toast, isRTL])
 
-  const loadPreferredTags = async () => {
+  // Load tags from API
+  const loadTags = useCallback(async () => {
     setTagsLoading(true)
     try {
-      const response = await blogAPI.getPreferredTags()
-      const tagItems = response?.Data || []
-      setPreferredTags(tagItems)
-      setSelectedPreferredTagIds(tagItems.map((tag) => tag.TagID))
+      const response = await blogAPI.getTags()
+      const items = pickItems(response)
+      const data = pickData(response)
+      // handle both array and paginated response
+      if (Array.isArray(items) && items.length > 0) {
+        setAllTags(items)
+      } else if (Array.isArray(data)) {
+        setAllTags(data)
+      } else {
+        setAllTags([])
+      }
     } catch {
-      setPreferredTags([])
-      setSelectedPreferredTagIds([])
+      setAllTags([])
     } finally {
       setTagsLoading(false)
     }
-  }
-
-  useEffect(() => {
-    loadPreferredTags()
   }, [])
 
-  const handleSave = async (data) => {
+  useEffect(() => {
+    loadTags()
+  }, [loadTags])
+
+  // ─── Article Handlers ─────────────────────────────────────────────────
+
+  const handleOpenAdd = () => {
+    setEditingBlog(null)
+    setIsModalOpen(true)
+  }
+
+  const handleEdit = async (blog) => {
     try {
-      if (editingBlog?.id) {
-        await updateBlog(editingBlog.id, data)
-        toast.success(t('success.blogUpdated'))
-      } else {
-        await addBlog(data)
-        toast.success(t('success.blogAdded'))
-      }
-      setEditingBlog(null)
+      // Fetch full blog details (list API doesn't return Body)
+      const response = await blogAPI.getBlogById(blog.id)
+      const data = pickData(response)
+      const fullBlog = data || response
+
+      setEditingBlog({
+        ...blog,
+        // Override with the full data from the detail endpoint
+        Body: fullBlog?.Body || fullBlog?.body || '',
+        Title: fullBlog?.Title || fullBlog?.title || blog.title,
+        Tags: fullBlog?.Tags || fullBlog?.tags || [],
+        tagItems: (fullBlog?.Tags || fullBlog?.tags || []).map((t) => ({
+          id: t.TagID ?? t.tagID ?? t.id,
+          name: t.Name ?? t.name,
+        })).filter((t) => t.id && t.name),
+      })
+      setIsModalOpen(true)
     } catch {
-      toast.error(t('errors.unexpectedError'))
+      // Fallback to the store data if API fails
+      setEditingBlog(blog)
+      setIsModalOpen(true)
     }
   }
 
-  const handleEdit = (blog) => {
-    setEditingBlog(blog)
-    setIsModalOpen(true)
+  const handleSave = async (payload) => {
+    setIsSaving(true)
+    try {
+      if (editingBlog?.id) {
+        await updateBlog(editingBlog.id, {
+          title: payload.Title,
+          description: payload.Body,
+          tags: payload.TagIDs.map((id) => {
+            const tag = allTags.find((t) => (t.TagID ?? t.tagID ?? t.id) === id)
+            return tag?.Name ?? tag?.name ?? String(id)
+          }),
+        })
+        toast.success(t('success.blogUpdated'))
+      } else {
+        // Direct API call for proper TagIDs
+        const createResponse = await blogAPI.createBlog(payload)
+        if (createResponse?.IsSuccess === false) {
+          toast.error(extractErrorMessage(createResponse) || t('errors.unexpectedError'))
+          return
+        }
+        toast.success(t('success.blogAdded'))
+        // Reload page data
+        window.location.reload()
+      }
+      setIsModalOpen(false)
+      setEditingBlog(null)
+    } catch (err) {
+      toast.error(extractErrorMessage(err, t('errors.unexpectedError')))
+    } finally {
+      setIsSaving(false)
+    }
   }
 
   const handleDelete = async (id) => {
@@ -343,99 +532,70 @@ export default function AdminBlogs() {
     }
   }
 
-  const handleOpenAdd = () => {
-    setEditingBlog(null)
-    setIsModalOpen(true)
-  }
+  // ─── Tag Handlers ─────────────────────────────────────────────────────
 
-  const handleCreateTag = async () => {
-    const name = newTagName.trim()
-    if (!name) return
-
-    setCreatingTag(true)
+  const handleCreateTag = async (name) => {
+    setIsCreatingTag(true)
     try {
-      const createResponse = await blogAPI.createTag(name)
-      if (createResponse?.IsSuccess === false) {
-        toast.error(createResponse?.Message || t('errors.unexpectedError'))
-        return
-      }
-
-      setCreatedTagNames((prev) => (
-        prev.some((tag) => tag.toLowerCase() === name.toLowerCase()) ? prev : [...prev, name]
-      ))
-
-      setNewTagName('')
-      await loadPreferredTags()
-      toast.success(isRTL ? 'تم إنشاء الوسم' : 'Tag created')
-    } catch {
-      toast.error(isRTL ? 'فشل إنشاء الوسم' : 'Failed to create tag')
-    } finally {
-      setCreatingTag(false)
-    }
-  }
-
-  const togglePreferredTag = (tagId) => {
-    setSelectedPreferredTagIds((prev) => (
-      prev.includes(tagId)
-        ? prev.filter((id) => id !== tagId)
-        : [...prev, tagId]
-    ))
-  }
-
-  const handleSavePreferredTags = async () => {
-    setSavingTags(true)
-    try {
-      const response = await blogAPI.setPreferredTags(selectedPreferredTagIds)
+      const response = await blogAPI.createTag(name)
       if (response?.IsSuccess === false) {
-        toast.error(response?.Message || t('errors.unexpectedError'))
+        toast.error(extractErrorMessage(response) || t('errors.unexpectedError'))
         return
       }
-      toast.success(isRTL ? 'تم حفظ الوسوم المفضلة' : 'Preferred tags saved')
-      await loadPreferredTags()
-    } catch {
-      toast.error(isRTL ? 'فشل حفظ الوسوم المفضلة' : 'Failed to save preferred tags')
+      setIsCreateTagOpen(false)
+      toast.success(isRTL ? 'تم إنشاء الوسم بنجاح' : 'Tag created successfully')
+      await loadTags()
+    } catch (err) {
+      toast.error(extractErrorMessage(err, isRTL ? 'فشل إنشاء الوسم' : 'Failed to create tag'))
     } finally {
-      setSavingTags(false)
+      setIsCreatingTag(false)
     }
   }
 
-  const tagsUsage = useMemo(() => {
-    const counts = new Map()
-    blogs.forEach((blog) => {
-      ;(blog.tags || []).forEach((tag) => {
-        counts.set(tag, (counts.get(tag) || 0) + 1)
-      })
+  // ─── Filtered Articles ────────────────────────────────────────────────
+
+  const filtered = useMemo(() => {
+    return blogs.filter((b) => {
+      const matchSearch =
+        !search ||
+        b.title.toLowerCase().includes(search.toLowerCase()) ||
+        b.tags.some((tag) => tag.toLowerCase().includes(search.toLowerCase()))
+
+      let matchTag = true
+      if (filterTagId) {
+        const filterTag = allTags.find(
+          (t) => String(t.TagID ?? t.tagID ?? t.id) === String(filterTagId)
+        )
+        if (filterTag) {
+          const tagName = (filterTag.Name ?? filterTag.name ?? '').toLowerCase()
+          matchTag = b.tags.some((bt) => bt.toLowerCase() === tagName)
+        }
+      }
+
+      return matchSearch && matchTag
     })
-    return [...counts.entries()]
-      .map(([name, count]) => ({ name, count }))
-      .sort((a, b) => b.count - a.count)
-  }, [blogs])
+  }, [blogs, search, filterTagId, allTags])
 
-  const availableTagNames = useMemo(() => {
-    const names = [
-      ...preferredTags.map((tag) => tag?.Name).filter(Boolean),
-      ...tagsUsage.map((item) => item.name).filter(Boolean),
-      ...createdTagNames,
-      ...TAG_SUGGESTIONS,
-    ]
+  // ─── Tab Definitions ──────────────────────────────────────────────────
 
-    return [...new Set(names.map((name) => String(name).trim()).filter(Boolean))]
-  }, [preferredTags, tagsUsage, createdTagNames])
-
-  const filtered = blogs.filter(b =>
-    !search || b.title.toLowerCase().includes(search.toLowerCase()) ||
-    b.tags.some(tag => tag.toLowerCase().includes(search.toLowerCase()))
-  )
-
-  const stats = {
-    total: blogs.length,
-    featured: blogs.filter(b => b.featured).length,
-    tags: [...new Set(blogs.flatMap(b => b.tags))].length,
-  }
+  const tabs = [
+    {
+      key: 'articles',
+      label: isRTL ? 'المقالات' : 'Articles',
+      icon: <ArticleIcon style={{ width: 18, height: 18 }} />,
+      count: blogs.length,
+    },
+    {
+      key: 'tags',
+      label: isRTL ? 'الوسوم' : 'Tags',
+      icon: <TagIcon style={{ width: 18, height: 18 }} />,
+      count: allTags.length,
+    },
+  ]
 
   return (
     <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Header */}
+      {/* ─── Header ──────────────────────────────────────────────────── */}
       <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
         <div>
           <h1 className="text-2xl font-bold text-text-heading flex items-center gap-3">
@@ -446,137 +606,189 @@ export default function AdminBlogs() {
           </h1>
           <p className="text-text-muted mt-1 text-sm">{t('blogs.adminSubtitle')}</p>
         </div>
-        <Button onClick={handleOpenAdd} className="gap-2 shadow-lg shadow-primary/20">
-          <Plus style={{ width: 18, height: 18 }} />
-          {t('blogs.addNew')}
-        </Button>
-      </div>
 
-      {/* Search */}
-      <div className="relative">
-        <Search
-          className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-text-muted`}
-          style={{ width: 18, height: 18 }}
-        />
-        <input
-          type="text"
-          placeholder={t('blogs.searchPlaceholder')}
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          className={`w-full ${isRTL ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text transition-all`}
-        />
-      </div>
-
-      {/* Tag Management */}
-      <div className="rounded-2xl border border-border bg-background-paper p-5 space-y-4">
-        <div className={`flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <h2 className="text-lg font-bold text-text-heading">{isRTL ? 'إدارة الوسوم' : 'Tag Management'}</h2>
-          <Button variant="outline" size="sm" onClick={handleSavePreferredTags} disabled={savingTags || tagsLoading}>
-            {savingTags ? (isRTL ? 'جاري الحفظ...' : 'Saving...') : (isRTL ? 'حفظ الوسوم المفضلة' : 'Save Preferred Tags')}
+        {/* CTA Button - changes based on active tab */}
+        {activeTab === 'articles' ? (
+          <Button onClick={handleOpenAdd} className="gap-2 shadow-lg shadow-primary/20">
+            <Plus style={{ width: 18, height: 18 }} />
+            {t('blogs.addNew')}
           </Button>
-        </div>
-
-        <div className={`flex gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <input
-            type="text"
-            value={newTagName}
-            onChange={(e) => setNewTagName(e.target.value)}
-            placeholder={isRTL ? 'أدخل اسم وسم جديد' : 'Enter new tag name'}
-            className="flex-1 px-4 py-2 border border-border rounded-xl bg-background text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
-          <Button onClick={handleCreateTag} disabled={creatingTag || !newTagName.trim()}>
-            {creatingTag ? (isRTL ? 'جاري الإنشاء...' : 'Creating...') : (isRTL ? 'إنشاء وسم' : 'Create Tag')}
-          </Button>
-        </div>
-
-        {tagsLoading ? (
-          <p className="text-sm text-text-muted">{isRTL ? 'جاري تحميل الوسوم...' : 'Loading tags...'}</p>
         ) : (
-          <div className="space-y-3">
-            <p className="text-sm text-text-muted">{isRTL ? 'اختر الوسوم المفضلة:' : 'Choose preferred tags:'}</p>
-            <div className="flex flex-wrap gap-2">
-              {preferredTags.length > 0 ? (
-                preferredTags.map((tag) => {
-                  const selected = selectedPreferredTagIds.includes(tag.TagID)
-                  return (
-                    <button
-                      key={tag.TagID}
-                      onClick={() => togglePreferredTag(tag.TagID)}
-                      className={`px-3 py-1.5 text-sm rounded-full border transition-all ${
-                        selected
-                          ? 'bg-primary/10 text-primary border-primary/30'
-                          : 'bg-background-subtle text-text-muted border-border hover:text-text-heading'
-                      }`}
-                    >
-                      {tag.Name}
-                    </button>
-                  )
-                })
-              ) : (
-                <p className="text-sm text-text-muted">{isRTL ? 'لا توجد وسوم بعد' : 'No tags found yet'}</p>
-              )}
-            </div>
-
-            {tagsUsage.length > 0 && (
-              <div>
-                <p className="text-sm text-text-muted mb-2">{isRTL ? 'استخدام الوسوم في المقالات:' : 'Tag usage across articles:'}</p>
-                <div className="flex flex-wrap gap-2">
-                  {tagsUsage.map((item) => (
-                    <span key={item.name} className="text-xs px-2.5 py-1 rounded-full bg-background-subtle border border-border text-text-muted">
-                      {item.name} ({item.count})
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          <Button onClick={() => setIsCreateTagOpen(true)} className="gap-2 shadow-lg shadow-primary/20">
+            <Plus style={{ width: 18, height: 18 }} />
+            {isRTL ? 'إنشاء وسم' : 'Create Tag'}
+          </Button>
         )}
       </div>
 
-      {/* Grid */}
-      {filtered.length === 0 ? (
+      {/* ─── Tabs ────────────────────────────────────────────────────── */}
+      <div className="flex border-b border-border gap-1">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm transition-all relative whitespace-nowrap rounded-t-xl ${
+              activeTab === tab.key
+                ? 'text-primary bg-primary/5 border-b-2 border-primary -mb-[2px]'
+                : 'text-text-muted hover:text-text-heading hover:bg-background-subtle'
+            }`}
+          >
+            {tab.icon}
+            {tab.label}
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+                activeTab === tab.key
+                  ? 'bg-primary text-white'
+                  : 'bg-background-subtle text-text-muted'
+              }`}
+            >
+              {tab.count}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      {/* ─── Articles Tab ────────────────────────────────────────────── */}
+      {activeTab === 'articles' && (
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/30 rounded-2xl border-2 border-dashed border-border"
+          key="articles"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="space-y-5"
         >
-          <ArticleIcon className="text-text-muted opacity-20 mb-4" style={{ width: 64, height: 64 }} />
-          <h3 className="text-xl font-bold text-text-heading mb-2">
-            {search ? t('blogs.noResults') : t('blogs.noArticles')}
-          </h3>
-          <p className="text-text-muted text-sm mb-6">
-            {search ? t('blogs.noResultsDesc') : t('blogs.noArticlesDesc')}
-          </p>
-          {!search && (
-            <Button onClick={handleOpenAdd} className="gap-2">
-              <Plus style={{ width: 16, height: 16 }} />
-              {t('blogs.addNew')}
-            </Button>
-          )}
-        </motion.div>
-      ) : (
-        <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
-          <AnimatePresence>
-            {filtered.map(blog => (
-              <BlogCard
-                key={blog.id}
-                blog={blog}
-                onEdit={handleEdit}
-                onDelete={handleDelete}
+          {/* Search + Filter Row */}
+          <div className={`flex flex-col sm:flex-row gap-3 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+            {/* Search */}
+            <div className="relative flex-1">
+              <Search
+                className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-text-muted`}
+                style={{ width: 18, height: 18 }}
               />
-            ))}
-          </AnimatePresence>
+              <input
+                type="text"
+                placeholder={t('blogs.searchPlaceholder')}
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className={`w-full ${isRTL ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text transition-all`}
+              />
+            </div>
+
+            {/* Tag Filter */}
+            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              <Filter className="text-text-muted" style={{ width: 18, height: 18 }} />
+              <select
+                value={filterTagId}
+                onChange={(e) => setFilterTagId(e.target.value)}
+                className="px-4 py-3 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text min-w-[180px]"
+              >
+                <option value="">{isRTL ? 'كل الوسوم' : 'All Tags'}</option>
+                {allTags.map((tag) => (
+                  <option key={tag.TagID ?? tag.tagID ?? tag.id} value={tag.TagID ?? tag.tagID ?? tag.id}>
+                    {tag.Name ?? tag.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Articles Grid */}
+          {filtered.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/30 rounded-2xl border-2 border-dashed border-border"
+            >
+              <ArticleIcon className="text-text-muted opacity-20 mb-4" style={{ width: 64, height: 64 }} />
+              <h3 className="text-xl font-bold text-text-heading mb-2">
+                {search || filterTagId ? t('blogs.noResults') : t('blogs.noArticles')}
+              </h3>
+              <p className="text-text-muted text-sm mb-6">
+                {search || filterTagId ? t('blogs.noResultsDesc') : t('blogs.noArticlesDesc')}
+              </p>
+              {!search && !filterTagId && (
+                <Button onClick={handleOpenAdd} className="gap-2">
+                  <Plus style={{ width: 16, height: 16 }} />
+                  {t('blogs.addNew')}
+                </Button>
+              )}
+            </motion.div>
+          ) : (
+            <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+              <AnimatePresence>
+                {filtered.map((blog) => (
+                  <BlogCard key={blog.id} blog={blog} onEdit={handleEdit} onDelete={handleDelete} />
+                ))}
+              </AnimatePresence>
+            </motion.div>
+          )}
         </motion.div>
       )}
 
-      {/* Form Modal */}
-      <BlogFormModal
+      {/* ─── Tags Tab ────────────────────────────────────────────────── */}
+      {activeTab === 'tags' && (
+        <motion.div
+          key="tags"
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.2 }}
+          className="space-y-5"
+        >
+          {tagsLoading ? (
+            <div className="flex flex-col items-center justify-center py-20">
+              <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3" />
+              <p className="text-sm text-text-muted">{isRTL ? 'جاري تحميل الوسوم...' : 'Loading tags...'}</p>
+            </div>
+          ) : allTags.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/30 rounded-2xl border-2 border-dashed border-border"
+            >
+              <TagIcon className="text-text-muted opacity-20 mb-4" style={{ width: 64, height: 64 }} />
+              <h3 className="text-xl font-bold text-text-heading mb-2">
+                {isRTL ? 'لا توجد وسوم بعد' : 'No tags yet'}
+              </h3>
+              <p className="text-text-muted text-sm mb-6">
+                {isRTL ? 'أنشئ أول وسم لتنظيم المقالات' : 'Create your first tag to organize articles'}
+              </p>
+              <Button onClick={() => setIsCreateTagOpen(true)} className="gap-2">
+                <Plus style={{ width: 16, height: 16 }} />
+                {isRTL ? 'إنشاء وسم' : 'Create Tag'}
+              </Button>
+            </motion.div>
+          ) : (
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {allTags.map((tag) => (
+                <TagCard
+                  key={tag.TagID ?? tag.tagID ?? tag.id}
+                  tag={tag}
+                  isRTL={isRTL}
+                />
+              ))}
+            </div>
+          )}
+        </motion.div>
+      )}
+
+      {/* ─── Modals ──────────────────────────────────────────────────── */}
+      <ArticleFormModal
         isOpen={isModalOpen}
-        onClose={() => { setIsModalOpen(false); setEditingBlog(null) }}
+        onClose={() => {
+          setIsModalOpen(false)
+          setEditingBlog(null)
+        }}
         onSave={handleSave}
         initial={editingBlog}
-        availableTags={availableTagNames}
-        key={editingBlog?.id || 'new'}
+        allTags={allTags}
+        isSaving={isSaving}
+      />
+
+      <CreateTagModal
+        isOpen={isCreateTagOpen}
+        onClose={() => setIsCreateTagOpen(false)}
+        onSave={handleCreateTag}
+        isCreating={isCreatingTag}
       />
     </div>
   )

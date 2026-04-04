@@ -72,6 +72,33 @@ api.interceptors.response.use((response) => {
     return Promise.reject(error);
 });
 
+// ─── Error Message Extractor ─────────────────────────────────────────────────
+/**
+ * Extracts a human-readable error message from an Axios error or API response.
+ * Tries all known backend response shapes before falling back.
+ *
+ * @param {any} error - The caught error (Axios error or unknown)
+ * @param {string} fallback - Fallback message if nothing found
+ * @returns {string}
+ */
+export const extractErrorMessage = (error, fallback = 'Something went wrong') => {
+    // 1. Backend returned a response (4xx / 5xx HTTP error)
+    const data = error?.response?.data;
+    if (data) {
+        // Most common: { Message: "..." } or { message: "..." }
+        if (data.Message && typeof data.Message === 'string') return data.Message;
+        if (data.message && typeof data.message === 'string') return data.message;
+        // Validation errors array: { errors: ["...", "..."] }
+        if (Array.isArray(data.errors) && data.errors.length) return data.errors[0];
+        if (Array.isArray(data.Messages) && data.Messages.length) return data.Messages[0];
+        // Plain string body
+        if (typeof data === 'string' && data.length < 300) return data;
+    }
+    // 2. Network / timeout error
+    if (error?.message) return error.message;
+    return fallback;
+};
+
 // ─── Authentication API Functions ────────────────────────────────────────────
 export const authAPI = {
     // Login
@@ -508,6 +535,11 @@ export const blogAPI = {
         return response.data;
     },
 
+    getTags: async () => {
+        const response = await api.get('/blog/tags');
+        return response.data;
+    },
+
     createTag: async (name) => {
         const response = await api.post('/blog/tags', { Name: name });
         return response.data;
@@ -602,6 +634,13 @@ export const filesAPI = {
         const response = await api.post('/files/upload', formData, {
             headers: { 'Content-Type': 'multipart/form-data' },
         });
+
+        // Normalize PublicUrl to absolute URL if the backend returns a relative path
+        if (response.data?.Data?.PublicUrl?.startsWith('/')) {
+            const base = API_BASE_URL.replace(/\/$/, '');
+            response.data.Data.PublicUrl = `${base}${response.data.Data.PublicUrl}`;
+        }
+
         return response.data;
     },
 };

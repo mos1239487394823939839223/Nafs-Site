@@ -58,7 +58,7 @@ export function useBlogsStore() {
   const mapSummary = useCallback((item) => ({
     id: String(item.BlogID ?? item.Id ?? item.id),
     title: item.Title ?? item.title ?? '',
-    description: item.Body ?? item.body ?? item.Summary ?? item.summary ?? '',
+    description: item.Body || item.body || item.Summary || item.summary || '',
     tags: (item.Tags || item.tags || []).map((t) => t.Name ?? t.name).filter(Boolean),
     tagItems: (item.Tags || item.tags || []).map((t) => ({ id: t.TagID ?? t.tagID ?? t.id, name: t.Name ?? t.name })).filter((t) => t.id && t.name),
     author: item.AuthorName ?? item.authorName ?? item.Author ?? item.author ?? 'Nafs Team',
