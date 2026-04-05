@@ -187,21 +187,23 @@ export default function DoctorDashboard() {
                         )}
                       </div>
                     </div>
-                    <Button
-                      size="sm"
-                      className="w-full sm:w-auto"
-                      variant={patient.statusCode === 1 || patient.statusCode === 2 ? 'primary' : 'outline'}
-                      onClick={() => {
-                        if (patient.meetingUrl) {
-                          window.open(patient.meetingUrl, '_blank')
-                        } else {
-                          setSelectedPatient(patient)
-                          setIsDetailsModalOpen(true)
-                        }
-                      }}
-                    >
-                      {patient.statusCode === 1 || patient.statusCode === 2 ? t('doctor.joinNow', 'Join Now') : t('common.viewDetails', 'View Details')}
-                    </Button>
+                    { (patient.statusCode === 1 || patient.statusCode === 2) && (
+                      <Button
+                        size="sm"
+                        className="w-full sm:w-auto"
+                        variant="primary"
+                        onClick={() => {
+                          if (patient.meetingUrl) {
+                            window.open(patient.meetingUrl, '_blank')
+                          } else {
+                            setSelectedPatient(patient)
+                            setIsDetailsModalOpen(true)
+                          }
+                        }}
+                      >
+                        {t('doctor.joinNow', 'Join Now')}
+                      </Button>
+                    )}
                   </div>
                   <div className="bg-background p-3 rounded-xl text-sm">
                     <p className="text-text-heading"><strong>{t('common.notes', 'Notes')}:</strong> {patient.reason}</p>

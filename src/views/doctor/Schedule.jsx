@@ -62,7 +62,16 @@ export default function Schedule() {
   const DayOfWeekNames = [t('doctor.sunday'), t('doctor.monday'), t('doctor.tuesday'), t('doctor.wednesday'), t('doctor.thursday'), t('doctor.friday'), t('doctor.saturday')]
   const DayOfWeekShort = [t('doctor.sun'), t('doctor.mon'), t('doctor.tue'), t('doctor.wed'), t('doctor.thu'), t('doctor.fri'), t('doctor.sat')]
 
-  const SlotDurationLabels = { 30: '30 ' + t('doctor.min'), 45: '45 ' + t('doctor.min') }
+  const SlotDurationLabels = { 30: '30 ' + t('doctor.min'), 45: '45 ' + t('doctor.min'), 60: '60 ' + t('doctor.min') }
+
+  // Helper: add minutes to a HH:MM string
+  const addMinutesToTime = (timeStr, minutes) => {
+    const [h, m] = timeStr.split(':').map(Number)
+    const total = h * 60 + m + minutes
+    const newH = Math.floor(total / 60) % 24
+    const newM = total % 60
+    return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`
+  }
 
   const [availability, setAvailability] = useState([])
   const [loading, setLoading] = useState(true)
@@ -89,7 +98,7 @@ export default function Schedule() {
   const [slotForm, setSlotForm] = useState({
     SpecificDate: '',
     StartTime: '09:00',
-    EndTime: '10:00',
+    EndTime: '09:30',
     SlotDuration: 30,
   })
 
@@ -158,7 +167,7 @@ export default function Schedule() {
       if (response.IsSuccess) {
         toast.success(t('success.slotAdded'))
         setIsSlotModalOpen(false)
-        setSlotForm({ SpecificDate: '', StartTime: '09:00', EndTime: '10:00', SlotDuration: 30 })
+        setSlotForm({ SpecificDate: '', StartTime: '09:00', EndTime: '09:30', SlotDuration: 30 })
         fetchAvailability()
       } else {
         toast.error(response.Message || t('errors.saveFailed'))
@@ -232,9 +241,17 @@ export default function Schedule() {
   }
 
   const updateWeeklyRow = (index, field, value) => {
-    setWeeklySchedules(prev => prev.map((row, i) =>
-      i === index ? { ...row, [field]: field === 'DayOfWeek' || field === 'SlotDuration' ? parseInt(value) : value } : row
-    ))
+    setWeeklySchedules(prev => prev.map((row, i) => {
+      if (i !== index) return row
+      const updated = { ...row, [field]: field === 'DayOfWeek' || field === 'SlotDuration' ? parseInt(value) : value }
+      // Auto-calculate EndTime when StartTime or SlotDuration changes
+      if (field === 'StartTime' || field === 'SlotDuration') {
+        const startTime = field === 'StartTime' ? value : row.StartTime
+        const duration = field === 'SlotDuration' ? parseInt(value) : row.SlotDuration
+        updated.EndTime = addMinutesToTime(startTime, duration)
+      }
+      return updated
+    }))
   }
 
   // Group availability by type (1=Weekly, 2=SpecificSlot, 3=Blocked)
@@ -509,8 +526,8 @@ export default function Schedule() {
                 <input
                   type="time"
                   value={row.EndTime}
-                  onChange={(e) => updateWeeklyRow(index, 'EndTime', e.target.value)}
-                  className="w-full p-2 border border-border rounded-lg bg-background-paper text-text text-sm"
+                  disabled
+                  className="w-full p-2 border border-border rounded-lg bg-background-paper text-text text-sm opacity-50 cursor-not-allowed"
                 />
               </div>
               <div className="min-w-[120px]">
@@ -579,7 +596,10 @@ export default function Schedule() {
               <input
                 type="time"
                 value={slotForm.StartTime}
-                onChange={(e) => setSlotForm({ ...slotForm, StartTime: e.target.value })}
+                onChange={(e) => {
+                  const newStart = e.target.value
+                  setSlotForm(prev => ({ ...prev, StartTime: newStart, EndTime: addMinutesToTime(newStart, prev.SlotDuration) }))
+                }}
                 className="w-full p-3 border border-border rounded-xl bg-background text-text"
               />
             </div>
@@ -588,15 +608,15 @@ export default function Schedule() {
               <input
                 type="time"
                 value={slotForm.EndTime}
-                onChange={(e) => setSlotForm({ ...slotForm, EndTime: e.target.value })}
-                className="w-full p-3 border border-border rounded-xl bg-background text-text"
+                disabled
+                className="w-full p-3 border border-border rounded-xl bg-background text-text opacity-50 cursor-not-allowed"
               />
             </div>
           </div>
           <SelectDropdown
             label={t('doctor.slotDuration')}
             value={String(slotForm.SlotDuration)}
-            onChange={(val) => setSlotForm({ ...slotForm, SlotDuration: parseInt(val) })}
+            onChange={(val) => setSlotForm(prev => ({ ...prev, SlotDuration: parseInt(val), EndTime: addMinutesToTime(prev.StartTime, parseInt(val)) }))}
             options={Object.entries(SlotDurationLabels).map(([key, label]) => ({ value: key, label }))}
           />
           <div className="flex gap-3 pt-4 border-t border-border">
@@ -640,7 +660,10 @@ export default function Schedule() {
               <input
                 type="time"
                 value={blockForm.StartTime}
-                onChange={(e) => setBlockForm({ ...blockForm, StartTime: e.target.value })}
+                onChange={(e) => {
+                  const newStart = e.target.value
+                  setBlockForm(prev => ({ ...prev, StartTime: newStart, EndTime: addMinutesToTime(newStart, 60) }))
+                }}
                 className="w-full p-3 border border-border rounded-xl bg-background text-text"
               />
             </div>
@@ -649,8 +672,8 @@ export default function Schedule() {
               <input
                 type="time"
                 value={blockForm.EndTime}
-                onChange={(e) => setBlockForm({ ...blockForm, EndTime: e.target.value })}
-                className="w-full p-3 border border-border rounded-xl bg-background text-text"
+                disabled
+                className="w-full p-3 border border-border rounded-xl bg-background text-text opacity-50 cursor-not-allowed"
               />
             </div>
           </div>

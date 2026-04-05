@@ -14,7 +14,7 @@ import Table, {
   TableHeader,
   TableRow,
 } from "../../components/ui/Table";
-import { Search, MedicalServices as Stethoscope, CalendarToday as Calendar, AccessTime as Clock, ChevronRight, Person as User, ArrowBack as ArrowLeft, CheckCircle, Cancel as XCircle, ChevronLeft, Sync as Loader2, Visibility as Eye, ViewList, GridView, Star, Send, ThumbUp, Badge as BadgeIcon } from '@mui/icons-material';
+import { Search, MedicalServices as Stethoscope, CalendarToday as Calendar, AccessTime as Clock, ChevronRight, Person as User, ArrowBack as ArrowLeft, CheckCircle, Cancel as XCircle, ChevronLeft, Sync as Loader2, Visibility as Eye, ViewList, GridView, Star, Send, ThumbUp, Badge as BadgeIcon, FlashOn, AccountBalanceWallet, RadioButtonUnchecked, CheckCircle as SelectedIcon, UploadFile as UploadIcon, ReceiptLong } from '@mui/icons-material';
 
 import { useAuth } from "../../contexts/AuthContext";
 import { patientAPI, paymentAPI } from "../../lib/api";
@@ -77,8 +77,12 @@ export default function ReserveAppointment() {
   
   // Documents modal state
   const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
-  const [selectedPaymentProvider, setSelectedPaymentProvider] = useState(1);
+  const [selectedPaymentProvider, setSelectedPaymentProvider] = useState('instapay');
   const [paymentLoading, setPaymentLoading] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
+  const [paymentScreenshot, setPaymentScreenshot] = useState(null);
+  const [referenceNumber, setReferenceNumber] = useState('');
+  const [bookingPendingReview, setBookingPendingReview] = useState(false);
 
   // Fetch Doctors with Pagination
   const fetchDoctors = async (page = 1) => {
@@ -328,10 +332,13 @@ export default function ReserveAppointment() {
 
     setPaymentLoading(true);
     try {
+      const providerValue = selectedPaymentProvider === 'instapay' ? 2 : 3;
       const response = await paymentAPI.initiatePayment({
         BookingId: bookingId,
-        Provider: selectedPaymentProvider,
+        Provider: providerValue,
         Amount: safeAmount,
+        Screenshot: paymentScreenshot,
+        ReferenceNumber: selectedPaymentProvider === 'instapay' ? referenceNumber : undefined,
       });
 
       if (response?.IsSuccess === false) {
@@ -339,17 +346,41 @@ export default function ReserveAppointment() {
         return;
       }
 
-      const paymentUrl = response?.Data?.PaymentUrl;
-      if (paymentUrl) {
-        window.open(paymentUrl, '_blank', 'noopener,noreferrer');
-      }
-      toast.success(isRTL ? 'تم بدء عملية الدفع' : 'Payment initiated successfully');
+      toast.success(
+        isRTL
+          ? 'تم إرسال إثبات الدفع. سيظل الحجز قيد المراجعة حتى يراجعه الدعم الفني.'
+          : 'Payment proof submitted. Booking will stay pending until technical support reviews it.'
+      );
       fetchPatientBookings(bookingsPagination.pageIndex);
     } catch (error) {
       toast.error(error?.response?.data?.Message || (isRTL ? 'فشل بدء عملية الدفع' : 'Failed to initiate payment'));
     } finally {
       setPaymentLoading(false);
     }
+  };
+
+  const handleConfirmBookingClick = () => {
+    if (!bookedSlot) return;
+    setPaymentScreenshot(null);
+    setReferenceNumber('');
+    setIsPaymentModalOpen(true);
+  };
+
+  const handlePaymentProviderSelect = (providerId) => {
+    setSelectedPaymentProvider(providerId);
+  };
+
+  const handlePaymentSubmit = async () => {
+    if (!paymentScreenshot) {
+      toast.error(isRTL ? 'يرجى إرفاق صورة التحويل' : 'Please attach a transfer screenshot');
+      return;
+    }
+    if (selectedPaymentProvider === 'instapay' && !referenceNumber.trim()) {
+      toast.error(isRTL ? 'يرجى إدخال رقم المرجع' : 'Please enter the reference number');
+      return;
+    }
+    setIsPaymentModalOpen(false);
+    await confirmBooking();
   };
 
   const checkBookingPaymentStatus = async (bookingId) => {
@@ -444,8 +475,13 @@ export default function ReserveAppointment() {
           await initiatePaymentForBooking(bookingId, doctorFee);
         }
 
+        setBookingPendingReview(true);
         setStep(3);
-        toast.success(t('success.bookingConfirmed'));
+        toast.success(
+          isRTL
+            ? 'تم إرسال طلب الحجز والدفع بنجاح وهو الآن قيد المراجعة.'
+            : 'Booking and payment request submitted successfully and is now pending review.'
+        );
       } else {
         toast.error(response.Message || t('errors.bookingFailed'));
       }
@@ -959,15 +995,59 @@ export default function ReserveAppointment() {
                         )}
 
                         <div className={`space-y-2 ${isRTL ? 'text-right' : ''}`}>
-                          <p className="text-xs text-text-muted">{isRTL ? 'مزود الدفع' : 'Payment Provider'}</p>
-                          <select
-                            value={selectedPaymentProvider}
-                            onChange={(e) => setSelectedPaymentProvider(Number(e.target.value))}
-                            className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                          >
-                            <option value={0}>Fawry</option>
-                            <option value={1}>Paymob</option>
-                          </select>
+                          <p className="text-xs text-text-muted font-semibold mb-2">{isRTL ? 'طريقة الدفع' : 'Payment Method'}</p>
+                          <div className="grid grid-cols-2 gap-2">
+                            {[
+                              {
+                                id: 'instapay',
+                                label: 'InstaPay',
+                                icon: FlashOn,
+                                desc: isRTL ? 'تحويل فوري عبر التطبيق' : 'Instant app transfer',
+                                accent: 'from-amber-500/20 to-orange-500/10',
+                                iconBg: 'bg-amber-500/15',
+                                iconColor: 'text-amber-400',
+                              },
+                              {
+                                id: 'cash_wallet',
+                                label: isRTL ? 'كاش وولت' : 'Cash Wallet',
+                                icon: AccountBalanceWallet,
+                                desc: isRTL ? 'محفظة نقدية رقمية' : 'Digital cash wallet',
+                                accent: 'from-emerald-500/20 to-teal-500/10',
+                                iconBg: 'bg-emerald-500/15',
+                                iconColor: 'text-emerald-400',
+                              },
+                            ].map((p) => (
+                              (() => {
+                                const Icon = p.icon;
+                                const isSelected = selectedPaymentProvider === p.id;
+                                return (
+                              <button
+                                key={p.id}
+                                onClick={() => handlePaymentProviderSelect(p.id)}
+                                className={`relative overflow-hidden flex flex-col items-start gap-2 p-3 rounded-xl border-2 transition-all duration-200 text-left ${isRTL ? 'text-right' : ''} ${
+                                  isSelected
+                                    ? 'border-primary bg-primary/10 shadow-md shadow-primary/20 ring-1 ring-primary/30'
+                                    : 'border-border bg-background-paper hover:border-primary/40 hover:bg-primary/5'
+                                }`}
+                              >
+                                <div className={`absolute inset-0 bg-gradient-to-br ${p.accent} opacity-70`} />
+                                <div className={`relative w-full flex items-start justify-between gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                                  <div className={`w-9 h-9 rounded-lg ${p.iconBg} flex items-center justify-center`}> 
+                                    <Icon className={`w-5 h-5 ${p.iconColor}`} />
+                                  </div>
+                                  {isSelected ? (
+                                    <SelectedIcon className="w-5 h-5 text-primary" />
+                                  ) : (
+                                    <RadioButtonUnchecked className="w-5 h-5 text-text-muted" />
+                                  )}
+                                </div>
+                                <span className={`relative text-xs font-bold ${isSelected ? 'text-primary' : 'text-text-heading'}`}>{p.label}</span>
+                                <span className="relative text-[10px] text-text-muted">{p.desc}</span>
+                              </button>
+                                );
+                              })()
+                            ))}
+                          </div>
                         </div>
 
                         <div className={`space-y-1 ${isRTL ? 'text-right' : ''}`}>
@@ -977,13 +1057,137 @@ export default function ReserveAppointment() {
                           </p>
                         </div>
                       </div>
-                      <Button className="w-full mt-6" disabled={!bookedSlot} onClick={confirmBooking}>
+                      <Button className="w-full mt-6" disabled={!bookedSlot} onClick={handleConfirmBookingClick}>
                         {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                         {t('patient.confirmAppointment')}
                       </Button>
                     </Card>
                   </div>
                 </div>
+
+                {/* ── Payment Instructions Modal ── */}
+                <Modal
+                  isOpen={isPaymentModalOpen}
+                  onClose={() => setIsPaymentModalOpen(false)}
+                  title={isRTL ? 'تفاصيل الدفع' : 'Payment Details'}
+                  size="md"
+                >
+                  <div className="space-y-5">
+                    {/* Provider badge */}
+                    <div className={`flex items-center gap-3 p-4 rounded-2xl border-2 ${
+                      selectedPaymentProvider === 'instapay'
+                        ? 'bg-violet-50 border-violet-200 dark:bg-violet-900/20 dark:border-violet-700'
+                        : 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-700'
+                    }`}>
+                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${selectedPaymentProvider === 'instapay' ? 'bg-violet-500/15' : 'bg-emerald-500/15'}`}>
+                        {selectedPaymentProvider === 'instapay'
+                          ? <FlashOn className="w-6 h-6 text-violet-500" />
+                          : <AccountBalanceWallet className="w-6 h-6 text-emerald-500" />}
+                      </div>
+                      <div>
+                        <p className="font-bold text-text-heading text-base">
+                          {selectedPaymentProvider === 'instapay' ? 'InstaPay' : (isRTL ? 'كاش وولت' : 'Cash Wallet')}
+                        </p>
+                        <p className="text-xs text-text-muted">
+                          {isRTL ? 'يرجى اتباع التعليمات بدقة' : 'Please follow the instructions carefully'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Instructions */}
+                    <div className="bg-background-subtle rounded-xl p-4 space-y-3">
+                      <p className="text-sm font-bold text-text-heading">{isRTL ? 'تعليمات التحويل' : 'Transfer Instructions'}</p>
+                      <div className="space-y-2 text-sm text-text-muted">
+                        <div className="flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
+                          <p>{isRTL ? `قم بتحويل المبلغ المطلوب عبر ${selectedPaymentProvider === 'instapay' ? 'InstaPay' : 'كاش وولت'}` : `Transfer the required amount via ${selectedPaymentProvider === 'instapay' ? 'InstaPay' : 'Cash Wallet'}`}</p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
+                          <div>
+                            <p className="text-text-heading font-semibold">{isRTL ? 'إلى الحساب:' : 'To account:'}</p>
+                            <p className="font-mono text-primary text-base font-bold mt-0.5">01XXXXXXXXXX</p>
+                            <p className="text-xs text-text-muted mt-0.5">{isRTL ? 'اسم الحساب: نفس للصحة النفسية' : 'Account name: Nafs Mental Health'}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</span>
+                          <p>{isRTL ? 'المبلغ المطلوب:' : 'Amount:'} <span className="font-bold text-text-heading">{selectedDoctor?.ConsultationFee ? `${selectedDoctor.ConsultationFee} EGP` : '—'}</span></p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">4</span>
+                          <p>{isRTL ? 'التقط سكرين شوت وارفعه أدناه' : 'Take a screenshot and upload it below'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* InstaPay-only: Reference Number */}
+                    {selectedPaymentProvider === 'instapay' && (
+                      <div>
+                        <label className="text-sm font-semibold text-text-heading block mb-1.5">
+                          <ReceiptLong className="w-4 h-4 inline-block mr-1" />
+                          {isRTL ? 'رقم المرجع (Reference Number)' : 'Reference Number'}
+                          <span className="text-red-500 ml-1">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={referenceNumber}
+                          onChange={(e) => setReferenceNumber(e.target.value)}
+                          placeholder={isRTL ? 'أدخل رقم المرجع من الإيصال' : 'Enter reference number from receipt'}
+                          className="w-full px-4 py-3 border-2 border-border rounded-xl bg-background text-text text-sm focus:outline-none focus:border-primary transition-colors"
+                        />
+                      </div>
+                    )}
+
+                    {/* Screenshot Upload */}
+                    <div>
+                      <label className="text-sm font-semibold text-text-heading block mb-1.5">
+                        {isRTL ? 'إرفاق سكرين شوت' : 'Attach Screenshot'}
+                        <span className="text-red-500 ml-1">*</span>
+                      </label>
+                      <label className={`flex flex-col items-center justify-center gap-2 w-full h-32 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
+                        paymentScreenshot
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50 hover:bg-primary/3'
+                      }`}>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => setPaymentScreenshot(e.target.files?.[0] || null)}
+                        />
+                        {paymentScreenshot ? (
+                          <>
+                            <CheckCircle className="w-7 h-7 text-primary" />
+                            <p className="text-sm font-semibold text-primary">{paymentScreenshot.name}</p>
+                            <p className="text-xs text-text-muted">{isRTL ? 'اضغط لتغيير الصورة' : 'Click to change'}</p>
+                          </>
+                        ) : (
+                          <>
+                            <UploadIcon className="w-7 h-7 text-text-muted" />
+                            <p className="text-sm text-text-muted">{isRTL ? 'اضغط لرفع صورة التحويل' : 'Click to upload transfer screenshot'}</p>
+                            <p className="text-xs text-text-muted">PNG, JPG, WEBP</p>
+                          </>
+                        )}
+                      </label>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-3 pt-2 border-t border-border">
+                      <Button variant="outline" className="flex-1" onClick={() => setIsPaymentModalOpen(false)}>
+                        {t('common.cancel')}
+                      </Button>
+                      <Button
+                        className="flex-1 gap-2"
+                        onClick={handlePaymentSubmit}
+                        disabled={loading || !paymentScreenshot || (selectedPaymentProvider === 'instapay' && !referenceNumber.trim())}
+                      >
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                        {isRTL ? 'دفع وإرسال الإثبات' : 'Pay & Submit Proof'}
+                      </Button>
+                    </div>
+                  </div>
+                </Modal>
 
                 {/* ── Reviews Section ── */}
                 <div className="space-y-5">
@@ -1111,15 +1315,22 @@ export default function ReserveAppointment() {
                   <CheckCircle className="w-12 h-12" />
                 </div>
                 <h2 className="text-3xl font-bold text-text-heading mb-4">
-                  {t('patient.bookingConfirmedTitle')}
+                  {bookingPendingReview
+                    ? (isRTL ? 'تم استلام طلبك' : 'Request Submitted')
+                    : t('patient.bookingConfirmedTitle')}
                 </h2>
                 <p className="text-text-muted mb-8">
-                  {t('patient.bookingConfirmedDesc')}
+                  {bookingPendingReview
+                    ? (isRTL
+                      ? 'حجزك الآن في حالة Pending حتى يقوم فريق الدعم الفني بمراجعة إثبات التحويل.'
+                      : 'Your booking is currently pending until technical support reviews your transfer proof.')
+                    : t('patient.bookingConfirmedDesc')}
                 </p>
                 <Button className="w-full" onClick={() => {
                   setStep(1);
                   setSelectedDoctor(null);
                   setBookedSlot(null);
+                  setBookingPendingReview(false);
                   setSearchParams({});
                 }}>
                   {t('patient.backToDoctors')}
