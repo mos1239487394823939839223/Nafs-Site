@@ -9,6 +9,7 @@ import { LanguageProvider, useLanguage } from './contexts/LanguageContext'
 import Layout from './components/layout/Layout'
 
 import PatientSettings from './views/patient/Settings'
+import PatientProfile from './views/patient/Profile'
 import PatientMessages from './views/patient/PatientMessages'
 import ReserveAppointment from './views/patient/ReserveAppointment'
 import PatientTests from './views/patient/Tests'
@@ -131,7 +132,7 @@ function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
               <Layout>
-                <PatientSettings />
+                <PatientProfile />
               </Layout>
             </ProtectedRoute>
           }
