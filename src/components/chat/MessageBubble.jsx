@@ -1,4 +1,5 @@
 import { Check, DoneAll as CheckCheck } from '@mui/icons-material'
+import { MessageType } from '../../lib/api'
 
 export default function MessageBubble({ message, isSent }) {
   const formatTime = (timestamp) => {
@@ -7,6 +8,19 @@ export default function MessageBubble({ message, isSent }) {
       minute: '2-digit',
       hour12: true
     })
+  }
+
+  // ─── System Message Styling ────────────────────────────────────────────────
+  if (message.type === MessageType.System || message.messageType === MessageType.System) {
+    return (
+      <div className="flex justify-center mb-6">
+        <div className="bg-background-subtle/40 px-6 py-2 rounded-full border border-border shadow-sm">
+          <p className="text-xs text-text-muted font-medium text-center">
+            {message.content}
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -21,9 +35,11 @@ export default function MessageBubble({ message, isSent }) {
         `}
       >
         {/* Message Content */}
-        <p className="text-sm leading-relaxed break-words">
-          {message.content}
-        </p>
+        {message.content && (
+          <p className="text-sm leading-relaxed break-words">
+            {message.content}
+          </p>
+        )}
 
         {/* Attachments */}
         {message.attachments && message.attachments.length > 0 && (

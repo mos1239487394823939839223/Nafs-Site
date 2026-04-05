@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useAuth, Roles } from '../../contexts/AuthContext'
-import { chatAPI, filesAPI } from '../../lib/api'
+import { chatAPI, filesAPI, MessageType } from '../../lib/api'
 import ChatWindow from '../../components/chat/ChatWindow'
 import { Search, ChatBubbleOutline as MessageSquare, Sync as Loader2, Refresh as RefreshCw, MedicalServices as Stethoscope, Person as User, Headphones } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
@@ -10,12 +11,43 @@ import { startChatConnection } from '../../lib/signalr'
 export default function MessagesPage() {
   const { user } = useAuth()
   const { t } = useLanguage()
+  const [searchParams, setSearchParams] = useSearchParams()
+
+  const initialRoomId = searchParams.get('room')
+
   const [activeRoom, setActiveRoom] = useState(null)
+  const [pendingRoomId] = useState(initialRoomId || null)
   const [rooms, setRooms] = useState([])
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false)
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const connectionRef = useRef(null)
+  const activeRoomRef = useRef(null)
+
+  // Keep the ref in sync with state
+  useEffect(() => {
+    activeRoomRef.current = activeRoom
+  }, [activeRoom])
+
+  // Sync active room to URL
+  useEffect(() => {
+    const params = {}
+    if (activeRoom) params.room = String(activeRoom.Id || activeRoom.id)
+    setSearchParams(params, { replace: true })
+  }, [activeRoom, setSearchParams])
+
+  // Restore active room from URL after rooms load
+  useEffect(() => {
+    if (pendingRoomId && rooms.length > 0 && !activeRoom) {
+      const match = rooms.find(
+        (r) => String(r.Id || r.id) === String(pendingRoomId)
+      )
+      if (match) {
+        setActiveRoom(match)
+      }
+    }
+  }, [rooms, pendingRoomId, activeRoom])
 
   const fetchRooms = useCallback(async () => {
     setLoading(true)
@@ -55,34 +87,51 @@ export default function MessagesPage() {
     fetchRooms()
   }, [fetchRooms])
 
-  // SignalR Real-time Integration
+  // SignalR Real-time Integration — register ONCE on mount
   useEffect(() => {
-    let connection = null
+    let mounted = true
 
     const setupSignalR = async () => {
       try {
-        connection = await startChatConnection()
-        
-        // Listen for new messages
-        connection.on('ReceiveMessage', (roomId, message) => {
-          // If the message belongs to the current active room, add it to the state
-          if (String(activeRoom?.Id || activeRoom?.id) === String(roomId)) {
-            // Transform backend message to UI format
+        const conn = await startChatConnection()
+        if (!mounted) return
+        connectionRef.current = conn
+        console.log('📡 SignalR Connected — listening for ReceiveMessage')
+
+        conn.on('ReceiveMessage', (msg) => {
+          const currentRoom = activeRoomRef.current
+          const currentRoomId = String(currentRoom?.Id || currentRoom?.id || '')
+          const msgRoomId = String(msg.RoomId || msg.roomId || '')
+
+          console.log('📨 [ReceiveMessage]', {
+            msgRoom: msgRoomId,
+            activeRoom: currentRoomId,
+            match: currentRoomId === msgRoomId,
+            from: msg.SenderName || msg.senderName || msg.SenderId || msg.senderId,
+            text: (msg.Content || msg.content || '').substring(0, 50),
+          })
+
+          // If message is for the room currently open, inject it into the chat
+          if (currentRoomId && currentRoomId === msgRoomId) {
+            const attachmentUrl = msg.AttachmentUrl || msg.attachmentUrl
+            const attachmentName = msg.AttachmentName || msg.attachmentName
             const uiMessage = {
-              id: message.Id || message.id || Date.now(),
-              sender: message.SenderId === (user?.ID || user?.id) ? 'current-user' : 'other',
-              content: message.Content || message.content || '',
-              timestamp: message.CreatedAt || message.timestamp || new Date().toISOString(),
-              attachments: message.AttachmentUrl ? [{
-                name: message.AttachmentName || 'Attachment',
-                url: message.AttachmentUrl,
-                type: (message.AttachmentUrl || '').match(/\.(png|jpg|jpeg|gif|webp)$/i) ? 'image' : 'file'
+              id: msg.Id || msg.id || Date.now(),
+              sender: (msg.SenderId || msg.senderId) === (user?.ID || user?.id) ? 'current-user' : 'other',
+              content: msg.Content || msg.content || '',
+              messageType: msg.MessageType || msg.messageType,
+              timestamp: msg.CreatedAt || msg.createdAt || new Date().toISOString(),
+              attachments: attachmentUrl ? [{
+                name: attachmentName || 'Attachment',
+                url: attachmentUrl,
+                type: (attachmentUrl || '').match(/\.(png|jpg|jpeg|gif|webp)$/i) ? 'image' : 'file'
               }] : []
             }
             setMessages(prev => [...prev, uiMessage])
+            chatAPI.markAsRead(msgRoomId).catch(() => {})
           }
-          
-          // Always refresh rooms to show latest message snippet/unread count in sidebar
+
+          // Always refresh rooms sidebar for unread counts
           fetchRooms()
         })
       } catch (err) {
@@ -93,11 +142,13 @@ export default function MessagesPage() {
     setupSignalR()
 
     return () => {
-      if (connection) {
-        connection.off('ReceiveMessage')
+      mounted = false
+      if (connectionRef.current) {
+        connectionRef.current.off('ReceiveMessage')
+        console.log('🔌 SignalR ReceiveMessage listener removed')
       }
     }
-  }, [activeRoom, user, fetchRooms])
+  }, [user, fetchRooms]) // NO activeRoom here — we use the ref instead
 
   useEffect(() => {
     if (activeRoom) {
@@ -135,7 +186,7 @@ export default function MessagesPage() {
         await chatAPI.sendMessage(
           roomId,
           i === 0 ? (msgData.content || '') : '',
-          1,
+          MessageType.Attachment,
           url || attachment.url,
           name,
         )

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Search,
@@ -16,7 +17,8 @@ import {
 import Button from "../../components/ui/Button";
 import ChatWindow from "../../components/chat/ChatWindow";
 import { useAuth } from "../../contexts/AuthContext";
-import { chatAPI, filesAPI } from "../../lib/api";
+import { chatAPI, filesAPI, MessageType } from "../../lib/api";
+import { startChatConnection } from "../../lib/signalr";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 // Contact type selector
@@ -48,16 +50,52 @@ const CONTACT_TYPES = [
 export default function PatientMessages() {
   const { user } = useAuth();
   const { t, isRTL } = useLanguage();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Restore state from URL params on mount
+  const initialType = searchParams.get('type'); // 'doctors' | 'support'
+  const initialRoomId = searchParams.get('room');
 
   // contact type: null (selector), 'doctors', 'support'
-  const [contactType, setContactType] = useState(null);
-  const [mode, setMode] = useState("rooms"); // rooms, chat
+  const [contactType, setContactType] = useState(
+    CONTACT_TYPES.some(ct => ct.key === initialType) ? initialType : null
+  );
+  const [mode, setMode] = useState(initialRoomId ? "chat" : "rooms"); // rooms, chat
   const [activeRoom, setActiveRoom] = useState(null);
+  const [pendingRoomId] = useState(initialRoomId || null); // room to restore after rooms load
   const [rooms, setRooms] = useState([]);
   const [messages, setMessages] = useState([]);
   const [loading, setLoading] = useState(false);
   const [messagesLoading, setMessagesLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const connectionRef = useRef(null);
+  const activeRoomRef = useRef(null);
+
+  // Keep ref in sync with state
+  useEffect(() => {
+    activeRoomRef.current = activeRoom;
+  }, [activeRoom]);
+
+  // Sync state → URL search params
+  useEffect(() => {
+    const params = {};
+    if (contactType) params.type = contactType;
+    if (activeRoom) params.room = String(activeRoom.Id || activeRoom.id);
+    setSearchParams(params, { replace: true });
+  }, [contactType, activeRoom, setSearchParams]);
+
+  // Restore active room from URL after rooms load
+  useEffect(() => {
+    if (pendingRoomId && rooms.length > 0 && !activeRoom) {
+      const match = rooms.find(
+        (r) => String(r.Id || r.id) === String(pendingRoomId)
+      );
+      if (match) {
+        setActiveRoom(match);
+        setMode('chat');
+      }
+    }
+  }, [rooms, pendingRoomId, activeRoom]);
 
   const fetchRooms = useCallback(async () => {
     setLoading(true);
@@ -92,6 +130,66 @@ export default function PatientMessages() {
       setMessagesLoading(false);
     }
   }, []);
+
+  // SignalR — register ONCE on mount
+  useEffect(() => {
+    let mounted = true;
+
+    const setupSignalR = async () => {
+      try {
+        const conn = await startChatConnection();
+        if (!mounted) return;
+        connectionRef.current = conn;
+        console.log('📡 [Patient] SignalR Connected');
+
+        conn.on('ReceiveMessage', (msg) => {
+          const currentRoom = activeRoomRef.current;
+          const currentRoomId = String(currentRoom?.Id || currentRoom?.id || '');
+          const msgRoomId = String(msg.RoomId || msg.roomId || '');
+
+          console.log('📨 [Patient ReceiveMessage]', {
+            msgRoom: msgRoomId,
+            activeRoom: currentRoomId,
+            match: currentRoomId === msgRoomId,
+            from: msg.SenderName || msg.senderName || msg.SenderId || msg.senderId,
+            text: (msg.Content || msg.content || '').substring(0, 50),
+          });
+
+          if (currentRoomId && currentRoomId === msgRoomId) {
+            const attachmentUrl = msg.AttachmentUrl || msg.attachmentUrl;
+            const attachmentName = msg.AttachmentName || msg.attachmentName;
+            const uiMessage = {
+              id: msg.Id || msg.id || Date.now(),
+              sender: (msg.SenderId || msg.senderId) === (user?.ID || user?.id) ? "current-user" : "other",
+              content: msg.Content || msg.content || "",
+              messageType: msg.MessageType || msg.messageType,
+              timestamp: msg.CreatedAt || msg.createdAt || new Date().toISOString(),
+              attachments: attachmentUrl ? [{
+                name: attachmentName || 'Attachment',
+                url: attachmentUrl,
+                type: (attachmentUrl || '').match(/\.(png|jpg|jpeg|gif|webp)$/i) ? 'image' : 'file'
+              }] : []
+            };
+            setMessages((prev) => [...prev, uiMessage]);
+            chatAPI.markAsRead(msgRoomId).catch(() => { });
+          }
+
+          fetchRooms();
+        });
+      } catch (err) {
+        console.error("SignalR Setup Error:", err);
+      }
+    };
+
+    setupSignalR();
+
+    return () => {
+      mounted = false;
+      if (connectionRef.current) {
+        connectionRef.current.off('ReceiveMessage');
+      }
+    };
+  }, [user, fetchRooms]); // NO activeRoom — use ref
 
   useEffect(() => {
     if (contactType) fetchRooms();
@@ -132,7 +230,7 @@ export default function PatientMessages() {
         await chatAPI.sendMessage(
           roomId,
           i === 0 ? (msgData.content || '') : '',
-          1,
+          MessageType.Attachment,
           url || attachment.url,
           name,
         );
@@ -147,6 +245,21 @@ export default function PatientMessages() {
   const handleOpenRoom = (room) => {
     setActiveRoom(room);
     setMode("chat");
+  };
+
+  const handleBackToRooms = () => {
+    setMode("rooms");
+    setActiveRoom(null);
+    setMessages([]);
+  };
+
+  const handleBackToSelector = () => {
+    setContactType(null);
+    setRooms([]);
+    setSearchQuery('');
+    setActiveRoom(null);
+    setMessages([]);
+    setMode('rooms');
   };
 
   const currentConversation = activeRoom
@@ -267,7 +380,7 @@ export default function PatientMessages() {
               <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                 {/* Back to type selector */}
                 <button
-                  onClick={() => { setContactType(null); setRooms([]); setSearchQuery(''); }}
+                  onClick={handleBackToSelector}
                   className="p-2 rounded-xl hover:bg-background-subtle transition-colors text-text-muted hover:text-text"
                 >
                   <ChevronRight className={`w-5 h-5 ${isRTL ? '' : 'rotate-180'}`} />
@@ -371,11 +484,7 @@ export default function PatientMessages() {
             ) : (
               <ChatWindow
                 conversation={currentConversation}
-                onBack={() => {
-                  setMode("rooms");
-                  setActiveRoom(null);
-                  setMessages([]);
-                }}
+                onBack={handleBackToRooms}
                 onSendMessage={handleSendMessage}
               />
             )}

@@ -478,9 +478,6 @@ function TagCard({ tag, isRTL, articleCount }) {
         </div>
         <div>
           <h4 className="font-semibold text-text-heading text-sm">{tag.Name ?? tag.name}</h4>
-          <p className="text-xs text-text-muted mt-0.5">
-            ID: {tag.TagID ?? tag.tagID ?? tag.id}
-          </p>
         </div>
       </div>
     </motion.div>

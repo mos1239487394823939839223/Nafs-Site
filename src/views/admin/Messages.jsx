@@ -1,20 +1,53 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { Search, ChatBubbleOutline as MessageSquare, Headphones, MedicalServices as Stethoscope, Sync as Loader2, Refresh as RefreshCw } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 import ChatWindow from '../../components/chat/ChatWindow'
-import { chatAPI, filesAPI } from '../../lib/api'
+import { chatAPI, filesAPI, MessageType } from '../../lib/api'
+import { startChatConnection } from '../../lib/signalr'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function AdminMessages() {
     const { user } = useAuth()
     const { t } = useLanguage()
+    const [searchParams, setSearchParams] = useSearchParams()
+
+    const initialRoomId = searchParams.get('room')
+
     const [activeRoom, setActiveRoom] = useState(null)
+    const [pendingRoomId] = useState(initialRoomId || null)
     const [searchQuery, setSearchQuery] = useState('')
     const [rooms, setRooms] = useState([])
     const [messages, setMessages] = useState([])
     const [loading, setLoading] = useState(false)
     const [messagesLoading, setMessagesLoading] = useState(false)
+    const connectionRef = useRef(null)
+    const activeRoomRef = useRef(null)
+
+    // Keep ref in sync
+    useEffect(() => {
+        activeRoomRef.current = activeRoom
+    }, [activeRoom])
+
+    // Sync active room to URL
+    useEffect(() => {
+        const params = {}
+        if (activeRoom) params.room = String(activeRoom.Id || activeRoom.id)
+        setSearchParams(params, { replace: true })
+    }, [activeRoom, setSearchParams])
+
+    // Restore active room from URL after rooms load
+    useEffect(() => {
+        if (pendingRoomId && rooms.length > 0 && !activeRoom) {
+            const match = rooms.find(
+                (r) => String(r.Id || r.id) === String(pendingRoomId)
+            )
+            if (match) {
+                setActiveRoom(match)
+            }
+        }
+    }, [rooms, pendingRoomId, activeRoom])
 
     const fetchRooms = useCallback(async () => {
         setLoading(true)
@@ -49,6 +82,64 @@ export default function AdminMessages() {
             setMessagesLoading(false)
         }
     }, [])
+
+    // SignalR — register ONCE on mount
+    useEffect(() => {
+        let mounted = true
+
+        const setupSignalR = async () => {
+            try {
+                const conn = await startChatConnection()
+                if (!mounted) return
+                connectionRef.current = conn
+                console.log('📡 [Admin] SignalR Connected')
+
+                conn.on('ReceiveMessage', (msg) => {
+                    const currentRoom = activeRoomRef.current
+                    const currentRoomId = String(currentRoom?.Id || currentRoom?.id || '')
+                    const msgRoomId = String(msg.RoomId || msg.roomId || '')
+
+                    console.log('📨 [Admin ReceiveMessage]', {
+                        msgRoom: msgRoomId,
+                        activeRoom: currentRoomId,
+                        match: currentRoomId === msgRoomId,
+                        from: msg.SenderName || msg.senderName || msg.SenderId || msg.senderId,
+                    })
+
+                    if (currentRoomId && currentRoomId === msgRoomId) {
+                        const attachmentUrl = msg.AttachmentUrl || msg.attachmentUrl
+                        const attachmentName = msg.AttachmentName || msg.attachmentName
+                        const uiMessage = {
+                            id: msg.Id || msg.id || Date.now(),
+                            sender: (msg.SenderId || msg.senderId) === (user?.ID || user?.id) ? 'current-user' : 'other',
+                            content: msg.Content || msg.content || '',
+                            messageType: msg.MessageType || msg.messageType,
+                            timestamp: msg.CreatedAt || msg.createdAt || new Date().toISOString(),
+                            attachments: attachmentUrl ? [{
+                                name: attachmentName || 'Attachment',
+                                url: attachmentUrl,
+                                type: (attachmentUrl || '').match(/\.(png|jpg|jpeg|gif|webp)$/i) ? 'image' : 'file'
+                            }] : []
+                        }
+                        setMessages(prev => [...prev, uiMessage])
+                        chatAPI.markAsRead(msgRoomId).catch(() => {})
+                    }
+                    fetchRooms()
+                })
+            } catch (err) {
+                console.error('SignalR Setup Error:', err)
+            }
+        }
+
+        setupSignalR()
+
+        return () => {
+            mounted = false
+            if (connectionRef.current) {
+                connectionRef.current.off('ReceiveMessage')
+            }
+        }
+    }, [user, fetchRooms]) // NO activeRoom — use ref
 
     useEffect(() => {
         fetchRooms()
@@ -90,7 +181,7 @@ export default function AdminMessages() {
                 await chatAPI.sendMessage(
                     roomId,
                     i === 0 ? (msgData.content || '') : '',
-                    1,
+                    MessageType.Attachment,
                     url || attachment.url,
                     name,
                 )

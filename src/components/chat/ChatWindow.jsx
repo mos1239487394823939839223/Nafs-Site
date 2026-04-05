@@ -5,11 +5,12 @@ import { useTheme } from '../../contexts/ThemeContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import MessageBubble from './MessageBubble'
 
-export default function ChatWindow({ conversation, onSendMessage, onBack }) {
+export default function ChatWindow({ conversation, onSendMessage, onBack, isTyping: isOtherTyping = false, onTyping, onStopTyping }) {
   const { theme } = useTheme()
   const { t, isRTL } = useLanguage()
   const [messageInput, setMessageInput] = useState('')
-  const [isTyping, setIsTyping] = useState(false)
+  const [localIsTyping, setLocalIsTyping] = useState(false)
+  const typingTimeoutRef = useRef(null)
   const [attachments, setAttachments] = useState([])
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const messagesEndRef = useRef(null)
@@ -37,6 +38,21 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
 
   const onEmojiClick = (emojiData) => {
     setMessageInput(prev => prev + emojiData.emoji)
+    handleTyping()
+  }
+
+  const handleTyping = () => {
+    if (!localIsTyping) {
+      setLocalIsTyping(true)
+      if (onTyping) onTyping()
+    }
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+    
+    typingTimeoutRef.current = setTimeout(() => {
+      setLocalIsTyping(false)
+      if (onStopTyping) onStopTyping()
+    }, 3000)
   }
 
   const handleSend = () => {
@@ -141,13 +157,16 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
         ))}
 
         {/* Typing Indicator */}
-        {isTyping && (
+        {isOtherTyping && (
           <div className="flex justify-start mb-4">
             <div className="bg-background-subtle px-4 py-3 rounded-2xl">
-              <div className="flex gap-1">
-                <div className="w-2 h-2 bg-text-light rounded-full animate-bounce"></div>
-                <div className="w-2 h-2 bg-text-light rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                <div className="w-2 h-2 bg-text-light rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+              <div className="flex items-center gap-2">
+                <div className="flex gap-1">
+                  <div className="w-2 h-2 bg-text-light rounded-full animate-bounce"></div>
+                  <div className="w-2 h-2 bg-text-light rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-2 h-2 bg-text-light rounded-full animate-bounce" style={{ animationDelay: '0.4s' }}></div>
+                </div>
+                <span className="text-xs text-text-light italic">{t('chat.typing', 'Typing...')}</span>
               </div>
             </div>
           </div>
@@ -212,7 +231,10 @@ export default function ChatWindow({ conversation, onSendMessage, onBack }) {
           <div className="flex-1 relative">
             <textarea
               value={messageInput}
-              onChange={(e) => setMessageInput(e.target.value)}
+              onChange={(e) => {
+                setMessageInput(e.target.value)
+                handleTyping()
+              }}
               onKeyPress={handleKeyPress}
               placeholder={t('chat.typeMessage', 'Type your message...')}
               rows="1"

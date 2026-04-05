@@ -462,6 +462,13 @@ export const adminAPI = {
     },
 };
 
+// ─── Chat API Constants ──────────────────────────────────────────────────────
+export const MessageType = {
+    Text: 1,
+    System: 2,
+    Attachment: 3,
+};
+
 // ─── Chat API Functions ──────────────────────────────────────────────────────
 export const chatAPI = {
     // Get all chat rooms
@@ -482,7 +489,7 @@ export const chatAPI = {
     },
 
     // Send a message to a room
-    sendMessage: async (roomId, content, messageType = 0, attachmentUrl = null, attachmentName = null) => {
+    sendMessage: async (roomId, content, messageType = MessageType.Text, attachmentUrl = null, attachmentName = null) => {
         const response = await api.post(`/Chat/Room/${roomId}/Message`, {
             Content: content,
             MessageType: messageType,
