@@ -1,15 +1,18 @@
 import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Download, FilterList as Filter, CalendarToday as Calendar, Sync as Loader2, ChevronLeft, ChevronRight } from '@mui/icons-material'
+import { Download, FilterList as Filter, CalendarToday as Calendar, Sync as Loader2, ChevronLeft, ChevronRight, Description as FileText } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 import SelectDropdown from '../../components/ui/SelectDropdown'
 import HistoryStats from '../../components/doctor/history/HistoryStats'
 import HistoryList from '../../components/doctor/history/HistoryList'
 import { doctorAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
+import Modal from '../../components/ui/Modal'
+import { useToast } from '../../components/ui/Toast'
 
 export default function SessionHistory() {
   const { t, isRTL } = useLanguage()
+  const toast = useToast()
 
   const BookingStatusMap = {
     0: t('bookingStatus.pending'),
@@ -25,6 +28,10 @@ export default function SessionHistory() {
   const [pageIndex, setPageIndex] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalRecords, setTotalRecords] = useState(0)
+  const [isNoteModalOpen, setIsNoteModalOpen] = useState(false)
+  const [selectedSession, setSelectedSession] = useState(null)
+  const [noteText, setNoteText] = useState('')
+  const [sessionNotes, setSessionNotes] = useState({})
   const pageSize = 20
 
   // Fetch bookings from API
@@ -71,6 +78,7 @@ export default function SessionHistory() {
     duration: booking.DurationMinutes || 0,
     outcome: BookingStatusMap[booking.Status] || t('common.unknown', 'unknown'),
     paymentConfirmed: booking.PaymentConfirmed,
+    note: sessionNotes[booking.Id] || '',
   }))
 
   // Calculate stats
@@ -83,6 +91,26 @@ export default function SessionHistory() {
   const handleStatusFilter = (status) => {
     setStatusFilter(status)
     setPageIndex(1) // Reset to first page on filter change
+  }
+
+  const handleOpenNoteModal = (session) => {
+    setSelectedSession(session)
+    setNoteText(session?.note || '')
+    setIsNoteModalOpen(true)
+  }
+
+  const handleSaveNote = () => {
+    if (!selectedSession?.id) return
+
+    setSessionNotes(prev => ({
+      ...prev,
+      [selectedSession.id]: noteText.trim(),
+    }))
+
+    setIsNoteModalOpen(false)
+    setSelectedSession(null)
+    setNoteText('')
+    toast.success(t('success.saved', 'Saved successfully'))
   }
 
   return (
@@ -147,7 +175,7 @@ export default function SessionHistory() {
         </div>
       ) : (
         <>
-          <HistoryList sessions={sessions} />
+          <HistoryList sessions={sessions} onNoteClick={handleOpenNoteModal} />
 
           {/* Pagination */}
           {totalPages > 1 && (
@@ -177,6 +205,60 @@ export default function SessionHistory() {
           )}
         </>
       )}
+
+      <Modal
+        isOpen={isNoteModalOpen}
+        onClose={() => {
+          setIsNoteModalOpen(false)
+          setSelectedSession(null)
+          setNoteText('')
+        }}
+        title={t('common.notes', 'Notes')}
+        size="md"
+      >
+        <div className="space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>
+          {selectedSession && (
+            <div className="rounded-xl border border-border bg-background-subtle p-3 text-sm text-text-muted">
+              <p>
+                {isRTL ? 'الجلسة:' : 'Session:'} <span className="font-semibold text-text-heading">{selectedSession.patientName}</span>
+              </p>
+              <p>
+                {isRTL ? 'التاريخ:' : 'Date:'} <span className="font-medium text-text-heading">{selectedSession.date}</span>
+              </p>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-text-muted mb-2">
+              {isRTL ? 'اكتب وصف الملاحظة' : 'Write note description'}
+            </label>
+            <textarea
+              rows={5}
+              value={noteText}
+              onChange={(e) => setNoteText(e.target.value)}
+              placeholder={isRTL ? 'اكتب الملاحظة هنا...' : 'Write your note here...'}
+              className="w-full px-4 py-3 border border-border rounded-xl bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary/40"
+            />
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsNoteModalOpen(false)
+                setSelectedSession(null)
+                setNoteText('')
+              }}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button onClick={handleSaveNote} className="gap-2" disabled={!noteText.trim()}>
+              <FileText className="w-4 h-4" />
+              {t('common.save', 'Save')}
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   )
 }

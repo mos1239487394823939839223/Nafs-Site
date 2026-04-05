@@ -211,11 +211,13 @@ export default function ReserveAppointment() {
           if (slotTime) {
             const slotDate = new Date(slotTime);
             const dateKey = formatDateKey(slotDate);
-            const hour = slotDate.getHours();
-            const key = `${dateKey}-${hour}`;
+            const hour = String(slotDate.getHours()).padStart(2, '0');
+            const minute = String(slotDate.getMinutes()).padStart(2, '0');
+            const key = `${dateKey}-${hour}:${minute}`;
 
-            // Check if slot is available or booked
-            if (slot.IsBooked || slot.Booked) {
+            // Respect backend reserved state; IsReserved is used in swagger SlotDto.
+            const isReserved = Boolean(slot.IsReserved ?? slot.IsBooked ?? slot.Booked);
+            if (isReserved) {
               mappedSlots[key] = "booked";
             } else {
               mappedSlots[key] = "available";
@@ -235,8 +237,9 @@ export default function ReserveAppointment() {
           if (schedule.Aviable && schedule.Date) {
             const scheduleDate = new Date(schedule.Date);
             const dateKey = formatDateKey(scheduleDate);
-            const hour = scheduleDate.getHours();
-            const key = `${dateKey}-${hour}`;
+            const hour = String(scheduleDate.getHours()).padStart(2, '0');
+            const minute = String(scheduleDate.getMinutes()).padStart(2, '0');
+            const key = `${dateKey}-${hour}:${minute}`;
             mappedSlots[key] = "available";
           }
         });
@@ -252,8 +255,9 @@ export default function ReserveAppointment() {
           if (schedule.Aviable && schedule.Date) {
             const scheduleDate = new Date(schedule.Date);
             const dateKey = formatDateKey(scheduleDate);
-            const hour = scheduleDate.getHours();
-            const key = `${dateKey}-${hour}`;
+            const hour = String(scheduleDate.getHours()).padStart(2, '0');
+            const minute = String(scheduleDate.getMinutes()).padStart(2, '0');
+            const key = `${dateKey}-${hour}:${minute}`;
             mappedSlots[key] = "available";
           }
         });
@@ -320,6 +324,17 @@ export default function ReserveAppointment() {
     } finally {
       setCancellingId(null);
     }
+  };
+
+  const confirmCancelReservation = (bookingId) => {
+    const confirmed = window.confirm(
+      isRTL
+        ? 'هل أنت متأكد أنك تريد إلغاء هذا الموعد؟'
+        : 'Are you sure you want to cancel this appointment?'
+    );
+
+    if (!confirmed) return;
+    handleCancelReservation(bookingId);
   };
 
   const initiatePaymentForBooking = async (bookingId, amount) => {
@@ -418,20 +433,44 @@ export default function ReserveAppointment() {
     await initiatePaymentForBooking(bookingId, amount);
   };
 
-  const handleSlotClick = (date, hour) => {
+  const resolveStatusInfo = (booking) => {
+    const rawStatus = booking?.Status;
+
+    if (typeof rawStatus === 'number') {
+      if (rawStatus === 0) return { label: isRTL ? 'قيد الانتظار' : 'Pending', variant: 'warning', key: 'pending' };
+      if (rawStatus === 1) return { label: isRTL ? 'تمت الموافقة' : 'Approved', variant: 'primary', key: 'approved' };
+      if (rawStatus === 4) return { label: isRTL ? 'ملغي' : 'Cancelled', variant: 'danger', key: 'cancelled' };
+      if (rawStatus === 3) return { label: t('bookingStatus.completed'), variant: 'success', key: 'completed' };
+      if (rawStatus === 2) return { label: t('bookingStatus.inProgress'), variant: 'info', key: 'inProgress' };
+      if (rawStatus === 5) return { label: t('bookingStatus.noShow'), variant: 'danger', key: 'noShow' };
+    }
+
+    const normalized = String(rawStatus || '').toLowerCase();
+    if (normalized.includes('cancel')) return { label: isRTL ? 'ملغي' : 'Cancelled', variant: 'danger', key: 'cancelled' };
+    if (normalized.includes('approv') || normalized.includes('confirm')) return { label: isRTL ? 'تمت الموافقة' : 'Approved', variant: 'primary', key: 'approved' };
+    if (normalized.includes('pend')) return { label: isRTL ? 'قيد الانتظار' : 'Pending', variant: 'warning', key: 'pending' };
+
+    if (booking?.CancellationReason) {
+      return { label: isRTL ? 'ملغي' : 'Cancelled', variant: 'danger', key: 'cancelled' };
+    }
+
+    return { label: isRTL ? 'قيد الانتظار' : 'Pending', variant: 'warning', key: 'pending' };
+  };
+
+  const handleSlotClick = (date, timeKey) => {
     // Consistent date formatting
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
     const day = String(date.getDate()).padStart(2, '0');
     const dateKey = `${year}-${month}-${day}`;
 
-    const key = `${dateKey}-${hour}`;
+    const key = `${dateKey}-${timeKey}`;
     console.log("Slot clicked:", key, "status:", slots[key]);
 
     // Allow booking if slot is available
     if (slots[key] === "available") {
-      setBookedSlot({ date, hour });
-      console.log("Booked slot set:", { date: dateKey, hour });
+      setBookedSlot({ date, timeKey });
+      console.log("Booked slot set:", { date: dateKey, timeKey });
     }
   };
 
@@ -455,8 +494,9 @@ export default function ReserveAppointment() {
       };
 
       const bookingDate = new Date(bookedSlot.date);
-      bookingDate.setHours(bookedSlot.hour);
-      bookingDate.setMinutes(0);
+      const [hour, minute] = (bookedSlot.timeKey || '00:00').split(':').map(Number);
+      bookingDate.setHours(Number.isFinite(hour) ? hour : 0);
+      bookingDate.setMinutes(Number.isFinite(minute) ? minute : 0);
       bookingDate.setSeconds(0);
 
       const bookingRequest = {
@@ -494,6 +534,33 @@ export default function ReserveAppointment() {
     }
   };
 
+  const formatHourLabel = (timeKey) => {
+    const [rawHour, rawMinute] = String(timeKey || '00:00').split(':');
+    const hour = Number(rawHour);
+    const minute = Number(rawMinute);
+
+    const safeHour = Number.isFinite(hour) ? hour : 0;
+    const safeMinute = Number.isFinite(minute) ? minute : 0;
+    const displayHour = safeHour % 12 === 0 ? 12 : safeHour % 12;
+    const suffix = safeHour >= 12 ? 'PM' : 'AM';
+
+    return `${displayHour}:${String(safeMinute).padStart(2, '0')} ${suffix}`;
+  };
+
+  const getWeekDates = (baseDate) => {
+    const weekDates = [];
+    const base = new Date(baseDate);
+    base.setDate(base.getDate() - base.getDay());
+
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(base);
+      d.setDate(base.getDate() + i);
+      weekDates.push(d);
+    }
+
+    return weekDates;
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 p-4 md:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
       {/* Header */}
@@ -507,22 +574,24 @@ export default function ReserveAppointment() {
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b-2 border-border mb-8 overflow-x-auto no-scrollbar scroll-smooth gap-1">
+      <div className="inline-flex p-1 rounded-2xl border border-border bg-background-subtle mb-8 overflow-x-auto no-scrollbar scroll-smooth gap-1">
         <button
           onClick={() => setMainTab("reserve")}
-          className={`px-5 md:px-8 py-3.5 font-semibold transition-all relative whitespace-nowrap rounded-t-xl ${mainTab === "reserve"
-            ? "text-primary bg-primary/5 border-b-2 border-primary -mb-[2px]"
-            : "text-text-muted hover:text-text-heading hover:bg-background-subtle"
+          className={`px-5 md:px-8 py-3 font-semibold transition-all relative whitespace-nowrap rounded-xl ${mainTab === "reserve"
+            ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
+            : "text-text-muted hover:text-text-heading hover:bg-background-paper"
             }`}
+          aria-pressed={mainTab === "reserve"}
         >
           {t('patient.availableDoctors')}
         </button>
         <button
           onClick={() => setMainTab("status")}
-          className={`px-5 md:px-8 py-3.5 font-semibold transition-all relative whitespace-nowrap rounded-t-xl ${mainTab === "status"
-            ? "text-primary bg-primary/5 border-b-2 border-primary -mb-[2px]"
-            : "text-text-muted hover:text-text-heading hover:bg-background-subtle"
+          className={`px-5 md:px-8 py-3 font-semibold transition-all relative whitespace-nowrap rounded-xl ${mainTab === "status"
+            ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
+            : "text-text-muted hover:text-text-heading hover:bg-background-paper"
             }`}
+          aria-pressed={mainTab === "status"}
         >
           {t('patient.myReservationStatus')}
         </button>
@@ -777,67 +846,86 @@ export default function ReserveAppointment() {
                 exit={{ opacity: 0, x: -20 }}
                 className="space-y-8"
               >
-                {/* ── Doctor Details Card ── */}
-                <Card className="overflow-hidden">
-                  <div className="h-2 bg-gradient-to-r from-primary via-secondary to-accent" />
-                  <CardContent className="p-6">
-                    <div className={`flex flex-col md:flex-row gap-6 ${isRTL ? 'md:flex-row-reverse' : ''}`}>
-                      {/* Avatar */}
-                      <div className="flex-shrink-0 flex flex-col items-center gap-3">
-                        <div className="w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center overflow-hidden border-2 border-primary/20 shadow">
+                {/* ── Doctor Overview ── */}
+                <Card className="overflow-hidden border border-border/80">
+                  <div className="h-1.5 bg-gradient-to-r from-primary via-secondary to-primary-light" />
+                  <CardContent className="p-5 md:p-6">
+                    <div className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${isRTL ? 'text-right' : 'text-left'}`}>
+                      <div className={`lg:col-span-7 flex flex-col sm:flex-row gap-4 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+                        <div className="w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center overflow-hidden border-2 border-primary/20 shadow-sm mx-auto sm:mx-0">
                           {selectedDoctor.Image
                             ? <img src={selectedDoctor.Image} alt={selectedDoctor.Name} className="w-full h-full object-cover" />
                             : <User className="w-12 h-12 text-primary" />}
                         </div>
-                        <div className="flex items-center gap-1">
-                          {[1,2,3,4,5].map(s => <Star key={s} className={`w-4 h-4 ${s <= 4 ? 'text-amber-400' : 'text-border'}`} />)}
-                          <span className="text-sm font-bold text-text-heading ms-1">4.8</span>
-                        </div>
-                        <span className="text-xs text-text-muted">{isRTL ? '(٢٤ مراجعة)' : '(24 reviews)'}</span>
-                      </div>
-                      {/* Info */}
-                      <div className={`flex-1 ${isRTL ? 'text-right' : 'text-left'}`}>
-                        <h2 className="text-2xl font-bold text-text-heading">{isRTL ? 'د.' : 'Dr.'} {selectedDoctor.Name}</h2>
-                        {selectedDoctor.Specialist && selectedDoctor.Specialist.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mt-2">
-                            {selectedDoctor.Specialist.map((sp, i) => (
-                              <span key={i} className="text-xs px-3 py-1 bg-primary/10 text-primary rounded-full font-medium">{sp}</span>
-                            ))}
-                          </div>
-                        )}
-                        {selectedDoctor.Description && (
-                          <p className="text-sm text-text-muted mt-3 leading-relaxed">{selectedDoctor.Description}</p>
-                        )}
-                        <div className="grid grid-cols-2 gap-3 mt-4">
-                          <div className="p-3 bg-background-subtle rounded-xl">
-                            <p className="text-xs text-text-muted">{isRTL ? 'سنوات الخبرة' : 'Experience'}</p>
-                            <p className="font-bold text-text-heading">{selectedDoctor.YearsOfExperience || '—'} {isRTL ? 'سنة' : 'yrs'}</p>
-                          </div>
-                          <div className="p-3 bg-background-subtle rounded-xl">
-                            <p className="text-xs text-text-muted">{isRTL ? 'رسوم الاستشارة' : 'Consultation Fee'}</p>
-                            <p className="font-bold text-text-heading">{selectedDoctor.ConsultationFee ? `${selectedDoctor.ConsultationFee} EGP` : isRTL ? 'متاح' : 'Available'}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
 
-                {/* ── Doctor Documents & Certificates Card ── */}
-                <Card className="overflow-hidden">
-                  <CardContent className={`p-4 md:p-6 flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-                    <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                      <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                        <BadgeIcon className="w-5 h-5 text-primary" />
+                        <div className="flex-1 space-y-3">
+                          <div>
+                            <h2 className="text-2xl font-bold text-text-heading leading-tight">
+                              {isRTL ? 'د.' : 'Dr.'} {selectedDoctor.Name}
+                            </h2>
+                            <div className={`mt-2 flex items-center gap-2 ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
+                              <div className="flex items-center gap-0.5">
+                                {[1, 2, 3, 4, 5].map((s) => (
+                                  <Star key={s} className={`w-4 h-4 ${s <= 4 ? 'text-amber-400' : 'text-border'}`} />
+                                ))}
+                              </div>
+                              <span className="text-sm font-bold text-text-heading">4.8</span>
+                              <span className="text-xs text-text-muted">{isRTL ? '(٢٤ مراجعة)' : '(24 reviews)'}</span>
+                            </div>
+                          </div>
+
+                          {selectedDoctor.Specialist && selectedDoctor.Specialist.length > 0 && (
+                            <div className={`flex flex-wrap gap-2 ${isRTL ? 'justify-end' : ''}`}>
+                              {selectedDoctor.Specialist.map((sp, i) => (
+                                <span key={i} className="text-xs px-3 py-1 bg-primary/10 text-primary rounded-full font-medium border border-primary/20">
+                                  {sp}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          {selectedDoctor.Description && (
+                            <p className="text-sm text-text-muted leading-relaxed max-w-2xl">
+                              {selectedDoctor.Description}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      <div className={isRTL ? 'text-right' : ''}>
-                        <h3 className="font-semibold text-text-heading">{t('doctor.docs.title', 'Documents & Certificates')}</h3>
-                        <p className="text-sm text-text-muted">{t('patient.viewDocs', 'View verified certificates and licenses')}</p>
+
+                      <div className="lg:col-span-5 grid grid-cols-2 gap-3">
+                        <div className="p-4 bg-background-subtle rounded-xl border border-border/60">
+                          <p className="text-xs text-text-muted mb-1">{isRTL ? 'سنوات الخبرة' : 'Experience'}</p>
+                          <p className="font-bold text-text-heading text-base">
+                            {selectedDoctor.YearsOfExperience || '—'} {isRTL ? 'سنة' : 'yrs'}
+                          </p>
+                        </div>
+
+                        <div className="p-4 bg-background-subtle rounded-xl border border-border/60">
+                          <p className="text-xs text-text-muted mb-1">{isRTL ? 'رسوم الاستشارة' : 'Consultation Fee'}</p>
+                          <p className="font-bold text-text-heading text-base">
+                            {selectedDoctor.ConsultationFee ? `${selectedDoctor.ConsultationFee} EGP` : (isRTL ? 'غير محدد' : 'Not specified')}
+                          </p>
+                        </div>
+
+                        <div className="col-span-2 p-4 rounded-xl border border-primary/20 bg-primary/5">
+                          <div className={`flex items-start justify-between gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                            <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                              <div className="w-10 h-10 bg-primary/15 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <BadgeIcon className="w-5 h-5 text-primary" />
+                              </div>
+                              <div>
+                                <p className="text-sm font-semibold text-text-heading">{t('doctor.docs.title', 'Documents & Certificates')}</p>
+                                <p className="text-xs text-text-muted mt-0.5">{t('patient.viewDocs', 'View verified certificates and licenses')}</p>
+                              </div>
+                            </div>
+
+                            <Button variant="outline" size="sm" onClick={() => setIsDocsModalOpen(true)}>
+                              {isRTL ? 'عرض' : 'View'}
+                            </Button>
+                          </div>
+                        </div>
                       </div>
                     </div>
-                    <Button variant="outline" size="sm" onClick={() => setIsDocsModalOpen(true)}>
-                      {isRTL ? 'عرض' : 'View'}
-                    </Button>
                   </CardContent>
                 </Card>
 
@@ -852,157 +940,212 @@ export default function ReserveAppointment() {
                 </Modal>
 
                 {/* ── Slot Picker + Summary ── */}
-                <div className="grid lg:grid-cols-3 gap-6">
-                  {/* Slot Picker */}
-                  <div className="lg:col-span-2 space-y-4">
-                    <div>
-                      <h3 className="text-lg font-bold text-text-heading">{t('patient.selectTimeSlot')}</h3>
-                      <p className="text-text-muted text-sm">{t('patient.bookingWith')} {selectedDoctor.Name}</p>
-                    </div>
-
-                    {/* Week navigation */}
-                    <div className="flex items-center justify-between bg-background-paper border border-border rounded-xl p-3">
-                      <button
-                        onClick={() => { const d = new Date(selectedDate); d.setDate(d.getDate()-7); setSelectedDate(d); }}
-                        className="p-2 rounded-lg hover:bg-background-subtle transition-colors"
-                      >
-                        {isRTL ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
-                      </button>
-                      <span className="font-semibold text-text-heading">
-                        {selectedDate.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { month: 'long', year: 'numeric' })}
-                      </span>
-                      <button
-                        onClick={() => { const d = new Date(selectedDate); d.setDate(d.getDate()+7); setSelectedDate(d); }}
-                        className="p-2 rounded-lg hover:bg-background-subtle transition-colors"
-                      >
-                        {isRTL ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
-                      </button>
-                    </div>
-
-                    {/* Days with slots */}
-                    {(() => {
-                      const weekDates = [];
-                      const base = new Date(selectedDate);
-                      base.setDate(base.getDate() - base.getDay());
-                      for (let i = 0; i < 7; i++) {
-                        const d = new Date(base);
-                        d.setDate(base.getDate() + i);
-                        weekDates.push(d);
-                      }
-                      const today = new Date(); today.setHours(0,0,0,0);
-                      const dayNames = isRTL
-                        ? ['أحد','إثنين','ثلاثاء','أربعاء','خميس','جمعة','سبت']
-                        : ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-
-                      return (
-                        <div className="space-y-3">
-                          {weekDates.map((date, di) => {
-                            const isPast = date < today;
-                            const yyyy = date.getFullYear();
-                            const mm = String(date.getMonth()+1).padStart(2,'0');
-                            const dd = String(date.getDate()).padStart(2,'0');
-                            const dateKey = `${yyyy}-${mm}-${dd}`;
-                            const daySlots = Object.entries(slots)
-                              .filter(([k]) => k.startsWith(dateKey) && slots[k] === 'available')
-                              .map(([k]) => parseInt(k.split('-').pop()));
-
-                            if (isPast && daySlots.length === 0) return null;
-
-                            return (
-                              <div key={di} className="bg-background-paper border border-border rounded-xl p-4">
-                                <div className={`flex items-center gap-2 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                                  <span className="font-semibold text-text-heading">{dayNames[date.getDay()]}</span>
-                                  <span className="text-sm text-text-muted">
-                                    {date.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' })}
-                                  </span>
-                                  {date.toDateString() === new Date().toDateString() && (
-                                    <span className="text-xs bg-primary text-white px-2 py-0.5 rounded-full">{isRTL ? 'اليوم' : 'Today'}</span>
-                                  )}
-                                </div>
-                                {daySlots.length > 0 ? (
-                                  <div className="flex flex-wrap gap-2">
-                                    {daySlots.sort((a,b)=>a-b).map(hour => {
-                                      const isSelected = bookedSlot && bookedSlot.date.toDateString() === date.toDateString() && bookedSlot.hour === hour;
-                                      const label = hour > 12 ? `${hour-12}:00 PM` : hour === 12 ? '12:00 PM' : `${hour}:00 AM`;
-                                      return (
-                                        <button
-                                          key={hour}
-                                          onClick={() => handleSlotClick(date, hour)}
-                                          className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border-2 ${
-                                            isSelected
-                                              ? 'bg-primary text-white border-primary shadow-md scale-105'
-                                              : 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400'
-                                          }`}
-                                        >
-                                          {label}
-                                        </button>
-                                      );
-                                    })}
-                                  </div>
-                                ) : (
-                                  <p className="text-sm text-text-muted">{isRTL ? 'لا توجد مواعيد متاحة' : 'No available slots'}</p>
-                                )}
-                              </div>
-                            );
-                          })}
-                          {Object.keys(slots).length === 0 && (
-                            <div className="p-6 bg-amber-50 border border-amber-200 rounded-xl text-center">
-                              <Calendar className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-                              <p className="text-amber-700 font-medium">{t('patient.noSlotsAvailable')}</p>
-                              <p className="text-amber-600 text-sm mt-1">{t('patient.trySlotsNextWeek')}</p>
-                            </div>
-                          )}
+                <div className="grid xl:grid-cols-12 gap-6 items-start">
+                  <div className="xl:col-span-8 space-y-4">
+                    <Card className="overflow-hidden border border-border shadow-lg rounded-2xl">
+                      <CardContent className="p-5 md:p-6 space-y-5">
+                        <div className={`flex items-start justify-between gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div className={isRTL ? 'text-right' : ''}>
+                            <h3 className="text-lg md:text-xl font-bold text-text-heading flex items-center gap-2">
+                              <Calendar className="w-5 h-5 text-primary" />
+                              {t('patient.selectTimeSlot')}
+                            </h3>
+                            <p className="text-text-muted text-sm mt-1">{t('patient.bookingWith')} {selectedDoctor.Name}</p>
+                          </div>
+                          <div className="hidden sm:flex items-center gap-2 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full border border-primary/20">
+                            <Clock className="w-4 h-4" />
+                            <span>{isRTL ? 'اختر موعدًا واحدًا' : 'Pick one slot'}</span>
+                          </div>
                         </div>
-                      );
-                    })()}
+
+                        <div className="flex flex-wrap items-center justify-between gap-3 bg-background-subtle border border-border rounded-xl px-3 py-2.5">
+                          <button
+                            onClick={() => {
+                              const d = new Date(selectedDate);
+                              d.setDate(d.getDate() - 7);
+                              setSelectedDate(d);
+                            }}
+                            className="p-2 rounded-lg hover:bg-background-paper transition-colors border border-transparent hover:border-border"
+                          >
+                            {isRTL ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+                          </button>
+
+                          <span className="font-semibold text-text-heading text-sm md:text-base bg-background-paper border border-border px-3 py-1 rounded-lg">
+                            {selectedDate.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { month: 'long', year: 'numeric' })}
+                          </span>
+
+                          <button
+                            onClick={() => {
+                              const d = new Date(selectedDate);
+                              d.setDate(d.getDate() + 7);
+                              setSelectedDate(d);
+                            }}
+                            className="p-2 rounded-lg hover:bg-background-paper transition-colors border border-transparent hover:border-border"
+                          >
+                            {isRTL ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                          </button>
+
+                          <button
+                            onClick={() => setSelectedDate(new Date())}
+                            className="text-xs px-3 py-1 rounded-lg border border-border bg-background-paper text-text-muted hover:text-primary"
+                          >
+                            {t('doctor.today', 'Today')}
+                          </button>
+                        </div>
+
+                        <div className={`flex items-center gap-4 text-xs text-text-muted ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                            <span className="w-2.5 h-2.5 rounded-full bg-primary block" />
+                            <span>{isRTL ? 'محدد' : 'Selected'}</span>
+                          </div>
+                          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 block" />
+                            <span>{isRTL ? 'متاح' : 'Available'}</span>
+                          </div>
+                        </div>
+
+                        {(() => {
+                          const weekDates = getWeekDates(selectedDate);
+                          const today = new Date();
+                          today.setHours(0, 0, 0, 0);
+                          const dayNames = isRTL
+                            ? ['أحد', 'إثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت']
+                            : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+                          return (
+                            <div className="space-y-3">
+                              {weekDates.map((date, di) => {
+                                const isPast = date < today;
+                                const yyyy = date.getFullYear();
+                                const mm = String(date.getMonth() + 1).padStart(2, '0');
+                                const dd = String(date.getDate()).padStart(2, '0');
+                                const dateKey = `${yyyy}-${mm}-${dd}`;
+                                const daySlots = Object.entries(slots)
+                                  .filter(([k]) => k.startsWith(dateKey) && slots[k] === 'available')
+                                  .map(([k]) => k.replace(`${dateKey}-`, ''));
+
+                                if (daySlots.length === 0) {
+                                  return null;
+                                }
+
+                                return (
+                                  <div key={di} className="bg-background-subtle/50 border border-border rounded-xl p-4">
+                                    <div className={`flex flex-wrap items-center justify-between gap-2 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                                      <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                                        <span className="font-semibold text-text-heading">{dayNames[date.getDay()]}</span>
+                                        <span className="text-sm text-text-muted">
+                                          {date.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' })}
+                                        </span>
+                                        {date.toDateString() === new Date().toDateString() && (
+                                          <span className="text-xs bg-primary text-white px-2 py-0.5 rounded-full">{isRTL ? 'اليوم' : 'Today'}</span>
+                                        )}
+                                      </div>
+
+                                      <span className="text-xs px-2.5 py-1 rounded-full bg-background-subtle border border-border text-text-muted">
+                                        {daySlots.length > 0
+                                          ? `${daySlots.length} ${isRTL ? 'مواعيد متاحة' : 'slots available'}`
+                                          : (isRTL ? 'غير متاح' : 'Unavailable')}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-2.5">
+                                      {daySlots.sort((a, b) => {
+                                        const [ah, am] = a.split(':').map(Number);
+                                        const [bh, bm] = b.split(':').map(Number);
+                                        return (ah * 60 + am) - (bh * 60 + bm);
+                                      }).map((timeKey) => {
+                                        const isSelected = bookedSlot
+                                          && bookedSlot.date.toDateString() === date.toDateString()
+                                          && bookedSlot.timeKey === timeKey;
+
+                                        return (
+                                          <button
+                                            key={timeKey}
+                                            onClick={() => handleSlotClick(date, timeKey)}
+                                            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border-2 flex items-center gap-1.5 ${
+                                              isSelected
+                                                ? 'bg-primary text-white border-primary shadow-md shadow-primary/30'
+                                                : 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400'
+                                            }`}
+                                          >
+                                            {isSelected ? <CheckCircle className="w-3.5 h-3.5" /> : null}
+                                            {formatHourLabel(timeKey)}
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                );
+                              })}
+
+                              {Object.keys(slots).length === 0 && (
+                                <div className="p-6 bg-amber-50 border border-amber-200 rounded-xl text-center">
+                                  <Calendar className="w-8 h-8 text-amber-500 mx-auto mb-2" />
+                                  <p className="text-amber-700 font-medium">{t('patient.noSlotsAvailable')}</p>
+                                  <p className="text-amber-600 text-sm mt-1">{t('patient.trySlotsNextWeek')}</p>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
+                      </CardContent>
+                    </Card>
                   </div>
 
-                  {/* Booking Summary */}
-                  <div>
-                    <Card className="p-6 border-l-4 border-l-primary sticky top-4">
-                      <h3 className="font-bold text-lg mb-4">{t('patient.bookingSummary')}</h3>
-                      <div className="space-y-4">
+                  <div className="xl:col-span-4">
+                    <Card className="p-5 md:p-6 sticky top-4 border border-border/80">
+                      <h3 className={`font-bold text-lg text-text-heading ${isRTL ? 'text-right' : ''}`}>
+                        {t('patient.bookingSummary')}
+                      </h3>
+
+                      <div className="mt-4 space-y-5">
                         <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                          <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
                             {selectedDoctor.Image
                               ? <img src={selectedDoctor.Image} alt={selectedDoctor.Name} className="w-full h-full rounded-full object-cover" />
                               : <User className="w-5 h-5 text-primary" />}
                           </div>
+
                           <div className={isRTL ? 'text-right' : ''}>
                             <p className="text-xs text-text-light">{t('common.doctor')}</p>
-                            <p className="font-medium">{selectedDoctor.Name}</p>
+                            <p className="font-semibold text-text-heading">{selectedDoctor.Name}</p>
                           </div>
                         </div>
-                        {selectedDoctor.Specialist && (
-                          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                            <Stethoscope className="w-5 h-5 text-primary flex-shrink-0" />
+
+                        {selectedDoctor.Specialist && selectedDoctor.Specialist.length > 0 && (
+                          <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                            <Stethoscope className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                             <div className={isRTL ? 'text-right' : ''}>
                               <p className="text-xs text-text-light">{t('common.specialty')}</p>
-                              <p className="font-medium text-sm">{selectedDoctor.Specialist.join(', ')}</p>
-                            </div>
-                          </div>
-                        )}
-                        {bookedSlot && (
-                          <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                            <Calendar className="w-5 h-5 text-primary flex-shrink-0" />
-                            <div className={isRTL ? 'text-right' : ''}>
-                              <p className="text-xs text-text-muted">{t('patient.selectedTime')}</p>
-                              <p className="font-medium text-text-heading" dir="ltr">
-                                {bookedSlot.date.toLocaleDateString()} – {bookedSlot.hour > 12 ? `${bookedSlot.hour-12}:00 PM` : `${bookedSlot.hour}:00 AM`}
-                              </p>
+                              <p className="font-medium text-sm text-text-heading">{selectedDoctor.Specialist.join(', ')}</p>
                             </div>
                           </div>
                         )}
 
+                        <div className="rounded-xl border border-border bg-background-subtle p-3.5">
+                          <p className={`text-xs text-text-muted mb-1 ${isRTL ? 'text-right' : ''}`}>
+                            {t('patient.selectedTime')}
+                          </p>
+                          {bookedSlot ? (
+                            <p className={`font-semibold text-text-heading text-sm ${isRTL ? 'text-right' : ''}`} dir="ltr">
+                              {bookedSlot.date.toLocaleDateString()} - {formatHourLabel(bookedSlot.timeKey)}
+                            </p>
+                          ) : (
+                            <p className={`text-sm text-text-muted ${isRTL ? 'text-right' : ''}`}>
+                              {isRTL ? 'لم يتم اختيار موعد بعد' : 'No slot selected yet'}
+                            </p>
+                          )}
+                        </div>
+
                         <div className={`space-y-2 ${isRTL ? 'text-right' : ''}`}>
-                          <p className="text-xs text-text-muted font-semibold mb-2">{isRTL ? 'طريقة الدفع' : 'Payment Method'}</p>
-                          <div className="grid grid-cols-2 gap-2">
+                          <p className="text-xs text-text-muted font-semibold">{isRTL ? 'طريقة الدفع' : 'Payment Method'}</p>
+                          <div className="grid grid-cols-2 gap-2.5">
                             {[
                               {
                                 id: 'instapay',
                                 label: 'InstaPay',
                                 icon: FlashOn,
-                                desc: isRTL ? 'تحويل فوري عبر التطبيق' : 'Instant app transfer',
+                                desc: isRTL ? 'تحويل فوري' : 'Instant transfer',
                                 accent: 'from-amber-500/20 to-orange-500/10',
                                 iconBg: 'bg-amber-500/15',
                                 iconColor: 'text-amber-400',
@@ -1011,52 +1154,52 @@ export default function ReserveAppointment() {
                                 id: 'cash_wallet',
                                 label: isRTL ? 'كاش وولت' : 'Cash Wallet',
                                 icon: AccountBalanceWallet,
-                                desc: isRTL ? 'محفظة نقدية رقمية' : 'Digital cash wallet',
+                                desc: isRTL ? 'محفظة رقمية' : 'Digital wallet',
                                 accent: 'from-emerald-500/20 to-teal-500/10',
                                 iconBg: 'bg-emerald-500/15',
                                 iconColor: 'text-emerald-400',
                               },
-                            ].map((p) => (
-                              (() => {
-                                const Icon = p.icon;
-                                const isSelected = selectedPaymentProvider === p.id;
-                                return (
-                              <button
-                                key={p.id}
-                                onClick={() => handlePaymentProviderSelect(p.id)}
-                                className={`relative overflow-hidden flex flex-col items-start gap-2 p-3 rounded-xl border-2 transition-all duration-200 text-left ${isRTL ? 'text-right' : ''} ${
-                                  isSelected
-                                    ? 'border-primary bg-primary/10 shadow-md shadow-primary/20 ring-1 ring-primary/30'
-                                    : 'border-border bg-background-paper hover:border-primary/40 hover:bg-primary/5'
-                                }`}
-                              >
-                                <div className={`absolute inset-0 bg-gradient-to-br ${p.accent} opacity-70`} />
-                                <div className={`relative w-full flex items-start justify-between gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                                  <div className={`w-9 h-9 rounded-lg ${p.iconBg} flex items-center justify-center`}> 
-                                    <Icon className={`w-5 h-5 ${p.iconColor}`} />
+                            ].map((p) => {
+                              const Icon = p.icon;
+                              const isSelected = selectedPaymentProvider === p.id;
+
+                              return (
+                                <button
+                                  key={p.id}
+                                  onClick={() => handlePaymentProviderSelect(p.id)}
+                                  className={`relative overflow-hidden flex flex-col items-start gap-2 p-3 rounded-xl border-2 transition-all duration-200 text-left ${isRTL ? 'text-right' : ''} ${
+                                    isSelected
+                                      ? 'border-primary bg-primary/10 shadow-md shadow-primary/20 ring-1 ring-primary/30'
+                                      : 'border-border bg-background-paper hover:border-primary/40 hover:bg-primary/5'
+                                  }`}
+                                >
+                                  <div className={`absolute inset-0 bg-gradient-to-br ${p.accent} opacity-70`} />
+                                  <div className={`relative w-full flex items-start justify-between gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                                    <div className={`w-9 h-9 rounded-lg ${p.iconBg} flex items-center justify-center`}>
+                                      <Icon className={`w-5 h-5 ${p.iconColor}`} />
+                                    </div>
+                                    {isSelected ? (
+                                      <SelectedIcon className="w-5 h-5 text-primary" />
+                                    ) : (
+                                      <RadioButtonUnchecked className="w-5 h-5 text-text-muted" />
+                                    )}
                                   </div>
-                                  {isSelected ? (
-                                    <SelectedIcon className="w-5 h-5 text-primary" />
-                                  ) : (
-                                    <RadioButtonUnchecked className="w-5 h-5 text-text-muted" />
-                                  )}
-                                </div>
-                                <span className={`relative text-xs font-bold ${isSelected ? 'text-primary' : 'text-text-heading'}`}>{p.label}</span>
-                                <span className="relative text-[10px] text-text-muted">{p.desc}</span>
-                              </button>
-                                );
-                              })()
-                            ))}
+                                  <span className={`relative text-xs font-bold ${isSelected ? 'text-primary' : 'text-text-heading'}`}>{p.label}</span>
+                                  <span className="relative text-[10px] text-text-muted">{p.desc}</span>
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
 
                         <div className={`space-y-1 ${isRTL ? 'text-right' : ''}`}>
                           <p className="text-xs text-text-muted">{isRTL ? 'قيمة الجلسة' : 'Session Fee'}</p>
-                          <p className="font-semibold text-text-heading">
+                          <p className="font-semibold text-text-heading text-base">
                             {selectedDoctor?.ConsultationFee ? `${selectedDoctor.ConsultationFee} EGP` : (isRTL ? 'غير محدد' : 'Not specified')}
                           </p>
                         </div>
                       </div>
+
                       <Button className="w-full mt-6" disabled={!bookedSlot} onClick={handleConfirmBookingClick}>
                         {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                         {t('patient.confirmAppointment')}
@@ -1353,9 +1496,9 @@ export default function ReserveAppointment() {
             <div className="grid gap-4">
               {patientBookings.length > 0 ? (
                 patientBookings.map((booking) => {
-                  const statusInfo = BookingStatusMap[booking.Status] || { label: 'Unknown', variant: 'secondary' };
+                  const statusInfo = resolveStatusInfo(booking);
                   const sessionDate = booking.SessionStartTime ? new Date(booking.SessionStartTime) : null;
-                  const canCancel = booking.Status === 0 || booking.Status === 1; // Pending or Confirmed
+                  const canCancel = statusInfo.key === 'pending' || statusInfo.key === 'approved';
 
                   return (
                     <Card key={booking.Id} className="p-6">
@@ -1401,41 +1544,21 @@ export default function ReserveAppointment() {
                               {statusInfo.label}
                             </Badge>
 
-                            {!booking.PaymentConfirmed && booking.Status !== 4 && booking.Status !== 5 && (
+                            {canCancel && (
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => handlePayNowFromStatus(booking.Id)}
-                                disabled={paymentLoading}
-                              >
-                                {isRTL ? 'ادفع الآن' : 'Pay Now'}
-                              </Button>
-                            )}
-
-                            {!booking.PaymentConfirmed && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => checkBookingPaymentStatus(booking.Id)}
-                                disabled={paymentLoading}
-                              >
-                                {isRTL ? 'تحقق من الدفع' : 'Check Payment'}
-                              </Button>
-                            )}
-
-                            {canCancel && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-red-500 hover:text-red-700 hover:bg-red-50 p-1 h-auto"
-                                onClick={() => handleCancelReservation(booking.Id)}
+                                className="text-red-500 border-red-300 hover:text-red-700 hover:bg-red-50 gap-1.5"
+                                onClick={() => confirmCancelReservation(booking.Id)}
                                 disabled={cancellingId === booking.Id}
-                                title={t('patient.cancelAppointment')}
                               >
                                 {cancellingId === booking.Id ? (
                                   <Loader2 className="w-4 h-4 animate-spin" />
                                 ) : (
-                                  <XCircle className="w-4 h-4" />
+                                  <>
+                                    <XCircle className="w-4 h-4" />
+                                    <span>{t('patient.cancelAppointment')}</span>
+                                  </>
                                 )}
                               </Button>
                             )}

@@ -17,7 +17,6 @@ import DoctorDashboard from './views/doctor/Dashboard'
 import Schedule from './views/doctor/Schedule'
 import PatientQueue from './views/doctor/PatientQueue'
 import SessionHistory from './views/doctor/SessionHistory'
-import MedicalHistory from './views/doctor/MedicalHistory'
 import DoctorTests from './views/doctor/Tests'
 import Settings from './views/doctor/Settings'
 import UserManagement from './views/admin/UserManagement'
@@ -171,9 +170,7 @@ function AppRoutes() {
           path="/dashboard/doctor/medical-history"
           element={
             <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
-              <Layout>
-                <MedicalHistory />
-              </Layout>
+              <Navigate to="/dashboard/doctor/history" replace />
             </ProtectedRoute>
           }
         />

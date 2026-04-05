@@ -4,7 +4,7 @@ import Badge from '../../ui/Badge'
 import Button from '../../ui/Button'
 import { useLanguage } from '../../../contexts/LanguageContext'
 
-export default function HistoryList({ sessions }) {
+export default function HistoryList({ sessions, onNoteClick }) {
     const { t, isRTL } = useLanguage()
     const getStatusBadge = (outcome) => {
         if (outcome === t('bookingStatus.completed')) {
@@ -70,7 +70,12 @@ export default function HistoryList({ sessions }) {
                                     {getStatusBadge(session.outcome)}
                                 </td>
                                 <td className={`px-6 py-4 ${isRTL ? 'text-left' : 'text-right'}`}>
-                                    <Button variant="ghost" size="sm" className="text-primary hover:bg-primary/5">
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-primary hover:bg-primary/5"
+                                        onClick={() => onNoteClick?.(session)}
+                                    >
                                         <FileText className={`w-4 h-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />
                                         {t('common.notes', 'Notes')}
                                     </Button>

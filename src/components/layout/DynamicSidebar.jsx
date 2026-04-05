@@ -3,7 +3,7 @@ import { useAuth, Roles } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import RoleBadge from '../ui/RoleBadge'
 import { UserAvatar } from '../ui/Avatar'
-import { Home, CalendarToday as Calendar, Description as FileText, ChatBubbleOutline as MessageSquare, Settings, Logout as LogOut, People as Users, ShowChart as Activity, AttachMoney as DollarSign, BarChart as BarChart3, PersonAdd as UserPlus, Medication as Pill, Science as TestTube, FolderOpen, AccessTime as Clock, TrendingUp, Headphones, Phone, ConfirmationNumber as TicketIcon, Article as ArticleIcon } from '@mui/icons-material'
+import { Home, CalendarToday as Calendar, ChatBubbleOutline as MessageSquare, Settings, Logout as LogOut, People as Users, ShowChart as Activity, AttachMoney as DollarSign, BarChart as BarChart3, PersonAdd as UserPlus, Medication as Pill, Science as TestTube, FolderOpen, AccessTime as Clock, TrendingUp, Headphones, Phone, ConfirmationNumber as TicketIcon, Article as ArticleIcon } from '@mui/icons-material'
 
 export default function DynamicSidebar({ isOpen, onClose }) {
   const { role, user, logout } = useAuth()
@@ -21,7 +21,6 @@ export default function DynamicSidebar({ isOpen, onClose }) {
     [Roles.DOCTOR]: [
       { name: t('nav.dashboard'), path: '/dashboard/doctor', icon: Home },
       { name: t('nav.queue'), path: '/dashboard/doctor/queue', icon: Users },
-      { name: t('nav.medicalHistory'), path: '/dashboard/doctor/medical-history', icon: FileText },
       { name: t('nav.tests'), path: '/dashboard/doctor/tests', icon: TestTube },
       { name: t('nav.blogs'), path: '/dashboard/doctor/blogs', icon: ArticleIcon },
       { name: t('nav.schedule'), path: '/dashboard/doctor/schedule', icon: Calendar },
