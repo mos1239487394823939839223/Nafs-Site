@@ -10,7 +10,6 @@ import Layout from './components/layout/Layout'
 
 import PatientSettings from './views/patient/Settings'
 import PatientProfile from './views/patient/Profile'
-import PatientMessages from './views/patient/PatientMessages'
 import ReserveAppointment from './views/patient/ReserveAppointment'
 import PatientTests from './views/patient/Tests'
 import PatientArticles from './views/patient/Articles'
@@ -34,7 +33,6 @@ import PendingApproval from './views/auth/PendingApproval'
 import ForgotPassword from './views/auth/ForgotPassword'
 
 import InviteStaff from './views/admin/InviteStaff'
-import AdminMessages from './views/admin/Messages'
 import AdminBookings from './views/admin/Bookings'
 import AdminDashboard from './views/admin/Dashboard'
 import AdminBlogs from './views/admin/Blogs'
@@ -92,7 +90,7 @@ function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
               <Layout>
-                <PatientMessages />
+                <MessagesPage />
               </Layout>
             </ProtectedRoute>
           }
@@ -191,7 +189,6 @@ function AppRoutes() {
         />
         <Route
           path="/dashboard/doctor/history"
-
           element={
             <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
               <Layout>
@@ -293,6 +290,7 @@ function AppRoutes() {
           }
         />
 
+        {/* Admin Routes */}
         <Route
           path="/admin"
           element={
@@ -301,7 +299,6 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/admin/users"
           element={
@@ -337,7 +334,7 @@ function AppRoutes() {
           element={
             <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
               <Layout>
-                <AdminMessages />
+                <MessagesPage />
               </Layout>
             </ProtectedRoute>
           }
@@ -374,7 +371,6 @@ function AppRoutes() {
         />
         <Route
           path="/admin/profile"
-
           element={
             <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
               <Layout>
@@ -384,7 +380,7 @@ function AppRoutes() {
           }
         />
 
-        {/* Legacy dashboard route - redirect to role-specific dashboard */}
+        {/* Legacy redirect */}
         <Route
           path="/dashboard"
           element={
@@ -403,16 +399,12 @@ function AppRoutes() {
           }
         />
 
-        {/* Root Route */}
         <Route path="/" element={<RootRedirect />} />
-
-        {/* 404 - Redirect to root */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   )
 }
-
 
 function App() {
   return (
