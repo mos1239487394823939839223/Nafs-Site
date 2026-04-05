@@ -70,6 +70,146 @@ export default function PatientMessages() {
   const [searchQuery, setSearchQuery] = useState("");
   const connectionRef = useRef(null);
   const activeRoomRef = useRef(null);
+  const hydrationTimersRef = useRef({});
+
+  const getIncomingRoomId = (msg) =>
+    String(
+      msg?.RoomId ||
+      msg?.roomId ||
+      msg?.ActiveRoom ||
+      msg?.activeRoom ||
+      msg?.ChatRoomId ||
+      msg?.chatRoomId ||
+      ''
+    );
+
+  const getIncomingContent = (msg) =>
+    msg?.Content ?? msg?.content ?? msg?.Text ?? msg?.text ?? '';
+
+  const getIncomingAttachmentUrl = (msg) =>
+    msg?.AttachmentUrl ??
+    msg?.attachmentUrl ??
+    msg?.FileUrl ??
+    msg?.fileUrl ??
+    msg?.MediaUrl ??
+    msg?.mediaUrl ??
+    msg?.Url ??
+    msg?.url ??
+    '';
+
+  const getIncomingAttachmentName = (msg) =>
+    msg?.AttachmentName ??
+    msg?.attachmentName ??
+    msg?.FileName ??
+    msg?.fileName ??
+    msg?.Name ??
+    msg?.name ??
+    'Attachment';
+
+  const getIncomingMessageType = (msg) =>
+    Number(msg?.MessageType ?? msg?.messageType ?? msg?.Type ?? msg?.type ?? 0);
+
+  const buildIncomingAttachments = (msg) => {
+    const attachmentUrl = getIncomingAttachmentUrl(msg);
+    if (!attachmentUrl) return [];
+    const attachmentName = getIncomingAttachmentName(msg);
+    return [{
+      name: attachmentName,
+      url: attachmentUrl,
+      type: (attachmentUrl || '').match(/\.(png|jpg|jpeg|gif|webp|svg)$/i) ? 'image' : 'file',
+    }];
+  };
+
+  const getMessageUniqueKey = (msg) => {
+    const id = msg?.Id ?? msg?.id;
+    if (id !== undefined && id !== null && String(id).trim() !== '') {
+      return `id:${String(id)}`;
+    }
+
+    const sender = normalizeValue(msg?.SenderId ?? msg?.senderId ?? msg?.From ?? msg?.from ?? msg?.sender);
+    const content = normalizeValue(getIncomingContent(msg));
+    const createdAt = normalizeValue(msg?.CreatedAt ?? msg?.createdAt ?? msg?.timestamp);
+    const attachmentUrl = normalizeValue(getIncomingAttachmentUrl(msg));
+
+    return `fallback:${sender}|${content}|${createdAt}|${attachmentUrl}`;
+  };
+
+  const mergeMessages = (currentMessages, fetchedMessages) => {
+    const fetchedKeys = new Set(fetchedMessages.map(getMessageUniqueKey));
+    const onlyCurrent = currentMessages.filter((msg) => !fetchedKeys.has(getMessageUniqueKey(msg)));
+    return [...fetchedMessages, ...onlyCurrent];
+  };
+
+  const sortMessagesByTime = (msgs) => {
+    const withIndex = msgs.map((msg, idx) => ({ msg, idx }));
+    withIndex.sort((a, b) => {
+      const ta = new Date(a.msg?.CreatedAt || a.msg?.createdAt || a.msg?.timestamp || 0).getTime();
+      const tb = new Date(b.msg?.CreatedAt || b.msg?.createdAt || b.msg?.timestamp || 0).getTime();
+      if (ta === tb) return a.idx - b.idx;
+      return ta - tb;
+    });
+    return withIndex.map((item) => item.msg);
+  };
+
+  const extractMessagesFromResponse = (response) => {
+    if (!response) return [];
+    if (Array.isArray(response?.Data)) return response.Data;
+    if (Array.isArray(response?.Data?.Items)) return response.Data.Items;
+    if (Array.isArray(response)) return response;
+    return [];
+  };
+
+  const fetchLatestMessages = useCallback(async (roomId) => {
+    const [pageZero, pageOne] = await Promise.allSettled([
+      chatAPI.getRoomMessages(roomId, 0, 100),
+      chatAPI.getRoomMessages(roomId, 1, 100),
+    ]);
+
+    const merged = [];
+    if (pageZero.status === 'fulfilled') {
+      merged.push(...extractMessagesFromResponse(pageZero.value));
+    }
+    if (pageOne.status === 'fulfilled') {
+      merged.push(...extractMessagesFromResponse(pageOne.value));
+    }
+
+    const deduped = [];
+    const seen = new Set();
+    for (const msg of merged) {
+      const key = getMessageUniqueKey(msg);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      deduped.push(msg);
+    }
+
+    return sortMessagesByTime(deduped);
+  }, []);
+
+  const normalizeValue = (value) =>
+    String(value ?? '').trim().toLowerCase();
+
+  const isCurrentUserMessage = (msg) => {
+    if (msg?.sender === 'current-user') return true;
+    if (msg?.sender === 'other') return false;
+
+    if (msg?.IsMine === true || msg?.isMine === true || msg?.IsCurrentUser === true || msg?.isCurrentUser === true) {
+      return true;
+    }
+
+    const currentUserId = normalizeValue(user?.ID ?? user?.Id ?? user?.id);
+    const senderId = normalizeValue(msg?.SenderId ?? msg?.senderId ?? msg?.FromUserId ?? msg?.fromUserId);
+    if (currentUserId && senderId) {
+      return currentUserId === senderId;
+    }
+
+    const currentUserName = normalizeValue(user?.Name ?? user?.name ?? user?.UserName ?? user?.Username);
+    const senderName = normalizeValue(msg?.SenderName ?? msg?.senderName ?? msg?.From ?? msg?.from);
+    if (currentUserName && senderName) {
+      return currentUserName === senderName;
+    }
+
+    return false;
+  };
 
   // Keep ref in sync with state
   useEffect(() => {
@@ -113,23 +253,36 @@ export default function PatientMessages() {
     }
   }, []);
 
-  const fetchMessages = useCallback(async (roomId) => {
-    setMessagesLoading(true);
+  const fetchMessages = useCallback(async (roomId, options = {}) => {
+    const { silent = false } = options;
+    if (!silent) setMessagesLoading(true);
     try {
-      const response = await chatAPI.getRoomMessages(roomId);
-      if (response?.Data) {
-        const msgs = Array.isArray(response.Data) ? response.Data : response.Data.Items || [];
+      const msgs = await fetchLatestMessages(roomId);
+      if (silent) {
+        setMessages((prev) => sortMessagesByTime(mergeMessages(prev, msgs)));
+      } else {
         setMessages(msgs);
-      } else if (Array.isArray(response)) {
-        setMessages(response);
       }
       await chatAPI.markAsRead(roomId).catch(() => { });
     } catch (error) {
       console.error("Failed to fetch messages:", error);
     } finally {
-      setMessagesLoading(false);
+      if (!silent) setMessagesLoading(false);
     }
   }, []);
+
+  const scheduleSilentHydration = useCallback((roomId) => {
+    const key = String(roomId || '');
+    if (!key) return;
+
+    const existing = hydrationTimersRef.current[key];
+    if (existing) clearTimeout(existing);
+
+    hydrationTimersRef.current[key] = setTimeout(() => {
+      fetchMessages(key, { silent: true });
+      delete hydrationTimersRef.current[key];
+    }, 450);
+  }, [fetchMessages]);
 
   // SignalR — register ONCE on mount
   useEffect(() => {
@@ -145,33 +298,43 @@ export default function PatientMessages() {
         conn.on('ReceiveMessage', (msg) => {
           const currentRoom = activeRoomRef.current;
           const currentRoomId = String(currentRoom?.Id || currentRoom?.id || '');
-          const msgRoomId = String(msg.RoomId || msg.roomId || '');
+          const msgRoomId = getIncomingRoomId(msg);
+          const incomingContent = getIncomingContent(msg);
+          const incomingType = getIncomingMessageType(msg);
+          const incomingAttachments = buildIncomingAttachments(msg);
+          const fromCurrentUser = isCurrentUserMessage(msg);
+          const hasStableId = msg?.Id !== undefined && msg?.Id !== null
+            ? true
+            : msg?.id !== undefined && msg?.id !== null;
 
           console.log('📨 [Patient ReceiveMessage]', {
             msgRoom: msgRoomId,
             activeRoom: currentRoomId,
             match: currentRoomId === msgRoomId,
             from: msg.SenderName || msg.senderName || msg.SenderId || msg.senderId,
-            text: (msg.Content || msg.content || '').substring(0, 50),
+            text: String(incomingContent).substring(0, 50),
           });
 
           if (currentRoomId && currentRoomId === msgRoomId) {
-            const attachmentUrl = msg.AttachmentUrl || msg.attachmentUrl;
-            const attachmentName = msg.AttachmentName || msg.attachmentName;
+            // Backend can emit an optimistic self-echo before DB persistence.
+            // Render only confirmed self messages that have a stable id.
+            if (fromCurrentUser && !hasStableId) {
+              scheduleSilentHydration(msgRoomId);
+              return;
+            }
+
             const uiMessage = {
               id: msg.Id || msg.id || Date.now(),
-              sender: (msg.SenderId || msg.senderId) === (user?.ID || user?.id) ? "current-user" : "other",
-              content: msg.Content || msg.content || "",
-              messageType: msg.MessageType || msg.messageType,
+              sender: fromCurrentUser ? "current-user" : "other",
+              content: incomingContent,
+              messageType: incomingType,
               timestamp: msg.CreatedAt || msg.createdAt || new Date().toISOString(),
-              attachments: attachmentUrl ? [{
-                name: attachmentName || 'Attachment',
-                url: attachmentUrl,
-                type: (attachmentUrl || '').match(/\.(png|jpg|jpeg|gif|webp)$/i) ? 'image' : 'file'
-              }] : []
+              attachments: incomingAttachments,
             };
             setMessages((prev) => [...prev, uiMessage]);
             chatAPI.markAsRead(msgRoomId).catch(() => { });
+            // Reconcile authoritative server state without UI spinner.
+            scheduleSilentHydration(msgRoomId);
           }
 
           fetchRooms();
@@ -185,11 +348,13 @@ export default function PatientMessages() {
 
     return () => {
       mounted = false;
+      Object.values(hydrationTimersRef.current).forEach((timerId) => clearTimeout(timerId));
+      hydrationTimersRef.current = {};
       if (connectionRef.current) {
         connectionRef.current.off('ReceiveMessage');
       }
     };
-  }, [user, fetchRooms]); // NO activeRoom — use ref
+  }, [user, fetchRooms, scheduleSilentHydration]); // NO activeRoom — use ref
 
   useEffect(() => {
     if (contactType) fetchRooms();
@@ -209,14 +374,8 @@ export default function PatientMessages() {
 
       if (outgoingAttachments.length === 0) {
         const response = await chatAPI.sendMessage(roomId, msgData.content);
-        if (response?.IsSuccess !== false) {
-          const newMessage = {
-            id: Date.now(),
-            sender: "current-user",
-            content: msgData.content,
-            timestamp: new Date().toISOString(),
-          };
-          setMessages((prev) => [...prev, newMessage]);
+        if (response?.IsSuccess === false) {
+          throw new Error(response?.Message || 'Failed to send message');
         }
         return;
       }
@@ -273,17 +432,10 @@ export default function PatientMessages() {
       },
       messages: messages.map((msg) => ({
         id: msg.Id || msg.id || Math.random(),
-        sender: msg.SenderId === (user?.ID || user?.id) ? "current-user" : "other",
-        content: msg.Content || msg.content || "",
+        sender: isCurrentUserMessage(msg) ? "current-user" : "other",
+        content: getIncomingContent(msg),
         timestamp: msg.CreatedAt || msg.timestamp || new Date().toISOString(),
-        attachments: msg.AttachmentUrl
-          ? [{
-              name: msg.AttachmentName || 'Attachment',
-              url: msg.AttachmentUrl,
-              type: (msg.AttachmentUrl || '').match(/\.(png|jpg|jpeg|gif|webp)$/i) ? 'image' : 'file',
-              size: '',
-            }]
-          : [],
+        attachments: buildIncomingAttachments(msg).map((item) => ({ ...item, size: '' })),
       })),
     }
     : null;
