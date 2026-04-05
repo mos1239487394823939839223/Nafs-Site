@@ -18,11 +18,63 @@ import Spinner from '../../components/ui/Spinner'
 import Pagination from '../../components/ui/Pagination'
 import { useToast } from '../../components/ui/Toast'
 import { People as Users, PersonAdd as UserPlus, Search, Mail, MedicalServices as Stethoscope, Person as User, Refresh as RefreshCw, Phone, Lock, Description as FileText, ToggleOff as ToggleLeft, ToggleOn as ToggleRight, VerifiedUser as ShieldCheck, ShowChart as Activity, Close as X, PhotoCamera as Camera } from '@mui/icons-material'
-import { adminAPI, userAPI } from '../../lib/api'
+import { adminAPI, userAPI, documentsAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 import LocalDocumentsManager from '../../components/shared/LocalDocumentsManager'
 
 const ADD_DOCTOR_DOCS_STORAGE_KEY = 'nafs:admin:add-doctor-documents'
+
+const readStagedDocuments = () => {
+    try {
+        const raw = localStorage.getItem(ADD_DOCTOR_DOCS_STORAGE_KEY)
+        if (!raw) return []
+        const parsed = JSON.parse(raw)
+        return Array.isArray(parsed) ? parsed : []
+    } catch {
+        return []
+    }
+}
+
+const fileToBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => {
+        const result = reader.result
+        if (typeof result !== 'string') {
+            reject(new Error('INVALID_FILE_RESULT'))
+            return
+        }
+        const base64 = result.split(',')[1]
+        if (!base64) {
+            reject(new Error('BASE64_CONVERSION_FAILED'))
+            return
+        }
+        resolve(base64)
+    }
+    reader.onerror = () => reject(new Error('FILE_READ_ERROR'))
+    reader.readAsDataURL(file)
+})
+
+const dataUrlToFile = (dataUrl, fallbackName, fallbackType) => {
+    if (typeof dataUrl !== 'string' || !dataUrl.includes(',')) {
+        throw new Error('INVALID_DATA_URL')
+    }
+
+    const [header, data] = dataUrl.split(',', 2)
+    const mimeMatch = header.match(/data:(.*?);base64/)
+    const mimeType = mimeMatch?.[1] || fallbackType || 'application/octet-stream'
+    const binary = atob(data)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i)
+    }
+
+    return new File([bytes], fallbackName || `document-${Date.now()}`, { type: mimeType })
+}
+
+const normalizeDocumentType = (value) => {
+    const parsed = Number(value)
+    return [1, 2, 3].includes(parsed) ? parsed : 1
+}
 
 export default function UserManagement() {
     const toast = useToast()
@@ -133,18 +185,42 @@ export default function UserManagement() {
             if (response?.IsSuccess !== false) {
                 const newDoctorId = response.Data || response.data?.Data
 
+                if (!newDoctorId) {
+                    toast.error(t('errors.somethingWentWrong'))
+                    return
+                }
+
                 // If image is provided, upload it using the new endpoint /user/UpdateImage
                 if (formData.image && newDoctorId) {
                     try {
-                        const reader = new FileReader()
-                        reader.onload = async () => {
-                            const base64 = reader.result.split(',')[1]
-                            await userAPI.updateImage(newDoctorId, base64)
-                        }
-                        reader.readAsDataURL(formData.image)
+                        const base64 = await fileToBase64(formData.image)
+                        await userAPI.updateImage(newDoctorId, base64)
                     } catch (err) {
                         console.error('Failed to upload doctor image:', err)
                         toast.error(t('errors.imageUploadFailed', 'Doctor created, but image upload failed'))
+                    }
+                }
+
+                const stagedDocs = readStagedDocuments()
+                const docsToUpload = stagedDocs.filter((doc) => doc?.dataUrl)
+
+                if (docsToUpload.length > 0) {
+                    const uploadResults = await Promise.allSettled(
+                        docsToUpload.map((doc, index) => {
+                            const fileName = doc.name || doc.title || `doctor-document-${index + 1}`
+                            const file = dataUrlToFile(doc.dataUrl, fileName, doc.type)
+                            return documentsAPI.uploadDocument({
+                                file,
+                                ownerUserId: newDoctorId,
+                                title: doc.title || fileName,
+                                documentType: normalizeDocumentType(doc.documentType),
+                            })
+                        })
+                    )
+
+                    const failedUploads = uploadResults.filter((result) => result.status === 'rejected').length
+                    if (failedUploads > 0) {
+                        toast.error(t('documents.uploadFailed', 'Failed to upload selected files.'))
                     }
                 }
 

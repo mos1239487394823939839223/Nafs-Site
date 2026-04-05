@@ -646,6 +646,8 @@ export default {
     filesCountSuffix: 'ملف',
     typeLabel: 'نوع المستند',
     typeCertificates: 'شهادات',
+    typeDocument: 'مستند',
+    typeId: 'بطاقة هوية',
     typeLicenses: 'تراخيص',
     typeMedical: 'ملفات طبية',
     typeOther: 'أخرى',

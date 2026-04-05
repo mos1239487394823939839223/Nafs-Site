@@ -1,12 +1,24 @@
-import { useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
+import { useEffect, useMemo, useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../contexts/AuthContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useToast } from '../../components/ui/Toast'
-import ProfileSettings from '../../components/doctor/settings/ProfileSettings'
 import LocalDocumentsManager from '../../components/shared/LocalDocumentsManager'
-import { userAPI } from '../../lib/api'
-import { Lock } from '@mui/icons-material'
+import { userAPI, filesAPI, extractErrorMessage } from '../../lib/api'
+import Input from '../../components/ui/Input'
+import {
+  PhotoCamera as Camera,
+  Person as User,
+  Mail,
+  Phone,
+  Lock,
+  Sync as Loader2,
+  Edit,
+  Close as X,
+  MedicalServices as Stethoscope,
+  CheckCircle as CheckCircle2,
+  Description as FileText,
+} from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 
 export default function Settings() {
@@ -14,57 +26,95 @@ export default function Settings() {
   const { t, isRTL } = useLanguage()
   const toast = useToast()
 
-  // Change password state
-  const [showPasswordSection, setShowPasswordSection] = useState(false)
+  const [formData, setFormData] = useState({
+    name: user?.name || user?.Name || '',
+    email: user?.email || user?.Email || '',
+    phone: user?.phone || user?.PhoneNumber || '',
+    specialty: user?.specialty || user?.Specialist?.[0] || '',
+    bio: user?.bio || user?.Description || '',
+  })
+  const [avatar, setAvatar] = useState(user?.image || user?.Image || null)
+  const [saving, setSaving] = useState(false)
+  const [uploadingImage, setUploadingImage] = useState(false)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [passwordModalOpen, setPasswordModalOpen] = useState(false)
   const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [passwordLoading, setPasswordLoading] = useState(false)
+
+  useEffect(() => {
+    const image = user?.image || user?.Image || null
+    if (image) setAvatar(image)
+  }, [user?.image, user?.Image])
+
+  useEffect(() => {
+    setFormData({
+      name: user?.name || user?.Name || '',
+      email: user?.email || user?.Email || '',
+      phone: user?.phone || user?.PhoneNumber || '',
+      specialty: user?.specialty || user?.Specialist?.[0] || '',
+      bio: user?.bio || user?.Description || '',
+    })
+  }, [user])
+
   const doctorDocumentsStorageKey = useMemo(() => {
     const userId = userAPI.resolveUserId(user) || 'doctor-current'
     return `nafs:doctor:documents:${userId}`
   }, [user])
   const doctorUserId = useMemo(() => userAPI.resolveUserId(user), [user])
 
-  const handleSave = async (data) => {
-    try {
-      const response = await userAPI.editMainInfo({
-        name: data.name,
-        phoneNumber: data.phone,
-        email: data.email,
-      })
+  const handleChange = (field, value) => {
+    setFormData(prev => ({ ...prev, [field]: value }))
+  }
 
-      if (response?.IsSuccess !== false) {
-        updateProfile(data)
-        toast.success(t('success.settingsSaved', 'Settings saved successfully'))
+  const handleFileChange = async (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    setAvatar(URL.createObjectURL(file))
+    setUploadingImage(true)
+    try {
+      const uploadResponse = await filesAPI.uploadFile(file)
+      const imageUrl = uploadResponse?.Data?.PublicUrl || uploadResponse?.Data
+      if (!imageUrl) {
+        toast.error(t('errors.somethingWentWrong'))
+        return
+      }
+
+      const response = await userAPI.updateCurrentUserImage(user, imageUrl)
+      if (response?.IsSuccess === true) {
+        setAvatar(imageUrl)
+        updateProfile({ image: imageUrl })
+        toast.success(t('success.photoUpdated', 'Profile photo updated'))
       } else {
-        toast.error(response?.Message || t('errors.unexpectedError', 'Failed to save settings'))
+        toast.error(response?.Message || t('errors.somethingWentWrong'))
       }
     } catch (error) {
-      console.error('Save settings error:', error)
-      toast.error(error.response?.data?.Message || t('errors.unexpectedError', 'Failed to save settings'))
+      toast.error(extractErrorMessage(error, t('errors.somethingWentWrong')))
+    } finally {
+      setUploadingImage(false)
     }
   }
 
-  const handleImageUpload = async (file) => {
+  const handleSave = async () => {
+    setSaving(true)
     try {
-      const reader = new FileReader()
-      reader.onload = async () => {
-        try {
-          const base64 = reader.result.split(',')[1]
-          const response = await userAPI.updateCurrentUserImage(user, base64)
-          if (response?.IsSuccess !== false) {
-            updateProfile({ image: response.Data || reader.result })
-            toast.success(t('success.photoUpdated', 'Profile photo updated'))
-          } else {
-            toast.error(response?.Message || t('errors.unexpectedError', 'Failed to update photo'))
-          }
-        } catch (error) {
-          toast.error(error?.response?.data?.Message || t('errors.unexpectedError', 'Failed to update photo'))
-        }
+      const response = await userAPI.editMainInfo({
+        name: formData.name,
+        phoneNumber: formData.phone,
+        email: formData.email,
+      })
+
+      if (response?.IsSuccess === true) {
+        updateProfile({ name: formData.name, email: formData.email, phone: formData.phone })
+        toast.success(t('success.profileUpdated', 'Profile updated successfully'))
+        setEditModalOpen(false)
+      } else {
+        toast.error(response?.Message || t('errors.somethingWentWrong'))
       }
-      reader.readAsDataURL(file)
     } catch (error) {
-      console.error('Image upload error:', error)
-      toast.error(t('errors.unexpectedError', 'Failed to upload image'))
+      toast.error(extractErrorMessage(error, t('errors.somethingWentWrong')))
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -85,55 +135,158 @@ export default function Settings() {
     setPasswordLoading(true)
     try {
       const response = await userAPI.changePassword(passwordData.currentPassword, passwordData.newPassword)
-      if (response?.IsSuccess !== false) {
+      if (response?.IsSuccess === true) {
         toast.success(t('success.passwordChanged', 'Password changed successfully'))
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
-        setShowPasswordSection(false)
+        setPasswordModalOpen(false)
       } else {
-        toast.error(response?.Message || t('errors.unexpectedError', 'Failed to change password'))
+        toast.error(response?.Message || t('errors.somethingWentWrong'))
       }
     } catch (error) {
-      toast.error(error.response?.data?.Message || t('errors.unexpectedError', 'Failed to change password'))
+      toast.error(extractErrorMessage(error, t('errors.somethingWentWrong')))
     } finally {
       setPasswordLoading(false)
     }
   }
 
-  return (
-    <div className="min-h-screen bg-background p-6 md:p-10" dir={isRTL ? 'rtl' : 'ltr'}>
-      <div className="max-w-4xl mx-auto">
+  const displayName = formData.name || user?.name || user?.Name || t('common.doctor', 'Doctor')
+  const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text mb-2">{t('settings.profile', 'Profile')}</h1>
-          <p className="text-text-muted">{t('settings.manageProfile', 'Manage your personal information.')}</p>
+  return (
+    <div className="min-h-screen bg-background" dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className="relative">
+        <div className="h-56 md:h-72 w-full overflow-hidden relative">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-secondary" />
+          <svg className="absolute inset-0 w-full h-full opacity-10" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <pattern id="doctor-grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1" />
+              </pattern>
+            </defs>
+            <rect width="100%" height="100%" fill="url(#doctor-grid)" />
+          </svg>
+          <div className="absolute top-8 left-1/4 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
+          <div className="absolute bottom-0 right-1/3 w-64 h-64 bg-secondary/30 rounded-full blur-3xl" />
         </div>
 
-        {/* Main Content Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-background-paper rounded-2xl shadow-lg border border-border overflow-hidden"
-        >
-          {/* Decorative Top Bar */}
-          <div className="h-1.5 w-full bg-gradient-to-r from-primary via-secondary to-primary/50" />
-
-          <div className="p-6 md:p-8">
-            <ProfileSettings user={user} onSave={handleSave} onImageUpload={handleImageUpload} />
+        <div className="absolute left-1/2 md:left-16 -translate-x-1/2 md:translate-x-0 -bottom-16 z-10">
+          <div className="relative group">
+            <div className="w-32 h-32 md:w-36 md:h-36 rounded-full border-4 border-background-paper shadow-2xl flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/20">
+              {uploadingImage ? (
+                <Loader2 className="w-8 h-8 text-primary animate-spin" />
+              ) : avatar ? (
+                <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
+              ) : (
+                <span className="text-4xl font-bold text-primary">{initials}</span>
+              )}
+            </div>
+            <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer">
+              <Camera className="w-7 h-7 text-white" />
+              <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+            </label>
+            <div className="absolute bottom-2 right-2 w-4 h-4 bg-emerald-400 rounded-full border-2 border-background-paper shadow" />
           </div>
-        </motion.div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 md:px-6">
+        <div className="pt-20 md:pt-6 md:pl-48 flex flex-col md:flex-row items-center md:items-end justify-between gap-4 pb-6 border-b border-border">
+          <div className="text-center md:text-left">
+            <h1 className="text-2xl md:text-3xl font-bold text-text-heading">{displayName}</h1>
+            <div className="flex items-center justify-center md:justify-start gap-2 mt-1.5 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 text-sm text-primary font-medium bg-primary/10 px-3 py-1 rounded-full">
+                <Stethoscope className="w-3.5 h-3.5" />
+                {t('common.doctor', 'Doctor')}
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-sm text-emerald-600 font-medium bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                {t('common.active', 'Active')}
+              </span>
+            </div>
+            <p className="text-sm text-text-muted mt-1.5 flex items-center justify-center md:justify-start gap-1.5">
+              <Mail className="w-3.5 h-3.5" />
+              {formData.email}
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button variant="outline" size="sm" onClick={() => setPasswordModalOpen(true)} className="flex items-center gap-2">
+              <Lock className="w-4 h-4" />
+              {t('settings.changePassword', 'Change Password')}
+            </Button>
+            <Button size="sm" onClick={() => setEditModalOpen(true)} className="flex items-center gap-2">
+              <Edit className="w-4 h-4" />
+              {t('admin.editDetails', 'Edit Details')}
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 py-6 border-b border-border">
+          {[
+            { label: t('admin.role', 'Role'), value: t('common.doctor', 'Doctor') },
+            { label: t('common.phoneNumber', 'Phone'), value: formData.phone || '—' },
+            { label: t('common.specialty', 'Specialty'), value: formData.specialty || '—' },
+          ].map((stat, i) => (
+            <motion.div
+              key={i}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
+              className="text-center p-4 rounded-2xl bg-background-paper border border-border hover:border-primary/30 hover:shadow-sm transition-all duration-200"
+            >
+              <p className="text-lg md:text-xl font-bold text-text-heading truncate">{stat.value}</p>
+              <p className="text-xs text-text-muted mt-1">{stat.label}</p>
+            </motion.div>
+          ))}
+        </div>
+
+        <div className="py-6 grid md:grid-cols-2 gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-background-paper rounded-2xl border border-border p-5 hover:shadow-md transition-shadow duration-200"
+          >
+            <h3 className="font-semibold text-text-heading mb-4 flex items-center gap-2">
+              <User className="w-4 h-4 text-primary" />
+              {t('settings.personalInformation', 'Personal Information')}
+            </h3>
+            <div className="space-y-3">
+              <InfoRow icon={User} label={t('common.fullName', 'Full Name')} value={displayName} />
+              <InfoRow icon={Mail} label={t('common.emailAddress', 'Email')} value={formData.email || '—'} />
+              <InfoRow icon={Phone} label={t('common.phoneNumber', 'Phone')} value={formData.phone || '—'} />
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="bg-background-paper rounded-2xl border border-border p-5 hover:shadow-md transition-shadow duration-200"
+          >
+            <h3 className="font-semibold text-text-heading mb-4 flex items-center gap-2">
+              <Stethoscope className="w-4 h-4 text-primary" />
+              {t('settings.professionalDetails', 'Professional Details')}
+            </h3>
+            <div className="space-y-3">
+              <InfoRow icon={Stethoscope} label={t('common.specialty', 'Specialty')} value={formData.specialty || '—'} />
+              <InfoRow icon={CheckCircle2} label={t('admin.accountStatus', 'Status')} value={t('common.active', 'Active')} valueClass="text-emerald-500" />
+              <InfoRow icon={FileText} label={t('settings.bio', 'Bio')} value={formData.bio || t('common.notAvailable', 'Not available')} />
+            </div>
+          </motion.div>
+        </div>
 
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.05 }}
-          className="mt-8 bg-background-paper rounded-2xl shadow-lg border border-border overflow-hidden"
+          transition={{ delay: 0.2 }}
+          className="mb-10 bg-background-paper rounded-2xl border border-border overflow-hidden"
         >
           <div className="p-6 md:p-8">
             <LocalDocumentsManager
               storageKey={doctorDocumentsStorageKey}
               ownerUserId={doctorUserId}
-              documentType={0}
+              documentType={1}
               allowDocumentTypeSelection
               title={t('documents.title')}
               buttonLabel={t('documents.addButton')}
@@ -141,64 +294,158 @@ export default function Settings() {
             />
           </div>
         </motion.div>
+      </div>
 
-        {/* Change Password Section */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="mt-8 bg-background-paper rounded-2xl shadow-lg border border-border overflow-hidden"
-        >
-          <div className="p-6 md:p-8">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                  <Lock className="w-5 h-5 text-primary" />
+      <AnimatePresence>
+        {editModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" dir={isRTL ? 'rtl' : 'ltr'}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setEditModalOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-background-paper rounded-2xl shadow-2xl border border-border overflow-hidden z-10"
+            >
+              <div className="px-6 pt-6 pb-4 bg-gradient-to-r from-primary/10 to-secondary/5 border-b border-border flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Edit className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-text-heading">{t('admin.editDetails', 'Edit Details')}</h2>
+                    <p className="text-xs text-text-muted">{t('admin.updateYourInfo', 'Update your personal information')}</p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="font-semibold text-text">{t('settings.changePassword', 'Change Password')}</h3>
-                  <p className="text-sm text-text-muted">{t('settings.updateAccountPassword', 'Update your account password')}</p>
-                </div>
+                <button
+                  onClick={() => setEditModalOpen(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-background-subtle transition-colors"
+                >
+                  <X className="w-5 h-5 text-text-muted" />
+                </button>
               </div>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowPasswordSection(!showPasswordSection)}
-              >
-                {showPasswordSection ? t('common.cancel', 'Cancel') : t('common.change', 'Change')}
-              </Button>
-            </div>
 
-            {showPasswordSection && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                className="space-y-4 pt-4 border-t border-border"
-              >
-                {['currentPassword', 'newPassword', 'confirmPassword'].map((field) => (
-                  <div key={field}>
-                    <label className="block text-sm font-medium text-text-muted mb-2">
-                      {field === 'currentPassword' ? t('auth.currentPassword', 'Current Password') : field === 'newPassword' ? t('auth.newPassword', 'New Password') : t('auth.confirmNewPassword', 'Confirm New Password')}
-                    </label>
+              <div className="p-6 space-y-4">
+                <Input
+                  label={t('common.fullName', 'Full Name')}
+                  value={formData.name}
+                  onChange={(e) => handleChange('name', e.target.value)}
+                  icon={User}
+                />
+                <Input
+                  label={t('common.emailAddress', 'Email Address')}
+                  value={formData.email}
+                  onChange={(e) => handleChange('email', e.target.value)}
+                  icon={Mail}
+                  disabled
+                />
+                <Input
+                  label={t('common.phoneNumber', 'Phone Number')}
+                  value={formData.phone}
+                  onChange={(e) => handleChange('phone', e.target.value)}
+                  icon={Phone}
+                />
+              </div>
+
+              <div className="px-6 pb-6 flex gap-3 justify-end">
+                <Button variant="ghost" onClick={() => setEditModalOpen(false)}>
+                  {t('common.cancel', 'Cancel')}
+                </Button>
+                <Button onClick={handleSave} isLoading={saving} className="px-6">
+                  {!saving && <CheckCircle2 className="w-4 h-4" />}
+                  {saving ? t('common.saving', 'Saving...') : t('common.saveChanges', 'Save Changes')}
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {passwordModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" dir={isRTL ? 'rtl' : 'ltr'}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setPasswordModalOpen(false)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-background-paper rounded-2xl shadow-2xl border border-border overflow-hidden z-10"
+            >
+              <div className="px-6 pt-6 pb-4 bg-gradient-to-r from-primary/10 to-secondary/5 border-b border-border flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                    <Lock className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-lg font-bold text-text-heading">{t('settings.changePassword', 'Change Password')}</h2>
+                    <p className="text-xs text-text-muted">{t('settings.updateAccountPassword', 'Update your account password')}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setPasswordModalOpen(false)}
+                  className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-background-subtle transition-colors"
+                >
+                  <X className="w-5 h-5 text-text-muted" />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-4">
+                {[
+                  { key: 'currentPassword', label: t('auth.currentPassword', 'Current Password') },
+                  { key: 'newPassword', label: t('auth.newPassword', 'New Password') },
+                  { key: 'confirmPassword', label: t('auth.confirmNewPassword', 'Confirm New Password') },
+                ].map(({ key, label }) => (
+                  <div key={key}>
+                    <label className="block text-sm font-medium text-text-muted mb-1.5">{label}</label>
                     <input
                       type="password"
-                      value={passwordData[field]}
-                      onChange={(e) => setPasswordData(prev => ({ ...prev, [field]: e.target.value }))}
-                      className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-text"
+                      value={passwordData[key]}
+                      onChange={(e) => setPasswordData(prev => ({ ...prev, [key]: e.target.value }))}
+                      className="w-full px-4 py-2.5 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-text transition-all"
                       dir="ltr"
                       placeholder="••••••••"
                     />
                   </div>
                 ))}
-                <div className="flex justify-end">
-                  <Button onClick={handleChangePassword} disabled={passwordLoading}>
-                    {passwordLoading ? t('common.updating', 'Updating...') : t('settings.updatePassword', 'Update Password')}
-                  </Button>
-                </div>
-              </motion.div>
-            )}
+              </div>
+
+              <div className="px-6 pb-6 flex gap-3 justify-end">
+                <Button variant="ghost" onClick={() => setPasswordModalOpen(false)}>
+                  {t('common.cancel', 'Cancel')}
+                </Button>
+                <Button onClick={handleChangePassword} isLoading={passwordLoading} className="px-6">
+                  {!passwordLoading && <Lock className="w-4 h-4" />}
+                  {passwordLoading ? t('common.updating', 'Updating...') : t('settings.updatePassword', 'Update Password')}
+                </Button>
+              </div>
+            </motion.div>
           </div>
-        </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+
+function InfoRow({ icon: Icon, label, value, valueClass = '' }) {
+  return (
+    <div className="flex items-center gap-3 py-2 border-b border-border/50 last:border-0">
+      <div className="w-8 h-8 rounded-lg bg-primary/8 flex items-center justify-center flex-shrink-0">
+        <Icon className="w-4 h-4 text-primary" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="text-xs text-text-muted">{label}</p>
+        <p className={`text-sm font-medium text-text-heading truncate ${valueClass}`}>{value}</p>
       </div>
     </div>
   )

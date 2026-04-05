@@ -10,6 +10,11 @@ const ACCEPTED_DOCUMENT_TYPES = 'image/*,.pdf,.doc,.docx,.txt,.rtf,.xls,.xlsx,.p
 const DEFAULT_BUTTON_LABEL = 'Add Certificate && docementation'
 const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024
 
+const normalizeDocumentType = (value) => {
+  const parsed = Number(value)
+  return [1, 2, 3].includes(parsed) ? parsed : 1
+}
+
 const safeReadLocalDocuments = (storageKey) => {
   try {
     const raw = localStorage.getItem(storageKey)
@@ -43,7 +48,7 @@ const formatBytes = (value) => {
 export default function LocalDocumentsManager({
   storageKey,
   ownerUserId,
-  documentType = 0,
+  documentType = 1,
   allowDocumentTypeSelection = false,
   title = 'Certificates & Documentation',
   buttonLabel = DEFAULT_BUTTON_LABEL,
@@ -55,8 +60,12 @@ export default function LocalDocumentsManager({
   const [documents, setDocuments] = useState([])
   const [isUploading, setIsUploading] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [selectedDocumentType, setSelectedDocumentType] = useState(documentType)
+  const [selectedDocumentType, setSelectedDocumentType] = useState(normalizeDocumentType(documentType))
   const isRemoteMode = Boolean(ownerUserId)
+
+  useEffect(() => {
+    setSelectedDocumentType(normalizeDocumentType(documentType))
+  }, [documentType])
 
   useEffect(() => {
     const loadDocuments = async () => {
@@ -238,13 +247,12 @@ export default function LocalDocumentsManager({
                 </label>
                 <select
                   value={selectedDocumentType}
-                  onChange={(e) => setSelectedDocumentType(Number(e.target.value))}
+                  onChange={(e) => setSelectedDocumentType(normalizeDocumentType(e.target.value))}
                   className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                 >
-                  <option value={0}>{t('documents.typeCertificates') || 'Certificates'}</option>
-                  <option value={1}>{t('documents.typeLicenses') || 'Licenses'}</option>
-                  <option value={2}>{t('documents.typeMedical') || 'Medical Papers'}</option>
-                  <option value={3}>{t('documents.typeOther') || 'Other'}</option>
+                  <option value={1}>{t('documents.typeCertificates') || 'Certificate'}</option>
+                  <option value={2}>{t('documents.typeDocument') || 'Document'}</option>
+                  <option value={3}>{t('documents.typeId') || 'ID'}</option>
                 </select>
               </div>
             )}

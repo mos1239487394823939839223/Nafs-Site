@@ -636,6 +636,8 @@ export default {
     filesCountSuffix: 'file(s)',
     typeLabel: 'Document Type',
     typeCertificates: 'Certificates',
+    typeDocument: 'Document',
+    typeId: 'ID',
     typeLicenses: 'Licenses',
     typeMedical: 'Medical Papers',
     typeOther: 'Other',

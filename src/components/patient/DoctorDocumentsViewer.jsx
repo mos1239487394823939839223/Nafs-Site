@@ -16,15 +16,15 @@ import { documentsAPI } from '../../lib/api'
 
 const DOCUMENT_CATEGORIES = [
   { key: 'certificates', labelKey: 'doctor.docs.certificates', icon: GraduationCap, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-  { key: 'licenses',     labelKey: 'doctor.docs.licenses',     icon: BadgeIcon,       color: 'text-green-500', bg: 'bg-green-500/10' },
-  { key: 'medical',      labelKey: 'doctor.docs.medical',      icon: Stethoscope,     color: 'text-purple-500', bg: 'bg-purple-500/10' },
+  { key: 'documents',    labelKey: 'doctor.docs.documents',    icon: FileText,        color: 'text-green-500', bg: 'bg-green-500/10' },
+  { key: 'ids',          labelKey: 'doctor.docs.ids',          icon: BadgeIcon,       color: 'text-purple-500', bg: 'bg-purple-500/10' },
   { key: 'other',        labelKey: 'doctor.docs.other',        icon: FolderOpen,      color: 'text-orange-500', bg: 'bg-orange-500/10' },
 ]
 
 const CATEGORY_LABELS_FALLBACK = {
   certificates: 'Certificates & Degrees',
-  licenses:     'Medical Licenses',
-  medical:      'Medical Papers',
+  documents:    'Documents',
+  ids:          'ID',
   other:        'Other Documents',
 }
 
@@ -56,9 +56,9 @@ export default function DoctorDocumentsViewer({ doctorId }) {
   useEffect(() => {
     const mapCategory = (documentType) => {
       const value = Number(documentType)
-      if (value === 0) return 'certificates'
-      if (value === 1) return 'licenses'
-      if (value === 2) return 'medical'
+      if (value === 1) return 'certificates'
+      if (value === 2) return 'documents'
+      if (value === 3) return 'ids'
       return 'other'
     }
 
@@ -67,8 +67,8 @@ export default function DoctorDocumentsViewer({ doctorId }) {
 
       const grouped = {
         certificates: [],
-        licenses: [],
-        medical: [],
+        documents: [],
+        ids: [],
         other: [],
       }
 

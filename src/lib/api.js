@@ -606,15 +606,24 @@ export const medicalAPI = {
 
 // ─── Documents API Functions ─────────────────────────────────────────────────
 export const documentsAPI = {
-    uploadDocument: async ({ file, ownerUserId, title, documentType = 0 }) => {
-        const formData = new FormData();
-        formData.append('file', file);
-        formData.append('ownerUserId', String(ownerUserId));
-        formData.append('title', title);
-        formData.append('documentType', String(documentType));
+    uploadDocument: async ({ file, ownerUserId, title, documentType = 1 }) => {
+        // Backend expects JSON metadata for /documents/upload, not multipart.
+        // Upload binary first, then send file URL + metadata.
+        const uploadResponse = await filesAPI.uploadFile(file);
+        const fileUrl = uploadResponse?.Data?.PublicUrl;
+        const fileName = uploadResponse?.Data?.FileName || file?.name || title;
+        const normalizedDocumentType = Number(documentType);
 
-        const response = await api.post('/documents/upload', formData, {
-            headers: { 'Content-Type': 'multipart/form-data' },
+        if (!fileUrl) {
+            throw new Error('DOCUMENT_FILE_UPLOAD_FAILED');
+        }
+
+        const response = await api.post('/documents/upload', {
+            OwnerUserID: ownerUserId,
+            Title: title || fileName,
+            DocumentType: [1, 2, 3].includes(normalizedDocumentType) ? normalizedDocumentType : 1,
+            FileUrl: fileUrl,
+            FileName: fileName,
         });
         return response.data;
     },
