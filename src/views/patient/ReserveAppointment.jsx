@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Card, {
   CardHeader,
@@ -14,10 +14,11 @@ import Table, {
   TableHeader,
   TableRow,
 } from "../../components/ui/Table";
-import { Search, MedicalServices as Stethoscope, CalendarToday as Calendar, AccessTime as Clock, ChevronRight, Person as User, ArrowBack as ArrowLeft, CheckCircle, Cancel as XCircle, ChevronLeft, Sync as Loader2, Visibility as Eye, ViewList, GridView, Star, Send, ThumbUp, Badge as BadgeIcon, FlashOn, AccountBalanceWallet, RadioButtonUnchecked, CheckCircle as SelectedIcon, UploadFile as UploadIcon, ReceiptLong } from '@mui/icons-material';
+import { Search, MedicalServices as Stethoscope, CalendarToday as Calendar, AccessTime as Clock, ChevronRight, Person as User, ArrowBack as ArrowLeft, CheckCircle, Cancel as XCircle, ChevronLeft, Sync as Loader2, Visibility as Eye, ViewList, GridView, Star, Send, ThumbUp, Badge as BadgeIcon, FlashOn, AccountBalanceWallet, UploadFile as UploadIcon, ReceiptLong } from '@mui/icons-material';
 
 import { useAuth } from "../../contexts/AuthContext";
-import { patientAPI, paymentAPI } from "../../lib/api";
+import { patientAPI, paymentAPI, filesAPI } from "../../lib/api";
+import { getPaymentStatusMeta } from "../../lib/paymentStatus";
 import { useToast } from "../../components/ui/Toast";
 import { useLanguage } from "../../contexts/LanguageContext";
 import DoctorDocumentsViewer from "../../components/patient/DoctorDocumentsViewer";
@@ -29,6 +30,7 @@ export default function ReserveAppointment() {
   const toast = useToast();
   const { t, isRTL } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
+  const initialTab = searchParams.get("tab") === "status" ? "status" : "reserve";
 
   // BookingStatus enum
   const BookingStatusMap = {
@@ -44,7 +46,7 @@ export default function ReserveAppointment() {
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [bookedSlot, setBookedSlot] = useState(null);
   const [doctorSearch, setDoctorSearch] = useState("");
-  const [mainTab, setMainTab] = useState("reserve"); // reserve, status
+  const [mainTab, setMainTab] = useState(initialTab); // reserve, status
   const [viewMode, setViewMode] = useState("grid"); // list or grid
   const [slots, setSlots] = useState({});
   const [currentViewDate, setCurrentViewDate] = useState(new Date());
@@ -61,6 +63,7 @@ export default function ReserveAppointment() {
 
   // Patient bookings states (My Reservation Status)
   const [patientBookings, setPatientBookings] = useState([]);
+  const [bookingsForSlots, setBookingsForSlots] = useState([]);
   const [bookingsLoading, setBookingsLoading] = useState(false);
   const [bookingsPagination, setBookingsPagination] = useState({
     pageIndex: 1,
@@ -77,12 +80,47 @@ export default function ReserveAppointment() {
   
   // Documents modal state
   const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
-  const [selectedPaymentProvider, setSelectedPaymentProvider] = useState('instapay');
+  const [selectedPaymentProvider, setSelectedPaymentProvider] = useState(2);
+  const [paymentProviders, setPaymentProviders] = useState([]);
+  const [paymentProvidersLoading, setPaymentProvidersLoading] = useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentScreenshot, setPaymentScreenshot] = useState(null);
   const [referenceNumber, setReferenceNumber] = useState('');
+  const [pendingManualPaymentBookingId, setPendingManualPaymentBookingId] = useState(null);
   const [bookingPendingReview, setBookingPendingReview] = useState(false);
+
+  const fallbackPaymentProviders = [
+    { ID: 2, Name: 'InstaPay' },
+    { ID: 3, Name: isRTL ? 'كاش وولت' : 'Cash Wallet' },
+  ];
+
+  const getProviderUiMeta = (provider) => {
+    const name = String(provider?.Name || '').toLowerCase();
+    const id = Number(provider?.ID);
+    const isInsta = name.includes('insta') || id === 2;
+    if (isInsta) {
+      return {
+        icon: FlashOn,
+        label: provider?.Name || 'InstaPay',
+        desc: isRTL ? 'تحويل فوري' : 'Instant transfer',
+        accent: 'from-amber-500/20 to-orange-500/10',
+        iconBg: 'bg-amber-500/15',
+        iconColor: 'text-amber-400',
+        requireReference: true,
+      };
+    }
+
+    return {
+      icon: AccountBalanceWallet,
+      label: provider?.Name || (isRTL ? 'محفظة رقمية' : 'Digital Wallet'),
+      desc: isRTL ? 'تحويل يدوي' : 'Manual transfer',
+      accent: 'from-emerald-500/20 to-teal-500/10',
+      iconBg: 'bg-emerald-500/15',
+      iconColor: 'text-emerald-400',
+      requireReference: false,
+    };
+  };
 
   // Fetch Doctors with Pagination
   const fetchDoctors = async (page = 1) => {
@@ -131,9 +169,21 @@ export default function ReserveAppointment() {
     }
   };
 
+  const fetchBookingsForSlots = async () => {
+    try {
+      const response = await patientAPI.getPatientBookings(1, 100);
+      if (response?.IsSuccess && response?.Data) {
+        setBookingsForSlots(response.Data.Items || []);
+      }
+    } catch (error) {
+      console.error('Error fetching bookings for slots:', error);
+    }
+  };
+
   useEffect(() => {
     if (mainTab === "reserve") {
       fetchDoctors(1);
+      fetchBookingsForSlots();
       const doctorIdFromUrl = searchParams.get("doctorId");
       if (doctorIdFromUrl) {
         handleSelectDoctor(doctorIdFromUrl);
@@ -143,12 +193,57 @@ export default function ReserveAppointment() {
     }
   }, [mainTab]);
 
+  useEffect(() => {
+    const nextParams = new URLSearchParams(searchParams);
+
+    if (mainTab === "status") {
+      nextParams.set("tab", "status");
+    } else {
+      nextParams.delete("tab");
+    }
+
+    const current = searchParams.toString();
+    const next = nextParams.toString();
+    if (current !== next) {
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [mainTab, searchParams, setSearchParams]);
+
   // Re-fetch doctor slots when the user navigates to a different week
   useEffect(() => {
     if (step === 2 && selectedDoctor) {
       fetchDoctorSlots(selectedDoctor.Id, selectedDate);
     }
   }, [selectedDate]);
+
+  useEffect(() => {
+    const fetchPaymentProviders = async () => {
+      setPaymentProvidersLoading(true);
+      try {
+        const response = await paymentAPI.getProviders();
+        if (response?.IsSuccess !== false && Array.isArray(response?.Data) && response.Data.length > 0) {
+          setPaymentProviders(response.Data);
+          if (!response.Data.some((p) => Number(p.ID) === Number(selectedPaymentProvider))) {
+            setSelectedPaymentProvider(response.Data[0].ID);
+          }
+        } else {
+          setPaymentProviders(fallbackPaymentProviders);
+          if (!fallbackPaymentProviders.some((p) => Number(p.ID) === Number(selectedPaymentProvider))) {
+            setSelectedPaymentProvider(fallbackPaymentProviders[0].ID);
+          }
+        }
+      } catch {
+        setPaymentProviders(fallbackPaymentProviders);
+        if (!fallbackPaymentProviders.some((p) => Number(p.ID) === Number(selectedPaymentProvider))) {
+          setSelectedPaymentProvider(fallbackPaymentProviders[0].ID);
+        }
+      } finally {
+        setPaymentProvidersLoading(false);
+      }
+    };
+
+    fetchPaymentProviders();
+  }, []);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -162,6 +257,27 @@ export default function ReserveAppointment() {
     const month = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
+  };
+
+  const buildSlotKeyFromDateTime = (dateTimeValue) => {
+    if (!dateTimeValue) return null;
+    const d = new Date(dateTimeValue);
+    if (Number.isNaN(d.getTime())) return null;
+    const dateKey = formatDateKey(d);
+    const hour = String(d.getHours()).padStart(2, '0');
+    const minute = String(d.getMinutes()).padStart(2, '0');
+    return `${dateKey}-${hour}:${minute}`;
+  };
+
+  const getBookingStatusMeta = (statusValue) => {
+    const normalized = Number(statusValue);
+    if (normalized === 0) return { label: isRTL ? 'قيد المراجعة' : 'Pending', className: 'bg-amber-500/15 text-amber-300 border-amber-500/35' };
+    if (normalized === 1) return { label: isRTL ? 'مؤكد' : 'Approved', className: 'bg-blue-500/15 text-blue-300 border-blue-500/35' };
+    if (normalized === 2) return { label: isRTL ? 'قيد الجلسة' : 'In Progress', className: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/35' };
+    if (normalized === 3) return { label: isRTL ? 'مكتمل' : 'Completed', className: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35' };
+    if (normalized === 4) return { label: isRTL ? 'ملغي' : 'Cancelled', className: 'bg-red-500/15 text-red-300 border-red-500/35' };
+    if (normalized === 5) return { label: isRTL ? 'لم يحضر' : 'No Show', className: 'bg-slate-500/20 text-slate-200 border-slate-400/35' };
+    return { label: isRTL ? 'طلبي' : 'My request', className: 'bg-primary/15 text-primary border-primary/35' };
   };
 
   // Get the week date range for a given base date
@@ -316,6 +432,7 @@ export default function ReserveAppointment() {
         toast.success(t('success.appointmentCancelled'));
         // Refresh bookings
         fetchPatientBookings(bookingsPagination.pageIndex);
+        fetchBookingsForSlots();
       } else {
         toast.error(response?.Message || t('errors.cancelFailed'));
       }
@@ -337,28 +454,33 @@ export default function ReserveAppointment() {
     handleCancelReservation(bookingId);
   };
 
-  const initiatePaymentForBooking = async (bookingId, amount) => {
-    if (!bookingId) return;
-    const safeAmount = Number(amount || 0);
-    if (safeAmount <= 0) {
-      toast.error(isRTL ? 'لا يمكن بدء الدفع بدون قيمة صحيحة' : 'Cannot initiate payment without a valid amount');
-      return;
+  const submitManualPaymentForBooking = async (bookingId) => {
+    if (!bookingId) return false;
+    if (!paymentScreenshot) {
+      toast.error(isRTL ? 'يرجى إرفاق صورة التحويل' : 'Please attach a transfer screenshot');
+      return false;
     }
 
     setPaymentLoading(true);
     try {
-      const providerValue = selectedPaymentProvider === 'instapay' ? 2 : 3;
-      const response = await paymentAPI.initiatePayment({
+      const uploadResponse = await filesAPI.uploadFile(paymentScreenshot);
+      const screenshotUrl = uploadResponse?.Data?.PublicUrl;
+
+      if (!screenshotUrl) {
+        toast.error(isRTL ? 'فشل رفع صورة التحويل' : 'Failed to upload transfer screenshot');
+        return false;
+      }
+
+      const response = await paymentAPI.submitManualPayment({
         BookingId: bookingId,
-        Provider: providerValue,
-        Amount: safeAmount,
-        Screenshot: paymentScreenshot,
-        ReferenceNumber: selectedPaymentProvider === 'instapay' ? referenceNumber : undefined,
+        ScreenshotUrl: screenshotUrl,
+        ReferenceNumber: referenceNumber.trim() || null,
+        PaymentMethod: Number(selectedPaymentProvider),
       });
 
       if (response?.IsSuccess === false) {
         toast.error(response?.Message || t('errors.unexpectedError'));
-        return;
+        return false;
       }
 
       toast.success(
@@ -367,8 +489,11 @@ export default function ReserveAppointment() {
           : 'Payment proof submitted. Booking will stay pending until technical support reviews it.'
       );
       fetchPatientBookings(bookingsPagination.pageIndex);
+      fetchBookingsForSlots();
+      return true;
     } catch (error) {
-      toast.error(error?.response?.data?.Message || (isRTL ? 'فشل بدء عملية الدفع' : 'Failed to initiate payment'));
+      toast.error(error?.response?.data?.Message || (isRTL ? 'فشل إرسال إثبات الدفع' : 'Failed to submit payment proof'));
+      return false;
     } finally {
       setPaymentLoading(false);
     }
@@ -376,6 +501,7 @@ export default function ReserveAppointment() {
 
   const handleConfirmBookingClick = () => {
     if (!bookedSlot) return;
+    setPendingManualPaymentBookingId(null);
     setPaymentScreenshot(null);
     setReferenceNumber('');
     setIsPaymentModalOpen(true);
@@ -390,47 +516,16 @@ export default function ReserveAppointment() {
       toast.error(isRTL ? 'يرجى إرفاق صورة التحويل' : 'Please attach a transfer screenshot');
       return;
     }
-    if (selectedPaymentProvider === 'instapay' && !referenceNumber.trim()) {
-      toast.error(isRTL ? 'يرجى إدخال رقم المرجع' : 'Please enter the reference number');
+
+    if (pendingManualPaymentBookingId) {
+      setIsPaymentModalOpen(false);
+      await submitManualPaymentForBooking(pendingManualPaymentBookingId);
+      setPendingManualPaymentBookingId(null);
       return;
     }
+
     setIsPaymentModalOpen(false);
     await confirmBooking();
-  };
-
-  const checkBookingPaymentStatus = async (bookingId) => {
-    if (!bookingId) return;
-    setPaymentLoading(true);
-    try {
-      const response = await paymentAPI.getPaymentStatus(bookingId);
-      if (response?.IsSuccess === false || !response?.Data) {
-        toast.error(response?.Message || t('errors.unexpectedError'));
-        return;
-      }
-
-      const paid = Number(response.Data.Status) === 2;
-      toast.success(
-        paid
-          ? (isRTL ? 'تم تأكيد الدفع' : 'Payment confirmed')
-          : (isRTL ? 'الدفع غير مكتمل بعد' : 'Payment is not completed yet')
-      );
-
-      fetchPatientBookings(bookingsPagination.pageIndex);
-    } catch (error) {
-      toast.error(error?.response?.data?.Message || (isRTL ? 'فشل التحقق من الدفع' : 'Failed to check payment status'));
-    } finally {
-      setPaymentLoading(false);
-    }
-  };
-
-  const handlePayNowFromStatus = async (bookingId) => {
-    const amountInput = window.prompt(isRTL ? 'أدخل مبلغ الدفع (EGP)' : 'Enter payment amount (EGP)');
-    const amount = Number(amountInput);
-    if (!Number.isFinite(amount) || amount <= 0) {
-      toast.error(isRTL ? 'يرجى إدخال مبلغ صحيح' : 'Please enter a valid payment amount');
-      return;
-    }
-    await initiatePaymentForBooking(bookingId, amount);
   };
 
   const resolveStatusInfo = (booking) => {
@@ -455,6 +550,21 @@ export default function ReserveAppointment() {
     }
 
     return { label: isRTL ? 'قيد الانتظار' : 'Pending', variant: 'warning', key: 'pending' };
+  };
+
+  const resolvePaymentStatusInfo = (booking) => {
+    const rawPaymentStatus = booking?.PaymentStatus ?? booking?.paymentStatus;
+
+    if (rawPaymentStatus !== undefined && rawPaymentStatus !== null && String(rawPaymentStatus) !== '') {
+      return getPaymentStatusMeta(rawPaymentStatus, { isRTL });
+    }
+
+    // Backward compatibility if API still returns PaymentConfirmed without PaymentStatus
+    if (booking?.PaymentConfirmed === true) {
+      return getPaymentStatusMeta(2, { isRTL });
+    }
+
+    return getPaymentStatusMeta(1, { isRTL });
   };
 
   const handleSlotClick = (date, timeKey) => {
@@ -509,10 +619,11 @@ export default function ReserveAppointment() {
       const response = await patientAPI.createBooking(bookingRequest);
       if (response.IsSuccess) {
         const bookingId = response?.Data?.BookingId;
-        const doctorFee = Number(selectedDoctor?.ConsultationFee || 0);
-
-        if (bookingId && doctorFee > 0) {
-          await initiatePaymentForBooking(bookingId, doctorFee);
+        if (bookingId) {
+          const submitted = await submitManualPaymentForBooking(bookingId);
+          if (!submitted) {
+            return;
+          }
         }
 
         setBookingPendingReview(true);
@@ -560,6 +671,21 @@ export default function ReserveAppointment() {
 
     return weekDates;
   };
+
+  const availablePaymentProviders = paymentProviders.length > 0 ? paymentProviders : fallbackPaymentProviders;
+  const activeProvider = availablePaymentProviders.find((p) => Number(p.ID) === Number(selectedPaymentProvider)) || availablePaymentProviders[0];
+  const activeProviderMeta = getProviderUiMeta(activeProvider || {});
+  const mySlotBookingsByKey = useMemo(() => {
+    if (!selectedDoctor?.Id) return {};
+    const map = {};
+    bookingsForSlots.forEach((booking) => {
+      if (String(booking?.DoctorId) !== String(selectedDoctor.Id)) return;
+      const key = buildSlotKeyFromDateTime(booking?.SessionStartTime);
+      if (!key) return;
+      map[key] = booking;
+    });
+    return map;
+  }, [bookingsForSlots, selectedDoctor]);
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 p-4 md:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -1002,6 +1128,14 @@ export default function ReserveAppointment() {
                             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 block" />
                             <span>{isRTL ? 'متاح' : 'Available'}</span>
                           </div>
+                          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                            <span className="w-2.5 h-2.5 rounded-full bg-amber-500 block" />
+                            <span>{isRTL ? 'طلبي' : 'My request'}</span>
+                          </div>
+                          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                            <span className="w-2.5 h-2.5 rounded-full bg-slate-400 block" />
+                            <span>{isRTL ? 'محجوز' : 'Booked'}</span>
+                          </div>
                         </div>
 
                         {(() => {
@@ -1020,9 +1154,20 @@ export default function ReserveAppointment() {
                                 const mm = String(date.getMonth() + 1).padStart(2, '0');
                                 const dd = String(date.getDate()).padStart(2, '0');
                                 const dateKey = `${yyyy}-${mm}-${dd}`;
-                                const daySlots = Object.entries(slots)
+                                const dayAvailableSlots = Object.entries(slots)
                                   .filter(([k]) => k.startsWith(dateKey) && slots[k] === 'available')
                                   .map(([k]) => k.replace(`${dateKey}-`, ''));
+                                const dayMyBookedSlots = Object.keys(mySlotBookingsByKey)
+                                  .filter((k) => k.startsWith(dateKey))
+                                  .map((k) => k.replace(`${dateKey}-`, ''));
+                                const dayBookedSlotsByOthers = Object.entries(slots)
+                                  .filter(([k, status]) => k.startsWith(dateKey) && status === 'booked' && !mySlotBookingsByKey[k])
+                                  .map(([k]) => k.replace(`${dateKey}-`, ''));
+                                const daySlots = Array.from(new Set([...dayAvailableSlots, ...dayMyBookedSlots, ...dayBookedSlotsByOthers]));
+                                const availableCount = dayAvailableSlots.length;
+                                const myRequestsCount = dayMyBookedSlots.length;
+                                const bookedCount = dayBookedSlotsByOthers.length;
+                                const totalCount = daySlots.length;
 
                                 if (daySlots.length === 0) {
                                   return null;
@@ -1041,35 +1186,85 @@ export default function ReserveAppointment() {
                                         )}
                                       </div>
 
-                                      <span className="text-xs px-2.5 py-1 rounded-full bg-background-subtle border border-border text-text-muted">
-                                        {daySlots.length > 0
-                                          ? `${daySlots.length} ${isRTL ? 'مواعيد متاحة' : 'slots available'}`
-                                          : (isRTL ? 'غير متاح' : 'Unavailable')}
-                                      </span>
+                                      <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                                        <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 border border-primary/25 text-primary">
+                                          {totalCount} {isRTL ? 'إجمالي المواعيد' : 'total slots'}
+                                        </span>
+                                        {availableCount > 0 && (
+                                          <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300">
+                                            {availableCount} {isRTL ? 'متاح' : 'available'}
+                                          </span>
+                                        )}
+                                        {myRequestsCount > 0 && (
+                                          <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-300">
+                                            {myRequestsCount} {isRTL ? 'طلبي' : 'my request'}
+                                          </span>
+                                        )}
+                                        {bookedCount > 0 && (
+                                          <span className="text-xs px-2.5 py-1 rounded-full bg-slate-500/15 border border-slate-400/25 text-slate-300">
+                                            {bookedCount} {isRTL ? 'محجوز' : 'booked'}
+                                          </span>
+                                        )}
+                                        {availableCount === 0 && myRequestsCount === 0 && (
+                                          <span className="text-xs px-2.5 py-1 rounded-full bg-background-subtle border border-border text-text-muted">
+                                            {isRTL ? 'غير متاح' : 'Unavailable'}
+                                          </span>
+                                        )}
+                                      </div>
                                     </div>
 
-                                    <div className="flex flex-wrap gap-2.5">
+                                    <div className="flex flex-wrap gap-3">
                                       {daySlots.sort((a, b) => {
                                         const [ah, am] = a.split(':').map(Number);
                                         const [bh, bm] = b.split(':').map(Number);
                                         return (ah * 60 + am) - (bh * 60 + bm);
                                       }).map((timeKey) => {
+                                        const slotKey = `${dateKey}-${timeKey}`;
+                                        const myBooking = mySlotBookingsByKey[slotKey];
+                                        const myBookingStatus = myBooking ? getBookingStatusMeta(myBooking.Status) : null;
                                         const isSelected = bookedSlot
                                           && bookedSlot.date.toDateString() === date.toDateString()
                                           && bookedSlot.timeKey === timeKey;
+                                        const isAvailableSlot = slots[slotKey] === 'available';
+                                        const isBookedByOthers = !myBooking && slots[slotKey] === 'booked';
+                                        const isClickableSlot = myBooking || isAvailableSlot;
 
                                         return (
                                           <button
                                             key={timeKey}
-                                            onClick={() => handleSlotClick(date, timeKey)}
+                                            onClick={() => {
+                                              if (myBooking) {
+                                                setMainTab('status');
+                                                return;
+                                              }
+                                              if (isBookedByOthers) {
+                                                return;
+                                              }
+                                              handleSlotClick(date, timeKey);
+                                            }}
                                             className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border-2 flex items-center gap-1.5 ${
-                                              isSelected
+                                              myBooking
+                                                ? `${myBookingStatus.className} hover:opacity-95 shadow-sm`
+                                                : isBookedByOthers
+                                                ? 'bg-slate-500/10 text-slate-300 border-slate-400/35 cursor-not-allowed'
+                                                : isSelected
                                                 ? 'bg-primary text-white border-primary shadow-md shadow-primary/30'
                                                 : 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400'
                                             }`}
+                                            disabled={!isClickableSlot}
                                           >
-                                            {isSelected ? <CheckCircle className="w-3.5 h-3.5" /> : null}
+                                            {myBooking ? null : isSelected ? <CheckCircle className="w-3.5 h-3.5" /> : null}
                                             {formatHourLabel(timeKey)}
+                                            {myBooking && (
+                                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/20 border border-current/30">
+                                                {myBookingStatus.label}
+                                              </span>
+                                            )}
+                                            {isBookedByOthers && (
+                                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-700/40 border border-slate-400/30">
+                                                {isRTL ? 'محجوز' : 'Booked'}
+                                              </span>
+                                            )}
                                           </button>
                                         );
                                       })}
@@ -1139,56 +1334,27 @@ export default function ReserveAppointment() {
 
                         <div className={`space-y-2 ${isRTL ? 'text-right' : ''}`}>
                           <p className="text-xs text-text-muted font-semibold">{isRTL ? 'طريقة الدفع' : 'Payment Method'}</p>
-                          <div className="grid grid-cols-2 gap-2.5">
-                            {[
-                              {
-                                id: 'instapay',
-                                label: 'InstaPay',
-                                icon: FlashOn,
-                                desc: isRTL ? 'تحويل فوري' : 'Instant transfer',
-                                accent: 'from-amber-500/20 to-orange-500/10',
-                                iconBg: 'bg-amber-500/15',
-                                iconColor: 'text-amber-400',
-                              },
-                              {
-                                id: 'cash_wallet',
-                                label: isRTL ? 'كاش وولت' : 'Cash Wallet',
-                                icon: AccountBalanceWallet,
-                                desc: isRTL ? 'محفظة رقمية' : 'Digital wallet',
-                                accent: 'from-emerald-500/20 to-teal-500/10',
-                                iconBg: 'bg-emerald-500/15',
-                                iconColor: 'text-emerald-400',
-                              },
-                            ].map((p) => {
-                              const Icon = p.icon;
-                              const isSelected = selectedPaymentProvider === p.id;
-
-                              return (
-                                <button
-                                  key={p.id}
-                                  onClick={() => handlePaymentProviderSelect(p.id)}
-                                  className={`relative overflow-hidden flex flex-col items-start gap-2 p-3 rounded-xl border-2 transition-all duration-200 text-left ${isRTL ? 'text-right' : ''} ${
-                                    isSelected
-                                      ? 'border-primary bg-primary/10 shadow-md shadow-primary/20 ring-1 ring-primary/30'
-                                      : 'border-border bg-background-paper hover:border-primary/40 hover:bg-primary/5'
-                                  }`}
-                                >
-                                  <div className={`absolute inset-0 bg-gradient-to-br ${p.accent} opacity-70`} />
-                                  <div className={`relative w-full flex items-start justify-between gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                                    <div className={`w-9 h-9 rounded-lg ${p.iconBg} flex items-center justify-center`}>
-                                      <Icon className={`w-5 h-5 ${p.iconColor}`} />
-                                    </div>
-                                    {isSelected ? (
-                                      <SelectedIcon className="w-5 h-5 text-primary" />
-                                    ) : (
-                                      <RadioButtonUnchecked className="w-5 h-5 text-text-muted" />
-                                    )}
-                                  </div>
-                                  <span className={`relative text-xs font-bold ${isSelected ? 'text-primary' : 'text-text-heading'}`}>{p.label}</span>
-                                  <span className="relative text-[10px] text-text-muted">{p.desc}</span>
-                                </button>
-                              );
-                            })}
+                          {paymentProvidersLoading && (
+                            <p className="text-xs text-text-muted">{isRTL ? 'جاري تحميل وسائل الدفع...' : 'Loading payment providers...'}</p>
+                          )}
+                          <div className="rounded-xl border border-border bg-background-subtle p-3">
+                            <label className="text-[11px] text-text-muted block mb-1.5">
+                              {isRTL ? 'اختر وسيلة الدفع' : 'Choose payment provider'}
+                            </label>
+                            <select
+                              value={selectedPaymentProvider}
+                              onChange={(e) => handlePaymentProviderSelect(Number(e.target.value))}
+                              className="w-full px-3 py-2.5 rounded-lg border border-border bg-background-paper text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+                            >
+                              {availablePaymentProviders.map((provider) => (
+                                <option key={provider.ID} value={provider.ID}>
+                                  {provider.Name}
+                                </option>
+                              ))}
+                            </select>
+                            <p className="text-xs text-text-muted mt-2">
+                              {activeProviderMeta.label} - {activeProviderMeta.desc}
+                            </p>
                           </div>
                         </div>
 
@@ -1218,18 +1384,18 @@ export default function ReserveAppointment() {
                   <div className="space-y-5">
                     {/* Provider badge */}
                     <div className={`flex items-center gap-3 p-4 rounded-2xl border-2 ${
-                      selectedPaymentProvider === 'instapay'
+                      activeProviderMeta.requireReference
                         ? 'bg-violet-50 border-violet-200 dark:bg-violet-900/20 dark:border-violet-700'
                         : 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-700'
                     }`}>
-                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${selectedPaymentProvider === 'instapay' ? 'bg-violet-500/15' : 'bg-emerald-500/15'}`}>
-                        {selectedPaymentProvider === 'instapay'
+                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${activeProviderMeta.requireReference ? 'bg-violet-500/15' : 'bg-emerald-500/15'}`}>
+                        {activeProviderMeta.requireReference
                           ? <FlashOn className="w-6 h-6 text-violet-500" />
                           : <AccountBalanceWallet className="w-6 h-6 text-emerald-500" />}
                       </div>
                       <div>
                         <p className="font-bold text-text-heading text-base">
-                          {selectedPaymentProvider === 'instapay' ? 'InstaPay' : (isRTL ? 'كاش وولت' : 'Cash Wallet')}
+                          {activeProviderMeta.label}
                         </p>
                         <p className="text-xs text-text-muted">
                           {isRTL ? 'يرجى اتباع التعليمات بدقة' : 'Please follow the instructions carefully'}
@@ -1243,7 +1409,7 @@ export default function ReserveAppointment() {
                       <div className="space-y-2 text-sm text-text-muted">
                         <div className="flex items-start gap-2">
                           <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
-                          <p>{isRTL ? `قم بتحويل المبلغ المطلوب عبر ${selectedPaymentProvider === 'instapay' ? 'InstaPay' : 'كاش وولت'}` : `Transfer the required amount via ${selectedPaymentProvider === 'instapay' ? 'InstaPay' : 'Cash Wallet'}`}</p>
+                          <p>{isRTL ? `قم بتحويل المبلغ المطلوب عبر ${activeProviderMeta.label}` : `Transfer the required amount via ${activeProviderMeta.label}`}</p>
                         </div>
                         <div className="flex items-start gap-2">
                           <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
@@ -1265,12 +1431,12 @@ export default function ReserveAppointment() {
                     </div>
 
                     {/* InstaPay-only: Reference Number */}
-                    {selectedPaymentProvider === 'instapay' && (
+                    {activeProviderMeta.requireReference && (
                       <div>
                         <label className="text-sm font-semibold text-text-heading block mb-1.5">
                           <ReceiptLong className="w-4 h-4 inline-block mr-1" />
                           {isRTL ? 'رقم المرجع (Reference Number)' : 'Reference Number'}
-                          <span className="text-red-500 ml-1">*</span>
+                          <span className="text-text-muted ml-1">({isRTL ? 'اختياري' : 'optional'})</span>
                         </label>
                         <input
                           type="text"
@@ -1323,9 +1489,9 @@ export default function ReserveAppointment() {
                       <Button
                         className="flex-1 gap-2"
                         onClick={handlePaymentSubmit}
-                        disabled={loading || !paymentScreenshot || (selectedPaymentProvider === 'instapay' && !referenceNumber.trim())}
+                        disabled={loading || paymentLoading || !paymentScreenshot}
                       >
-                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                        {(loading || paymentLoading) ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                         {isRTL ? 'دفع وإرسال الإثبات' : 'Pay & Submit Proof'}
                       </Button>
                     </div>
@@ -1497,6 +1663,7 @@ export default function ReserveAppointment() {
               {patientBookings.length > 0 ? (
                 patientBookings.map((booking) => {
                   const statusInfo = resolveStatusInfo(booking);
+                  const paymentStatusInfo = resolvePaymentStatusInfo(booking);
                   const sessionDate = booking.SessionStartTime ? new Date(booking.SessionStartTime) : null;
                   const canCancel = statusInfo.key === 'pending' || statusInfo.key === 'approved';
 
@@ -1542,6 +1709,11 @@ export default function ReserveAppointment() {
                           <div className="flex items-center gap-2">
                             <Badge variant={statusInfo.variant}>
                               {statusInfo.label}
+                            </Badge>
+
+                            <Badge variant={paymentStatusInfo.badgeVariant}>
+                              {isRTL ? 'الدفع: ' : 'Payment: '}
+                              {paymentStatusInfo.label}
                             </Badge>
 
                             {canCancel && (

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { People as Users, FilterList as Filter, Sync as Loader2, ChevronLeft, ChevronRight, AccessTime as Clock } from '@mui/icons-material'
 import { useToast } from '../../components/ui/Toast'
@@ -20,6 +21,7 @@ const BookingStatusMap = {
 export default function PatientQueue() {
   const toast = useToast()
   const { t } = useLanguage()
+  const navigate = useNavigate()
   const [filter, setFilter] = useState('all')
   const [bookings, setBookings] = useState([])
   const [loading, setLoading] = useState(true)
@@ -63,6 +65,8 @@ export default function PatientQueue() {
 
     return {
       id: booking.Id,
+      bookingId: booking.Id,
+      patientId: booking.PatientId,
       name: booking.PatientName || 'Unknown Patient',
       status: BookingStatusMap[booking.Status] || 'waiting',
       statusCode: booking.Status,
@@ -85,10 +89,24 @@ export default function PatientQueue() {
       : 0
   }
 
-  const handleAction = (action, id) => {
+  const handleAction = (action, patient) => {
+    if (action === 'start') {
+      const params = new URLSearchParams()
+      if (patient?.patientId !== undefined && patient?.patientId !== null && String(patient.patientId) !== '') {
+        params.set('patientId', String(patient.patientId))
+      }
+      if (patient?.bookingId !== undefined && patient?.bookingId !== null && String(patient.bookingId) !== '') {
+        params.set('bookingId', String(patient.bookingId))
+      }
+
+      const query = params.toString()
+      navigate(`/dashboard/doctor/messages${query ? `?${query}` : ''}`)
+      return
+    }
+
     // Actions would need a backend endpoint to update booking status
     // For now, show a toast and refresh
-    toast.success(`Action "${action}" triggered for booking #${id}`)
+    toast.success(`Action "${action}" triggered for booking #${patient?.id}`)
     // Could call an API to update status here in the future
     fetchBookings()
   }

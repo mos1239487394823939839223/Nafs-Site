@@ -49,7 +49,7 @@ export default function QueueItem({ patient, onAction }) {
                             variant="outline"
                             size="sm"
                             className={`text-red-600 hover:bg-red-50 border-red-100 hover:border-red-200 ${isRTL ? 'flex-row-reverse' : ''}`}
-                            onClick={() => onAction('no-show', patient.id)}
+                            onClick={() => onAction('no-show', patient)}
                         >
                             <XCircle className={`w-4 h-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />
                             {t('doctor.noShow', 'No Show')}
@@ -57,7 +57,7 @@ export default function QueueItem({ patient, onAction }) {
                         <Button
                             size="sm"
                             className={`bg-primary hover:bg-primary-dark text-white ${isRTL ? 'flex-row-reverse' : ''}`}
-                            onClick={() => onAction('start', patient.id)}
+                            onClick={() => onAction('start', patient)}
                         >
                             <Play className={`w-4 h-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />
                             {t('doctor.startSession', 'Start Session')}
@@ -69,7 +69,7 @@ export default function QueueItem({ patient, onAction }) {
                     <Button
                         size="sm"
                         className={`bg-[#dcfce7] hover:bg-[#bbf7d0] text-green-700 border border-green-300 ${isRTL ? 'flex-row-reverse' : ''}`}
-                        onClick={() => onAction('complete', patient.id)}
+                        onClick={() => onAction('complete', patient)}
                     >
                         <CheckCircle className={`w-4 h-4 ${isRTL ? 'ml-1' : 'mr-1'}`} />
                         {t('doctor.completeSession', 'Complete Session')}

@@ -138,10 +138,14 @@ export default function MessagesPage() {
   const [searchParams, setSearchParams] = useSearchParams()
 
   const initialRoomId = searchParams.get('room')
+  const initialPatientId = searchParams.get('patientId')
+  const initialBookingId = searchParams.get('bookingId')
   const currentUserId = String(user?.ID ?? user?.Id ?? user?.id ?? '')
 
   const [activeRoom, setActiveRoom] = useState(null)
   const [pendingRoomId] = useState(initialRoomId || null)
+  const [pendingPatientId] = useState(initialPatientId || null)
+  const [pendingBookingId] = useState(initialBookingId || null)
   const [rooms, setRooms] = useState([])
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false)
@@ -169,10 +173,12 @@ export default function MessagesPage() {
 
   // ── Sync URL ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    const params = {}
-    if (activeRoom) params.room = String(activeRoom.Id || activeRoom.id)
-    setSearchParams(params, { replace: true })
-  }, [activeRoom, setSearchParams])
+    if (!activeRoom) return
+    const roomId = String(activeRoom.Id || activeRoom.id || '')
+    if (!roomId) return
+    if (searchParams.get('room') === roomId && !searchParams.get('patientId') && !searchParams.get('bookingId')) return
+    setSearchParams({ room: roomId }, { replace: true })
+  }, [activeRoom, searchParams, setSearchParams])
 
   // ── Restore from URL ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -181,6 +187,26 @@ export default function MessagesPage() {
       if (match) setActiveRoom(match)
     }
   }, [rooms, pendingRoomId, activeRoom])
+
+  useEffect(() => {
+    if (activeRoom || rooms.length === 0 || pendingRoomId) return
+
+    const patientId = String(pendingPatientId || '')
+    const bookingId = String(pendingBookingId || '')
+    if (!patientId && !bookingId) return
+
+    const match = rooms.find((room) => {
+      const roomPatientId = String(room?.PatientId || room?.patientId || '')
+      const roomBookingId = String(room?.BookingId || room?.bookingId || '')
+      if (patientId && roomPatientId === patientId) return true
+      if (bookingId && roomBookingId === bookingId) return true
+      return false
+    })
+
+    if (match) {
+      setActiveRoom(match)
+    }
+  }, [activeRoom, rooms, pendingRoomId, pendingPatientId, pendingBookingId])
 
   // ── Fetch Rooms ─────────────────────────────────────────────────────────────
   const fetchRooms = useCallback(async () => {

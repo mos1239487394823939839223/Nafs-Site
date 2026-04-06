@@ -668,8 +668,47 @@ export const paymentAPI = {
         return response.data;
     },
 
+    submitManualPayment: async (payload) => {
+        const response = await api.post('/Payment/Manual', payload);
+        return response.data;
+    },
+
+    getProviders: async () => {
+        const response = await api.get('/Payment/Providers');
+        return response.data;
+    },
+
     getPaymentStatus: async (bookingId) => {
         const response = await api.get(`/Patient/Payment/${bookingId}/Status`);
+        return response.data;
+    },
+};
+
+// ─── Customer Support API Functions ─────────────────────────────────────────
+export const customerSupportAPI = {
+    getManualPayments: async (pageIndex = 1, pageSize = 20, status = null) => {
+        const params = {
+            pageIndex,
+            pageSize,
+        };
+
+        if (status !== null && status !== undefined && status !== '') {
+            params.status = status;
+        }
+
+        const response = await api.get('/CustomerSupport/ManualPayments', { params });
+        return response.data;
+    },
+
+    confirmManualPayment: async (id) => {
+        const response = await api.put(`/CustomerSupport/ManualPayments/${id}/Confirm`);
+        return response.data;
+    },
+
+    rejectManualPayment: async (id, rejectionReason) => {
+        const response = await api.put(`/CustomerSupport/ManualPayments/${id}/Reject`, {
+            RejectionReason: rejectionReason || null,
+        });
         return response.data;
     },
 };
