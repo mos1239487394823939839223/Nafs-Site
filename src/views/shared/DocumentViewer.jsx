@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { Download, ArrowBack } from '@mui/icons-material'
-import { renderAsync } from 'docx-preview'
+import DocViewer, { DocViewerRenderers } from '@cyntler/react-doc-viewer'
+import '@cyntler/react-doc-viewer/dist/index.css'
 import Button from '../../components/ui/Button'
 import { useLanguage } from '../../contexts/LanguageContext'
 
@@ -17,7 +18,8 @@ const readDocuments = (storageKey) => {
 }
 
 const getFileTypeFromName = (fileName = '') => {
-  const extension = fileName.split('.').pop()?.toLowerCase()
+  const cleanName = fileName.split('?')[0].split('#')[0]
+  const extension = cleanName.split('.').pop()?.toLowerCase()
   return extension || undefined
 }
 
@@ -26,15 +28,26 @@ const getMimeTypeFromDataUrl = (dataUrl = '') => {
   return match?.[1] || ''
 }
 
-const dataUrlToBlob = async (dataUrl) => {
-  const response = await fetch(dataUrl)
-  return response.blob()
+const OFFICE_EXTENSIONS = new Set(['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'])
+
+const isHttpUrl = (value = '') => /^https?:\/\//i.test(value)
+
+const deriveNameFromUrl = (url = '') => {
+  try {
+    const pathname = new URL(url).pathname
+    const rawName = pathname.split('/').pop() || ''
+    return decodeURIComponent(rawName) || 'document'
+  } catch {
+    return 'document'
+  }
 }
 
-const downloadDataUrl = (dataUrl, fileName) => {
+const downloadFile = (url, fileName) => {
   const anchor = document.createElement('a')
-  anchor.href = dataUrl
+  anchor.href = url
   anchor.download = fileName
+  anchor.target = '_blank'
+  anchor.rel = 'noopener noreferrer'
   document.body.appendChild(anchor)
   anchor.click()
   document.body.removeChild(anchor)
@@ -45,66 +58,60 @@ export default function DocumentViewer() {
   const [searchParams] = useSearchParams()
   const storageKey = searchParams.get('storageKey') || ''
   const docId = searchParams.get('docId') || ''
-  const docxContainerRef = useRef(null)
-  const [docxError, setDocxError] = useState('')
+  const remoteFileUrl = searchParams.get('fileUrl') || ''
+  const remoteFileName = searchParams.get('fileName') || ''
+  const remoteMimeType = searchParams.get('mimeType') || ''
 
   const documentItem = useMemo(() => {
+    if (remoteFileUrl) {
+      return {
+        id: 'remote-file',
+        name: remoteFileName || deriveNameFromUrl(remoteFileUrl),
+        type: remoteMimeType,
+        dataUrl: remoteFileUrl,
+      }
+    }
+
     if (!storageKey || !docId) return null
     const allDocuments = readDocuments(storageKey)
     return allDocuments.find((doc) => doc.id === docId) || null
-  }, [storageKey, docId])
+  }, [storageKey, docId, remoteFileUrl, remoteFileName, remoteMimeType])
 
-  const extension = useMemo(() => getFileTypeFromName(documentItem?.name || ''), [documentItem])
-  const mimeType = useMemo(() => getMimeTypeFromDataUrl(documentItem?.dataUrl || ''), [documentItem])
-  const isDocx = extension === 'docx'
+  const sourceUrl = documentItem?.dataUrl || documentItem?.fileUrl || ''
+
+  const extension = useMemo(() => getFileTypeFromName(documentItem?.name || sourceUrl), [documentItem, sourceUrl])
+  const mimeType = useMemo(() => {
+    if (documentItem?.type) return documentItem.type
+    return getMimeTypeFromDataUrl(sourceUrl)
+  }, [documentItem, sourceUrl])
+
+  const isPdfPreview = useMemo(() => {
+    return mimeType === 'application/pdf' || extension === 'pdf'
+  }, [mimeType, extension])
+
   const isInlinePreviewSupported = useMemo(() => {
-    if (!documentItem) return false
-    if (isDocx) return true
+    if (!sourceUrl) return false
     if (mimeType.startsWith('image/')) return true
-    if (mimeType === 'application/pdf') return true
-    if (mimeType.startsWith('text/')) return true
+    if (OFFICE_EXTENSIONS.has(extension || '')) return true
     if (['txt', 'csv', 'json', 'xml', 'md', 'html'].includes(extension || '')) return true
     return false
-  }, [documentItem, extension, isDocx, mimeType])
+  }, [sourceUrl, extension, mimeType])
 
-  useEffect(() => {
-    if (!isDocx || !documentItem || !docxContainerRef.current) return
-
-    let cancelled = false
-    setDocxError('')
-    docxContainerRef.current.innerHTML = ''
-
-    const renderDocx = async () => {
-      try {
-        const blob = await dataUrlToBlob(documentItem.dataUrl)
-        const buffer = await blob.arrayBuffer()
-        if (cancelled || !docxContainerRef.current) return
-
-        await renderAsync(buffer, docxContainerRef.current, null, {
-          className: 'docx-preview-container',
-          inWrapper: true,
-          ignoreWidth: false,
-          ignoreHeight: true,
-          useBase64URL: true,
-          renderChanges: true,
-          breakPages: true,
-        })
-      } catch {
-        if (!cancelled) {
-          setDocxError(t('documents.docxRenderFailed'))
-        }
-      }
+  const officeViewerUrl = useMemo(() => {
+    if (!sourceUrl || !OFFICE_EXTENSIONS.has(extension || '') || !isHttpUrl(sourceUrl)) {
+      return ''
     }
+    return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(sourceUrl)}`
+  }, [sourceUrl, extension])
 
-    renderDocx()
-
-    return () => {
-      cancelled = true
-      if (docxContainerRef.current) {
-        docxContainerRef.current.innerHTML = ''
-      }
-    }
-  }, [documentItem, isDocx])
+  const docViewerDocuments = useMemo(() => {
+    if (!sourceUrl) return []
+    return [{
+      uri: sourceUrl,
+      fileType: extension,
+      fileName: documentItem?.name || 'document',
+    }]
+  }, [sourceUrl, extension, documentItem])
 
   if (!documentItem) {
     return (
@@ -130,7 +137,7 @@ export default function DocumentViewer() {
             <p className="text-sm text-text-muted">{t('documents.openedInNewTab')}</p>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="outline" onClick={() => downloadDataUrl(documentItem.dataUrl, documentItem.name)}>
+            <Button variant="outline" onClick={() => downloadFile(sourceUrl, documentItem.name)}>
               <Download className="w-4 h-4" />
               {t('common.download')}
             </Button>
@@ -138,27 +145,47 @@ export default function DocumentViewer() {
         </div>
 
         <div className="rounded-2xl border border-border overflow-hidden bg-background-paper" style={{ minHeight: '80vh' }}>
-          {isDocx ? (
-            <div className="h-[80vh] overflow-auto p-4 bg-white text-black">
-              {docxError ? (
-                <div className="h-full flex items-center justify-center text-sm text-red-600">{docxError}</div>
-              ) : (
-                <div ref={docxContainerRef} />
-              )}
-            </div>
-          ) : isInlinePreviewSupported ? (
+          {officeViewerUrl ? (
             <iframe
               title={documentItem.name}
-              src={documentItem.dataUrl}
+              src={officeViewerUrl}
               className="w-full h-[80vh]"
             />
+          ) : isPdfPreview ? (
+            <object
+              data={sourceUrl}
+              type="application/pdf"
+              className="w-full h-[80vh]"
+            >
+              <iframe
+                title={documentItem.name}
+                src={sourceUrl}
+                className="w-full h-[80vh]"
+              />
+            </object>
+          ) : isInlinePreviewSupported ? (
+            <div className="h-[80vh]">
+              <DocViewer
+                key={sourceUrl}
+                pluginRenderers={DocViewerRenderers}
+                documents={docViewerDocuments}
+                config={{
+                  header: {
+                    disableHeader: true,
+                    disableFileName: true,
+                    retainURLParams: true,
+                  },
+                }}
+                style={{ height: '100%' }}
+              />
+            </div>
           ) : (
             <div className="h-[80vh] flex items-center justify-center text-center p-8">
               <div>
                 <h2 className="text-xl font-semibold text-text-heading mb-2">{t('documents.previewNotAvailable')}</h2>
                 <p className="text-text-muted mb-4">{t('documents.previewNotAvailableDescription')}</p>
                 <div className="flex items-center justify-center gap-2">
-                  <Button variant="outline" onClick={() => downloadDataUrl(documentItem.dataUrl, documentItem.name)}>
+                  <Button variant="outline" onClick={() => downloadFile(sourceUrl, documentItem.name)}>
                     <Download className="w-4 h-4" />
                     {t('common.download')}
                   </Button>

@@ -15,6 +15,36 @@ const normalizeDocumentType = (value) => {
   return [1, 2, 3].includes(parsed) ? parsed : 1
 }
 
+const getFileExtension = (value = '') => {
+  const clean = value.split('?')[0].split('#')[0]
+  return clean.split('.').pop()?.toLowerCase() || ''
+}
+
+const inferMimeTypeFromName = (fileName = '') => {
+  const extension = getFileExtension(fileName)
+  const mimeByExtension = {
+    pdf: 'application/pdf',
+    png: 'image/png',
+    jpg: 'image/jpeg',
+    jpeg: 'image/jpeg',
+    webp: 'image/webp',
+    gif: 'image/gif',
+    bmp: 'image/bmp',
+    svg: 'image/svg+xml',
+    doc: 'application/msword',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    xls: 'application/vnd.ms-excel',
+    xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    ppt: 'application/vnd.ms-powerpoint',
+    pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    txt: 'text/plain',
+    csv: 'text/csv',
+    json: 'application/json',
+    xml: 'application/xml',
+  }
+  return mimeByExtension[extension] || 'application/octet-stream'
+}
+
 const safeReadLocalDocuments = (storageKey) => {
   try {
     const raw = localStorage.getItem(storageKey)
@@ -77,7 +107,7 @@ export default function LocalDocumentsManager({
               id: String(item.DocumentID),
               name: item.FileName || item.Title,
               title: item.Title,
-              type: '',
+              type: item.MimeType || item.ContentType || inferMimeTypeFromName(item.FileName || item.Title || ''),
               size: 0,
               uploadedAt: item.UploadedAt,
               fileUrl: item.FileUrl,
@@ -177,7 +207,13 @@ export default function LocalDocumentsManager({
 
   const handleViewDocument = (documentItem) => {
     if (documentItem.fileUrl) {
-      window.open(documentItem.fileUrl, '_blank', 'noopener,noreferrer')
+      const query = new URLSearchParams({
+        fileUrl: documentItem.fileUrl,
+        fileName: documentItem.name || 'document',
+        mimeType: documentItem.type || inferMimeTypeFromName(documentItem.name || ''),
+      }).toString()
+
+      window.open(`/document-viewer?${query}`, '_blank', 'noopener,noreferrer')
       return
     }
 
@@ -284,9 +320,13 @@ export default function LocalDocumentsManager({
                         <FileText className="w-4 h-4 shrink-0" />
                         <span className="truncate">{documentItem.name}</span>
                       </div>
-                      <p className="text-xs text-text-muted mt-1">
-                        {formatBytes(documentItem.size)} | {new Date(documentItem.uploadedAt).toLocaleString()}
-                      </p>
+                      {(documentItem.size > 0 || documentItem.uploadedAt) && (
+                        <p className="text-xs text-text-muted mt-1">
+                          {[documentItem.size > 0 ? formatBytes(documentItem.size) : null, documentItem.uploadedAt ? new Date(documentItem.uploadedAt).toLocaleString() : null]
+                            .filter(Boolean)
+                            .join(' | ')}
+                        </p>
+                      )}
                     </div>
                     <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" onClick={() => handleViewDocument(documentItem)}>

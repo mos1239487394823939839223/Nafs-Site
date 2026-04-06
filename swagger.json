@@ -39,10 +39,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -76,10 +76,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -103,10 +103,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -186,10 +186,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -213,10 +213,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -250,10 +250,224 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/Payment/Manual": {
+      "post": {
+        "tags": [
+          "Payment"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitManualPaymentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfstring"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/CustomerSupport/ManualPayments/{id}/Reject": {
+      "put": {
+        "tags": [
+          "CustomerSupport"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectManualPaymentRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfboolean"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/Payment/Providers": {
+      "get": {
+        "tags": [
+          "Payment"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfListOfSelectEnumListDTO"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/CustomerSupport/ManualPayments": {
+      "get": {
+        "tags": [
+          "CustomerSupport"
+        ],
+        "parameters": [
+          {
+            "name": "pageIndex",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/PaymentStatus"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfPagingDtoOfManualPaymentDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/CustomerSupport/ManualPayments/{id}/Confirm": {
+      "put": {
+        "tags": [
+          "CustomerSupport"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfboolean"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
           }
         ]
       }
@@ -277,10 +491,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -304,10 +518,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -341,10 +555,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -383,10 +597,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -438,10 +652,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -480,10 +694,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -542,10 +756,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -602,10 +816,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -639,10 +853,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -691,10 +905,59 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/Medical/TestTypes/{testTypeId}/Diseases": {
+      "put": {
+        "tags": [
+          "Medical"
+        ],
+        "parameters": [
+          {
+            "name": "testTypeId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkTestTypeDiseasesRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfboolean"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
           }
         ]
       }
@@ -730,6 +993,18 @@
               "format": "int32",
               "default": 50
             }
+          },
+          {
+            "name": "diseaseId",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int64"
+            }
           }
         ],
         "responses": {
@@ -746,10 +1021,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       },
@@ -781,10 +1056,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -830,10 +1105,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -885,10 +1160,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -950,10 +1225,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -987,10 +1262,107 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/Medical/Diseases": {
+      "get": {
+        "tags": [
+          "Medical"
+        ],
+        "parameters": [
+          {
+            "name": "pageIndex",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 50
+            }
+          },
+          {
+            "name": "name",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfPagingDtoOfDiseaseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Medical"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateDiseaseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfstring"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
           }
         ]
       }
@@ -1024,10 +1396,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1069,10 +1441,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1106,10 +1478,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1171,10 +1543,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1210,10 +1582,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1277,10 +1649,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1339,10 +1711,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1376,10 +1748,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1403,10 +1775,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1442,10 +1814,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1479,10 +1851,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1516,10 +1888,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1565,10 +1937,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1604,10 +1976,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1631,10 +2003,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1651,10 +2023,7 @@
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int64"
             }
           },
@@ -1699,10 +2068,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1761,10 +2130,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       },
@@ -1796,10 +2165,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1833,10 +2202,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       },
@@ -1858,10 +2227,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -1907,10 +2276,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       },
@@ -1944,10 +2313,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       },
@@ -1981,10 +2350,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2036,10 +2405,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2103,10 +2472,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       },
@@ -2138,10 +2507,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2175,10 +2544,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2212,10 +2581,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2239,10 +2608,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2276,10 +2645,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2314,10 +2683,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2352,10 +2721,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2382,10 +2751,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2412,10 +2781,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2442,10 +2811,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2479,10 +2848,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2516,10 +2885,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2565,10 +2934,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2602,10 +2971,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2664,10 +3033,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2703,10 +3072,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2793,10 +3162,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -2830,10 +3199,10 @@
         },
         "security": [
           {
-            "Bearer": []
+            "Bearer": [ ]
           },
           {
-            "Bearer": []
+            "Bearer": [ ]
           }
         ]
       }
@@ -3168,6 +3537,9 @@
             "items": {
               "$ref": "#/components/schemas/TagDto"
             }
+          },
+          "Body": {
+            "type": "string"
           }
         }
       },
@@ -3529,6 +3901,20 @@
           }
         }
       },
+      "CreateDiseaseRequest": {
+        "type": "object",
+        "properties": {
+          "Name": {
+            "type": "string"
+          },
+          "Description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "CreateTagRequest": {
         "type": "object",
         "properties": {
@@ -3594,6 +3980,23 @@
       },
       "DayOfWeek": {
         "type": "integer"
+      },
+      "DiseaseDto": {
+        "type": "object",
+        "properties": {
+          "ID": {
+            "format": "int64"
+          },
+          "Name": {
+            "type": "string"
+          },
+          "Description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
       },
       "DoctoreSchualing": {
         "type": "object",
@@ -4354,6 +4757,40 @@
           }
         }
       },
+      "EndPointResponseOfPagingDtoOfDiseaseDto": {
+        "required": [
+          "Data",
+          "IsSuccess",
+          "Message",
+          "ErrorCode",
+          "IsAuthorized"
+        ],
+        "type": "object",
+        "properties": {
+          "Data": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PagingDtoOfDiseaseDto"
+              }
+            ]
+          },
+          "IsSuccess": {
+            "type": "boolean"
+          },
+          "Message": {
+            "type": "string"
+          },
+          "ErrorCode": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "IsAuthorized": {
+            "type": "boolean"
+          }
+        }
+      },
       "EndPointResponseOfPagingDtoOfGetDoctorByIDResponse": {
         "required": [
           "Data",
@@ -4405,6 +4842,40 @@
               },
               {
                 "$ref": "#/components/schemas/PagingDtoOfGetDoctorsResponse"
+              }
+            ]
+          },
+          "IsSuccess": {
+            "type": "boolean"
+          },
+          "Message": {
+            "type": "string"
+          },
+          "ErrorCode": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "IsAuthorized": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EndPointResponseOfPagingDtoOfManualPaymentDto": {
+        "required": [
+          "Data",
+          "IsSuccess",
+          "Message",
+          "ErrorCode",
+          "IsAuthorized"
+        ],
+        "type": "object",
+        "properties": {
+          "Data": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PagingDtoOfManualPaymentDto"
               }
             ]
           },
@@ -5059,6 +5530,22 @@
       "Language": {
         "type": "integer"
       },
+      "LinkTestTypeDiseasesRequest": {
+        "type": "object",
+        "properties": {
+          "DiseaseIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int64"
+            }
+          }
+        }
+      },
       "LoginRequest": {
         "type": "object",
         "properties": {
@@ -5084,6 +5571,55 @@
             ]
           },
           "RefreshToken": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ManualPaymentDto": {
+        "type": "object",
+        "properties": {
+          "Id": {
+            "format": "int64"
+          },
+          "BookingId": {
+            "format": "int64"
+          },
+          "PatientId": {
+            "format": "int64"
+          },
+          "PatientName": {
+            "type": "string"
+          },
+          "SessionStartTime": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "ScreenshotUrl": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ReferenceNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "Provider": {
+            "$ref": "#/components/schemas/PaymentProvider"
+          },
+          "Status": {
+            "$ref": "#/components/schemas/PaymentStatus"
+          },
+          "CreatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "RejectionReason": {
             "type": [
               "null",
               "string"
@@ -5344,6 +5880,56 @@
           }
         }
       },
+      "PagingDtoOfDiseaseDto": {
+        "required": [
+          "PageSize",
+          "PageIndex",
+          "Records",
+          "Pages",
+          "Items"
+        ],
+        "type": "object",
+        "properties": {
+          "PageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "PageIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Records": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Pages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/DiseaseDto"
+            }
+          }
+        }
+      },
       "PagingDtoOfGetDoctorByIDResponse": {
         "required": [
           "PageSize",
@@ -5440,6 +6026,56 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/GetDoctorsResponse"
+            }
+          }
+        }
+      },
+      "PagingDtoOfManualPaymentDto": {
+        "required": [
+          "PageSize",
+          "PageIndex",
+          "Records",
+          "Pages",
+          "Items"
+        ],
+        "type": "object",
+        "properties": {
+          "PageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "PageIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Records": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Pages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ManualPaymentDto"
             }
           }
         }
@@ -5912,6 +6548,17 @@
           }
         }
       },
+      "RejectManualPaymentRequest": {
+        "type": "object",
+        "properties": {
+          "RejectionReason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "ResendOtpRequest": {
         "type": "object",
         "properties": {
@@ -5956,8 +6603,20 @@
       "ReviewDto": {
         "type": "object",
         "properties": {
-          "Name": {
-            "type": "string"
+          "Id": {
+            "format": "int64"
+          },
+          "PatientName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "Comment": {
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "Rate": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
@@ -5966,9 +6625,6 @@
               "string"
             ],
             "format": "int32"
-          },
-          "Comment": {
-            "type": "string"
           },
           "CreatedAt": {
             "type": "string",
@@ -6175,6 +6831,28 @@
       "SlotDuration": {
         "type": "integer"
       },
+      "SubmitManualPaymentRequest": {
+        "type": "object",
+        "properties": {
+          "BookingId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "ScreenshotUrl": {
+            "type": "string"
+          },
+          "ReferenceNumber": {
+            "type": "string"
+          },
+          "PaymentMethod": {
+            "$ref": "#/components/schemas/PaymentProvider"
+          }
+        }
+      },
       "TagDto": {
         "type": "object",
         "properties": {
@@ -6206,6 +6884,17 @@
               "null",
               "string"
             ]
+          },
+          "DiseaseIds": {
+            "type": "array",
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int64"
+            }
           }
         }
       },
@@ -6505,6 +7194,12 @@
   "tags": [
     {
       "name": "User"
+    },
+    {
+      "name": "Payment"
+    },
+    {
+      "name": "CustomerSupport"
     },
     {
       "name": "Payment Webhook"

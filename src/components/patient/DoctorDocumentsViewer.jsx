@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import DocViewer, { DocViewerRenderers } from '@cyntler/react-doc-viewer'
+import '@cyntler/react-doc-viewer/dist/index.css'
 import {
   Description as FileText,
   PictureAsPdf as FilePdf,
@@ -28,19 +30,48 @@ const CATEGORY_LABELS_FALLBACK = {
   other:        'Other Documents',
 }
 
+const EXTENSION_MIME_MAP = {
+  pdf: 'application/pdf',
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  webp: 'image/webp',
+  gif: 'image/gif',
+  bmp: 'image/bmp',
+  svg: 'image/svg+xml',
+  doc: 'application/msword',
+  docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  xls: 'application/vnd.ms-excel',
+  xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  ppt: 'application/vnd.ms-powerpoint',
+  pptx: 'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+  txt: 'text/plain',
+  csv: 'text/csv',
+  json: 'application/json',
+  xml: 'application/xml',
+}
+
+const OFFICE_EXTENSIONS = new Set(['doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx'])
+
+const getFileExtension = (value = '') => {
+  const clean = value.split('?')[0].split('#')[0]
+  const extension = clean.split('.').pop()?.toLowerCase()
+  return extension || ''
+}
+
+const inferMimeType = ({ type, name, fileUrl, dataUrl }) => {
+  if (type) return type
+  const fromDataUrl = dataUrl?.match(/^data:([^;]+);/)?.[1]
+  if (fromDataUrl) return fromDataUrl
+  const extension = getFileExtension(name || fileUrl || '')
+  return EXTENSION_MIME_MAP[extension] || 'application/octet-stream'
+}
+
 function getFileIcon(mimeType) {
   if (!mimeType) return FileText
   if (mimeType.includes('pdf')) return FilePdf
   if (mimeType.startsWith('image/')) return FileImage
   return FileText
-}
-
-function formatBytes(bytes) {
-  if (bytes === 0) return '0 B'
-  const k = 1024
-  const sizes = ['B', 'KB', 'MB', 'GB']
-  const i = Math.floor(Math.log(bytes) / Math.log(k))
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
 }
 
 export default function DoctorDocumentsViewer({ doctorId }) {
@@ -78,12 +109,17 @@ export default function DoctorDocumentsViewer({ doctorId }) {
 
         items.forEach((item) => {
           const categoryKey = mapCategory(item.DocumentType)
+          const fileName = item.FileName || item.Title || 'document'
+          const fileUrl = item.FileUrl || ''
           grouped[categoryKey].push({
             id: String(item.DocumentID),
-            name: item.FileName || item.Title,
-            size: 0,
-            type: '',
-            dataUrl: item.FileUrl,
+            name: fileName,
+            type: inferMimeType({
+              type: item.MimeType || item.ContentType || '',
+              name: fileName,
+              fileUrl,
+            }),
+            fileUrl,
             uploadedAt: item.UploadedAt,
           })
         })
@@ -112,6 +148,23 @@ export default function DoctorDocumentsViewer({ doctorId }) {
 
   const currentCat = activeCategory ? DOCUMENT_CATEGORIES.find(c => c.key === activeCategory) : null
   const currentFiles = activeCategory ? (docs[activeCategory] || []) : []
+  const previewSource = previewFile ? (previewFile.fileUrl || previewFile.dataUrl || '') : ''
+  const previewExtension = getFileExtension(previewFile?.name || previewSource)
+  const previewMimeType = previewFile ? inferMimeType(previewFile) : ''
+  const isImagePreview = previewMimeType.startsWith('image/')
+  const isPdfPreview = previewMimeType === 'application/pdf' || previewExtension === 'pdf'
+  const isOfficePreview = OFFICE_EXTENSIONS.has(previewExtension)
+  const canUseOfficeWebViewer = isOfficePreview && /^https?:\/\//i.test(previewSource)
+  const officeViewerUrl = canUseOfficeWebViewer
+    ? `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(previewSource)}`
+    : ''
+  const docViewerDocuments = previewSource
+    ? [{
+        uri: previewSource,
+        fileType: previewExtension || undefined,
+        fileName: previewFile?.name,
+      }]
+    : []
 
   return (
     <div className="bg-background-paper border border-border rounded-2xl overflow-hidden mt-6 mb-8">
@@ -182,7 +235,11 @@ export default function DoctorDocumentsViewer({ doctorId }) {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-text-heading truncate text-sm" title={file.name}>{file.name}</p>
-                    <p className="text-xs text-text-muted mt-0.5">{formatBytes(file.size)}</p>
+                    {file.uploadedAt && (
+                      <p className="text-xs text-text-muted mt-0.5">
+                        {new Date(file.uploadedAt).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
                   <div className="text-text-muted group-hover:text-primary transition-colors opacity-0 group-hover:opacity-100 p-1">
                     <Eye className="w-4 h-4" />
@@ -222,27 +279,49 @@ export default function DoctorDocumentsViewer({ doctorId }) {
               </div>
 
               <div className="p-4 overflow-auto max-h-[calc(85vh-64px)] flex items-center justify-center bg-background">
-                {previewFile.type?.startsWith('image/') ? (
+                {isImagePreview ? (
                   <img
-                    src={previewFile.dataUrl}
+                    src={previewSource}
                     alt={previewFile.name}
                     className="max-w-full max-h-full rounded-xl object-contain"
                   />
-                ) : previewFile.type === 'application/pdf' ? (
+                ) : isPdfPreview ? (
                   <iframe
-                    src={previewFile.dataUrl}
+                    src={previewSource}
                     className="w-full h-[60vh] rounded-xl border border-border"
                     title={previewFile.name}
                   />
+                ) : canUseOfficeWebViewer ? (
+                  <iframe
+                    src={officeViewerUrl}
+                    className="w-full h-[60vh] rounded-xl border border-border"
+                    title={previewFile.name}
+                  />
+                ) : docViewerDocuments.length > 0 ? (
+                  <div className="w-full h-[60vh] rounded-xl border border-border overflow-hidden">
+                    <DocViewer
+                      key={previewSource}
+                      pluginRenderers={DocViewerRenderers}
+                      documents={docViewerDocuments}
+                      config={{
+                        header: {
+                          disableHeader: true,
+                          disableFileName: true,
+                          retainURLParams: true,
+                        },
+                      }}
+                      style={{ height: '100%' }}
+                    />
+                  </div>
                 ) : (
                   <div className="text-center py-12">
                     <FileText className="w-16 h-16 text-text-muted mx-auto mb-3 opacity-30" />
                     <p className="text-text-muted text-sm">
                       {label('doctor.docs.noPreview', 'Preview not available')}
                     </p>
-                    {previewFile.dataUrl && (
+                    {previewSource && (
                       <a
-                        href={previewFile.dataUrl}
+                        href={previewSource}
                         download={previewFile.name}
                         className="mt-3 inline-block px-4 py-2 rounded-lg bg-primary text-white text-sm hover:bg-primary-dark transition-colors"
                       >
