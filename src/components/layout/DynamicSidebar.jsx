@@ -60,17 +60,17 @@ export default function DynamicSidebar({ isOpen, onClose }) {
     ],
     [Roles.DOCTOR]: [
       { name: t("nav.dashboard"), path: "/dashboard/doctor", icon: Home },
+      {
+        name: t("nav.schedule"),
+        path: "/dashboard/doctor/schedule",
+        icon: Calendar,
+      },
       { name: t("nav.queue"), path: "/dashboard/doctor/queue", icon: Users },
       { name: t("nav.tests"), path: "/dashboard/doctor/tests", icon: TestTube },
       {
         name: t("nav.blogs"),
         path: "/dashboard/doctor/blogs",
         icon: ArticleIcon,
-      },
-      {
-        name: t("nav.schedule"),
-        path: "/dashboard/doctor/schedule",
-        icon: Calendar,
       },
       {
         name: t("nav.history"),
