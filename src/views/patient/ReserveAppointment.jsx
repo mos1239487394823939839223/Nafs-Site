@@ -67,6 +67,7 @@ export default function ReserveAppointment() {
   const [mainTab, setMainTab] = useState(initialTab); // reserve, status
   const [viewMode, setViewMode] = useState("grid"); // list or grid
   const [slots, setSlots] = useState({});
+  const [slotDetailsByKey, setSlotDetailsByKey] = useState({});
   const [currentViewDate, setCurrentViewDate] = useState(new Date());
 
   // Data States
@@ -463,6 +464,15 @@ export default function ReserveAppointment() {
         return next;
       });
 
+      setSlotDetailsByKey((prev) => {
+        if (!Object.prototype.hasOwnProperty.call(prev, targetSlotKey)) {
+          return prev;
+        }
+        const next = { ...prev };
+        delete next[targetSlotKey];
+        return next;
+      });
+
       if (bookedSlot) {
         const selectedSlotKey = `${formatDateKey(bookedSlot.date)}-${
           bookedSlot.timeKey
@@ -537,6 +547,7 @@ export default function ReserveAppointment() {
       console.log("Doctor Slots API response:", response);
 
       const mappedSlots = {};
+      const mappedSlotDetails = {};
 
       if (response.IsSuccess && response.Data) {
         // API returns { DoctorId, DoctorName, Slots: [...] }
@@ -561,6 +572,42 @@ export default function ReserveAppointment() {
             const hour = String(slotDate.getHours()).padStart(2, "0");
             const minute = String(slotDate.getMinutes()).padStart(2, "0");
             const key = `${dateKey}-${hour}:${minute}`;
+
+            const rawDuration = Number(
+              slot.DurationMinute ?? slot.DurationMinutes ?? slot.Duration,
+            );
+            const durationMinutes =
+              Number.isFinite(rawDuration) && rawDuration > 0
+                ? rawDuration
+                : null;
+
+            const slotEndTime =
+              slot.EndTime || slot.End || slot.SessionEndTime || null;
+            let endTimeKey = null;
+            if (slotEndTime) {
+              const endDate = new Date(slotEndTime);
+              if (!Number.isNaN(endDate.getTime())) {
+                const endHour = String(endDate.getHours()).padStart(2, "0");
+                const endMinute = String(endDate.getMinutes()).padStart(2, "0");
+                endTimeKey = `${endHour}:${endMinute}`;
+              }
+            } else if (durationMinutes) {
+              const computedEnd = new Date(slotDate);
+              computedEnd.setMinutes(
+                computedEnd.getMinutes() + durationMinutes,
+              );
+              const endHour = String(computedEnd.getHours()).padStart(2, "0");
+              const endMinute = String(computedEnd.getMinutes()).padStart(
+                2,
+                "0",
+              );
+              endTimeKey = `${endHour}:${endMinute}`;
+            }
+
+            mappedSlotDetails[key] = {
+              durationMinutes,
+              endTimeKey,
+            };
 
             // Respect backend reserved state; IsReserved is used in swagger SlotDto.
             const isReserved = Boolean(
@@ -598,6 +645,7 @@ export default function ReserveAppointment() {
       }
 
       setSlots(mappedSlots);
+      setSlotDetailsByKey(mappedSlotDetails);
     } catch (error) {
       console.error("Error fetching doctor slots:", error);
       // Fallback to DoctoreSchualings if the slots API fails
@@ -614,6 +662,7 @@ export default function ReserveAppointment() {
           }
         });
         setSlots(mappedSlots);
+        setSlotDetailsByKey({});
       }
     }
   };
@@ -1860,9 +1909,9 @@ export default function ReserveAppointment() {
                                       </div>
                                     </div>
 
-                                    <div className="flex flex-wrap gap-3">
-                                      {daySlots
-                                        .sort((a, b) => {
+                                    {(() => {
+                                      const sortedDaySlots = [...daySlots].sort(
+                                        (a, b) => {
                                           const [ah, am] = a
                                             .split(":")
                                             .map(Number);
@@ -1870,71 +1919,269 @@ export default function ReserveAppointment() {
                                             .split(":")
                                             .map(Number);
                                           return ah * 60 + am - (bh * 60 + bm);
-                                        })
-                                        .map((timeKey) => {
-                                          const slotKey = `${dateKey}-${timeKey}`;
-                                          const myBooking =
-                                            mySlotBookingsByKey[slotKey];
-                                          const myBookingStatus = myBooking
-                                            ? getBookingStatusMeta(
-                                                myBooking.Status,
-                                              )
-                                            : null;
-                                          const isSelected =
-                                            bookedSlot &&
-                                            bookedSlot.date.toDateString() ===
-                                              date.toDateString() &&
-                                            bookedSlot.timeKey === timeKey;
-                                          const isAvailableSlot =
-                                            slots[slotKey] === "available";
-                                          const isBookedByOthers =
-                                            !myBooking &&
-                                            slots[slotKey] === "booked";
-                                          const isClickableSlot =
-                                            myBooking || isAvailableSlot;
+                                        },
+                                      );
 
-                                          return (
-                                            <button
-                                              key={timeKey}
-                                              onClick={() => {
-                                                if (myBooking) {
-                                                  setMainTab("status");
-                                                  return;
-                                                }
-                                                if (isBookedByOthers) {
-                                                  return;
-                                                }
-                                                handleSlotClick(date, timeKey);
-                                              }}
-                                              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border-2 flex items-center gap-1.5 ${
-                                                myBooking
-                                                  ? `${myBookingStatus.className} hover:opacity-95 shadow-sm`
-                                                  : isBookedByOthers
-                                                  ? "bg-slate-100 text-slate-700 border-slate-300 cursor-not-allowed"
-                                                  : isSelected
-                                                  ? "bg-primary text-white border-primary shadow-md shadow-primary/30"
-                                                  : "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400"
-                                              }`}
-                                              disabled={!isClickableSlot}
+                                      const periodBuckets = [
+                                        {
+                                          id: "early",
+                                          label: isRTL
+                                            ? "الصباح المبكر"
+                                            : "Early Morning",
+                                          min: 0,
+                                          max: 8,
+                                          chipClass:
+                                            "bg-sky-50 border-sky-200 text-sky-700",
+                                        },
+                                        {
+                                          id: "morning",
+                                          label: isRTL ? "الصباح" : "Morning",
+                                          min: 8,
+                                          max: 12,
+                                          chipClass:
+                                            "bg-emerald-50 border-emerald-200 text-emerald-700",
+                                        },
+                                        {
+                                          id: "afternoon",
+                                          label: isRTL
+                                            ? "بعد الظهر"
+                                            : "Afternoon",
+                                          min: 12,
+                                          max: 17,
+                                          chipClass:
+                                            "bg-amber-50 border-amber-200 text-amber-700",
+                                        },
+                                        {
+                                          id: "evening",
+                                          label: isRTL ? "المساء" : "Evening",
+                                          min: 17,
+                                          max: 24,
+                                          chipClass:
+                                            "bg-indigo-50 border-indigo-200 text-indigo-700",
+                                        },
+                                      ];
+
+                                      const groupedSlots = periodBuckets
+                                        .map((bucket) => ({
+                                          ...bucket,
+                                          slots: sortedDaySlots.filter(
+                                            (timeKey) => {
+                                              const [h] = timeKey
+                                                .split(":")
+                                                .map(Number);
+                                              return (
+                                                h >= bucket.min &&
+                                                h < bucket.max
+                                              );
+                                            },
+                                          ),
+                                        }))
+                                        .filter(
+                                          (bucket) => bucket.slots.length > 0,
+                                        );
+
+                                      return (
+                                        <div
+                                          className={`space-y-3 ${
+                                            totalCount >= 4
+                                              ? "rounded-xl bg-gradient-to-r from-primary/5 via-transparent to-emerald-500/5 p-3 border border-border/70"
+                                              : ""
+                                          }`}
+                                        >
+                                          {groupedSlots.map((bucket) => (
+                                            <div
+                                              key={bucket.id}
+                                              className="rounded-xl border border-border/80 bg-background-paper/70 p-2.5"
                                             >
-                                              {myBooking ? null : isSelected ? (
-                                                <CheckCircle className="w-3.5 h-3.5" />
-                                              ) : null}
-                                              {formatHourLabel(timeKey)}
-                                              {myBooking && (
-                                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/20 border border-current/30">
-                                                  {myBookingStatus.label}
+                                              <div
+                                                className={`flex items-center justify-between gap-2 mb-2 ${
+                                                  isRTL
+                                                    ? "flex-row-reverse"
+                                                    : ""
+                                                }`}
+                                              >
+                                                <div
+                                                  className={`flex items-center gap-1.5 text-xs font-semibold text-text-muted ${
+                                                    isRTL
+                                                      ? "flex-row-reverse"
+                                                      : ""
+                                                  }`}
+                                                >
+                                                  <Clock className="w-3.5 h-3.5" />
+                                                  <span>{bucket.label}</span>
+                                                </div>
+                                                <span
+                                                  className={`text-[11px] px-2 py-0.5 rounded-full border font-medium ${bucket.chipClass}`}
+                                                >
+                                                  {bucket.slots.length}{" "}
+                                                  {isRTL ? "موعد" : "slots"}
                                                 </span>
-                                              )}
-                                              {isBookedByOthers && (
-                                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 border border-slate-300 text-slate-700">
-                                                  {isRTL ? "محجوز" : "Booked"}
-                                                </span>
-                                              )}
-                                            </button>
-                                          );
-                                        })}
-                                    </div>
+                                              </div>
+
+                                              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
+                                                {bucket.slots.map((timeKey) => {
+                                                  const slotKey = `${dateKey}-${timeKey}`;
+                                                  const myBooking =
+                                                    mySlotBookingsByKey[
+                                                      slotKey
+                                                    ];
+                                                  const slotDetails =
+                                                    slotDetailsByKey[slotKey] ||
+                                                    null;
+                                                  const myBookingStatus = myBooking
+                                                    ? getBookingStatusMeta(
+                                                        myBooking.Status,
+                                                      )
+                                                    : null;
+                                                  const isSelected =
+                                                    bookedSlot &&
+                                                    bookedSlot.date.toDateString() ===
+                                                      date.toDateString() &&
+                                                    bookedSlot.timeKey ===
+                                                      timeKey;
+                                                  const isAvailableSlot =
+                                                    slots[slotKey] ===
+                                                    "available";
+                                                  const isBookedByOthers =
+                                                    !myBooking &&
+                                                    slots[slotKey] === "booked";
+                                                  const isClickableSlot =
+                                                    myBooking ||
+                                                    isAvailableSlot;
+                                                  const detailParts = [];
+
+                                                  if (
+                                                    slotDetails?.durationMinutes &&
+                                                    slotDetails.durationMinutes >
+                                                      0
+                                                  ) {
+                                                    detailParts.push(
+                                                      isRTL
+                                                        ? `المدة ${slotDetails.durationMinutes} د`
+                                                        : `${slotDetails.durationMinutes} min`,
+                                                    );
+                                                  }
+
+                                                  if (slotDetails?.endTimeKey) {
+                                                    detailParts.push(
+                                                      isRTL
+                                                        ? `ينتهي ${formatHourLabel(
+                                                            slotDetails.endTimeKey,
+                                                          )}`
+                                                        : `Ends ${formatHourLabel(
+                                                            slotDetails.endTimeKey,
+                                                          )}`,
+                                                    );
+                                                  }
+
+                                                  return (
+                                                    <button
+                                                      key={timeKey}
+                                                      onClick={() => {
+                                                        if (myBooking) {
+                                                          setMainTab("status");
+                                                          return;
+                                                        }
+                                                        if (isBookedByOthers) {
+                                                          return;
+                                                        }
+                                                        handleSlotClick(
+                                                          date,
+                                                          timeKey,
+                                                        );
+                                                      }}
+                                                      className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm transition-all duration-200 ${
+                                                        myBooking
+                                                          ? `${myBookingStatus.className} hover:opacity-95 shadow-sm`
+                                                          : isBookedByOthers
+                                                          ? "bg-slate-100 text-slate-700 border-slate-300 cursor-not-allowed"
+                                                          : isSelected
+                                                          ? "bg-primary text-white border-primary shadow-md shadow-primary/30"
+                                                          : "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400 hover:shadow-sm"
+                                                      }`}
+                                                      disabled={
+                                                        !isClickableSlot
+                                                      }
+                                                    >
+                                                      <div
+                                                        className={`flex items-center justify-between gap-2 ${
+                                                          isRTL
+                                                            ? "flex-row-reverse"
+                                                            : ""
+                                                        }`}
+                                                      >
+                                                        <div
+                                                          className={`flex items-center gap-1.5 font-semibold ${
+                                                            isRTL
+                                                              ? "flex-row-reverse"
+                                                              : ""
+                                                          }`}
+                                                        >
+                                                          {myBooking ? null : isSelected ? (
+                                                            <CheckCircle className="w-3.5 h-3.5" />
+                                                          ) : null}
+                                                          <span>
+                                                            {formatHourLabel(
+                                                              timeKey,
+                                                            )}
+                                                          </span>
+                                                        </div>
+
+                                                        {myBooking && (
+                                                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/20 border border-current/30">
+                                                            {
+                                                              myBookingStatus.label
+                                                            }
+                                                          </span>
+                                                        )}
+                                                        {isBookedByOthers && (
+                                                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 border border-slate-300 text-slate-700">
+                                                            {isRTL
+                                                              ? "محجوز"
+                                                              : "Booked"}
+                                                          </span>
+                                                        )}
+                                                        {!myBooking &&
+                                                          !isBookedByOthers &&
+                                                          !isSelected && (
+                                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100/80 border border-emerald-300/70 text-emerald-700">
+                                                              {isRTL
+                                                                ? "متاح"
+                                                                : "Available"}
+                                                            </span>
+                                                          )}
+                                                      </div>
+
+                                                      {(detailParts.length >
+                                                        0 ||
+                                                        isAvailableSlot) && (
+                                                        <div
+                                                          className={`mt-1.5 text-[11px] font-medium opacity-85 flex items-center gap-1 ${
+                                                            isRTL
+                                                              ? "flex-row-reverse text-right"
+                                                              : "text-left"
+                                                          }`}
+                                                        >
+                                                          <Clock className="w-3 h-3" />
+                                                          <span>
+                                                            {detailParts.join(
+                                                              " • ",
+                                                            ) ||
+                                                              (isRTL
+                                                                ? "اضغط للحجز"
+                                                                : "Tap to reserve")}
+                                                          </span>
+                                                        </div>
+                                                      )}
+                                                    </button>
+                                                  );
+                                                })}
+                                              </div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      );
+                                    })()}
                                   </div>
                                 );
                               })}

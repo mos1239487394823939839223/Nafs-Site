@@ -73,6 +73,20 @@ const normalizeDateKey = (dateStr) => {
   return dateStr.split("T")[0];
 };
 
+const TWO_DAYS_IN_MS = 2 * 24 * 60 * 60 * 1000;
+
+const buildSpecificSlotDateTime = (specificDate, startTime) => {
+  const dateKey = normalizeDateKey(specificDate);
+  if (!dateKey) return null;
+
+  const normalizedTime = String(startTime || "00:00").slice(0, 5);
+  if (!normalizedTime.includes(":")) return null;
+
+  const dateTime = new Date(`${dateKey}T${normalizedTime}:00`);
+  if (Number.isNaN(dateTime.getTime())) return null;
+  return dateTime;
+};
+
 export default function Schedule() {
   const toast = useToast();
   const { user } = useAuth();
@@ -289,6 +303,26 @@ export default function Schedule() {
     } finally {
       setDeletingId(null);
     }
+  };
+
+  const canCancelSpecificSlot = (slot) => {
+    const slotDateTime = buildSpecificSlotDateTime(
+      slot?.SpecificDate,
+      slot?.StartTime,
+    );
+
+    if (!slotDateTime) {
+      return {
+        canCancel: true,
+      };
+    }
+
+    const now = new Date();
+    const timeDiff = slotDateTime.getTime() - now.getTime();
+
+    return {
+      canCancel: timeDiff >= TWO_DAYS_IN_MS,
+    };
   };
 
   // Add weekly schedule row
@@ -533,51 +567,94 @@ export default function Schedule() {
             </h2>
             {specificSlots.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {specificSlots.map((slot) => (
-                  <div
-                    key={slot.Id}
-                    className="bg-background-paper border border-green-200 rounded-2xl p-4 shadow-sm"
-                  >
-                    <div className="flex items-center justify-between mb-3">
-                      <Badge variant="success">
-                        {t("doctor.specificSlot")}
-                      </Badge>
-                      <button
-                        onClick={() => handleDelete(slot.Id)}
-                        disabled={deletingId === slot.Id}
-                        className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                {specificSlots.map((slot) =>
+                  (() => {
+                    const cancelMeta = canCancelSpecificSlot(slot);
+                    const canCancel = cancelMeta.canCancel;
+                    const isDeleting = deletingId === slot.Id;
+
+                    return (
+                      <div
+                        key={slot.Id}
+                        className="bg-background-paper border border-green-200 rounded-2xl p-4 shadow-sm"
                       >
-                        {deletingId === slot.Id ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Trash2 className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                    <div className="text-sm text-text-muted space-y-1">
-                      <p>
-                        <strong>{t("doctor.date")}:</strong>{" "}
-                        {normalizeDateKey(slot.SpecificDate) || "N/A"}
-                      </p>
-                      <p>
-                        <strong>{t("doctor.time")}:</strong> {slot.StartTime} -{" "}
-                        {slot.EndTime}
-                      </p>
-                      <p>
-                        <strong>{t("doctor.duration")}:</strong>{" "}
-                        {SlotDurationLabels[slot.SlotDuration] ||
-                          `${slot.SlotDuration}`}
-                      </p>
-                      {slot.SessionFee ?? slot.ConsultationFee ?? slot.Fee ? (
-                        <p>
-                          <strong>{t("patient.consultationFee")}:</strong>{" "}
-                          {slot.SessionFee ?? slot.ConsultationFee ?? slot.Fee}{" "}
-                          EGP
-                        </p>
-                      ) : null}
-                    </div>
-                  </div>
-                ))}
+                        <div className="flex items-center justify-between mb-3">
+                          <Badge variant="success">
+                            {t("doctor.specificSlot")}
+                          </Badge>
+                          <button
+                            onClick={() => {
+                              if (!canCancel) {
+                                toast.error(
+                                  t(
+                                    "doctor.cancelWindowPassed",
+                                    "Cancellation window has passed. Slots can only be canceled at least 2 days before start time.",
+                                  ),
+                                );
+                                return;
+                              }
+                              handleDelete(slot.Id);
+                            }}
+                            disabled={isDeleting}
+                            title={
+                              canCancel
+                                ? t("common.delete", "Delete")
+                                : t(
+                                    "doctor.cancelWindowPassed",
+                                    "Cancellation window has passed. Slots can only be canceled at least 2 days before start time.",
+                                  )
+                            }
+                            className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${
+                              canCancel
+                                ? "text-red-400 hover:text-red-600 hover:bg-red-50"
+                                : "text-slate-300 bg-slate-100 cursor-not-allowed"
+                            }`}
+                          >
+                            {isDeleting ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Trash2 className="w-4 h-4" />
+                            )}
+                          </button>
+                        </div>
+                        <div className="text-sm text-text-muted space-y-1">
+                          <p>
+                            <strong>{t("doctor.date")}:</strong>{" "}
+                            {normalizeDateKey(slot.SpecificDate) || "N/A"}
+                          </p>
+                          <p>
+                            <strong>{t("doctor.time")}:</strong>{" "}
+                            {slot.StartTime} - {slot.EndTime}
+                          </p>
+                          <p>
+                            <strong>{t("doctor.duration")}:</strong>{" "}
+                            {SlotDurationLabels[slot.SlotDuration] ||
+                              `${slot.SlotDuration}`}
+                          </p>
+                          {slot.SessionFee ??
+                          slot.ConsultationFee ??
+                          slot.Fee ? (
+                            <p>
+                              <strong>{t("patient.consultationFee")}:</strong>{" "}
+                              {slot.SessionFee ??
+                                slot.ConsultationFee ??
+                                slot.Fee}{" "}
+                              EGP
+                            </p>
+                          ) : null}
+                          {!canCancel && (
+                            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 mt-2">
+                              {t(
+                                "doctor.cancelWindowHint",
+                                "Cancellation is allowed only 2 days before the slot start time.",
+                              )}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })(),
+                )}
               </div>
             ) : (
               <div className="text-center py-8 bg-background-paper rounded-2xl border-2 border-dashed border-border">

@@ -4,7 +4,12 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useToast } from "../../components/ui/Toast";
 import LocalDocumentsManager from "../../components/shared/LocalDocumentsManager";
-import { userAPI, filesAPI, extractErrorMessage } from "../../lib/api";
+import {
+  userAPI,
+  filesAPI,
+  adminAPI,
+  extractErrorMessage,
+} from "../../lib/api";
 import Input from "../../components/ui/Input";
 import {
   PhotoCamera as Camera,
@@ -109,6 +114,9 @@ export default function Settings() {
   const handleSave = async () => {
     setSaving(true);
     try {
+      const normalizedSpecialty = formData.specialty.trim();
+      const normalizedBio = formData.bio.trim();
+
       const response = await userAPI.editMainInfo({
         name: formData.name,
         phoneNumber: formData.phone,
@@ -116,10 +124,37 @@ export default function Settings() {
       });
 
       if (response?.IsSuccess === true) {
+        if (doctorUserId) {
+          const updateDoctorResponse = await adminAPI.updateDoctor(
+            Number(doctorUserId),
+            {
+              name: formData.name,
+              email: formData.email,
+              phoneNumber: formData.phone,
+              description: normalizedBio || null,
+              specialist: normalizedSpecialty ? [normalizedSpecialty] : [],
+            },
+          );
+
+          if (updateDoctorResponse?.IsSuccess !== true) {
+            toast.error(
+              updateDoctorResponse?.Message || t("errors.somethingWentWrong"),
+            );
+            return;
+          }
+        }
+
         updateProfile({
           name: formData.name,
+          Name: formData.name,
           email: formData.email,
+          Email: formData.email,
           phone: formData.phone,
+          PhoneNumber: formData.phone,
+          specialty: normalizedSpecialty,
+          Specialist: normalizedSpecialty ? [normalizedSpecialty] : [],
+          bio: normalizedBio,
+          Description: normalizedBio,
         });
         toast.success(
           t("success.profileUpdated", "Profile updated successfully"),
@@ -425,7 +460,7 @@ export default function Settings() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-background-paper rounded-2xl shadow-2xl border border-border overflow-hidden z-10"
+              className="relative w-full max-w-lg bg-background-paper rounded-2xl shadow-2xl border border-border overflow-hidden z-10"
             >
               <div className="px-6 pt-6 pb-4 bg-gradient-to-r from-primary/10 to-secondary/5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -464,7 +499,6 @@ export default function Settings() {
                   value={formData.email}
                   onChange={(e) => handleChange("email", e.target.value)}
                   icon={Mail}
-                  disabled
                 />
                 <Input
                   label={t("common.phoneNumber", "Phone Number")}
@@ -472,6 +506,27 @@ export default function Settings() {
                   onChange={(e) => handleChange("phone", e.target.value)}
                   icon={Phone}
                 />
+                <Input
+                  label={t("common.specialty", "Specialty")}
+                  value={formData.specialty}
+                  onChange={(e) => handleChange("specialty", e.target.value)}
+                  icon={Stethoscope}
+                />
+                <div>
+                  <label className="block text-sm font-medium text-text-muted mb-1.5">
+                    {t("settings.bio", "Bio")}
+                  </label>
+                  <textarea
+                    value={formData.bio}
+                    onChange={(e) => handleChange("bio", e.target.value)}
+                    rows={4}
+                    className="w-full px-4 py-2.5 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-text transition-all resize-none"
+                    placeholder={t(
+                      "settings.bioPlaceholder",
+                      "Write a short professional bio",
+                    )}
+                  />
+                </div>
               </div>
 
               <div className="px-6 pb-6 flex gap-3 justify-end">

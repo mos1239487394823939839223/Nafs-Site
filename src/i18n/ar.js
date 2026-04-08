@@ -451,6 +451,10 @@ export default {
     saveSchedule: "حفظ الجدول",
     addTimeSlot: "إضافة موعد",
     block: "حظر",
+    cancelWindowPassed:
+      "انتهى وقت الإلغاء المسموح. يمكن إلغاء الموعد فقط قبل وقت البدء بيومين على الأقل.",
+    cancelWindowHint:
+      "الإلغاء متاح فقط إذا كان الموعد قبل وقت البدء بيومين على الأقل.",
     // Patient Queue
     waiting: "في الانتظار",
     manageConsultations: "إدارة استشارات المرضى",

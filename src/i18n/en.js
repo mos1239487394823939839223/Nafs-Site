@@ -419,6 +419,10 @@ export default {
     saveSchedule: "Save Schedule",
     addTimeSlot: "Add Time Slot",
     block: "Block",
+    cancelWindowPassed:
+      "Cancellation window has passed. Slots can only be canceled at least 2 days before start time.",
+    cancelWindowHint:
+      "Cancellation is allowed only 2 days before the slot start time.",
     // Patient Queue
     waiting: "Waiting",
     manageConsultations: "Manage your patient consultations",
