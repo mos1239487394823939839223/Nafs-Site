@@ -156,9 +156,7 @@ export default function PatientProfile() {
     const displayName = formData.name || user?.name || user?.Name || t('patient.patient', 'Patient')
     const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 
-    const totalSessions = bookings.length
-    const completedSessions = bookings.filter(b => b.Status === 3).length
-    const upcomingSessions = bookings.filter(b => b.Status === 0 || b.Status === 1).length
+
 
     return (
         <div className="min-h-screen bg-background" dir={isRTL ? 'rtl' : 'ltr'}>
@@ -240,25 +238,7 @@ export default function PatientProfile() {
                     </div>
                 </div>
 
-                {/* ─── Stats Row ─── */}
-                <div className="grid grid-cols-3 gap-4 py-6 border-b border-border">
-                    {[
-                        { label: t('patient.totalSessions', 'Total Sessions'), value: bookingsLoading ? '—' : totalSessions },
-                        { label: t('patient.completed', 'Completed'), value: bookingsLoading ? '—' : completedSessions },
-                        { label: t('patient.upcoming', 'Upcoming'), value: bookingsLoading ? '—' : upcomingSessions },
-                    ].map((stat, i) => (
-                        <motion.div
-                            key={i}
-                            initial={{ opacity: 0, y: 10 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: i * 0.08 }}
-                            className="text-center p-4 rounded-2xl bg-background-paper border border-border hover:border-primary/30 hover:shadow-sm transition-all duration-200"
-                        >
-                            <p className="text-lg md:text-xl font-bold text-text-heading">{stat.value}</p>
-                            <p className="text-xs text-text-muted mt-1">{stat.label}</p>
-                        </motion.div>
-                    ))}
-                </div>
+
 
                 {/* ─── Personal Info Card ─── */}
                 <div className="py-6">

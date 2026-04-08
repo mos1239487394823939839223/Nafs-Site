@@ -4,8 +4,11 @@ import {
   PlayArrow as Play,
   CalendarToday as Calendar,
   Close as Cancel,
+  Timer as Duration,
+  Payment as PaymentIcon,
 } from "@mui/icons-material";
 import Button from "../../ui/Button";
+import Badge from "../../ui/Badge";
 import { useLanguage } from "../../../contexts/LanguageContext";
 
 export default function QueueItem({ patient, onAction, actionLoading }) {
@@ -58,7 +61,7 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
           {patient.name.charAt(0)}
         </div>
         <div className={isRTL ? "text-right" : "text-left"}>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-semibold text-text-heading">{patient.name}</h3>
             <span
               className={`text-xs px-2 py-0.5 rounded-full border ${
@@ -67,9 +70,15 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
             >
               {statusLabelMap[patient.status] || patient.status}
             </span>
+            {patient.paymentConfirmed && (
+              <Badge variant="success" className="text-xs">
+                <PaymentIcon className="w-3 h-3 mr-0.5" />
+                {t("bookingStatus.paid", "Paid")}
+              </Badge>
+            )}
           </div>
           <div
-            className={`flex items-center gap-4 text-sm text-text-muted mt-1 ${
+            className={`flex items-center gap-4 text-sm text-text-muted mt-1 flex-wrap ${
               isRTL ? "flex-row-reverse" : ""
             }`}
           >
@@ -89,6 +98,16 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
               <Clock className="w-3 h-3" />
               {patient.sessionTimeLabel}
             </span>
+            {patient.duration > 0 && (
+              <span
+                className={`flex items-center gap-1 ${
+                  isRTL ? "flex-row-reverse" : ""
+                }`}
+              >
+                <Duration className="w-3 h-3" />
+                {patient.duration} {t("common.min", "min")}
+              </span>
+            )}
           </div>
           <div
             className={`flex items-center gap-4 text-xs text-text-muted mt-1 ${

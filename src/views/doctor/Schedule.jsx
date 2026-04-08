@@ -642,14 +642,6 @@ export default function Schedule() {
                               EGP
                             </p>
                           ) : null}
-                          {!canCancel && (
-                            <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-2 py-1 mt-2">
-                              {t(
-                                "doctor.cancelWindowHint",
-                                "Cancellation is allowed only 2 days before the slot start time.",
-                              )}
-                            </p>
-                          )}
                         </div>
                       </div>
                     );

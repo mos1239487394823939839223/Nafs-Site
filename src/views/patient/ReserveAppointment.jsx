@@ -734,15 +734,17 @@ export default function ReserveAppointment() {
     }
   };
 
-  const confirmCancelReservation = (bookingId) => {
-    const confirmed = window.confirm(
-      isRTL
-        ? "هل أنت متأكد أنك تريد إلغاء هذا الموعد؟"
-        : "Are you sure you want to cancel this appointment?",
-    );
+  const [cancelConfirmId, setCancelConfirmId] = useState(null);
 
-    if (!confirmed) return;
-    handleCancelReservation(bookingId);
+  const confirmCancelReservation = (bookingId) => {
+    setCancelConfirmId(bookingId);
+  };
+
+  const handleConfirmCancel = () => {
+    if (cancelConfirmId) {
+      handleCancelReservation(cancelConfirmId);
+      setCancelConfirmId(null);
+    }
   };
 
   const submitManualPaymentForBooking = async (bookingId) => {
@@ -3084,6 +3086,56 @@ export default function ReserveAppointment() {
           )}
         </motion.div>
       )}
+
+      {/* Cancel Appointment Confirmation Modal */}
+      <AnimatePresence>
+        {cancelConfirmId && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setCancelConfirmId(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-sm bg-background-paper rounded-2xl shadow-2xl border border-border overflow-hidden z-10"
+            >
+              <div className="p-6 text-center">
+                <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+                  <XCircle className="w-7 h-7 text-red-500" />
+                </div>
+                <h3 className="text-lg font-bold text-text-heading mb-2">
+                  {isRTL ? "إلغاء الموعد" : "Cancel Appointment"}
+                </h3>
+                <p className="text-sm text-text-muted mb-6">
+                  {isRTL
+                    ? "هل أنت متأكد أنك تريد إلغاء هذا الموعد؟"
+                    : "Are you sure you want to cancel this appointment?"}
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => setCancelConfirmId(null)}
+                  >
+                    {t("common.cancel", "No, Keep it")}
+                  </Button>
+                  <Button
+                    className="bg-red-500 hover:bg-red-600 text-white"
+                    onClick={handleConfirmCancel}
+                    isLoading={cancellingId === cancelConfirmId}
+                  >
+                    {isRTL ? "نعم، إلغاء الموعد" : "Yes, Cancel"}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,18 +1,21 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   People as Users,
   FilterList as Filter,
   Sync as Loader2,
   ChevronLeft,
   ChevronRight,
+  Close as XCircle,
 } from "@mui/icons-material";
 import { useToast } from "../../components/ui/Toast";
 
 import QueueItem from "../../components/doctor/queue/QueueItem";
+import QueueStats from "../../components/doctor/queue/QueueStats";
+import Button from "../../components/ui/Button";
 import { doctorAPI } from "../../lib/api";
-import { getAppointmentStatusKey } from "../../lib/appointmentStatus";
+import { APPOINTMENT_STATUS, getAppointmentStatusKey } from "../../lib/appointmentStatus";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useSignalR } from "../../hooks/useSignalR";
 
@@ -29,13 +32,24 @@ export default function PatientQueue() {
   });
   const [pageIndex, setPageIndex] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [cancelConfirmPatient, setCancelConfirmPatient] = useState(null);
   const pageSize = 20;
+
+  // Map filter key to API BookingStatus value
+  const filterToStatus = {
+    all: null,
+    pending: APPOINTMENT_STATUS.PENDING,
+    approved: APPOINTMENT_STATUS.APPROVED,
+    completed: APPOINTMENT_STATUS.COMPLETED,
+    cancelled: APPOINTMENT_STATUS.CANCELLED,
+  };
 
   // Fetch bookings from API
   const fetchBookings = async () => {
     try {
       setLoading(true);
-      const response = await doctorAPI.getBookings(pageIndex, pageSize);
+      const status = filterToStatus[filter] ?? null;
+      const response = await doctorAPI.getBookings(pageIndex, pageSize, status);
       if (response.IsSuccess && response.Data) {
         setBookings(response.Data.Items || []);
         setTotalPages(response.Data.Pages || 1);
@@ -50,7 +64,7 @@ export default function PatientQueue() {
 
   useEffect(() => {
     fetchBookings();
-  }, [pageIndex]);
+  }, [pageIndex, filter]);
 
   useSignalR({
     enabled: true,
@@ -93,11 +107,13 @@ export default function PatientQueue() {
       const joinWindowMs = 24 * 60 * 60 * 1000;
       const waitTime = Math.max(0, Math.floor((now - sessionStart) / 60000));
       const statusKey = getAppointmentStatusKey(booking.Status, booking);
+      const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
 
       const canCancel =
-        statusKey === "pending" ||
+        (statusKey === "pending" ||
         statusKey === "approved" ||
-        statusKey === "paid";
+        statusKey === "paid") &&
+        diffMs >= twoDaysMs;
       const showJoin =
         (statusKey === "approved" || statusKey === "paid") &&
         diffMs >= 0 &&
@@ -123,16 +139,11 @@ export default function PatientQueue() {
         duration: booking.DurationMinutes,
         meetingUrl: booking.MeetingUrl,
         paymentConfirmed: booking.PaymentConfirmed,
+        paymentStatus: booking.PaymentStatus,
         canCancel,
         showJoin,
       };
-    })
-    .filter(
-      (booking) =>
-        booking.status === "pending" ||
-        booking.status === "approved" ||
-        booking.status === "paid",
-    );
+    });
 
   const handleJoin = async (patient) => {
     setActionLoading({ type: "join", bookingId: patient.bookingId });
@@ -172,14 +183,6 @@ export default function PatientQueue() {
   };
 
   const handleCancel = async (patient) => {
-    const confirmed = window.confirm(
-      isRTL
-        ? "هل أنت متأكد أنك تريد إلغاء هذا الموعد؟"
-        : "Are you sure you want to cancel this appointment?",
-    );
-
-    if (!confirmed) return;
-
     setActionLoading({ type: "cancel", bookingId: patient.bookingId });
     try {
       const response = await doctorAPI.cancelBooking(
@@ -224,7 +227,7 @@ export default function PatientQueue() {
     }
 
     if (action === "cancel") {
-      handleCancel(patient);
+      setCancelConfirmPatient(patient);
       return;
     }
 
@@ -239,17 +242,8 @@ export default function PatientQueue() {
     { id: "cancelled", label: t("bookingStatus.cancelled") },
   ];
 
-  // Filter patients based on selected filter
-  const filteredPatients = patients.filter((p) => {
-    if (filter === "all") return true;
-    if (filter === "approved") {
-      return p.status === "approved" || p.status === "paid";
-    }
-    return p.status === filter;
-  });
-
-  // Sort: approved first, then pending, then completed.
-  const sortedPatients = [...filteredPatients].sort((a, b) => {
+  // Sort: approved/paid first, then pending, then completed, then cancelled.
+  const sortedPatients = [...patients].sort((a, b) => {
     const statusOrder = {
       approved: 0,
       paid: 0,
@@ -261,6 +255,23 @@ export default function PatientQueue() {
     };
     return (statusOrder[a.status] || 4) - (statusOrder[b.status] || 4);
   });
+
+  // Compute stats from current page
+  const stats = {
+    waiting: patients.filter(
+      (p) => p.status === "pending" || p.status === "approved" || p.status === "paid"
+    ).length,
+    avgWait:
+      patients.filter((p) => p.waitTime > 0).length > 0
+        ? Math.round(
+            patients
+              .filter((p) => p.waitTime > 0)
+              .reduce((sum, p) => sum + p.waitTime, 0) /
+              patients.filter((p) => p.waitTime > 0).length,
+          )
+        : 0,
+    completed: patients.filter((p) => p.status === "completed").length,
+  };
 
   return (
     <div className="p-6 max-w-7xl mx-auto">
@@ -278,7 +289,18 @@ export default function PatientQueue() {
         </div>
       </motion.div>
 
+      {/* Cancellation Policy Banner */}
+      <div className={`flex items-center gap-3 p-4 mb-6 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+        <span className="text-amber-600 text-lg">⚠️</span>
+        <p className="text-sm text-amber-700 dark:text-amber-400 font-medium">
+          {t("doctor.cancelWindowHint", "Cancellation is allowed only 2 days before the slot start time.")}
+        </p>
+      </div>
+
       <div className="space-y-6">
+        {/* Queue Stats */}
+        <QueueStats stats={stats} />
+
         {/* Main Queue List */}
         <div className="space-y-6">
           {/* Filters */}
@@ -287,7 +309,10 @@ export default function PatientQueue() {
             {filters.map((f) => (
               <button
                 key={f.id}
-                onClick={() => setFilter(f.id)}
+                onClick={() => {
+                  setFilter(f.id);
+                  setPageIndex(1);
+                }}
                 className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
                   filter === f.id
                     ? "bg-primary text-white shadow-md"
@@ -348,6 +373,65 @@ export default function PatientQueue() {
           )}
         </div>
       </div>
+
+      {/* Cancel Confirmation Modal */}
+      <AnimatePresence>
+        {cancelConfirmPatient && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setCancelConfirmPatient(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-sm bg-background-paper rounded-2xl shadow-2xl border border-border overflow-hidden z-10"
+            >
+              <div className="p-6 text-center">
+                <div className="w-14 h-14 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mx-auto mb-4">
+                  <XCircle className="w-7 h-7 text-red-500" />
+                </div>
+                <h3 className="text-lg font-bold text-text-heading mb-2">
+                  {isRTL ? "إلغاء الموعد" : "Cancel Appointment"}
+                </h3>
+                <p className="text-sm text-text-muted mb-1">
+                  {cancelConfirmPatient.name}
+                </p>
+                <p className="text-sm text-text-muted mb-6">
+                  {isRTL
+                    ? "هل أنت متأكد أنك تريد إلغاء هذا الموعد؟"
+                    : "Are you sure you want to cancel this appointment?"}
+                </p>
+                <div className="flex gap-3 justify-center">
+                  <Button
+                    variant="outline"
+                    onClick={() => setCancelConfirmPatient(null)}
+                  >
+                    {isRTL ? "لا، احتفظ به" : "No, Keep it"}
+                  </Button>
+                  <Button
+                    className="bg-red-500 hover:bg-red-600 text-white"
+                    onClick={() => {
+                      handleCancel(cancelConfirmPatient);
+                      setCancelConfirmPatient(null);
+                    }}
+                    isLoading={
+                      actionLoading?.type === "cancel" &&
+                      actionLoading?.bookingId === cancelConfirmPatient.bookingId
+                    }
+                  >
+                    {isRTL ? "نعم، إلغاء الموعد" : "Yes, Cancel"}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

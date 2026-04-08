@@ -218,6 +218,12 @@ function ArticleCard({
           ))}
         </div>
 
+        {/* Read more */}
+        <div className={`flex items-center gap-1.5 text-sm font-medium text-primary mb-3 ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
+          <span>{isRTL ? 'اقرأ المزيد' : 'Read more'}</span>
+          <span className="text-xs transition-transform group-hover:translate-x-0.5">{isRTL ? '←' : '→'}</span>
+        </div>
+
         {/* Footer */}
         <div
           className={`flex items-center justify-between gap-2 text-xs text-text-muted border-t border-border pt-3 ${
