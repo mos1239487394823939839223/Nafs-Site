@@ -39,6 +39,7 @@ jobs:
 
       - name: Notify Google Chat on build start
         if: env.WEBHOOK_URL != ''
+        continue-on-error: true
         env:
           WEBHOOK_URL: ${{ env.WEBHOOK_URL }}
         run: |
@@ -53,9 +54,9 @@ jobs:
           BRANCH_INFO="\n🌿 Branch: ${{ github.ref_name }}"
           DOCKER_REPO="\n📦 Repository: ${{ env.IMAGE_NAME }}"
           ACTIONS_URL="\n📋 Actions: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          curl -X POST -H "Content-Type: application/json" \
+          curl --silent --show-error --max-time 15 --retry 2 --retry-delay 2 -X POST -H "Content-Type: application/json" \
           -d "{\"text\": \"🚀 Build Started: ${{ env.IMAGE_NAME }}\n\n👤 Triggered by: ${{ github.actor }}${PR_INFO}${BRANCH_INFO}${COMMIT_INFO}${DOCKER_REPO}${ACTIONS_URL}\"}" \
-          $WEBHOOK_URL
+          "$WEBHOOK_URL" || echo "Google Chat start notification failed, continuing..."
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -121,6 +122,7 @@ jobs:
 
       - name: Notify Google Chat on build success
         if: success() && env.WEBHOOK_URL != ''
+        continue-on-error: true
         env:
           WEBHOOK_URL: ${{ env.WEBHOOK_URL }}
         run: |
@@ -143,12 +145,13 @@ jobs:
           ACTIONS_URL="\n📋 Actions: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           DOCKER_HUB_URL="\n🐳 Docker Hub: https://hub.docker.com/r/${{ env.IMAGE_NAME }}"
           
-          curl -X POST -H "Content-Type: application/json" \
+          curl --silent --show-error --max-time 15 --retry 2 --retry-delay 2 -X POST -H "Content-Type: application/json" \
           -d "{\"text\": \"✅ Build Success: ${{ env.IMAGE_NAME }}\n\n👤 Built by: ${{ github.actor }}${PR_INFO}${BRANCH_INFO}${COMMIT_INFO}${DOCKER_TAGS}${BUILD_TIME}${ACTIONS_URL}${DOCKER_HUB_URL}\"}" \
-          $WEBHOOK_URL
+          "$WEBHOOK_URL" || echo "Google Chat success notification failed, continuing..."
 
       - name: Notify Google Chat on build failure
         if: failure() && env.WEBHOOK_URL != ''
+        continue-on-error: true
         env:
           WEBHOOK_URL: ${{ env.WEBHOOK_URL }}
         run: |
@@ -165,6 +168,6 @@ jobs:
           DOCKER_REPO="\n📦 Repository: ${{ env.IMAGE_NAME }}"
           BUILD_TIME="\n⏱️ Duration: ${{ steps.duration.outputs.duration }}"
           ACTIONS_URL="\n📋 Actions: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-          curl -X POST -H "Content-Type: application/json" \
+          curl --silent --show-error --max-time 15 --retry 2 --retry-delay 2 -X POST -H "Content-Type: application/json" \
           -d "{\"text\": \"❌ Build Failed: ${{ env.IMAGE_NAME }}\n\n👤 Triggered by: ${{ github.actor }}${PR_INFO}${BRANCH_INFO}${COMMIT_INFO}${DOCKER_REPO}${BUILD_TIME}${ACTIONS_URL}${ERROR_INFO}\"}" \
-          $WEBHOOK_URL
+          "$WEBHOOK_URL" || echo "Google Chat failure notification failed, continuing..."
