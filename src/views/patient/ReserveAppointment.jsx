@@ -14,33 +14,51 @@ import Table, {
   TableHeader,
   TableRow,
 } from "../../components/ui/Table";
-import { Search, MedicalServices as Stethoscope, CalendarToday as Calendar, AccessTime as Clock, ChevronRight, Person as User, ArrowBack as ArrowLeft, CheckCircle, Cancel as XCircle, ChevronLeft, Sync as Loader2, Visibility as Eye, ViewList, GridView, Star, Send, ThumbUp, Badge as BadgeIcon, FlashOn, AccountBalanceWallet, UploadFile as UploadIcon, ReceiptLong } from '@mui/icons-material';
+import {
+  Search,
+  MedicalServices as Stethoscope,
+  CalendarToday as Calendar,
+  AccessTime as Clock,
+  ChevronRight,
+  Person as User,
+  ArrowBack as ArrowLeft,
+  CheckCircle,
+  Cancel as XCircle,
+  ChevronLeft,
+  Sync as Loader2,
+  Visibility as Eye,
+  ViewList,
+  GridView,
+  Star,
+  Send,
+  ThumbUp,
+  Badge as BadgeIcon,
+  FlashOn,
+  AccountBalanceWallet,
+  UploadFile as UploadIcon,
+  ReceiptLong,
+} from "@mui/icons-material";
 
 import { useAuth } from "../../contexts/AuthContext";
 import { patientAPI, paymentAPI, filesAPI } from "../../lib/api";
 import { getPaymentStatusMeta } from "../../lib/paymentStatus";
 import { useToast } from "../../components/ui/Toast";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useSignalR } from "../../hooks/useSignalR";
 import DoctorDocumentsViewer from "../../components/patient/DoctorDocumentsViewer";
 import Modal from "../../components/ui/Modal";
 import { useSearchParams } from "react-router-dom";
+import { getDoctorSpecialtyTheme } from "../../lib/doctorSpecialtyTheme";
+import { getAppointmentStatusMeta } from "../../lib/appointmentStatus";
 
 export default function ReserveAppointment() {
   const { user: currentUser } = useAuth();
   const toast = useToast();
   const { t, isRTL } = useLanguage();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = searchParams.get("tab") === "status" ? "status" : "reserve";
+  const initialTab =
+    searchParams.get("tab") === "status" ? "status" : "reserve";
 
-  // BookingStatus enum
-  const BookingStatusMap = {
-    0: { label: t('bookingStatus.pending'), variant: 'warning' },
-    1: { label: t('bookingStatus.confirmed'), variant: 'primary' },
-    2: { label: t('bookingStatus.inProgress'), variant: 'info' },
-    3: { label: t('bookingStatus.completed'), variant: 'success' },
-    4: { label: t('bookingStatus.cancelled'), variant: 'danger' },
-    5: { label: t('bookingStatus.noShow'), variant: 'danger' },
-  };
   const [step, setStep] = useState(searchParams.get("doctorId") ? 2 : 1); // 1: Doctor List, 2: Calendar/Details, 3: Success
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -74,10 +92,10 @@ export default function ReserveAppointment() {
 
   // Doctor reviews state
   const [reviews, setReviews] = useState([]);
-  const [newReview, setNewReview] = useState({ rating: 0, comment: '' });
+  const [newReview, setNewReview] = useState({ rating: 0, comment: "" });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [selectedWeekStart, setSelectedWeekStart] = useState(new Date());
-  
+
   // Documents modal state
   const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
   const [selectedPaymentProvider, setSelectedPaymentProvider] = useState(2);
@@ -86,38 +104,60 @@ export default function ReserveAppointment() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentScreenshot, setPaymentScreenshot] = useState(null);
-  const [referenceNumber, setReferenceNumber] = useState('');
-  const [pendingManualPaymentBookingId, setPendingManualPaymentBookingId] = useState(null);
+  const [referenceNumber, setReferenceNumber] = useState("");
+  const [
+    pendingManualPaymentBookingId,
+    setPendingManualPaymentBookingId,
+  ] = useState(null);
   const [bookingPendingReview, setBookingPendingReview] = useState(false);
 
   const fallbackPaymentProviders = [
-    { ID: 2, Name: 'InstaPay' },
-    { ID: 3, Name: isRTL ? 'كاش وولت' : 'Cash Wallet' },
+    { ID: 2, Name: "InstaPay" },
+    { ID: 3, Name: isRTL ? "كاش وولت" : "Cash Wallet" },
   ];
 
+  const getNumericFee = (doctor) => {
+    const rawFee = doctor?.ConsultationFee ?? doctor?.price ?? 0;
+    const parsed = Number(rawFee);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  };
+
+  const getTransferFeeAmount = (baseFee, provider) => {
+    if (!baseFee || baseFee <= 0) return 0;
+    const providerName = String(provider?.Name || "").toLowerCase();
+    const providerId = Number(provider?.ID);
+    const isInstaPay = providerName.includes("insta") || providerId === 2;
+    const ratio = isInstaPay ? 0.015 : 0.02;
+    const minimum = isInstaPay ? 5 : 7;
+    return Math.max(minimum, Math.round(baseFee * ratio));
+  };
+
+  const formatCurrency = (amount) =>
+    `${Number(amount || 0).toLocaleString(isRTL ? "ar-EG" : "en-US")} EGP`;
+
   const getProviderUiMeta = (provider) => {
-    const name = String(provider?.Name || '').toLowerCase();
+    const name = String(provider?.Name || "").toLowerCase();
     const id = Number(provider?.ID);
-    const isInsta = name.includes('insta') || id === 2;
+    const isInsta = name.includes("insta") || id === 2;
     if (isInsta) {
       return {
         icon: FlashOn,
-        label: provider?.Name || 'InstaPay',
-        desc: isRTL ? 'تحويل فوري' : 'Instant transfer',
-        accent: 'from-amber-500/20 to-orange-500/10',
-        iconBg: 'bg-amber-500/15',
-        iconColor: 'text-amber-400',
+        label: provider?.Name || "InstaPay",
+        desc: isRTL ? "تحويل فوري" : "Instant transfer",
+        accent: "from-amber-100 to-orange-50",
+        iconBg: "bg-amber-100",
+        iconColor: "text-amber-700",
         requireReference: true,
       };
     }
 
     return {
       icon: AccountBalanceWallet,
-      label: provider?.Name || (isRTL ? 'محفظة رقمية' : 'Digital Wallet'),
-      desc: isRTL ? 'تحويل يدوي' : 'Manual transfer',
-      accent: 'from-emerald-500/20 to-teal-500/10',
-      iconBg: 'bg-emerald-500/15',
-      iconColor: 'text-emerald-400',
+      label: provider?.Name || (isRTL ? "محفظة رقمية" : "Digital Wallet"),
+      desc: isRTL ? "تحويل يدوي" : "Manual transfer",
+      accent: "from-emerald-100 to-teal-50",
+      iconBg: "bg-emerald-100",
+      iconColor: "text-emerald-700",
       requireReference: false,
     };
   };
@@ -126,7 +166,10 @@ export default function ReserveAppointment() {
   const fetchDoctors = async (page = 1) => {
     setLoading(true);
     try {
-      const response = await patientAPI.getAllDoctors(page, pagination.pageSize);
+      const response = await patientAPI.getAllDoctors(
+        page,
+        pagination.pageSize,
+      );
       if (response.IsSuccess) {
         setDoctors(response.Data.Items || []);
         setPagination({
@@ -136,11 +179,11 @@ export default function ReserveAppointment() {
           totalRecords: response.Data.Records,
         });
       } else {
-        toast.error(response.Message || t('errors.loadDoctorsFailed'));
+        toast.error(response.Message || t("errors.loadDoctorsFailed"));
       }
     } catch (error) {
       console.error("Error fetching doctors:", error);
-      toast.error(t('errors.networkError'));
+      toast.error(t("errors.networkError"));
     } finally {
       setLoading(false);
     }
@@ -150,7 +193,10 @@ export default function ReserveAppointment() {
   const fetchPatientBookings = async (page = 1) => {
     setBookingsLoading(true);
     try {
-      const response = await patientAPI.getPatientBookings(page, bookingsPagination.pageSize);
+      const response = await patientAPI.getPatientBookings(
+        page,
+        bookingsPagination.pageSize,
+      );
       if (response.IsSuccess && response.Data) {
         setPatientBookings(response.Data.Items || []);
         setBookingsPagination({
@@ -159,11 +205,11 @@ export default function ReserveAppointment() {
           totalPages: response.Data.Pages || 1,
         });
       } else {
-        toast.error(response?.Message || t('errors.loadBookingsFailed'));
+        toast.error(response?.Message || t("errors.loadBookingsFailed"));
       }
     } catch (error) {
       console.error("Error fetching bookings:", error);
-      toast.error(t('errors.loadBookingsFailed'));
+      toast.error(t("errors.loadBookingsFailed"));
     } finally {
       setBookingsLoading(false);
     }
@@ -176,7 +222,7 @@ export default function ReserveAppointment() {
         setBookingsForSlots(response.Data.Items || []);
       }
     } catch (error) {
-      console.error('Error fetching bookings for slots:', error);
+      console.error("Error fetching bookings for slots:", error);
     }
   };
 
@@ -192,6 +238,24 @@ export default function ReserveAppointment() {
       fetchPatientBookings(1);
     }
   }, [mainTab]);
+
+  useEffect(() => {
+    if (mainTab !== "status") return undefined;
+    const intervalId = setInterval(() => {
+      fetchPatientBookings(bookingsPagination.pageIndex || 1);
+    }, 20000);
+    return () => clearInterval(intervalId);
+  }, [mainTab, bookingsPagination.pageIndex]);
+
+  useEffect(() => {
+    if (mainTab !== "reserve" || step !== 2 || !selectedDoctor)
+      return undefined;
+    const intervalId = setInterval(() => {
+      fetchDoctorSlots(selectedDoctor.Id, selectedDate);
+      fetchBookingsForSlots();
+    }, 20000);
+    return () => clearInterval(intervalId);
+  }, [mainTab, step, selectedDoctor, selectedDate]);
 
   useEffect(() => {
     const nextParams = new URLSearchParams(searchParams);
@@ -221,20 +285,36 @@ export default function ReserveAppointment() {
       setPaymentProvidersLoading(true);
       try {
         const response = await paymentAPI.getProviders();
-        if (response?.IsSuccess !== false && Array.isArray(response?.Data) && response.Data.length > 0) {
+        if (
+          response?.IsSuccess !== false &&
+          Array.isArray(response?.Data) &&
+          response.Data.length > 0
+        ) {
           setPaymentProviders(response.Data);
-          if (!response.Data.some((p) => Number(p.ID) === Number(selectedPaymentProvider))) {
+          if (
+            !response.Data.some(
+              (p) => Number(p.ID) === Number(selectedPaymentProvider),
+            )
+          ) {
             setSelectedPaymentProvider(response.Data[0].ID);
           }
         } else {
           setPaymentProviders(fallbackPaymentProviders);
-          if (!fallbackPaymentProviders.some((p) => Number(p.ID) === Number(selectedPaymentProvider))) {
+          if (
+            !fallbackPaymentProviders.some(
+              (p) => Number(p.ID) === Number(selectedPaymentProvider),
+            )
+          ) {
             setSelectedPaymentProvider(fallbackPaymentProviders[0].ID);
           }
         }
       } catch {
         setPaymentProviders(fallbackPaymentProviders);
-        if (!fallbackPaymentProviders.some((p) => Number(p.ID) === Number(selectedPaymentProvider))) {
+        if (
+          !fallbackPaymentProviders.some(
+            (p) => Number(p.ID) === Number(selectedPaymentProvider),
+          )
+        ) {
           setSelectedPaymentProvider(fallbackPaymentProviders[0].ID);
         }
       } finally {
@@ -254,8 +334,8 @@ export default function ReserveAppointment() {
   // Helper to format date as YYYY-MM-DD
   const formatDateKey = (d) => {
     const year = d.getFullYear();
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   };
 
@@ -264,20 +344,165 @@ export default function ReserveAppointment() {
     const d = new Date(dateTimeValue);
     if (Number.isNaN(d.getTime())) return null;
     const dateKey = formatDateKey(d);
-    const hour = String(d.getHours()).padStart(2, '0');
-    const minute = String(d.getMinutes()).padStart(2, '0');
+    const hour = String(d.getHours()).padStart(2, "0");
+    const minute = String(d.getMinutes()).padStart(2, "0");
     return `${dateKey}-${hour}:${minute}`;
   };
 
+  const pickEventField = (payload, keys = []) => {
+    for (const key of keys) {
+      if (payload?.[key] !== undefined && payload?.[key] !== null) {
+        return payload[key];
+      }
+    }
+    return null;
+  };
+
+  const getEventBookingId = (payload) =>
+    pickEventField(payload, ["BookingId", "bookingId", "Id", "id"]);
+
+  const getEventDoctorId = (payload) =>
+    pickEventField(payload, [
+      "DoctorId",
+      "doctorId",
+      "ProviderId",
+      "providerId",
+    ]);
+
+  const getEventSlotKey = (payload) => {
+    const slotKey = pickEventField(payload, ["SlotKey", "slotKey"]);
+    if (slotKey) return String(slotKey);
+
+    const dateTimeValue = pickEventField(payload, [
+      "SessionStartTime",
+      "sessionStartTime",
+      "StartDateTime",
+      "startDateTime",
+      "SlotStart",
+      "slotStart",
+      "Date",
+      "date",
+      "StartTimeIso",
+      "startTimeIso",
+    ]);
+
+    const fromDateTime = buildSlotKeyFromDateTime(dateTimeValue);
+    if (fromDateTime) return fromDateTime;
+
+    const rawDate = pickEventField(payload, ["SpecificDate", "specificDate"]);
+    const rawStartTime = pickEventField(payload, ["StartTime", "startTime"]);
+    if (!rawDate || !rawStartTime) return null;
+
+    const datePart = String(rawDate).split("T")[0];
+    const timePart = String(rawStartTime).slice(0, 5);
+    if (!datePart || !timePart.includes(":")) return null;
+
+    return `${datePart}-${timePart}`;
+  };
+
+  const applyPaymentStatusUpdate = (payload) => {
+    const bookingId = getEventBookingId(payload);
+    if (!bookingId) return;
+
+    const eventPaymentStatus = pickEventField(payload, [
+      "PaymentStatus",
+      "paymentStatus",
+      "Status",
+      "status",
+    ]);
+
+    const normalizedStatus =
+      eventPaymentStatus !== null && eventPaymentStatus !== undefined
+        ? Number(eventPaymentStatus)
+        : null;
+
+    const nextPaymentConfirmed =
+      normalizedStatus === 2 ||
+      String(eventPaymentStatus || "")
+        .toLowerCase()
+        .includes("confirm") ||
+      String(eventPaymentStatus || "")
+        .toLowerCase()
+        .includes("complete");
+
+    setPatientBookings((prev) =>
+      prev.map((booking) =>
+        String(booking?.Id) === String(bookingId)
+          ? {
+              ...booking,
+              ...(normalizedStatus !== null && Number.isFinite(normalizedStatus)
+                ? { PaymentStatus: normalizedStatus }
+                : {}),
+              ...(nextPaymentConfirmed ? { PaymentConfirmed: true } : {}),
+            }
+          : booking,
+      ),
+    );
+  };
+
+  const handleSlotCancelledRealtime = (payload) => {
+    if (!selectedDoctor) return;
+
+    const payloadDoctorId = getEventDoctorId(payload);
+    if (
+      payloadDoctorId !== null &&
+      payloadDoctorId !== undefined &&
+      String(payloadDoctorId) !== String(selectedDoctor?.Id)
+    ) {
+      return;
+    }
+
+    const targetSlotKey = getEventSlotKey(payload);
+    if (targetSlotKey) {
+      setSlots((prev) => {
+        if (!Object.prototype.hasOwnProperty.call(prev, targetSlotKey)) {
+          return prev;
+        }
+        const next = { ...prev };
+        delete next[targetSlotKey];
+        return next;
+      });
+
+      if (bookedSlot) {
+        const selectedSlotKey = `${formatDateKey(bookedSlot.date)}-${
+          bookedSlot.timeKey
+        }`;
+        if (selectedSlotKey === targetSlotKey) {
+          setBookedSlot(null);
+          toast.error(
+            isRTL
+              ? "تم إلغاء الموعد المحدد من الدكتور. اختر موعدًا آخر."
+              : "The selected slot was cancelled by the doctor. Please choose another slot.",
+          );
+        }
+      }
+    }
+
+    fetchDoctorSlots(selectedDoctor.Id, selectedDate);
+    fetchBookingsForSlots();
+  };
+
   const getBookingStatusMeta = (statusValue) => {
-    const normalized = Number(statusValue);
-    if (normalized === 0) return { label: isRTL ? 'قيد المراجعة' : 'Pending', className: 'bg-amber-500/15 text-amber-300 border-amber-500/35' };
-    if (normalized === 1) return { label: isRTL ? 'مؤكد' : 'Approved', className: 'bg-blue-500/15 text-blue-300 border-blue-500/35' };
-    if (normalized === 2) return { label: isRTL ? 'قيد الجلسة' : 'In Progress', className: 'bg-cyan-500/15 text-cyan-300 border-cyan-500/35' };
-    if (normalized === 3) return { label: isRTL ? 'مكتمل' : 'Completed', className: 'bg-emerald-500/15 text-emerald-300 border-emerald-500/35' };
-    if (normalized === 4) return { label: isRTL ? 'ملغي' : 'Cancelled', className: 'bg-red-500/15 text-red-300 border-red-500/35' };
-    if (normalized === 5) return { label: isRTL ? 'لم يحضر' : 'No Show', className: 'bg-slate-500/20 text-slate-200 border-slate-400/35' };
-    return { label: isRTL ? 'طلبي' : 'My request', className: 'bg-primary/15 text-primary border-primary/35' };
+    const statusMeta = getAppointmentStatusMeta(statusValue, {
+      t,
+      isRTL,
+    });
+
+    const classNameByKey = {
+      pending: "bg-amber-50 text-amber-700 border-amber-200",
+      approved: "bg-blue-50 text-blue-700 border-blue-200",
+      paid: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
+      cancelled: "bg-red-50 text-red-700 border-red-200",
+      rejected: "bg-red-50 text-red-700 border-red-200",
+      noShow: "bg-slate-100 text-slate-700 border-slate-300",
+      unknown: "bg-primary/15 text-primary border-primary/35",
+    };
+
+    return {
+      label: statusMeta.label,
+      className: classNameByKey[statusMeta.key] || classNameByKey.unknown,
+    };
   };
 
   // Get the week date range for a given base date
@@ -306,7 +531,7 @@ export default function ReserveAppointment() {
       const response = await patientAPI.getDoctorSlots(
         String(doctorId),
         formatDateKey(start),
-        formatDateKey(end)
+        formatDateKey(end),
       );
 
       console.log("Doctor Slots API response:", response);
@@ -315,24 +540,32 @@ export default function ReserveAppointment() {
 
       if (response.IsSuccess && response.Data) {
         // API returns { DoctorId, DoctorName, Slots: [...] }
-        const slotsData = response.Data.Slots
-          || response.Data.Items
-          || (Array.isArray(response.Data) ? response.Data : []);
+        const slotsData =
+          response.Data.Slots ||
+          response.Data.Items ||
+          (Array.isArray(response.Data) ? response.Data : []);
 
         console.log("Slots data parsed:", slotsData);
 
-        slotsData.forEach(slot => {
+        slotsData.forEach((slot) => {
           // Handle various field names for the time
-          const slotTime = slot.StartTime || slot.Date || slot.Start || slot.SessionStartTime || slot.SlotStart;
+          const slotTime =
+            slot.StartTime ||
+            slot.Date ||
+            slot.Start ||
+            slot.SessionStartTime ||
+            slot.SlotStart;
           if (slotTime) {
             const slotDate = new Date(slotTime);
             const dateKey = formatDateKey(slotDate);
-            const hour = String(slotDate.getHours()).padStart(2, '0');
-            const minute = String(slotDate.getMinutes()).padStart(2, '0');
+            const hour = String(slotDate.getHours()).padStart(2, "0");
+            const minute = String(slotDate.getMinutes()).padStart(2, "0");
             const key = `${dateKey}-${hour}:${minute}`;
 
             // Respect backend reserved state; IsReserved is used in swagger SlotDto.
-            const isReserved = Boolean(slot.IsReserved ?? slot.IsBooked ?? slot.Booked);
+            const isReserved = Boolean(
+              slot.IsReserved ?? slot.IsBooked ?? slot.Booked,
+            );
             if (isReserved) {
               mappedSlots[key] = "booked";
             } else {
@@ -347,14 +580,17 @@ export default function ReserveAppointment() {
       }
 
       // Fallback: also try DoctoreSchualings from doctor data if slots API returned nothing
-      if (Object.keys(mappedSlots).length === 0 && selectedDoctor?.DoctoreSchualings) {
+      if (
+        Object.keys(mappedSlots).length === 0 &&
+        selectedDoctor?.DoctoreSchualings
+      ) {
         const apiSchedules = selectedDoctor.DoctoreSchualings || [];
-        apiSchedules.forEach(schedule => {
+        apiSchedules.forEach((schedule) => {
           if (schedule.Aviable && schedule.Date) {
             const scheduleDate = new Date(schedule.Date);
             const dateKey = formatDateKey(scheduleDate);
-            const hour = String(scheduleDate.getHours()).padStart(2, '0');
-            const minute = String(scheduleDate.getMinutes()).padStart(2, '0');
+            const hour = String(scheduleDate.getHours()).padStart(2, "0");
+            const minute = String(scheduleDate.getMinutes()).padStart(2, "0");
             const key = `${dateKey}-${hour}:${minute}`;
             mappedSlots[key] = "available";
           }
@@ -367,12 +603,12 @@ export default function ReserveAppointment() {
       // Fallback to DoctoreSchualings if the slots API fails
       if (selectedDoctor?.DoctoreSchualings) {
         const mappedSlots = {};
-        selectedDoctor.DoctoreSchualings.forEach(schedule => {
+        selectedDoctor.DoctoreSchualings.forEach((schedule) => {
           if (schedule.Aviable && schedule.Date) {
             const scheduleDate = new Date(schedule.Date);
             const dateKey = formatDateKey(scheduleDate);
-            const hour = String(scheduleDate.getHours()).padStart(2, '0');
-            const minute = String(scheduleDate.getMinutes()).padStart(2, '0');
+            const hour = String(scheduleDate.getHours()).padStart(2, "0");
+            const minute = String(scheduleDate.getMinutes()).padStart(2, "0");
             const key = `${dateKey}-${hour}:${minute}`;
             mappedSlots[key] = "available";
           }
@@ -391,9 +627,12 @@ export default function ReserveAppointment() {
 
       if (response.IsSuccess) {
         // The API returns a paging DTO, so we check for Items
-        const doctorData = response.Data?.Items && response.Data.Items.length > 0
-          ? response.Data.Items[0]
-          : (response.Data && !response.Data.Items ? response.Data : null);
+        const doctorData =
+          response.Data?.Items && response.Data.Items.length > 0
+            ? response.Data.Items[0]
+            : response.Data && !response.Data.Items
+            ? response.Data
+            : null;
 
         if (doctorData) {
           setSelectedDoctor(doctorData);
@@ -405,18 +644,18 @@ export default function ReserveAppointment() {
 
           setStep(2);
         } else {
-          toast.error(t('errors.doctorNotFound'));
+          toast.error(t("errors.doctorNotFound"));
           setStep(1);
           setSearchParams({});
         }
       } else {
-        toast.error(response.Message || t('errors.loadDoctorsFailed'));
+        toast.error(response.Message || t("errors.loadDoctorsFailed"));
         setStep(1);
         setSearchParams({});
       }
     } catch (error) {
       console.error("Error fetching doctor info:", error);
-      toast.error(t('errors.loadDoctorsFailed'));
+      toast.error(t("errors.loadDoctorsFailed"));
       setStep(1);
       setSearchParams({});
     } finally {
@@ -427,17 +666,20 @@ export default function ReserveAppointment() {
   const handleCancelReservation = async (bookingId) => {
     setCancellingId(bookingId);
     try {
-      const response = await patientAPI.cancelBooking(bookingId, "Cancelled by patient");
+      const response = await patientAPI.cancelBooking(
+        bookingId,
+        "Cancelled by patient",
+      );
       if (response?.IsSuccess !== false) {
-        toast.success(t('success.appointmentCancelled'));
+        toast.success(t("success.appointmentCancelled"));
         // Refresh bookings
         fetchPatientBookings(bookingsPagination.pageIndex);
         fetchBookingsForSlots();
       } else {
-        toast.error(response?.Message || t('errors.cancelFailed'));
+        toast.error(response?.Message || t("errors.cancelFailed"));
       }
     } catch (error) {
-      toast.error(error.response?.data?.Message || t('errors.cancelFailed'));
+      toast.error(error.response?.data?.Message || t("errors.cancelFailed"));
     } finally {
       setCancellingId(null);
     }
@@ -446,8 +688,8 @@ export default function ReserveAppointment() {
   const confirmCancelReservation = (bookingId) => {
     const confirmed = window.confirm(
       isRTL
-        ? 'هل أنت متأكد أنك تريد إلغاء هذا الموعد؟'
-        : 'Are you sure you want to cancel this appointment?'
+        ? "هل أنت متأكد أنك تريد إلغاء هذا الموعد؟"
+        : "Are you sure you want to cancel this appointment?",
     );
 
     if (!confirmed) return;
@@ -457,7 +699,11 @@ export default function ReserveAppointment() {
   const submitManualPaymentForBooking = async (bookingId) => {
     if (!bookingId) return false;
     if (!paymentScreenshot) {
-      toast.error(isRTL ? 'يرجى إرفاق صورة التحويل' : 'Please attach a transfer screenshot');
+      toast.error(
+        isRTL
+          ? "يرجى إرفاق صورة التحويل"
+          : "Please attach a transfer screenshot",
+      );
       return false;
     }
 
@@ -467,7 +713,11 @@ export default function ReserveAppointment() {
       const screenshotUrl = uploadResponse?.Data?.PublicUrl;
 
       if (!screenshotUrl) {
-        toast.error(isRTL ? 'فشل رفع صورة التحويل' : 'Failed to upload transfer screenshot');
+        toast.error(
+          isRTL
+            ? "فشل رفع صورة التحويل"
+            : "Failed to upload transfer screenshot",
+        );
         return false;
       }
 
@@ -479,20 +729,23 @@ export default function ReserveAppointment() {
       });
 
       if (response?.IsSuccess === false) {
-        toast.error(response?.Message || t('errors.unexpectedError'));
+        toast.error(response?.Message || t("errors.unexpectedError"));
         return false;
       }
 
       toast.success(
         isRTL
-          ? 'تم إرسال إثبات الدفع. سيظل الحجز قيد المراجعة حتى يراجعه الدعم الفني.'
-          : 'Payment proof submitted. Booking will stay pending until technical support reviews it.'
+          ? "تم إرسال إثبات الدفع. سيظل الحجز قيد المراجعة حتى يراجعه الدعم الفني."
+          : "Payment proof submitted. Booking will stay pending until technical support reviews it.",
       );
       fetchPatientBookings(bookingsPagination.pageIndex);
       fetchBookingsForSlots();
       return true;
     } catch (error) {
-      toast.error(error?.response?.data?.Message || (isRTL ? 'فشل إرسال إثبات الدفع' : 'Failed to submit payment proof'));
+      toast.error(
+        error?.response?.data?.Message ||
+          (isRTL ? "فشل إرسال إثبات الدفع" : "Failed to submit payment proof"),
+      );
       return false;
     } finally {
       setPaymentLoading(false);
@@ -503,7 +756,7 @@ export default function ReserveAppointment() {
     if (!bookedSlot) return;
     setPendingManualPaymentBookingId(null);
     setPaymentScreenshot(null);
-    setReferenceNumber('');
+    setReferenceNumber("");
     setIsPaymentModalOpen(true);
   };
 
@@ -513,7 +766,11 @@ export default function ReserveAppointment() {
 
   const handlePaymentSubmit = async () => {
     if (!paymentScreenshot) {
-      toast.error(isRTL ? 'يرجى إرفاق صورة التحويل' : 'Please attach a transfer screenshot');
+      toast.error(
+        isRTL
+          ? "يرجى إرفاق صورة التحويل"
+          : "Please attach a transfer screenshot",
+      );
       return;
     }
 
@@ -528,34 +785,39 @@ export default function ReserveAppointment() {
     await confirmBooking();
   };
 
+  useSignalR({
+    enabled: Boolean(currentUser),
+    disconnectOnUnmount: true,
+    handlers: {
+      PaymentStatusUpdated: applyPaymentStatusUpdate,
+      BookingPaymentStatusUpdated: applyPaymentStatusUpdate,
+      ManualPaymentStatusUpdated: applyPaymentStatusUpdate,
+      SlotDeleted: handleSlotCancelledRealtime,
+      SlotCancelled: handleSlotCancelledRealtime,
+      AvailabilityDeleted: handleSlotCancelledRealtime,
+      DoctorSlotDeleted: handleSlotCancelledRealtime,
+    },
+    onConnectionError: () => {
+      // Polling effects keep data synced if real-time channel fails.
+    },
+  });
+
   const resolveStatusInfo = (booking) => {
-    const rawStatus = booking?.Status;
-
-    if (typeof rawStatus === 'number') {
-      if (rawStatus === 0) return { label: isRTL ? 'قيد الانتظار' : 'Pending', variant: 'warning', key: 'pending' };
-      if (rawStatus === 1) return { label: isRTL ? 'تمت الموافقة' : 'Approved', variant: 'primary', key: 'approved' };
-      if (rawStatus === 4) return { label: isRTL ? 'ملغي' : 'Cancelled', variant: 'danger', key: 'cancelled' };
-      if (rawStatus === 3) return { label: t('bookingStatus.completed'), variant: 'success', key: 'completed' };
-      if (rawStatus === 2) return { label: t('bookingStatus.inProgress'), variant: 'info', key: 'inProgress' };
-      if (rawStatus === 5) return { label: t('bookingStatus.noShow'), variant: 'danger', key: 'noShow' };
-    }
-
-    const normalized = String(rawStatus || '').toLowerCase();
-    if (normalized.includes('cancel')) return { label: isRTL ? 'ملغي' : 'Cancelled', variant: 'danger', key: 'cancelled' };
-    if (normalized.includes('approv') || normalized.includes('confirm')) return { label: isRTL ? 'تمت الموافقة' : 'Approved', variant: 'primary', key: 'approved' };
-    if (normalized.includes('pend')) return { label: isRTL ? 'قيد الانتظار' : 'Pending', variant: 'warning', key: 'pending' };
-
-    if (booking?.CancellationReason) {
-      return { label: isRTL ? 'ملغي' : 'Cancelled', variant: 'danger', key: 'cancelled' };
-    }
-
-    return { label: isRTL ? 'قيد الانتظار' : 'Pending', variant: 'warning', key: 'pending' };
+    return getAppointmentStatusMeta(booking?.Status, {
+      t,
+      isRTL,
+      booking,
+    });
   };
 
   const resolvePaymentStatusInfo = (booking) => {
     const rawPaymentStatus = booking?.PaymentStatus ?? booking?.paymentStatus;
 
-    if (rawPaymentStatus !== undefined && rawPaymentStatus !== null && String(rawPaymentStatus) !== '') {
+    if (
+      rawPaymentStatus !== undefined &&
+      rawPaymentStatus !== null &&
+      String(rawPaymentStatus) !== ""
+    ) {
       return getPaymentStatusMeta(rawPaymentStatus, { isRTL });
     }
 
@@ -570,8 +832,8 @@ export default function ReserveAppointment() {
   const handleSlotClick = (date, timeKey) => {
     // Consistent date formatting
     const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
     const dateKey = `${year}-${month}-${day}`;
 
     const key = `${dateKey}-${timeKey}`;
@@ -592,11 +854,11 @@ export default function ReserveAppointment() {
       // Construct booking request
       const formatDate = (d) => {
         const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        const hours = String(d.getHours()).padStart(2, '0');
-        const minutes = String(d.getMinutes()).padStart(2, '0');
-        const seconds = String(d.getSeconds()).padStart(2, '0');
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        const hours = String(d.getHours()).padStart(2, "0");
+        const minutes = String(d.getMinutes()).padStart(2, "0");
+        const seconds = String(d.getSeconds()).padStart(2, "0");
         // Format: YYYY-MM-DDTHH:mm:ss (ISO 8601 without Z if backend expects local, or with Z if UTC)
         // Swagger says "date-time". Usually ISO.
         // Let's create a date object with the booked hour
@@ -604,7 +866,9 @@ export default function ReserveAppointment() {
       };
 
       const bookingDate = new Date(bookedSlot.date);
-      const [hour, minute] = (bookedSlot.timeKey || '00:00').split(':').map(Number);
+      const [hour, minute] = (bookedSlot.timeKey || "00:00")
+        .split(":")
+        .map(Number);
       bookingDate.setHours(Number.isFinite(hour) ? hour : 0);
       bookingDate.setMinutes(Number.isFinite(minute) ? minute : 0);
       bookingDate.setSeconds(0);
@@ -613,8 +877,55 @@ export default function ReserveAppointment() {
         DoctorId: selectedDoctor.Id,
         SessionStartTime: formatDate(bookingDate),
         DurationMinutes: 30, // Backend accepts 30 or 45 minutes only
-        PatientNotes: "Booked via Web App"
+        PatientNotes: "Booked via Web App",
       };
+
+      // Re-check availability right before booking to avoid race conditions with slot cancellations.
+      try {
+        const { start, end } = getWeekRange(bookingDate);
+        const latestSlotsResponse = await patientAPI.getDoctorSlots(
+          String(selectedDoctor.Id),
+          formatDateKey(start),
+          formatDateKey(end),
+        );
+
+        const latestSlotsData =
+          latestSlotsResponse?.Data?.Slots ||
+          latestSlotsResponse?.Data?.Items ||
+          (Array.isArray(latestSlotsResponse?.Data)
+            ? latestSlotsResponse.Data
+            : []);
+
+        const targetSlotKey = buildSlotKeyFromDateTime(bookingDate);
+        const isStillAvailable = latestSlotsData.some((slot) => {
+          const slotTime =
+            slot.StartTime ||
+            slot.Date ||
+            slot.Start ||
+            slot.SessionStartTime ||
+            slot.SlotStart;
+          const slotKey = buildSlotKeyFromDateTime(slotTime);
+          if (!slotKey || slotKey !== targetSlotKey) return false;
+          const isReserved = Boolean(
+            slot.IsReserved ?? slot.IsBooked ?? slot.Booked,
+          );
+          return !isReserved;
+        });
+
+        if (!isStillAvailable) {
+          setBookedSlot(null);
+          fetchDoctorSlots(selectedDoctor.Id, selectedDate);
+          fetchBookingsForSlots();
+          toast.error(
+            isRTL
+              ? "هذا الموعد لم يعد متاحًا. اختر موعدًا آخر."
+              : "This slot is no longer available. Please choose another slot.",
+          );
+          return;
+        }
+      } catch {
+        // Continue to backend booking validation when pre-check fails.
+      }
 
       const response = await patientAPI.createBooking(bookingRequest);
       if (response.IsSuccess) {
@@ -630,32 +941,47 @@ export default function ReserveAppointment() {
         setStep(3);
         toast.success(
           isRTL
-            ? 'تم إرسال طلب الحجز والدفع بنجاح وهو الآن قيد المراجعة.'
-            : 'Booking and payment request submitted successfully and is now pending review.'
+            ? "تم إرسال طلب الحجز والدفع بنجاح وهو الآن قيد المراجعة."
+            : "Booking and payment request submitted successfully and is now pending review.",
         );
       } else {
-        toast.error(response.Message || t('errors.bookingFailed'));
+        toast.error(response.Message || t("errors.bookingFailed"));
       }
     } catch (error) {
       console.error("Booking error:", error);
-      const errorMsg = error.response?.data?.Message || t('errors.bookingFailed');
-      toast.error(errorMsg);
+      const errorMsg =
+        error.response?.data?.Message || t("errors.bookingFailed");
+      if (
+        String(errorMsg).toLowerCase().includes("not available") ||
+        String(errorMsg).toLowerCase().includes("cancel")
+      ) {
+        setBookedSlot(null);
+        fetchDoctorSlots(selectedDoctor.Id, selectedDate);
+        fetchBookingsForSlots();
+        toast.error(
+          isRTL
+            ? "هذا الموعد لم يعد متاحًا. اختر موعدًا آخر."
+            : "This slot is no longer available. Please choose another slot.",
+        );
+      } else {
+        toast.error(errorMsg);
+      }
     } finally {
       setLoading(false);
     }
   };
 
   const formatHourLabel = (timeKey) => {
-    const [rawHour, rawMinute] = String(timeKey || '00:00').split(':');
+    const [rawHour, rawMinute] = String(timeKey || "00:00").split(":");
     const hour = Number(rawHour);
     const minute = Number(rawMinute);
 
     const safeHour = Number.isFinite(hour) ? hour : 0;
     const safeMinute = Number.isFinite(minute) ? minute : 0;
     const displayHour = safeHour % 12 === 0 ? 12 : safeHour % 12;
-    const suffix = safeHour >= 12 ? 'PM' : 'AM';
+    const suffix = safeHour >= 12 ? "PM" : "AM";
 
-    return `${displayHour}:${String(safeMinute).padStart(2, '0')} ${suffix}`;
+    return `${displayHour}:${String(safeMinute).padStart(2, "0")} ${suffix}`;
   };
 
   const getWeekDates = (baseDate) => {
@@ -672,9 +998,19 @@ export default function ReserveAppointment() {
     return weekDates;
   };
 
-  const availablePaymentProviders = paymentProviders.length > 0 ? paymentProviders : fallbackPaymentProviders;
-  const activeProvider = availablePaymentProviders.find((p) => Number(p.ID) === Number(selectedPaymentProvider)) || availablePaymentProviders[0];
+  const availablePaymentProviders =
+    paymentProviders.length > 0 ? paymentProviders : fallbackPaymentProviders;
+  const activeProvider =
+    availablePaymentProviders.find(
+      (p) => Number(p.ID) === Number(selectedPaymentProvider),
+    ) || availablePaymentProviders[0];
   const activeProviderMeta = getProviderUiMeta(activeProvider || {});
+  const selectedDoctorTheme = getDoctorSpecialtyTheme(
+    selectedDoctor?.Specialist || selectedDoctor?.specialty || [],
+  );
+  const bookingBaseFee = getNumericFee(selectedDoctor);
+  const transferFee = getTransferFeeAmount(bookingBaseFee, activeProvider);
+  const bookingTotalFee = bookingBaseFee + transferFee;
   const mySlotBookingsByKey = useMemo(() => {
     if (!selectedDoctor?.Id) return {};
     const map = {};
@@ -688,13 +1024,18 @@ export default function ReserveAppointment() {
   }, [bookingsForSlots, selectedDoctor]);
 
   return (
-    <div className="max-w-6xl mx-auto space-y-6 p-4 md:p-6" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div
+      className="max-w-6xl mx-auto space-y-6 p-4 md:p-6"
+      dir={isRTL ? "rtl" : "ltr"}
+    >
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-text-heading">{t('patient.appointments')}</h1>
+          <h1 className="text-3xl font-bold text-text-heading">
+            {t("patient.appointments")}
+          </h1>
           <p className="text-text-muted mt-1">
-            {t('patient.manageBookSessions')}
+            {t("patient.manageBookSessions")}
           </p>
         </div>
       </div>
@@ -703,30 +1044,32 @@ export default function ReserveAppointment() {
       <div className="inline-flex p-1 rounded-2xl border border-border bg-background-subtle mb-8 overflow-x-auto no-scrollbar scroll-smooth gap-1">
         <button
           onClick={() => setMainTab("reserve")}
-          className={`px-5 md:px-8 py-3 font-semibold transition-all relative whitespace-nowrap rounded-xl ${mainTab === "reserve"
-            ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
-            : "text-text-muted hover:text-text-heading hover:bg-background-paper"
-            }`}
+          className={`px-5 md:px-8 py-3 font-semibold transition-all relative whitespace-nowrap rounded-xl ${
+            mainTab === "reserve"
+              ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
+              : "text-text-muted hover:text-text-heading hover:bg-background-paper"
+          }`}
           aria-pressed={mainTab === "reserve"}
         >
-          {t('patient.availableDoctors')}
+          {t("patient.availableDoctors")}
         </button>
         <button
           onClick={() => setMainTab("status")}
-          className={`px-5 md:px-8 py-3 font-semibold transition-all relative whitespace-nowrap rounded-xl ${mainTab === "status"
-            ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
-            : "text-text-muted hover:text-text-heading hover:bg-background-paper"
-            }`}
+          className={`px-5 md:px-8 py-3 font-semibold transition-all relative whitespace-nowrap rounded-xl ${
+            mainTab === "status"
+              ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
+              : "text-text-muted hover:text-text-heading hover:bg-background-paper"
+          }`}
           aria-pressed={mainTab === "status"}
         >
-          {t('patient.myReservationStatus')}
+          {t("patient.myReservationStatus")}
         </button>
       </div>
 
       {mainTab === "reserve" ? (
         <div className="space-y-6">
           {step > 1 && step < 3 && (
-            <div className={`flex ${isRTL ? 'justify-end' : 'justify-start'}`}>
+            <div className={`flex ${isRTL ? "justify-end" : "justify-start"}`}>
               <Button
                 variant="ghost"
                 onClick={() => {
@@ -736,8 +1079,12 @@ export default function ReserveAppointment() {
                 }}
                 className="gap-2 hover:bg-primary/10"
               >
-                {isRTL ? <ChevronRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
-                {t('common.backToList')}
+                {isRTL ? (
+                  <ChevronRight className="w-4 h-4" />
+                ) : (
+                  <ArrowLeft className="w-4 h-4" />
+                )}
+                {t("common.backToList")}
               </Button>
             </div>
           )}
@@ -757,20 +1104,28 @@ export default function ReserveAppointment() {
                       <Stethoscope className="w-5 h-5 text-primary" />
                     </div>
                     <h2 className="text-xl font-bold text-text-heading">
-                      {t('patient.selectDoctor')}
+                      {t("patient.selectDoctor")}
                     </h2>
                   </div>
                   <div className="flex items-center gap-2 bg-background-subtle p-1 rounded-lg border border-border mt-2 md:mt-0">
                     <button
-                      onClick={() => setViewMode('list')}
-                      className={`p-2 rounded-md flex items-center justify-center transition-colors ${viewMode === 'list' ? 'bg-background-paper shadow-sm text-primary' : 'text-text-muted hover:text-text-heading'}`}
+                      onClick={() => setViewMode("list")}
+                      className={`p-2 rounded-md flex items-center justify-center transition-colors ${
+                        viewMode === "list"
+                          ? "bg-background-paper shadow-sm text-primary"
+                          : "text-text-muted hover:text-text-heading"
+                      }`}
                       title="List View"
                     >
                       <ViewList className="w-5 h-5" />
                     </button>
                     <button
-                      onClick={() => setViewMode('grid')}
-                      className={`p-2 rounded-md flex items-center justify-center transition-colors ${viewMode === 'grid' ? 'bg-background-paper shadow-sm text-primary' : 'text-text-muted hover:text-text-heading'}`}
+                      onClick={() => setViewMode("grid")}
+                      className={`p-2 rounded-md flex items-center justify-center transition-colors ${
+                        viewMode === "grid"
+                          ? "bg-background-paper shadow-sm text-primary"
+                          : "text-text-muted hover:text-text-heading"
+                      }`}
                       title="Grid View"
                     >
                       <GridView className="w-5 h-5" />
@@ -786,15 +1141,27 @@ export default function ReserveAppointment() {
                     </div>
                   ) : (
                     <>
-                      {viewMode === 'list' ? (
+                      {viewMode === "list" ? (
                         <div className="bg-background-paper rounded-xl border border-border overflow-hidden shadow-sm">
                           <Table>
                             <TableHeader>
                               <TableRow hover={false}>
-                                <TableHead className="w-[30%]">{t('common.doctor')}</TableHead>
-                                <TableHead className="w-[20%]">{t('common.specialty')}</TableHead>
-                                <TableHead className="w-[35%]">{t('patient.experienceBio')}</TableHead>
-                                <TableHead className={`w-[15%] ${isRTL ? 'text-left' : 'text-right'}`}>{t('common.action')}</TableHead>
+                                <TableHead className="w-[30%]">
+                                  {t("common.doctor")}
+                                </TableHead>
+                                <TableHead className="w-[20%]">
+                                  {t("common.specialty")}
+                                </TableHead>
+                                <TableHead className="w-[35%]">
+                                  {t("patient.experienceBio")}
+                                </TableHead>
+                                <TableHead
+                                  className={`w-[15%] ${
+                                    isRTL ? "text-left" : "text-right"
+                                  }`}
+                                >
+                                  {t("common.action")}
+                                </TableHead>
                               </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -802,56 +1169,107 @@ export default function ReserveAppointment() {
                                 doctors.map((doctor) => (
                                   <TableRow key={doctor.Id}>
                                     <TableCell className="py-4">
-                                      <div className="flex items-center gap-3">
-                                        <div className="w-12 h-12 rounded-full bg-gradient-to-br from-primary/20 to-secondary/20 flex items-center justify-center flex-shrink-0 border-2 border-white shadow-sm">
-                                          {doctor.Image ? (
-                                            <img src={doctor.Image} alt={doctor.Name} className="w-full h-full rounded-full object-cover" />
-                                          ) : (
-                                            <User className="w-6 h-6 text-primary" />
-                                          )}
-                                        </div>
-                                        <div>
-                                          <p className="font-bold text-text-heading text-base">{doctor.Name}</p>
-                                          <p className="text-xs text-text-muted">{t('common.doctor')}</p>
-                                        </div>
-                                      </div>
+                                      {(() => {
+                                        const specialtyTheme = getDoctorSpecialtyTheme(
+                                          doctor.Specialist ||
+                                            doctor.specialty ||
+                                            [],
+                                        );
+                                        return (
+                                          <div className="flex items-center gap-3">
+                                            <div
+                                              className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 border-2 shadow-sm ${specialtyTheme.avatar}`}
+                                            >
+                                              {doctor.Image ? (
+                                                <img
+                                                  src={doctor.Image}
+                                                  alt={doctor.Name}
+                                                  className="w-full h-full rounded-full object-cover"
+                                                />
+                                              ) : (
+                                                <User className="w-6 h-6 text-primary" />
+                                              )}
+                                            </div>
+                                            <div>
+                                              <p className="font-bold text-text-heading text-base">
+                                                {doctor.Name}
+                                              </p>
+                                              <p className="text-xs text-text-muted">
+                                                {t("common.doctor")}
+                                              </p>
+                                            </div>
+                                          </div>
+                                        );
+                                      })()}
                                     </TableCell>
                                     <TableCell className="py-4">
-                                      {doctor.Specialist && doctor.Specialist.length > 0 ? (
+                                      {doctor.Specialist &&
+                                      doctor.Specialist.length > 0 ? (
                                         <div className="flex flex-wrap gap-1.5">
-                                          {doctor.Specialist.map((spec, idx) => (
-                                            <Badge key={idx} variant="secondary" className="text-xs px-2.5 py-1">
-                                              {spec}
-                                            </Badge>
-                                          ))}
+                                          {doctor.Specialist.map(
+                                            (spec, idx) => (
+                                              <Badge
+                                                key={idx}
+                                                variant="outline"
+                                                className={`text-xs px-2.5 py-1 ${
+                                                  getDoctorSpecialtyTheme(spec)
+                                                    .badge
+                                                }`}
+                                              >
+                                                {spec}
+                                              </Badge>
+                                            ),
+                                          )}
                                         </div>
                                       ) : (
-                                        <Badge variant="outline" className="text-xs">{t('common.general')}</Badge>
+                                        <Badge
+                                          variant="outline"
+                                          className="text-xs"
+                                        >
+                                          {t("common.general")}
+                                        </Badge>
                                       )}
                                     </TableCell>
                                     <TableCell className="py-4">
-                                      <p className="max-w-xs line-clamp-2 text-text-muted text-sm leading-relaxed" title={doctor.Description}>
-                                        {doctor.Description || t('common.noDescription')}
+                                      <p
+                                        className="max-w-xs line-clamp-2 text-text-muted text-sm leading-relaxed"
+                                        title={doctor.Description}
+                                      >
+                                        {doctor.Description ||
+                                          t("common.noDescription")}
                                       </p>
                                     </TableCell>
-                                    <TableCell className={`py-4 ${isRTL ? 'text-left' : 'text-right'}`}>
+                                    <TableCell
+                                      className={`py-4 ${
+                                        isRTL ? "text-left" : "text-right"
+                                      }`}
+                                    >
                                       <Button
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => handleSelectDoctor(doctor.Id)}
+                                        onClick={() =>
+                                          handleSelectDoctor(doctor.Id)
+                                        }
                                         className="gap-2 text-primary border-primary/30 hover:bg-primary hover:text-white transition-all"
                                       >
                                         <Eye className="w-4 h-4" />
-                                        <span className="hidden sm:inline">{t('common.view')}</span>
+                                        <span className="hidden sm:inline">
+                                          {t("common.view")}
+                                        </span>
                                       </Button>
                                     </TableCell>
                                   </TableRow>
                                 ))
                               ) : (
                                 <TableRow>
-                                  <TableCell colSpan={4} className="text-center py-12 text-text-muted">
+                                  <TableCell
+                                    colSpan={4}
+                                    className="text-center py-12 text-text-muted"
+                                  >
                                     <User className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                                    <p className="font-medium">{t('patient.noDoctorsFound')}</p>
+                                    <p className="font-medium">
+                                      {t("patient.noDoctorsFound")}
+                                    </p>
                                   </TableCell>
                                 </TableRow>
                               )}
@@ -861,62 +1279,101 @@ export default function ReserveAppointment() {
                       ) : (
                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                           {doctors.length > 0 ? (
-                            doctors.map((doctor) => (
-                              <Card key={doctor.Id} className="hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1 cursor-pointer bg-[#15201b] border-[#1f2d26] rounded-2xl shadow-sm" onClick={() => handleSelectDoctor(doctor.Id)}>
-                                <CardContent className="p-5 flex flex-col h-full">
-                                  {/* Header: Image & Name */}
-                                  <div className="flex items-start gap-4 mb-3">
-                                    <div className="w-16 h-16 rounded-full overflow-hidden flex-shrink-0 bg-[#0f1714] flex items-center justify-center border border-[#1f2d26] shadow-inner ml-0 rtl:ml-3 mr-3 rtl:mr-0">
-                                      {doctor.Image ? (
-                                        <img src={doctor.Image} alt={doctor.Name} className="w-full h-full object-cover" />
-                                      ) : (
-                                        <User className="w-8 h-8 text-primary" />
-                                      )}
-                                    </div>
-                                    <div className="flex-1 min-w-0 flex flex-col justify-center text-left rtl:text-right mt-1">
-                                      <h3 className="font-bold text-gray-100 text-base sm:text-lg truncate leading-tight mb-1">{doctor.Name}</h3>
-                                      <p className="text-xs sm:text-sm text-gray-400 truncate mb-1">{t('common.doctor')}</p>
+                            doctors.map((doctor) => {
+                              const specialtyTheme = getDoctorSpecialtyTheme(
+                                doctor.Specialist || doctor.specialty || [],
+                              );
+                              return (
+                                <Card
+                                  key={doctor.Id}
+                                  className={`hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1 cursor-pointer rounded-2xl shadow-sm border ${specialtyTheme.surface}`}
+                                  onClick={() => handleSelectDoctor(doctor.Id)}
+                                >
+                                  <CardContent className="p-5 flex flex-col h-full">
+                                    {/* Header: Image & Name */}
+                                    <div className="flex items-start gap-4 mb-3">
+                                      <div
+                                        className={`w-16 h-16 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center border shadow-inner ml-0 rtl:ml-3 mr-3 rtl:mr-0 ${specialtyTheme.avatar}`}
+                                      >
+                                        {doctor.Image ? (
+                                          <img
+                                            src={doctor.Image}
+                                            alt={doctor.Name}
+                                            className="w-full h-full object-cover"
+                                          />
+                                        ) : (
+                                          <User className="w-8 h-8 text-primary" />
+                                        )}
+                                      </div>
+                                      <div className="flex-1 min-w-0 flex flex-col justify-center text-left rtl:text-right mt-1">
+                                        <h3 className="font-bold text-text-heading text-base sm:text-lg truncate leading-tight mb-1">
+                                          {doctor.Name}
+                                        </h3>
+                                        <p className="text-xs sm:text-sm text-text-muted truncate mb-1">
+                                          {t("common.doctor")}
+                                        </p>
 
-                                      {/* Rating */}
-                                      <div className="flex items-center gap-1.5 justify-start rtl:flex-row-reverse mb-1">
-                                        <div className="flex text-[#4ade80] rtl:flex-row-reverse">
-                                          <Star className="w-[14px] h-[14px]" />
-                                          <Star className="w-[14px] h-[14px]" />
-                                          <Star className="w-[14px] h-[14px]" />
-                                          <Star className="w-[14px] h-[14px]" />
-                                          <Star className="w-[14px] h-[14px]" />
+                                        {/* Rating */}
+                                        <div className="flex items-center gap-1.5 justify-start rtl:flex-row-reverse mb-1">
+                                          <div className="flex text-[#4ade80] rtl:flex-row-reverse">
+                                            <Star className="w-[14px] h-[14px]" />
+                                            <Star className="w-[14px] h-[14px]" />
+                                            <Star className="w-[14px] h-[14px]" />
+                                            <Star className="w-[14px] h-[14px]" />
+                                            <Star className="w-[14px] h-[14px]" />
+                                          </div>
+                                          <span className="text-[13px] font-semibold text-text mt-[1px]">
+                                            4.8
+                                          </span>
                                         </div>
-                                        <span className="text-[13px] font-semibold text-gray-300 mt-[1px]">4.8</span>
                                       </div>
                                     </div>
-                                  </div>
 
-                                  {/* Description */}
-                                  <p className="text-xs sm:text-[13px] text-gray-300 leading-relaxed line-clamp-3 mb-5 mt-2 flex-grow text-left rtl:text-right" title={doctor.Description}>
-                                    {doctor.Description || t('common.noDescription')}
-                                  </p>
+                                    {/* Description */}
+                                    <p
+                                      className="text-xs sm:text-[13px] text-text-muted leading-relaxed line-clamp-3 mb-5 mt-2 flex-grow text-left rtl:text-right"
+                                      title={doctor.Description}
+                                    >
+                                      {doctor.Description ||
+                                        t("common.noDescription")}
+                                    </p>
 
-                                  {/* Badges footer */}
-                                  <div className="flex flex-wrap gap-2 mt-auto justify-end rtl:justify-start">
-                                    {doctor.Specialist && doctor.Specialist.length > 0 ? (
-                                      doctor.Specialist.map((spec, idx) => (
-                                        <span key={idx} className="text-[10px] sm:text-xs px-2.5 py-1 font-medium rounded-md bg-[#0a0f0d] text-gray-400 border border-[#1f2d26]">
-                                          {spec}
+                                    {/* Badges footer */}
+                                    <div className="flex flex-wrap gap-2 mt-auto justify-end rtl:justify-start">
+                                      {doctor.Specialist &&
+                                      doctor.Specialist.length > 0 ? (
+                                        doctor.Specialist.map((spec, idx) => (
+                                          <span
+                                            key={idx}
+                                            className={`text-[10px] sm:text-xs px-2.5 py-1 font-medium rounded-md border ${
+                                              getDoctorSpecialtyTheme(spec)
+                                                .badge
+                                            }`}
+                                          >
+                                            {spec}
+                                          </span>
+                                        ))
+                                      ) : (
+                                        <span
+                                          className={`text-[10px] sm:text-xs px-2.5 py-1 font-medium rounded-md border ${
+                                            getDoctorSpecialtyTheme("general")
+                                              .badge
+                                          }`}
+                                        >
+                                          {t("common.general")}
                                         </span>
-                                      ))
-                                    ) : (
-                                      <span className="text-[10px] sm:text-xs px-2.5 py-1 font-medium rounded-md bg-[#0a0f0d] text-gray-400 border border-[#1f2d26]">
-                                        {t('common.general')}
-                                      </span>
-                                    )}
-                                  </div>
-                                </CardContent>
-                              </Card>
-                            ))
+                                      )}
+                                    </div>
+                                  </CardContent>
+                                </Card>
+                              );
+                            })
                           ) : (
                             <div className="col-span-full py-12 text-center text-text-muted bg-background-paper rounded-xl border border-border shadow-sm">
                               <User className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                              <p className="font-medium">{t('patient.noDoctorsFound')}</p>
+                              <p className="font-medium">
+                                {t("patient.noDoctorsFound")}
+                              </p>
                             </div>
                           )}
                         </div>
@@ -926,28 +1383,43 @@ export default function ReserveAppointment() {
                       {pagination.totalPages > 1 && (
                         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-6 py-4 border-t border-border bg-background-subtle/30">
                           <span className="text-sm text-text-muted font-medium">
-                            {t('common.page')} {pagination.pageIndex} {t('common.of')} {pagination.totalPages}
+                            {t("common.page")} {pagination.pageIndex}{" "}
+                            {t("common.of")} {pagination.totalPages}
                           </span>
                           <div className="flex items-center gap-2">
                             <Button
                               variant="outline"
                               size="sm"
                               disabled={pagination.pageIndex <= 1}
-                              onClick={() => handlePageChange(pagination.pageIndex - 1)}
+                              onClick={() =>
+                                handlePageChange(pagination.pageIndex - 1)
+                              }
                               className="gap-1"
                             >
-                              {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-                              {t('common.previous')}
+                              {isRTL ? (
+                                <ChevronRight className="w-4 h-4" />
+                              ) : (
+                                <ChevronLeft className="w-4 h-4" />
+                              )}
+                              {t("common.previous")}
                             </Button>
                             <Button
                               variant="outline"
                               size="sm"
-                              disabled={pagination.pageIndex >= pagination.totalPages}
-                              onClick={() => handlePageChange(pagination.pageIndex + 1)}
+                              disabled={
+                                pagination.pageIndex >= pagination.totalPages
+                              }
+                              onClick={() =>
+                                handlePageChange(pagination.pageIndex + 1)
+                              }
                               className="gap-1"
                             >
-                              {t('common.next')}
-                              {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                              {t("common.next")}
+                              {isRTL ? (
+                                <ChevronLeft className="w-4 h-4" />
+                              ) : (
+                                <ChevronRight className="w-4 h-4" />
+                              )}
                             </Button>
                           </div>
                         </div>
@@ -976,39 +1448,78 @@ export default function ReserveAppointment() {
                 <Card className="overflow-hidden border border-border/80">
                   <div className="h-1.5 bg-gradient-to-r from-primary via-secondary to-primary-light" />
                   <CardContent className="p-5 md:p-6">
-                    <div className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${isRTL ? 'text-right' : 'text-left'}`}>
-                      <div className={`lg:col-span-7 flex flex-col sm:flex-row gap-4 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
-                        <div className="w-24 h-24 rounded-2xl bg-primary/10 flex items-center justify-center overflow-hidden border-2 border-primary/20 shadow-sm mx-auto sm:mx-0">
-                          {selectedDoctor.Image
-                            ? <img src={selectedDoctor.Image} alt={selectedDoctor.Name} className="w-full h-full object-cover" />
-                            : <User className="w-12 h-12 text-primary" />}
+                    <div
+                      className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${
+                        isRTL ? "text-right" : "text-left"
+                      }`}
+                    >
+                      <div
+                        className={`lg:col-span-7 flex flex-col sm:flex-row gap-4 ${
+                          isRTL ? "sm:flex-row-reverse" : ""
+                        }`}
+                      >
+                        <div
+                          className={`w-24 h-24 rounded-2xl flex items-center justify-center overflow-hidden border-2 shadow-sm mx-auto sm:mx-0 ${selectedDoctorTheme.avatar}`}
+                        >
+                          {selectedDoctor.Image ? (
+                            <img
+                              src={selectedDoctor.Image}
+                              alt={selectedDoctor.Name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <User className="w-12 h-12 text-primary" />
+                          )}
                         </div>
 
                         <div className="flex-1 space-y-3">
                           <div>
                             <h2 className="text-2xl font-bold text-text-heading leading-tight">
-                              {isRTL ? 'د.' : 'Dr.'} {selectedDoctor.Name}
+                              {isRTL ? "د." : "Dr."} {selectedDoctor.Name}
                             </h2>
-                            <div className={`mt-2 flex items-center gap-2 ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
+                            <div
+                              className={`mt-2 flex items-center gap-2 ${
+                                isRTL ? "flex-row-reverse justify-end" : ""
+                              }`}
+                            >
                               <div className="flex items-center gap-0.5">
                                 {[1, 2, 3, 4, 5].map((s) => (
-                                  <Star key={s} className={`w-4 h-4 ${s <= 4 ? 'text-amber-400' : 'text-border'}`} />
+                                  <Star
+                                    key={s}
+                                    className={`w-4 h-4 ${
+                                      s <= 4 ? "text-amber-400" : "text-border"
+                                    }`}
+                                  />
                                 ))}
                               </div>
-                              <span className="text-sm font-bold text-text-heading">4.8</span>
-                              <span className="text-xs text-text-muted">{isRTL ? '(٢٤ مراجعة)' : '(24 reviews)'}</span>
+                              <span className="text-sm font-bold text-text-heading">
+                                4.8
+                              </span>
+                              <span className="text-xs text-text-muted">
+                                {isRTL ? "(٢٤ مراجعة)" : "(24 reviews)"}
+                              </span>
                             </div>
                           </div>
 
-                          {selectedDoctor.Specialist && selectedDoctor.Specialist.length > 0 && (
-                            <div className={`flex flex-wrap gap-2 ${isRTL ? 'justify-end' : ''}`}>
-                              {selectedDoctor.Specialist.map((sp, i) => (
-                                <span key={i} className="text-xs px-3 py-1 bg-primary/10 text-primary rounded-full font-medium border border-primary/20">
-                                  {sp}
-                                </span>
-                              ))}
-                            </div>
-                          )}
+                          {selectedDoctor.Specialist &&
+                            selectedDoctor.Specialist.length > 0 && (
+                              <div
+                                className={`flex flex-wrap gap-2 ${
+                                  isRTL ? "justify-end" : ""
+                                }`}
+                              >
+                                {selectedDoctor.Specialist.map((sp, i) => (
+                                  <span
+                                    key={i}
+                                    className={`text-xs px-3 py-1 rounded-full font-medium border ${
+                                      getDoctorSpecialtyTheme(sp).badge
+                                    }`}
+                                  >
+                                    {sp}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
 
                           {selectedDoctor.Description && (
                             <p className="text-sm text-text-muted leading-relaxed max-w-2xl">
@@ -1020,33 +1531,64 @@ export default function ReserveAppointment() {
 
                       <div className="lg:col-span-5 grid grid-cols-2 gap-3">
                         <div className="p-4 bg-background-subtle rounded-xl border border-border/60">
-                          <p className="text-xs text-text-muted mb-1">{isRTL ? 'سنوات الخبرة' : 'Experience'}</p>
+                          <p className="text-xs text-text-muted mb-1">
+                            {isRTL ? "سنوات الخبرة" : "Experience"}
+                          </p>
                           <p className="font-bold text-text-heading text-base">
-                            {selectedDoctor.YearsOfExperience || '—'} {isRTL ? 'سنة' : 'yrs'}
+                            {selectedDoctor.YearsOfExperience || "—"}{" "}
+                            {isRTL ? "سنة" : "yrs"}
                           </p>
                         </div>
 
                         <div className="p-4 bg-background-subtle rounded-xl border border-border/60">
-                          <p className="text-xs text-text-muted mb-1">{isRTL ? 'رسوم الاستشارة' : 'Consultation Fee'}</p>
+                          <p className="text-xs text-text-muted mb-1">
+                            {isRTL ? "رسوم الاستشارة" : "Consultation Fee"}
+                          </p>
                           <p className="font-bold text-text-heading text-base">
-                            {selectedDoctor.ConsultationFee ? `${selectedDoctor.ConsultationFee} EGP` : (isRTL ? 'غير محدد' : 'Not specified')}
+                            {selectedDoctor.ConsultationFee
+                              ? `${selectedDoctor.ConsultationFee} EGP`
+                              : isRTL
+                              ? "غير محدد"
+                              : "Not specified"}
                           </p>
                         </div>
 
                         <div className="col-span-2 p-4 rounded-xl border border-primary/20 bg-primary/5">
-                          <div className={`flex items-start justify-between gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                            <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div
+                            className={`flex items-start justify-between gap-3 ${
+                              isRTL ? "flex-row-reverse" : ""
+                            }`}
+                          >
+                            <div
+                              className={`flex items-start gap-3 ${
+                                isRTL ? "flex-row-reverse" : ""
+                              }`}
+                            >
                               <div className="w-10 h-10 bg-primary/15 rounded-lg flex items-center justify-center flex-shrink-0">
                                 <BadgeIcon className="w-5 h-5 text-primary" />
                               </div>
                               <div>
-                                <p className="text-sm font-semibold text-text-heading">{t('doctor.docs.title', 'Documents & Certificates')}</p>
-                                <p className="text-xs text-text-muted mt-0.5">{t('patient.viewDocs', 'View verified certificates and licenses')}</p>
+                                <p className="text-sm font-semibold text-text-heading">
+                                  {t(
+                                    "doctor.docs.title",
+                                    "Documents & Certificates",
+                                  )}
+                                </p>
+                                <p className="text-xs text-text-muted mt-0.5">
+                                  {t(
+                                    "patient.viewDocs",
+                                    "View verified certificates and licenses",
+                                  )}
+                                </p>
                               </div>
                             </div>
 
-                            <Button variant="outline" size="sm" onClick={() => setIsDocsModalOpen(true)}>
-                              {isRTL ? 'عرض' : 'View'}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setIsDocsModalOpen(true)}
+                            >
+                              {isRTL ? "عرض" : "View"}
                             </Button>
                           </div>
                         </div>
@@ -1059,7 +1601,7 @@ export default function ReserveAppointment() {
                 <Modal
                   isOpen={isDocsModalOpen}
                   onClose={() => setIsDocsModalOpen(false)}
-                  title={t('doctor.docs.title', 'Documents & Certificates')}
+                  title={t("doctor.docs.title", "Documents & Certificates")}
                   size="4xl"
                 >
                   <DoctorDocumentsViewer doctorId={selectedDoctor.Id} />
@@ -1070,17 +1612,25 @@ export default function ReserveAppointment() {
                   <div className="xl:col-span-8 space-y-4">
                     <Card className="overflow-hidden border border-border shadow-lg rounded-2xl">
                       <CardContent className="p-5 md:p-6 space-y-5">
-                        <div className={`flex items-start justify-between gap-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                          <div className={isRTL ? 'text-right' : ''}>
+                        <div
+                          className={`flex items-start justify-between gap-4 ${
+                            isRTL ? "flex-row-reverse" : ""
+                          }`}
+                        >
+                          <div className={isRTL ? "text-right" : ""}>
                             <h3 className="text-lg md:text-xl font-bold text-text-heading flex items-center gap-2">
                               <Calendar className="w-5 h-5 text-primary" />
-                              {t('patient.selectTimeSlot')}
+                              {t("patient.selectTimeSlot")}
                             </h3>
-                            <p className="text-text-muted text-sm mt-1">{t('patient.bookingWith')} {selectedDoctor.Name}</p>
+                            <p className="text-text-muted text-sm mt-1">
+                              {t("patient.bookingWith")} {selectedDoctor.Name}
+                            </p>
                           </div>
                           <div className="hidden sm:flex items-center gap-2 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full border border-primary/20">
                             <Clock className="w-4 h-4" />
-                            <span>{isRTL ? 'اختر موعدًا واحدًا' : 'Pick one slot'}</span>
+                            <span>
+                              {isRTL ? "اختر موعدًا واحدًا" : "Pick one slot"}
+                            </span>
                           </div>
                         </div>
 
@@ -1093,11 +1643,18 @@ export default function ReserveAppointment() {
                             }}
                             className="p-2 rounded-lg hover:bg-background-paper transition-colors border border-transparent hover:border-border"
                           >
-                            {isRTL ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
+                            {isRTL ? (
+                              <ChevronRight className="w-5 h-5" />
+                            ) : (
+                              <ChevronLeft className="w-5 h-5" />
+                            )}
                           </button>
 
                           <span className="font-semibold text-text-heading text-sm md:text-base bg-background-paper border border-border px-3 py-1 rounded-lg">
-                            {selectedDate.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { month: 'long', year: 'numeric' })}
+                            {selectedDate.toLocaleDateString(
+                              isRTL ? "ar-EG" : "en-US",
+                              { month: "long", year: "numeric" },
+                            )}
                           </span>
 
                           <button
@@ -1108,33 +1665,57 @@ export default function ReserveAppointment() {
                             }}
                             className="p-2 rounded-lg hover:bg-background-paper transition-colors border border-transparent hover:border-border"
                           >
-                            {isRTL ? <ChevronLeft className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
+                            {isRTL ? (
+                              <ChevronLeft className="w-5 h-5" />
+                            ) : (
+                              <ChevronRight className="w-5 h-5" />
+                            )}
                           </button>
 
                           <button
                             onClick={() => setSelectedDate(new Date())}
                             className="text-xs px-3 py-1 rounded-lg border border-border bg-background-paper text-text-muted hover:text-primary"
                           >
-                            {t('doctor.today', 'Today')}
+                            {t("doctor.today", "Today")}
                           </button>
                         </div>
 
-                        <div className={`flex items-center gap-4 text-xs text-text-muted ${isRTL ? 'flex-row-reverse' : ''}`}>
-                          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                        <div
+                          className={`flex items-center gap-4 text-xs text-text-muted ${
+                            isRTL ? "flex-row-reverse" : ""
+                          }`}
+                        >
+                          <div
+                            className={`flex items-center gap-2 ${
+                              isRTL ? "flex-row-reverse" : ""
+                            }`}
+                          >
                             <span className="w-2.5 h-2.5 rounded-full bg-primary block" />
-                            <span>{isRTL ? 'محدد' : 'Selected'}</span>
+                            <span>{isRTL ? "محدد" : "Selected"}</span>
                           </div>
-                          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div
+                            className={`flex items-center gap-2 ${
+                              isRTL ? "flex-row-reverse" : ""
+                            }`}
+                          >
                             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 block" />
-                            <span>{isRTL ? 'متاح' : 'Available'}</span>
+                            <span>{isRTL ? "متاح" : "Available"}</span>
                           </div>
-                          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div
+                            className={`flex items-center gap-2 ${
+                              isRTL ? "flex-row-reverse" : ""
+                            }`}
+                          >
                             <span className="w-2.5 h-2.5 rounded-full bg-amber-500 block" />
-                            <span>{isRTL ? 'طلبي' : 'My request'}</span>
+                            <span>{isRTL ? "طلبي" : "My request"}</span>
                           </div>
-                          <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div
+                            className={`flex items-center gap-2 ${
+                              isRTL ? "flex-row-reverse" : ""
+                            }`}
+                          >
                             <span className="w-2.5 h-2.5 rounded-full bg-slate-400 block" />
-                            <span>{isRTL ? 'محجوز' : 'Booked'}</span>
+                            <span>{isRTL ? "محجوز" : "Booked"}</span>
                           </div>
                         </div>
 
@@ -1143,30 +1724,64 @@ export default function ReserveAppointment() {
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
                           const dayNames = isRTL
-                            ? ['أحد', 'إثنين', 'ثلاثاء', 'أربعاء', 'خميس', 'جمعة', 'سبت']
-                            : ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+                            ? [
+                                "أحد",
+                                "إثنين",
+                                "ثلاثاء",
+                                "أربعاء",
+                                "خميس",
+                                "جمعة",
+                                "سبت",
+                              ]
+                            : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
                           return (
                             <div className="space-y-3">
                               {weekDates.map((date, di) => {
                                 const isPast = date < today;
                                 const yyyy = date.getFullYear();
-                                const mm = String(date.getMonth() + 1).padStart(2, '0');
-                                const dd = String(date.getDate()).padStart(2, '0');
+                                const mm = String(date.getMonth() + 1).padStart(
+                                  2,
+                                  "0",
+                                );
+                                const dd = String(date.getDate()).padStart(
+                                  2,
+                                  "0",
+                                );
                                 const dateKey = `${yyyy}-${mm}-${dd}`;
                                 const dayAvailableSlots = Object.entries(slots)
-                                  .filter(([k]) => k.startsWith(dateKey) && slots[k] === 'available')
-                                  .map(([k]) => k.replace(`${dateKey}-`, ''));
-                                const dayMyBookedSlots = Object.keys(mySlotBookingsByKey)
+                                  .filter(
+                                    ([k]) =>
+                                      k.startsWith(dateKey) &&
+                                      slots[k] === "available",
+                                  )
+                                  .map(([k]) => k.replace(`${dateKey}-`, ""));
+                                const dayMyBookedSlots = Object.keys(
+                                  mySlotBookingsByKey,
+                                )
                                   .filter((k) => k.startsWith(dateKey))
-                                  .map((k) => k.replace(`${dateKey}-`, ''));
-                                const dayBookedSlotsByOthers = Object.entries(slots)
-                                  .filter(([k, status]) => k.startsWith(dateKey) && status === 'booked' && !mySlotBookingsByKey[k])
-                                  .map(([k]) => k.replace(`${dateKey}-`, ''));
-                                const daySlots = Array.from(new Set([...dayAvailableSlots, ...dayMyBookedSlots, ...dayBookedSlotsByOthers]));
+                                  .map((k) => k.replace(`${dateKey}-`, ""));
+                                const dayBookedSlotsByOthers = Object.entries(
+                                  slots,
+                                )
+                                  .filter(
+                                    ([k, status]) =>
+                                      k.startsWith(dateKey) &&
+                                      status === "booked" &&
+                                      !mySlotBookingsByKey[k],
+                                  )
+                                  .map(([k]) => k.replace(`${dateKey}-`, ""));
+                                const daySlots = Array.from(
+                                  new Set([
+                                    ...dayAvailableSlots,
+                                    ...dayMyBookedSlots,
+                                    ...dayBookedSlotsByOthers,
+                                  ]),
+                                );
                                 const availableCount = dayAvailableSlots.length;
                                 const myRequestsCount = dayMyBookedSlots.length;
-                                const bookedCount = dayBookedSlotsByOthers.length;
+                                const bookedCount =
+                                  dayBookedSlotsByOthers.length;
                                 const totalCount = daySlots.length;
 
                                 if (daySlots.length === 0) {
@@ -1174,100 +1789,151 @@ export default function ReserveAppointment() {
                                 }
 
                                 return (
-                                  <div key={di} className="bg-background-subtle/50 border border-border rounded-xl p-4">
-                                    <div className={`flex flex-wrap items-center justify-between gap-2 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                                      <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                                        <span className="font-semibold text-text-heading">{dayNames[date.getDay()]}</span>
-                                        <span className="text-sm text-text-muted">
-                                          {date.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric' })}
+                                  <div
+                                    key={di}
+                                    className="bg-background-subtle/50 border border-border rounded-xl p-4"
+                                  >
+                                    <div
+                                      className={`flex flex-wrap items-center justify-between gap-2 mb-3 ${
+                                        isRTL ? "flex-row-reverse" : ""
+                                      }`}
+                                    >
+                                      <div
+                                        className={`flex items-center gap-2 ${
+                                          isRTL ? "flex-row-reverse" : ""
+                                        }`}
+                                      >
+                                        <span className="font-semibold text-text-heading">
+                                          {dayNames[date.getDay()]}
                                         </span>
-                                        {date.toDateString() === new Date().toDateString() && (
-                                          <span className="text-xs bg-primary text-white px-2 py-0.5 rounded-full">{isRTL ? 'اليوم' : 'Today'}</span>
+                                        <span className="text-sm text-text-muted">
+                                          {date.toLocaleDateString(
+                                            isRTL ? "ar-EG" : "en-US",
+                                            { month: "short", day: "numeric" },
+                                          )}
+                                        </span>
+                                        {date.toDateString() ===
+                                          new Date().toDateString() && (
+                                          <span className="text-xs bg-primary text-white px-2 py-0.5 rounded-full">
+                                            {isRTL ? "اليوم" : "Today"}
+                                          </span>
                                         )}
                                       </div>
 
-                                      <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                                      <div
+                                        className={`flex items-center gap-2 ${
+                                          isRTL ? "flex-row-reverse" : ""
+                                        }`}
+                                      >
                                         <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 border border-primary/25 text-primary">
-                                          {totalCount} {isRTL ? 'إجمالي المواعيد' : 'total slots'}
+                                          {totalCount}{" "}
+                                          {isRTL
+                                            ? "إجمالي المواعيد"
+                                            : "total slots"}
                                         </span>
                                         {availableCount > 0 && (
-                                          <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-300">
-                                            {availableCount} {isRTL ? 'متاح' : 'available'}
+                                          <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">
+                                            {availableCount}{" "}
+                                            {isRTL ? "متاح" : "available"}
                                           </span>
                                         )}
                                         {myRequestsCount > 0 && (
-                                          <span className="text-xs px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/25 text-amber-300">
-                                            {myRequestsCount} {isRTL ? 'طلبي' : 'my request'}
+                                          <span className="text-xs px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
+                                            {myRequestsCount}{" "}
+                                            {isRTL ? "طلبي" : "my request"}
                                           </span>
                                         )}
                                         {bookedCount > 0 && (
-                                          <span className="text-xs px-2.5 py-1 rounded-full bg-slate-500/15 border border-slate-400/25 text-slate-300">
-                                            {bookedCount} {isRTL ? 'محجوز' : 'booked'}
+                                          <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 border border-slate-300 text-slate-700">
+                                            {bookedCount}{" "}
+                                            {isRTL ? "محجوز" : "booked"}
                                           </span>
                                         )}
-                                        {availableCount === 0 && myRequestsCount === 0 && (
-                                          <span className="text-xs px-2.5 py-1 rounded-full bg-background-subtle border border-border text-text-muted">
-                                            {isRTL ? 'غير متاح' : 'Unavailable'}
-                                          </span>
-                                        )}
+                                        {availableCount === 0 &&
+                                          myRequestsCount === 0 && (
+                                            <span className="text-xs px-2.5 py-1 rounded-full bg-background-subtle border border-border text-text-muted">
+                                              {isRTL
+                                                ? "غير متاح"
+                                                : "Unavailable"}
+                                            </span>
+                                          )}
                                       </div>
                                     </div>
 
                                     <div className="flex flex-wrap gap-3">
-                                      {daySlots.sort((a, b) => {
-                                        const [ah, am] = a.split(':').map(Number);
-                                        const [bh, bm] = b.split(':').map(Number);
-                                        return (ah * 60 + am) - (bh * 60 + bm);
-                                      }).map((timeKey) => {
-                                        const slotKey = `${dateKey}-${timeKey}`;
-                                        const myBooking = mySlotBookingsByKey[slotKey];
-                                        const myBookingStatus = myBooking ? getBookingStatusMeta(myBooking.Status) : null;
-                                        const isSelected = bookedSlot
-                                          && bookedSlot.date.toDateString() === date.toDateString()
-                                          && bookedSlot.timeKey === timeKey;
-                                        const isAvailableSlot = slots[slotKey] === 'available';
-                                        const isBookedByOthers = !myBooking && slots[slotKey] === 'booked';
-                                        const isClickableSlot = myBooking || isAvailableSlot;
+                                      {daySlots
+                                        .sort((a, b) => {
+                                          const [ah, am] = a
+                                            .split(":")
+                                            .map(Number);
+                                          const [bh, bm] = b
+                                            .split(":")
+                                            .map(Number);
+                                          return ah * 60 + am - (bh * 60 + bm);
+                                        })
+                                        .map((timeKey) => {
+                                          const slotKey = `${dateKey}-${timeKey}`;
+                                          const myBooking =
+                                            mySlotBookingsByKey[slotKey];
+                                          const myBookingStatus = myBooking
+                                            ? getBookingStatusMeta(
+                                                myBooking.Status,
+                                              )
+                                            : null;
+                                          const isSelected =
+                                            bookedSlot &&
+                                            bookedSlot.date.toDateString() ===
+                                              date.toDateString() &&
+                                            bookedSlot.timeKey === timeKey;
+                                          const isAvailableSlot =
+                                            slots[slotKey] === "available";
+                                          const isBookedByOthers =
+                                            !myBooking &&
+                                            slots[slotKey] === "booked";
+                                          const isClickableSlot =
+                                            myBooking || isAvailableSlot;
 
-                                        return (
-                                          <button
-                                            key={timeKey}
-                                            onClick={() => {
-                                              if (myBooking) {
-                                                setMainTab('status');
-                                                return;
-                                              }
-                                              if (isBookedByOthers) {
-                                                return;
-                                              }
-                                              handleSlotClick(date, timeKey);
-                                            }}
-                                            className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border-2 flex items-center gap-1.5 ${
-                                              myBooking
-                                                ? `${myBookingStatus.className} hover:opacity-95 shadow-sm`
-                                                : isBookedByOthers
-                                                ? 'bg-slate-500/10 text-slate-300 border-slate-400/35 cursor-not-allowed'
-                                                : isSelected
-                                                ? 'bg-primary text-white border-primary shadow-md shadow-primary/30'
-                                                : 'bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400'
-                                            }`}
-                                            disabled={!isClickableSlot}
-                                          >
-                                            {myBooking ? null : isSelected ? <CheckCircle className="w-3.5 h-3.5" /> : null}
-                                            {formatHourLabel(timeKey)}
-                                            {myBooking && (
-                                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/20 border border-current/30">
-                                                {myBookingStatus.label}
-                                              </span>
-                                            )}
-                                            {isBookedByOthers && (
-                                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-700/40 border border-slate-400/30">
-                                                {isRTL ? 'محجوز' : 'Booked'}
-                                              </span>
-                                            )}
-                                          </button>
-                                        );
-                                      })}
+                                          return (
+                                            <button
+                                              key={timeKey}
+                                              onClick={() => {
+                                                if (myBooking) {
+                                                  setMainTab("status");
+                                                  return;
+                                                }
+                                                if (isBookedByOthers) {
+                                                  return;
+                                                }
+                                                handleSlotClick(date, timeKey);
+                                              }}
+                                              className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all border-2 flex items-center gap-1.5 ${
+                                                myBooking
+                                                  ? `${myBookingStatus.className} hover:opacity-95 shadow-sm`
+                                                  : isBookedByOthers
+                                                  ? "bg-slate-100 text-slate-700 border-slate-300 cursor-not-allowed"
+                                                  : isSelected
+                                                  ? "bg-primary text-white border-primary shadow-md shadow-primary/30"
+                                                  : "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100 hover:border-emerald-400"
+                                              }`}
+                                              disabled={!isClickableSlot}
+                                            >
+                                              {myBooking ? null : isSelected ? (
+                                                <CheckCircle className="w-3.5 h-3.5" />
+                                              ) : null}
+                                              {formatHourLabel(timeKey)}
+                                              {myBooking && (
+                                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/20 border border-current/30">
+                                                  {myBookingStatus.label}
+                                                </span>
+                                              )}
+                                              {isBookedByOthers && (
+                                                <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 border border-slate-300 text-slate-700">
+                                                  {isRTL ? "محجوز" : "Booked"}
+                                                </span>
+                                              )}
+                                            </button>
+                                          );
+                                        })}
                                     </div>
                                   </div>
                                 );
@@ -1276,8 +1942,12 @@ export default function ReserveAppointment() {
                               {Object.keys(slots).length === 0 && (
                                 <div className="p-6 bg-amber-50 border border-amber-200 rounded-xl text-center">
                                   <Calendar className="w-8 h-8 text-amber-500 mx-auto mb-2" />
-                                  <p className="text-amber-700 font-medium">{t('patient.noSlotsAvailable')}</p>
-                                  <p className="text-amber-600 text-sm mt-1">{t('patient.trySlotsNextWeek')}</p>
+                                  <p className="text-amber-700 font-medium">
+                                    {t("patient.noSlotsAvailable")}
+                                  </p>
+                                  <p className="text-amber-600 text-sm mt-1">
+                                    {t("patient.trySlotsNextWeek")}
+                                  </p>
                                 </div>
                               )}
                             </div>
@@ -1289,61 +1959,122 @@ export default function ReserveAppointment() {
 
                   <div className="xl:col-span-4">
                     <Card className="p-5 md:p-6 sticky top-4 border border-border/80">
-                      <h3 className={`font-bold text-lg text-text-heading ${isRTL ? 'text-right' : ''}`}>
-                        {t('patient.bookingSummary')}
+                      <h3
+                        className={`font-bold text-lg text-text-heading ${
+                          isRTL ? "text-right" : ""
+                        }`}
+                      >
+                        {t("patient.bookingSummary")}
                       </h3>
 
                       <div className="mt-4 space-y-5">
-                        <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                          <div className="w-11 h-11 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                            {selectedDoctor.Image
-                              ? <img src={selectedDoctor.Image} alt={selectedDoctor.Name} className="w-full h-full rounded-full object-cover" />
-                              : <User className="w-5 h-5 text-primary" />}
+                        <div
+                          className={`flex items-center gap-3 ${
+                            isRTL ? "flex-row-reverse" : ""
+                          }`}
+                        >
+                          <div
+                            className={`w-11 h-11 rounded-full flex items-center justify-center flex-shrink-0 overflow-hidden border ${selectedDoctorTheme.avatar}`}
+                          >
+                            {selectedDoctor.Image ? (
+                              <img
+                                src={selectedDoctor.Image}
+                                alt={selectedDoctor.Name}
+                                className="w-full h-full rounded-full object-cover"
+                              />
+                            ) : (
+                              <User className="w-5 h-5 text-primary" />
+                            )}
                           </div>
 
-                          <div className={isRTL ? 'text-right' : ''}>
-                            <p className="text-xs text-text-light">{t('common.doctor')}</p>
-                            <p className="font-semibold text-text-heading">{selectedDoctor.Name}</p>
+                          <div className={isRTL ? "text-right" : ""}>
+                            <p className="text-xs text-text-light">
+                              {t("common.doctor")}
+                            </p>
+                            <p className="font-semibold text-text-heading">
+                              {selectedDoctor.Name}
+                            </p>
                           </div>
                         </div>
 
-                        {selectedDoctor.Specialist && selectedDoctor.Specialist.length > 0 && (
-                          <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                            <Stethoscope className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                            <div className={isRTL ? 'text-right' : ''}>
-                              <p className="text-xs text-text-light">{t('common.specialty')}</p>
-                              <p className="font-medium text-sm text-text-heading">{selectedDoctor.Specialist.join(', ')}</p>
+                        {selectedDoctor.Specialist &&
+                          selectedDoctor.Specialist.length > 0 && (
+                            <div
+                              className={`flex items-start gap-3 ${
+                                isRTL ? "flex-row-reverse" : ""
+                              }`}
+                            >
+                              <Stethoscope className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                              <div className={isRTL ? "text-right" : ""}>
+                                <p className="text-xs text-text-light">
+                                  {t("common.specialty")}
+                                </p>
+                                <p
+                                  className={`font-medium text-sm inline-flex items-center rounded-full px-2.5 py-1 border ${selectedDoctorTheme.badge}`}
+                                >
+                                  {selectedDoctor.Specialist.join(", ")}
+                                </p>
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
 
                         <div className="rounded-xl border border-border bg-background-subtle p-3.5">
-                          <p className={`text-xs text-text-muted mb-1 ${isRTL ? 'text-right' : ''}`}>
-                            {t('patient.selectedTime')}
+                          <p
+                            className={`text-xs text-text-muted mb-1 ${
+                              isRTL ? "text-right" : ""
+                            }`}
+                          >
+                            {t("patient.selectedTime")}
                           </p>
                           {bookedSlot ? (
-                            <p className={`font-semibold text-text-heading text-sm ${isRTL ? 'text-right' : ''}`} dir="ltr">
-                              {bookedSlot.date.toLocaleDateString()} - {formatHourLabel(bookedSlot.timeKey)}
+                            <p
+                              className={`font-semibold text-text-heading text-sm ${
+                                isRTL ? "text-right" : ""
+                              }`}
+                              dir="ltr"
+                            >
+                              {bookedSlot.date.toLocaleDateString()} -{" "}
+                              {formatHourLabel(bookedSlot.timeKey)}
                             </p>
                           ) : (
-                            <p className={`text-sm text-text-muted ${isRTL ? 'text-right' : ''}`}>
-                              {isRTL ? 'لم يتم اختيار موعد بعد' : 'No slot selected yet'}
+                            <p
+                              className={`text-sm text-text-muted ${
+                                isRTL ? "text-right" : ""
+                              }`}
+                            >
+                              {isRTL
+                                ? "لم يتم اختيار موعد بعد"
+                                : "No slot selected yet"}
                             </p>
                           )}
                         </div>
 
-                        <div className={`space-y-2 ${isRTL ? 'text-right' : ''}`}>
-                          <p className="text-xs text-text-muted font-semibold">{isRTL ? 'طريقة الدفع' : 'Payment Method'}</p>
+                        <div
+                          className={`space-y-2 ${isRTL ? "text-right" : ""}`}
+                        >
+                          <p className="text-xs text-text-muted font-semibold">
+                            {isRTL ? "طريقة الدفع" : "Payment Method"}
+                          </p>
                           {paymentProvidersLoading && (
-                            <p className="text-xs text-text-muted">{isRTL ? 'جاري تحميل وسائل الدفع...' : 'Loading payment providers...'}</p>
+                            <p className="text-xs text-text-muted">
+                              {isRTL
+                                ? "جاري تحميل وسائل الدفع..."
+                                : "Loading payment providers..."}
+                            </p>
                           )}
                           <div className="rounded-xl border border-border bg-background-subtle p-3">
                             <label className="text-[11px] text-text-muted block mb-1.5">
-                              {isRTL ? 'اختر وسيلة الدفع' : 'Choose payment provider'}
+                              {isRTL
+                                ? "اختر وسيلة الدفع"
+                                : "Choose payment provider"}
                             </label>
                             <select
                               value={selectedPaymentProvider}
-                              onChange={(e) => handlePaymentProviderSelect(Number(e.target.value))}
+                              onChange={(e) =>
+                                handlePaymentProviderSelect(
+                                  Number(e.target.value),
+                                )
+                              }
                               className="w-full px-3 py-2.5 rounded-lg border border-border bg-background-paper text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                             >
                               {availablePaymentProviders.map((provider) => (
@@ -1353,22 +2084,65 @@ export default function ReserveAppointment() {
                               ))}
                             </select>
                             <p className="text-xs text-text-muted mt-2">
-                              {activeProviderMeta.label} - {activeProviderMeta.desc}
+                              {activeProviderMeta.label} -{" "}
+                              {activeProviderMeta.desc}
                             </p>
                           </div>
                         </div>
 
-                        <div className={`space-y-1 ${isRTL ? 'text-right' : ''}`}>
-                          <p className="text-xs text-text-muted">{isRTL ? 'قيمة الجلسة' : 'Session Fee'}</p>
+                        <div
+                          className={`space-y-1 ${isRTL ? "text-right" : ""}`}
+                        >
+                          <p className="text-xs text-text-muted">
+                            {isRTL ? "قيمة الجلسة" : "Session Fee"}
+                          </p>
                           <p className="font-semibold text-text-heading text-base">
-                            {selectedDoctor?.ConsultationFee ? `${selectedDoctor.ConsultationFee} EGP` : (isRTL ? 'غير محدد' : 'Not specified')}
+                            {bookingBaseFee > 0
+                              ? formatCurrency(bookingBaseFee)
+                              : isRTL
+                              ? "غير محدد"
+                              : "Not specified"}
+                          </p>
+                        </div>
+
+                        <div
+                          className={`space-y-1 ${isRTL ? "text-right" : ""}`}
+                        >
+                          <p className="text-xs text-text-muted">
+                            {isRTL ? "رسوم التحويل" : "Transfer Fees"}
+                          </p>
+                          <p className="font-semibold text-text-heading text-base">
+                            {bookingBaseFee > 0
+                              ? formatCurrency(transferFee)
+                              : "—"}
+                          </p>
+                        </div>
+
+                        <div
+                          className={`pt-3 border-t border-border ${
+                            isRTL ? "text-right" : ""
+                          }`}
+                        >
+                          <p className="text-xs text-text-muted">
+                            {isRTL ? "الإجمالي" : "Total Price"}
+                          </p>
+                          <p className="font-bold text-lg text-primary">
+                            {bookingBaseFee > 0
+                              ? formatCurrency(bookingTotalFee)
+                              : "—"}
                           </p>
                         </div>
                       </div>
 
-                      <Button className="w-full mt-6" disabled={!bookedSlot} onClick={handleConfirmBookingClick}>
-                        {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
-                        {t('patient.confirmAppointment')}
+                      <Button
+                        className="w-full mt-6"
+                        disabled={!bookedSlot}
+                        onClick={handleConfirmBookingClick}
+                      >
+                        {loading ? (
+                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                        ) : null}
+                        {t("patient.confirmAppointment")}
                       </Button>
                     </Card>
                   </div>
@@ -1378,54 +2152,125 @@ export default function ReserveAppointment() {
                 <Modal
                   isOpen={isPaymentModalOpen}
                   onClose={() => setIsPaymentModalOpen(false)}
-                  title={isRTL ? 'تفاصيل الدفع' : 'Payment Details'}
+                  title={isRTL ? "تفاصيل الدفع" : "Payment Details"}
                   size="md"
                 >
                   <div className="space-y-5">
                     {/* Provider badge */}
-                    <div className={`flex items-center gap-3 p-4 rounded-2xl border-2 ${
-                      activeProviderMeta.requireReference
-                        ? 'bg-violet-50 border-violet-200 dark:bg-violet-900/20 dark:border-violet-700'
-                        : 'bg-emerald-50 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-700'
-                    }`}>
-                      <div className={`w-11 h-11 rounded-xl flex items-center justify-center ${activeProviderMeta.requireReference ? 'bg-violet-500/15' : 'bg-emerald-500/15'}`}>
-                        {activeProviderMeta.requireReference
-                          ? <FlashOn className="w-6 h-6 text-violet-500" />
-                          : <AccountBalanceWallet className="w-6 h-6 text-emerald-500" />}
+                    <div
+                      className={`flex items-center gap-3 p-4 rounded-2xl border-2 ${
+                        activeProviderMeta.requireReference
+                          ? "bg-violet-50 border-violet-200"
+                          : "bg-emerald-50 border-emerald-200"
+                      }`}
+                    >
+                      <div
+                        className={`w-11 h-11 rounded-xl flex items-center justify-center ${
+                          activeProviderMeta.requireReference
+                            ? "bg-violet-500/15"
+                            : "bg-emerald-500/15"
+                        }`}
+                      >
+                        {activeProviderMeta.requireReference ? (
+                          <FlashOn className="w-6 h-6 text-violet-500" />
+                        ) : (
+                          <AccountBalanceWallet className="w-6 h-6 text-emerald-500" />
+                        )}
                       </div>
                       <div>
                         <p className="font-bold text-text-heading text-base">
                           {activeProviderMeta.label}
                         </p>
                         <p className="text-xs text-text-muted">
-                          {isRTL ? 'يرجى اتباع التعليمات بدقة' : 'Please follow the instructions carefully'}
+                          {isRTL
+                            ? "يرجى اتباع التعليمات بدقة"
+                            : "Please follow the instructions carefully"}
                         </p>
                       </div>
                     </div>
 
                     {/* Instructions */}
                     <div className="bg-background-subtle rounded-xl p-4 space-y-3">
-                      <p className="text-sm font-bold text-text-heading">{isRTL ? 'تعليمات التحويل' : 'Transfer Instructions'}</p>
+                      <p className="text-sm font-bold text-text-heading">
+                        {isRTL ? "تعليمات التحويل" : "Transfer Instructions"}
+                      </p>
                       <div className="space-y-2 text-sm text-text-muted">
                         <div className="flex items-start gap-2">
-                          <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">1</span>
-                          <p>{isRTL ? `قم بتحويل المبلغ المطلوب عبر ${activeProviderMeta.label}` : `Transfer the required amount via ${activeProviderMeta.label}`}</p>
+                          <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                            1
+                          </span>
+                          <p>
+                            {isRTL
+                              ? `قم بتحويل المبلغ المطلوب عبر ${activeProviderMeta.label}`
+                              : `Transfer the required amount via ${activeProviderMeta.label}`}
+                          </p>
                         </div>
                         <div className="flex items-start gap-2">
-                          <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">2</span>
+                          <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                            2
+                          </span>
                           <div>
-                            <p className="text-text-heading font-semibold">{isRTL ? 'إلى الحساب:' : 'To account:'}</p>
-                            <p className="font-mono text-primary text-base font-bold mt-0.5">01XXXXXXXXXX</p>
-                            <p className="text-xs text-text-muted mt-0.5">{isRTL ? 'اسم الحساب: نفس للصحة النفسية' : 'Account name: Nafs Mental Health'}</p>
+                            <p className="text-text-heading font-semibold">
+                              {isRTL ? "إلى الحساب:" : "To account:"}
+                            </p>
+                            <p className="font-mono text-primary text-base font-bold mt-0.5">
+                              01XXXXXXXXXX
+                            </p>
+                            <p className="text-xs text-text-muted mt-0.5">
+                              {isRTL
+                                ? "اسم الحساب: نفس للصحة النفسية"
+                                : "Account name: Nafs Mental Health"}
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-start gap-2">
-                          <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">3</span>
-                          <p>{isRTL ? 'المبلغ المطلوب:' : 'Amount:'} <span className="font-bold text-text-heading">{selectedDoctor?.ConsultationFee ? `${selectedDoctor.ConsultationFee} EGP` : '—'}</span></p>
+                          <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                            3
+                          </span>
+                          <p>
+                            {isRTL ? "رسوم الجلسة:" : "Session Fee:"}{" "}
+                            <span className="font-bold text-text-heading">
+                              {bookingBaseFee > 0
+                                ? formatCurrency(bookingBaseFee)
+                                : "—"}
+                            </span>
+                          </p>
                         </div>
                         <div className="flex items-start gap-2">
-                          <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">4</span>
-                          <p>{isRTL ? 'التقط سكرين شوت وارفعه أدناه' : 'Take a screenshot and upload it below'}</p>
+                          <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                            4
+                          </span>
+                          <p>
+                            {isRTL ? "رسوم التحويل:" : "Transfer Fees:"}{" "}
+                            <span className="font-bold text-text-heading">
+                              {bookingBaseFee > 0
+                                ? formatCurrency(transferFee)
+                                : "—"}
+                            </span>
+                          </p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                            5
+                          </span>
+                          <p>
+                            {isRTL ? "الإجمالي المطلوب:" : "Total amount:"}{" "}
+                            <span className="font-bold text-text-heading">
+                              {bookingBaseFee > 0
+                                ? formatCurrency(bookingTotalFee)
+                                : "—"}
+                            </span>
+                          </p>
+                        </div>
+                        <div className="flex items-start gap-2">
+                          <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                            6
+                          </span>
+                          <p>
+                            {isRTL
+                              ? "التقط سكرين شوت وارفعه أدناه"
+                              : "Take a screenshot and upload it below"}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -1435,14 +2280,22 @@ export default function ReserveAppointment() {
                       <div>
                         <label className="text-sm font-semibold text-text-heading block mb-1.5">
                           <ReceiptLong className="w-4 h-4 inline-block mr-1" />
-                          {isRTL ? 'رقم المرجع (Reference Number)' : 'Reference Number'}
-                          <span className="text-text-muted ml-1">({isRTL ? 'اختياري' : 'optional'})</span>
+                          {isRTL
+                            ? "رقم المرجع (Reference Number)"
+                            : "Reference Number"}
+                          <span className="text-text-muted ml-1">
+                            ({isRTL ? "اختياري" : "optional"})
+                          </span>
                         </label>
                         <input
                           type="text"
                           value={referenceNumber}
                           onChange={(e) => setReferenceNumber(e.target.value)}
-                          placeholder={isRTL ? 'أدخل رقم المرجع من الإيصال' : 'Enter reference number from receipt'}
+                          placeholder={
+                            isRTL
+                              ? "أدخل رقم المرجع من الإيصال"
+                              : "Enter reference number from receipt"
+                          }
                           className="w-full px-4 py-3 border-2 border-border rounded-xl bg-background text-text text-sm focus:outline-none focus:border-primary transition-colors"
                         />
                       </div>
@@ -1451,31 +2304,45 @@ export default function ReserveAppointment() {
                     {/* Screenshot Upload */}
                     <div>
                       <label className="text-sm font-semibold text-text-heading block mb-1.5">
-                        {isRTL ? 'إرفاق سكرين شوت' : 'Attach Screenshot'}
+                        {isRTL ? "إرفاق سكرين شوت" : "Attach Screenshot"}
                         <span className="text-red-500 ml-1">*</span>
                       </label>
-                      <label className={`flex flex-col items-center justify-center gap-2 w-full h-32 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
-                        paymentScreenshot
-                          ? 'border-primary bg-primary/5'
-                          : 'border-border hover:border-primary/50 hover:bg-primary/3'
-                      }`}>
+                      <label
+                        className={`flex flex-col items-center justify-center gap-2 w-full h-32 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
+                          paymentScreenshot
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/50 hover:bg-primary/3"
+                        }`}
+                      >
                         <input
                           type="file"
                           accept="image/*"
                           className="hidden"
-                          onChange={(e) => setPaymentScreenshot(e.target.files?.[0] || null)}
+                          onChange={(e) =>
+                            setPaymentScreenshot(e.target.files?.[0] || null)
+                          }
                         />
                         {paymentScreenshot ? (
                           <>
                             <CheckCircle className="w-7 h-7 text-primary" />
-                            <p className="text-sm font-semibold text-primary">{paymentScreenshot.name}</p>
-                            <p className="text-xs text-text-muted">{isRTL ? 'اضغط لتغيير الصورة' : 'Click to change'}</p>
+                            <p className="text-sm font-semibold text-primary">
+                              {paymentScreenshot.name}
+                            </p>
+                            <p className="text-xs text-text-muted">
+                              {isRTL ? "اضغط لتغيير الصورة" : "Click to change"}
+                            </p>
                           </>
                         ) : (
                           <>
                             <UploadIcon className="w-7 h-7 text-text-muted" />
-                            <p className="text-sm text-text-muted">{isRTL ? 'اضغط لرفع صورة التحويل' : 'Click to upload transfer screenshot'}</p>
-                            <p className="text-xs text-text-muted">PNG, JPG, WEBP</p>
+                            <p className="text-sm text-text-muted">
+                              {isRTL
+                                ? "اضغط لرفع صورة التحويل"
+                                : "Click to upload transfer screenshot"}
+                            </p>
+                            <p className="text-xs text-text-muted">
+                              PNG, JPG, WEBP
+                            </p>
                           </>
                         )}
                       </label>
@@ -1483,16 +2350,24 @@ export default function ReserveAppointment() {
 
                     {/* Actions */}
                     <div className="flex gap-3 pt-2 border-t border-border">
-                      <Button variant="outline" className="flex-1" onClick={() => setIsPaymentModalOpen(false)}>
-                        {t('common.cancel')}
+                      <Button
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => setIsPaymentModalOpen(false)}
+                      >
+                        {t("common.cancel")}
                       </Button>
                       <Button
                         className="flex-1 gap-2"
                         onClick={handlePaymentSubmit}
-                        disabled={loading || paymentLoading || !paymentScreenshot}
+                        disabled={
+                          loading || paymentLoading || !paymentScreenshot
+                        }
                       >
-                        {(loading || paymentLoading) ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                        {isRTL ? 'دفع وإرسال الإثبات' : 'Pay & Submit Proof'}
+                        {loading || paymentLoading ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : null}
+                        {isRTL ? "دفع وإرسال الإثبات" : "Pay & Submit Proof"}
                       </Button>
                     </div>
                   </div>
@@ -1500,72 +2375,139 @@ export default function ReserveAppointment() {
 
                 {/* ── Reviews Section ── */}
                 <div className="space-y-5">
-                  <h3 className={`text-xl font-bold text-text-heading flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <h3
+                    className={`text-xl font-bold text-text-heading flex items-center gap-2 ${
+                      isRTL ? "flex-row-reverse" : ""
+                    }`}
+                  >
                     <Star className="w-6 h-6 text-amber-400" />
-                    {isRTL ? 'تقييمات الدكتور' : 'Doctor Reviews'}
+                    {isRTL ? "تقييمات الدكتور" : "Doctor Reviews"}
                   </h3>
 
                   {/* Add Review */}
                   <Card className="p-5">
-                    <h4 className={`font-semibold text-text-heading mb-3 ${isRTL ? 'text-right' : ''}`}>
-                      {isRTL ? 'أضف تقييمك' : 'Add Your Review'}
+                    <h4
+                      className={`font-semibold text-text-heading mb-3 ${
+                        isRTL ? "text-right" : ""
+                      }`}
+                    >
+                      {isRTL ? "أضف تقييمك" : "Add Your Review"}
                     </h4>
-                    <div className={`flex items-center gap-2 mb-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                      {[1,2,3,4,5].map(s => (
-                        <button key={s} onClick={() => setNewReview(r => ({...r, rating: s}))} className="transition-transform hover:scale-110">
-                          <Star className={`w-7 h-7 ${s <= newReview.rating ? 'text-amber-400' : 'text-border'}`} />
+                    <div
+                      className={`flex items-center gap-2 mb-3 ${
+                        isRTL ? "flex-row-reverse" : ""
+                      }`}
+                    >
+                      {[1, 2, 3, 4, 5].map((s) => (
+                        <button
+                          key={s}
+                          onClick={() =>
+                            setNewReview((r) => ({ ...r, rating: s }))
+                          }
+                          className="transition-transform hover:scale-110"
+                        >
+                          <Star
+                            className={`w-7 h-7 ${
+                              s <= newReview.rating
+                                ? "text-amber-400"
+                                : "text-border"
+                            }`}
+                          />
                         </button>
                       ))}
-                      <span className="text-sm text-text-muted ms-2">{newReview.rating}/5</span>
+                      <span className="text-sm text-text-muted ms-2">
+                        {newReview.rating}/5
+                      </span>
                     </div>
                     <textarea
                       value={newReview.comment}
-                      onChange={e => setNewReview(r => ({...r, comment: e.target.value}))}
-                      placeholder={isRTL ? 'اكتب تجربتك مع الطبيب...' : 'Share your experience with this doctor...'}
+                      onChange={(e) =>
+                        setNewReview((r) => ({ ...r, comment: e.target.value }))
+                      }
+                      placeholder={
+                        isRTL
+                          ? "اكتب تجربتك مع الطبيب..."
+                          : "Share your experience with this doctor..."
+                      }
                       rows={3}
-                      className={`w-full p-3 border border-border rounded-xl bg-background text-text text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all ${isRTL ? 'text-right' : ''}`}
+                      className={`w-full p-3 border border-border rounded-xl bg-background text-text text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all ${
+                        isRTL ? "text-right" : ""
+                      }`}
                     />
-                    <div className={`flex ${isRTL ? 'justify-start' : 'justify-end'} mt-3`}>
+                    <div
+                      className={`flex ${
+                        isRTL ? "justify-start" : "justify-end"
+                      } mt-3`}
+                    >
                       <Button
                         size="sm"
-                        disabled={!newReview.comment.trim() || newReview.rating === 0 || submittingReview}
+                        disabled={
+                          !newReview.comment.trim() ||
+                          newReview.rating === 0 ||
+                          submittingReview
+                        }
                         onClick={async () => {
-                          if (!newReview.comment.trim() || newReview.rating === 0) return;
+                          if (
+                            !newReview.comment.trim() ||
+                            newReview.rating === 0
+                          )
+                            return;
                           setSubmittingReview(true);
-                          
+
                           try {
                             const response = await patientAPI.addDoctorReview({
                               DoctorId: selectedDoctor.Id,
                               Rate: newReview.rating,
                               Comment: newReview.comment,
                             });
-                            
+
                             if (response?.IsSuccess !== false) {
-                              toast.success(isRTL ? 'تمت إضافة التقييم بنجاح' : 'Review added successfully');
-                              
+                              toast.success(
+                                isRTL
+                                  ? "تمت إضافة التقييم بنجاح"
+                                  : "Review added successfully",
+                              );
+
                               // Optimistically update UI
-                              setReviews(prev => [{
-                                Id: Date.now(),
-                                ProfileImage: currentUser?.Image || null,
-                                Rate: newReview.rating,
-                                Comment: newReview.comment,
-                                CreatedAt: new Date().toISOString(),
-                              }, ...prev]);
+                              setReviews((prev) => [
+                                {
+                                  Id: Date.now(),
+                                  ProfileImage: currentUser?.Image || null,
+                                  Rate: newReview.rating,
+                                  Comment: newReview.comment,
+                                  CreatedAt: new Date().toISOString(),
+                                },
+                                ...prev,
+                              ]);
                             } else {
-                              toast.error(response?.Message || (isRTL ? 'حدث خطأ أثناء الإضافة' : 'Failed to add review'));
+                              toast.error(
+                                response?.Message ||
+                                  (isRTL
+                                    ? "حدث خطأ أثناء الإضافة"
+                                    : "Failed to add review"),
+                              );
                             }
                           } catch (error) {
                             console.error("Error adding review:", error);
-                            toast.error(error.response?.data?.Message || (isRTL ? 'حدث خطأ أثناء الإضافة' : 'Failed to add review'));
+                            toast.error(
+                              error.response?.data?.Message ||
+                                (isRTL
+                                  ? "حدث خطأ أثناء الإضافة"
+                                  : "Failed to add review"),
+                            );
                           } finally {
-                            setNewReview({ rating: 0, comment: '' });
+                            setNewReview({ rating: 0, comment: "" });
                             setSubmittingReview(false);
                           }
                         }}
                         className="gap-2"
                       >
-                        {submittingReview ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                        {isRTL ? 'إرسال' : 'Submit'}
+                        {submittingReview ? (
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                        ) : (
+                          <Send className="w-4 h-4" />
+                        )}
+                        {isRTL ? "إرسال" : "Submit"}
                       </Button>
                     </div>
                   </Card>
@@ -1575,29 +2517,63 @@ export default function ReserveAppointment() {
                     <div className="space-y-4">
                       {reviews.map((r, i) => (
                         <Card key={r.Id || i} className="p-5">
-                          <div className={`flex items-start justify-between gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                            <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div
+                            className={`flex items-start justify-between gap-3 ${
+                              isRTL ? "flex-row-reverse" : ""
+                            }`}
+                          >
+                            <div
+                              className={`flex items-center gap-3 ${
+                                isRTL ? "flex-row-reverse" : ""
+                              }`}
+                            >
                               <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden flex-shrink-0">
                                 {r.ProfileImage ? (
-                                  <img src={r.ProfileImage} alt="User" className="w-full h-full object-cover" />
+                                  <img
+                                    src={r.ProfileImage}
+                                    alt="User"
+                                    className="w-full h-full object-cover"
+                                  />
                                 ) : (
                                   <User className="w-5 h-5 text-primary" />
                                 )}
                               </div>
-                              <div className={isRTL ? 'text-right' : ''}>
-                                <p className="font-semibold text-text-heading text-sm">{isRTL ? 'مريض' : 'Patient'}</p>
+                              <div className={isRTL ? "text-right" : ""}>
+                                <p className="font-semibold text-text-heading text-sm">
+                                  {isRTL ? "مريض" : "Patient"}
+                                </p>
                                 <div className="flex items-center gap-1 mt-0.5">
-                                  {[1,2,3,4,5].map(s => <Star key={s} className={`w-3.5 h-3.5 ${s <= r.Rate ? 'text-amber-400' : 'text-border'}`} />)}
+                                  {[1, 2, 3, 4, 5].map((s) => (
+                                    <Star
+                                      key={s}
+                                      className={`w-3.5 h-3.5 ${
+                                        s <= r.Rate
+                                          ? "text-amber-400"
+                                          : "text-border"
+                                      }`}
+                                    />
+                                  ))}
                                 </div>
                               </div>
                             </div>
                             {r.CreatedAt && (
                               <span className="text-xs text-text-muted flex-shrink-0">
-                                {new Date(r.CreatedAt).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                                {new Date(r.CreatedAt).toLocaleDateString(
+                                  isRTL ? "ar-EG" : "en-US",
+                                  {
+                                    month: "short",
+                                    day: "numeric",
+                                    year: "numeric",
+                                  },
+                                )}
                               </span>
                             )}
                           </div>
-                          <p className={`text-sm text-text-muted mt-3 leading-relaxed ${isRTL ? 'text-right' : ''}`}>
+                          <p
+                            className={`text-sm text-text-muted mt-3 leading-relaxed ${
+                              isRTL ? "text-right" : ""
+                            }`}
+                          >
                             {r.Comment}
                           </p>
                         </Card>
@@ -1606,7 +2582,9 @@ export default function ReserveAppointment() {
                   ) : (
                     <div className="text-center py-8 text-text-muted bg-background-paper border rounded-xl shadow-sm">
                       <Star className="w-10 h-10 mx-auto text-amber-200 mb-2" />
-                      <p>{isRTL ? 'لا توجد تقييمات حتى الآن' : 'No reviews yet'}</p>
+                      <p>
+                        {isRTL ? "لا توجد تقييمات حتى الآن" : "No reviews yet"}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -1625,24 +2603,29 @@ export default function ReserveAppointment() {
                 </div>
                 <h2 className="text-3xl font-bold text-text-heading mb-4">
                   {bookingPendingReview
-                    ? (isRTL ? 'تم استلام طلبك' : 'Request Submitted')
-                    : t('patient.bookingConfirmedTitle')}
+                    ? isRTL
+                      ? "تم استلام طلبك"
+                      : "Request Submitted"
+                    : t("patient.bookingConfirmedTitle")}
                 </h2>
                 <p className="text-text-muted mb-8">
                   {bookingPendingReview
-                    ? (isRTL
-                      ? 'حجزك الآن في حالة Pending حتى يقوم فريق الدعم الفني بمراجعة إثبات التحويل.'
-                      : 'Your booking is currently pending until technical support reviews your transfer proof.')
-                    : t('patient.bookingConfirmedDesc')}
+                    ? isRTL
+                      ? "حجزك الآن في حالة Pending حتى يقوم فريق الدعم الفني بمراجعة إثبات التحويل."
+                      : "Your booking is currently pending until technical support reviews your transfer proof."
+                    : t("patient.bookingConfirmedDesc")}
                 </p>
-                <Button className="w-full" onClick={() => {
-                  setStep(1);
-                  setSelectedDoctor(null);
-                  setBookedSlot(null);
-                  setBookingPendingReview(false);
-                  setSearchParams({});
-                }}>
-                  {t('patient.backToDoctors')}
+                <Button
+                  className="w-full"
+                  onClick={() => {
+                    setStep(1);
+                    setSelectedDoctor(null);
+                    setBookedSlot(null);
+                    setBookingPendingReview(false);
+                    setSearchParams({});
+                  }}
+                >
+                  {t("patient.backToDoctors")}
                 </Button>
               </motion.div>
             )}
@@ -1664,8 +2647,13 @@ export default function ReserveAppointment() {
                 patientBookings.map((booking) => {
                   const statusInfo = resolveStatusInfo(booking);
                   const paymentStatusInfo = resolvePaymentStatusInfo(booking);
-                  const sessionDate = booking.SessionStartTime ? new Date(booking.SessionStartTime) : null;
-                  const canCancel = statusInfo.key === 'pending' || statusInfo.key === 'approved';
+                  const sessionDate = booking.SessionStartTime
+                    ? new Date(booking.SessionStartTime)
+                    : null;
+                  const canCancel =
+                    statusInfo.key === "pending" ||
+                    statusInfo.key === "approved" ||
+                    statusInfo.key === "paid";
 
                   return (
                     <Card key={booking.Id} className="p-6">
@@ -1673,15 +2661,25 @@ export default function ReserveAppointment() {
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden">
                             {booking.DoctorImage ? (
-                              <img src={booking.DoctorImage} alt="" className="w-full h-full object-cover" />
+                              <img
+                                src={booking.DoctorImage}
+                                alt=""
+                                className="w-full h-full object-cover"
+                              />
                             ) : (
                               <User className="w-6 h-6 text-primary" />
                             )}
                           </div>
                           <div>
-                            <h3 className="font-bold text-lg text-text-heading">{booking.DoctorName || t('common.doctor')}</h3>
+                            <h3 className="font-bold text-lg text-text-heading">
+                              {booking.DoctorName || t("common.doctor")}
+                            </h3>
                             <p className="text-text-muted text-sm">
-                              {booking.DurationMinutes ? `${booking.DurationMinutes} ${t('patient.minSession')}` : t('patient.consultation')}
+                              {booking.DurationMinutes
+                                ? `${booking.DurationMinutes} ${t(
+                                    "patient.minSession",
+                                  )}`
+                                : t("patient.consultation")}
                             </p>
                           </div>
                         </div>
@@ -1693,13 +2691,21 @@ export default function ReserveAppointment() {
                                 <div className="flex items-center gap-2 text-text-heading">
                                   <Calendar className="w-4 h-4 text-primary" />
                                   <span className="font-medium">
-                                    {sessionDate.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                                    {sessionDate.toLocaleDateString("en-US", {
+                                      year: "numeric",
+                                      month: "short",
+                                      day: "numeric",
+                                    })}
                                   </span>
                                 </div>
                                 <div className="flex items-center gap-2 text-text-muted mt-1">
                                   <Clock className="w-4 h-4" />
                                   <span>
-                                    {sessionDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                    {sessionDate.toLocaleTimeString("en-US", {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                      hour12: true,
+                                    })}
                                   </span>
                                 </div>
                               </>
@@ -1712,7 +2718,7 @@ export default function ReserveAppointment() {
                             </Badge>
 
                             <Badge variant={paymentStatusInfo.badgeVariant}>
-                              {isRTL ? 'الدفع: ' : 'Payment: '}
+                              {isRTL ? "الدفع: " : "Payment: "}
                               {paymentStatusInfo.label}
                             </Badge>
 
@@ -1721,7 +2727,9 @@ export default function ReserveAppointment() {
                                 variant="outline"
                                 size="sm"
                                 className="text-red-500 border-red-300 hover:text-red-700 hover:bg-red-50 gap-1.5"
-                                onClick={() => confirmCancelReservation(booking.Id)}
+                                onClick={() =>
+                                  confirmCancelReservation(booking.Id)
+                                }
                                 disabled={cancellingId === booking.Id}
                               >
                                 {cancellingId === booking.Id ? (
@@ -1729,7 +2737,9 @@ export default function ReserveAppointment() {
                                 ) : (
                                   <>
                                     <XCircle className="w-4 h-4" />
-                                    <span>{t('patient.cancelAppointment')}</span>
+                                    <span>
+                                      {t("patient.cancelAppointment")}
+                                    </span>
                                   </>
                                 )}
                               </Button>
@@ -1740,14 +2750,18 @@ export default function ReserveAppointment() {
 
                       {booking.PatientNotes && (
                         <div className="mt-4 p-3 bg-primary/5 border border-primary/10 rounded-lg text-sm text-text-muted">
-                          <span className="font-bold text-text-heading">{t('patient.notes')}:</span>{" "}
+                          <span className="font-bold text-text-heading">
+                            {t("patient.notes")}:
+                          </span>{" "}
                           {booking.PatientNotes}
                         </div>
                       )}
 
                       {booking.CancellationReason && booking.Status === 4 && (
                         <div className="mt-4 p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-sm text-red-600 dark:text-red-400">
-                          <span className="font-bold">{t('patient.cancellationReason')}:</span>{" "}
+                          <span className="font-bold">
+                            {t("patient.cancellationReason")}:
+                          </span>{" "}
                           {booking.CancellationReason}
                         </div>
                       )}
@@ -1758,17 +2772,17 @@ export default function ReserveAppointment() {
                 <div className="text-center py-20 bg-background-subtle/20 rounded-2xl border-2 border-dashed border-border">
                   <Calendar className="w-16 h-16 text-text-muted mx-auto mb-4 opacity-20" />
                   <h3 className="text-xl font-medium text-text-muted">
-                    {t('patient.noReservationsFound')}
+                    {t("patient.noReservationsFound")}
                   </h3>
                   <p className="text-text-muted mt-2">
-                    {t('patient.noReservationsDesc')}
+                    {t("patient.noReservationsDesc")}
                   </p>
                   <Button
                     className="mt-6"
                     variant="outline"
                     onClick={() => setMainTab("reserve")}
                   >
-                    {t('patient.bookNow')}
+                    {t("patient.bookNow")}
                   </Button>
                 </div>
               )}
@@ -1777,28 +2791,44 @@ export default function ReserveAppointment() {
               {bookingsPagination.totalPages > 1 && (
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pt-6 mt-6 border-t border-border">
                   <span className="text-sm text-text-muted font-medium">
-                    {t('common.page')} {bookingsPagination.pageIndex} {t('common.of')} {bookingsPagination.totalPages}
+                    {t("common.page")} {bookingsPagination.pageIndex}{" "}
+                    {t("common.of")} {bookingsPagination.totalPages}
                   </span>
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
                       disabled={bookingsPagination.pageIndex <= 1}
-                      onClick={() => fetchPatientBookings(bookingsPagination.pageIndex - 1)}
+                      onClick={() =>
+                        fetchPatientBookings(bookingsPagination.pageIndex - 1)
+                      }
                       className="gap-1"
                     >
-                      {isRTL ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-                      {t('common.previous')}
+                      {isRTL ? (
+                        <ChevronRight className="w-4 h-4" />
+                      ) : (
+                        <ChevronLeft className="w-4 h-4" />
+                      )}
+                      {t("common.previous")}
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      disabled={bookingsPagination.pageIndex >= bookingsPagination.totalPages}
-                      onClick={() => fetchPatientBookings(bookingsPagination.pageIndex + 1)}
+                      disabled={
+                        bookingsPagination.pageIndex >=
+                        bookingsPagination.totalPages
+                      }
+                      onClick={() =>
+                        fetchPatientBookings(bookingsPagination.pageIndex + 1)
+                      }
                       className="gap-1"
                     >
-                      {t('common.next')}
-                      {isRTL ? <ChevronLeft className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                      {t("common.next")}
+                      {isRTL ? (
+                        <ChevronLeft className="w-4 h-4" />
+                      ) : (
+                        <ChevronRight className="w-4 h-4" />
+                      )}
                     </Button>
                   </div>
                 </div>

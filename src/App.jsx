@@ -1,66 +1,70 @@
-import React from 'react'
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from 'react-router-dom'
-import { AuthProvider, useAuth, Roles } from './contexts/AuthContext'
-import { ToastProvider } from './components/ui/Toast'
-import ProtectedRoute from './components/auth/ProtectedRoute'
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider, useAuth, Roles } from "./contexts/AuthContext";
+import { ToastProvider } from "./components/ui/Toast";
+import ProtectedRoute from "./components/auth/ProtectedRoute";
 
-import { ThemeProvider } from './contexts/ThemeContext'
-import { LanguageProvider, useLanguage } from './contexts/LanguageContext'
-import Layout from './components/layout/Layout'
+import { ThemeProvider } from "./contexts/ThemeContext";
+import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
+import Layout from "./components/layout/Layout";
 
-import PatientSettings from './views/patient/Settings'
-import PatientProfile from './views/patient/Profile'
-import ReserveAppointment from './views/patient/ReserveAppointment'
-import PatientTests from './views/patient/Tests'
-import PatientArticles from './views/patient/Articles'
-import DoctorDashboard from './views/doctor/Dashboard'
-import Schedule from './views/doctor/Schedule'
-import PatientQueue from './views/doctor/PatientQueue'
-import SessionHistory from './views/doctor/SessionHistory'
-import DoctorTests from './views/doctor/Tests'
-import Settings from './views/doctor/Settings'
-import UserManagement from './views/admin/UserManagement'
-import AdminProfile from './views/admin/Profile'
-import CustomerServiceDashboard from './views/customer-service/Dashboard'
-import StaffProfile from './views/customer-service/Profile'
+import PatientSettings from "./views/patient/Settings";
+import PatientProfile from "./views/patient/Profile";
+import ReserveAppointment from "./views/patient/ReserveAppointment";
+import PatientTests from "./views/patient/Tests";
+import PatientArticles from "./views/patient/Articles";
+import DoctorDashboard from "./views/doctor/Dashboard";
+import Schedule from "./views/doctor/Schedule";
+import PatientQueue from "./views/doctor/PatientQueue";
+import SessionHistory from "./views/doctor/SessionHistory";
+import DoctorTests from "./views/doctor/Tests";
+import Settings from "./views/doctor/Settings";
+import UserManagement from "./views/admin/UserManagement";
+import AdminProfile from "./views/admin/Profile";
+import CustomerServiceDashboard from "./views/customer-service/Dashboard";
+import StaffProfile from "./views/customer-service/Profile";
 
-import Login from './views/auth/Login'
-import RoleSelection from './views/auth/RoleSelection'
-import PatientRegistration from './views/auth/patient/PatientRegistration'
-import DoctorRegistration from './views/auth/doctor/DoctorRegistration'
-import PendingApproval from './views/auth/PendingApproval'
-import ForgotPassword from './views/auth/ForgotPassword'
+import Login from "./views/auth/Login";
+import RoleSelection from "./views/auth/RoleSelection";
+import PatientRegistration from "./views/auth/patient/PatientRegistration";
+import DoctorRegistration from "./views/auth/doctor/DoctorRegistration";
+import PendingApproval from "./views/auth/PendingApproval";
+import ForgotPassword from "./views/auth/ForgotPassword";
 
-import InviteStaff from './views/admin/InviteStaff'
-import AdminBookings from './views/admin/Bookings'
-import AdminDashboard from './views/admin/Dashboard'
-import AdminBlogs from './views/admin/Blogs'
-import BlogDetail from './views/admin/BlogDetail'
-import AdminTests from './views/admin/Tests'
-import PatientBlogs from './views/patient/Blogs'
-import MessagesPage from './views/shared/MessagesPage'
-import DocumentViewer from './views/shared/DocumentViewer'
+import InviteStaff from "./views/admin/InviteStaff";
+import AdminBookings from "./views/admin/Bookings";
+import AdminDashboard from "./views/admin/Dashboard";
+import AdminBlogs from "./views/admin/Blogs";
+import BlogDetail from "./views/admin/BlogDetail";
+import AdminTests from "./views/admin/Tests";
+import AdminPaymentDetails from "./views/admin/PaymentDetails";
+import PatientBlogs from "./views/patient/Blogs";
+import MessagesPage from "./views/shared/MessagesPage";
+import DocumentViewer from "./views/shared/DocumentViewer";
 
 function RootRedirect() {
-  const { isAuthenticated, getDashboardRoute } = useAuth()
+  const { isAuthenticated, getDashboardRoute } = useAuth();
 
   if (isAuthenticated) {
-    return <Navigate to={getDashboardRoute()} replace />
+    return <Navigate to={getDashboardRoute()} replace />;
   }
 
-  return <Navigate to="/auth/login" replace />
+  return <Navigate to="/auth/login" replace />;
 }
 
 function AppRoutes() {
-  const { isRTL } = useLanguage()
+  const { isRTL } = useLanguage();
 
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen bg-background">
+    <div dir={isRTL ? "rtl" : "ltr"} className="min-h-screen bg-background">
       <Routes>
         {/* Public Routes */}
         <Route path="/auth/login" element={<Login />} />
         <Route path="/auth/role-selection" element={<RoleSelection />} />
-        <Route path="/auth/register/patient" element={<PatientRegistration />} />
+        <Route
+          path="/auth/register/patient"
+          element={<PatientRegistration />}
+        />
         <Route path="/auth/register/doctor" element={<DoctorRegistration />} />
         <Route path="/auth/pending-approval" element={<PendingApproval />} />
         <Route path="/auth/forgot-password" element={<ForgotPassword />} />
@@ -349,7 +353,14 @@ function AppRoutes() {
         <Route
           path="/admin/blogs/:blogId"
           element={
-            <ProtectedRoute allowedRoles={[Roles.ADMIN, Roles.PATIENT, Roles.DOCTOR, Roles.STAFF]}>
+            <ProtectedRoute
+              allowedRoles={[
+                Roles.ADMIN,
+                Roles.PATIENT,
+                Roles.DOCTOR,
+                Roles.STAFF,
+              ]}
+            >
               <Layout>
                 <BlogDetail />
               </Layout>
@@ -376,6 +387,16 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/admin/payment-details"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+              <Layout>
+                <AdminPaymentDetails />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
         {/* Legacy redirect */}
         <Route
@@ -390,7 +411,14 @@ function AppRoutes() {
         <Route
           path="/document-viewer"
           element={
-            <ProtectedRoute allowedRoles={[Roles.PATIENT, Roles.DOCTOR, Roles.ADMIN, Roles.STAFF]}>
+            <ProtectedRoute
+              allowedRoles={[
+                Roles.PATIENT,
+                Roles.DOCTOR,
+                Roles.ADMIN,
+                Roles.STAFF,
+              ]}
+            >
               <DocumentViewer />
             </ProtectedRoute>
           }
@@ -400,7 +428,7 @@ function AppRoutes() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
-  )
+  );
 }
 
 function App() {
@@ -416,7 +444,7 @@ function App() {
         </LanguageProvider>
       </AuthProvider>
     </BrowserRouter>
-  )
+  );
 }
 
-export default App
+export default App;

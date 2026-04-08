@@ -3952,12 +3952,6 @@
           "Name": {
             "type": "string"
           },
-          "CompanyName": {
-            "type": "string"
-          },
-          "CompanyLogo": {
-            "type": "string"
-          },
           "Image": {
             "type": "string"
           },
@@ -3971,6 +3965,50 @@
             ]
           },
           "UserName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "Email": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "Description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "Specialist": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          },
+          "Birthday": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "Gender": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/Gender"
+              }
+            ]
+          },
+          "PhoneNumber": {
             "type": [
               "null",
               "string"

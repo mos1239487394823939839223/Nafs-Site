@@ -1,23 +1,35 @@
-import { useState } from 'react'
-import { motion } from 'framer-motion'
-import { useAuth } from '../../contexts/AuthContext'
-import { useToast } from '../../components/ui/Toast'
-import ProfileSettings from '../../components/patient/settings/ProfileSettings'
-import { userAPI, filesAPI, extractErrorMessage } from '../../lib/api'
-import { Visibility as Eye, VisibilityOff as EyeOff, Lock } from '@mui/icons-material'
-import Button from '../../components/ui/Button'
-import { useLanguage } from '../../contexts/LanguageContext'
+import { useState } from "react";
+import { motion } from "framer-motion";
+import { useAuth } from "../../contexts/AuthContext";
+import { useToast } from "../../components/ui/Toast";
+import ProfileSettings from "../../components/patient/settings/ProfileSettings";
+import { userAPI, filesAPI, extractErrorMessage } from "../../lib/api";
+import {
+  Visibility as Eye,
+  VisibilityOff as EyeOff,
+  Lock,
+} from "@mui/icons-material";
+import Button from "../../components/ui/Button";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function Settings() {
-  const { user, updateProfile } = useAuth()
-  const toast = useToast()
-  const { t, isRTL } = useLanguage()
+  const { user, updateProfile } = useAuth();
+  const toast = useToast();
+  const { t, isRTL } = useLanguage();
 
   // Change password state
-  const [showPasswordSection, setShowPasswordSection] = useState(false)
-  const [passwordData, setPasswordData] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
-  const [passwordLoading, setPasswordLoading] = useState(false)
-  const [showPasswords, setShowPasswords] = useState({ current: false, new: false, confirm: false })
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordLoading, setPasswordLoading] = useState(false);
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    new: false,
+    confirm: false,
+  });
 
   const handleSave = async (data) => {
     try {
@@ -25,82 +37,93 @@ export default function Settings() {
         name: data.name,
         phoneNumber: data.phone,
         email: data.email,
-      })
+      });
 
       if (response?.IsSuccess === true) {
-        updateProfile(data)
-        toast.success(t('success.settingsSaved'))
+        updateProfile(data);
+        toast.success(t("success.settingsSaved"));
       } else {
-        toast.error(response?.Message || t('errors.saveFailed'))
+        toast.error(response?.Message || t("errors.saveFailed"));
       }
     } catch (error) {
-      console.error('Save settings error:', error)
-      toast.error(extractErrorMessage(error, t('errors.saveFailed')))
+      console.error("Save settings error:", error);
+      toast.error(extractErrorMessage(error, t("errors.saveFailed")));
     }
-  }
+  };
 
   const handleImageUpload = async (file) => {
     try {
       // 1. Upload file to get a URL
-      const uploadResponse = await filesAPI.uploadFile(file)
-      const imageUrl = uploadResponse?.Data?.PublicUrl || uploadResponse?.Data
+      const uploadResponse = await filesAPI.uploadFile(file);
+      const imageUrl = uploadResponse?.Data?.PublicUrl || uploadResponse?.Data;
       if (!imageUrl) {
-        toast.error(t('errors.photoUpdateFailed'))
-        return
+        toast.error(t("errors.photoUpdateFailed"));
+        return;
       }
       // 2. Send URL to UpdateImage
-      const response = await userAPI.updateCurrentUserImage(user, imageUrl)
+      const response = await userAPI.updateCurrentUserImage(user, imageUrl);
       if (response?.IsSuccess === true) {
-        updateProfile({ image: imageUrl })
-        toast.success(t('success.photoUpdated'))
+        updateProfile({ image: imageUrl });
+        toast.success(t("success.photoUpdated"));
       } else {
-        toast.error(response?.Message || t('errors.photoUpdateFailed'))
+        toast.error(response?.Message || t("errors.photoUpdateFailed"));
       }
     } catch (error) {
-      console.error('Image upload error:', error)
-      toast.error(extractErrorMessage(error, t('errors.photoUpdateFailed')))
+      console.error("Image upload error:", error);
+      toast.error(extractErrorMessage(error, t("errors.photoUpdateFailed")));
     }
-  }
+  };
 
   const handleChangePassword = async () => {
     if (!passwordData.currentPassword || !passwordData.newPassword) {
-      toast.error(t('errors.fillAllPasswordFields'))
-      return
+      toast.error(t("errors.fillAllPasswordFields"));
+      return;
     }
     if (passwordData.newPassword.length < 6) {
-      toast.error(t('errors.passwordMinLength'))
-      return
+      toast.error(t("errors.passwordMinLength"));
+      return;
     }
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error(t('errors.passwordsDoNotMatch'))
-      return
+      toast.error(t("errors.passwordsDoNotMatch"));
+      return;
     }
 
-    setPasswordLoading(true)
+    setPasswordLoading(true);
     try {
-      const response = await userAPI.changePassword(passwordData.currentPassword, passwordData.newPassword)
+      const response = await userAPI.changePassword(
+        passwordData.currentPassword,
+        passwordData.newPassword,
+      );
       if (response?.IsSuccess === true) {
-        toast.success(t('success.passwordChanged'))
-        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' })
-        setShowPasswordSection(false)
+        toast.success(t("success.passwordChanged"));
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+        setShowPasswordSection(false);
       } else {
-        toast.error(response?.Message || t('errors.passwordChangeFailed'))
+        toast.error(response?.Message || t("errors.passwordChangeFailed"));
       }
     } catch (error) {
-      toast.error(extractErrorMessage(error, t('errors.passwordChangeFailed')))
+      toast.error(extractErrorMessage(error, t("errors.passwordChangeFailed")));
     } finally {
-      setPasswordLoading(false)
+      setPasswordLoading(false);
     }
-  }
+  };
 
   return (
-    <div className="min-h-screen bg-background p-6 md:p-10" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div
+      className="min-h-screen bg-background p-6 md:p-10"
+      dir={isRTL ? "rtl" : "ltr"}
+    >
       <div className="max-w-4xl mx-auto">
-
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text mb-2">{t('settings.profile')}</h1>
-          <p className="text-text-muted">{t('settings.managePersonalInfo')}</p>
+          <h1 className="text-3xl font-bold text-text mb-2">
+            {t("settings.profile")}
+          </h1>
+          <p className="text-text-muted">{t("settings.managePersonalInfo")}</p>
         </div>
 
         {/* Main Content Card */}
@@ -113,7 +136,11 @@ export default function Settings() {
           <div className="h-1.5 w-full bg-gradient-to-r from-primary via-secondary to-primary/50" />
 
           <div className="p-6 md:p-8">
-            <ProfileSettings user={user} onSave={handleSave} onImageUpload={handleImageUpload} />
+            <ProfileSettings
+              user={user}
+              onSave={handleSave}
+              onImageUpload={handleImageUpload}
+            />
           </div>
         </motion.div>
 
@@ -131,8 +158,12 @@ export default function Settings() {
                   <Lock className="w-5 h-5 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-text">{t('settings.changePassword')}</h3>
-                  <p className="text-sm text-text-muted">{t('settings.updateAccountPassword')}</p>
+                  <h3 className="font-semibold text-text">
+                    {t("settings.changePassword")}
+                  </h3>
+                  <p className="text-sm text-text-muted">
+                    {t("settings.updateAccountPassword")}
+                  </p>
                 </div>
               </div>
               <Button
@@ -140,35 +171,98 @@ export default function Settings() {
                 size="sm"
                 onClick={() => setShowPasswordSection(!showPasswordSection)}
               >
-                {showPasswordSection ? t('common.cancel', 'Cancel') : t('common.change', 'Change')}
+                {showPasswordSection
+                  ? t("common.cancel", "Cancel")
+                  : t("common.change", "Change")}
               </Button>
             </div>
 
             {showPasswordSection && (
               <motion.div
                 initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
+                animate={{ opacity: 1, height: "auto" }}
                 className="space-y-4 pt-4 border-t border-border"
               >
-                {['currentPassword', 'newPassword', 'confirmPassword'].map((field) => (
-                  <div key={field}>
+                {[
+                  { key: "currentPassword", visKey: "current" },
+                  { key: "newPassword", visKey: "new" },
+                  { key: "confirmPassword", visKey: "confirm" },
+                ].map(({ key, visKey }) => (
+                  <div key={key}>
                     <label className="block text-sm font-medium text-text-muted mb-2">
-                      {field === 'currentPassword' ? t('settings.currentPassword') : field === 'newPassword' ? t('settings.newPassword') : t('settings.confirmNewPassword')}
+                      {key === "currentPassword"
+                        ? t("settings.currentPassword")
+                        : key === "newPassword"
+                        ? t("settings.newPassword")
+                        : t("settings.confirmNewPassword")}
                     </label>
                     <div className="relative">
                       <input
-                        type={showPasswords[field.replace('Password', '').replace('current', 'current')] ? 'text' : 'password'}
-                        value={passwordData[field]}
-                        onChange={(e) => setPasswordData(prev => ({ ...prev, [field]: e.target.value }))}
-                        className="w-full px-4 py-2 pr-10 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-text"
-                        placeholder="••••••••"
+                        type={showPasswords[visKey] ? "text" : "password"}
+                        value={passwordData[key]}
+                        style={
+                          showPasswords[visKey]
+                            ? { WebkitTextSecurity: "none" }
+                            : undefined
+                        }
+                        onChange={(e) =>
+                          setPasswordData((prev) => ({
+                            ...prev,
+                            [key]: e.target.value,
+                          }))
+                        }
+                        className={`w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-text ${
+                          isRTL ? "pl-10" : "pr-10"
+                        }`}
+                        placeholder={
+                          key === "currentPassword"
+                            ? t("settings.currentPassword", "Current password")
+                            : key === "newPassword"
+                            ? t("settings.newPassword", "New password")
+                            : t(
+                                "settings.confirmNewPassword",
+                                "Confirm new password",
+                              )
+                        }
                       />
+                      <button
+                        type="button"
+                        aria-label={
+                          showPasswords[visKey]
+                            ? isRTL
+                              ? "إخفاء كلمة المرور"
+                              : "Hide password"
+                            : isRTL
+                            ? "إظهار كلمة المرور"
+                            : "Show password"
+                        }
+                        onClick={() =>
+                          setShowPasswords((prev) => ({
+                            ...prev,
+                            [visKey]: !prev[visKey],
+                          }))
+                        }
+                        className={`absolute inset-y-0 ${
+                          isRTL ? "left-3" : "right-3"
+                        } z-10 flex items-center text-text-muted hover:text-text-heading`}
+                      >
+                        {showPasswords[visKey] ? (
+                          <EyeOff className="w-5 h-5" />
+                        ) : (
+                          <Eye className="w-5 h-5" />
+                        )}
+                      </button>
                     </div>
                   </div>
                 ))}
                 <div className="flex justify-end pt-4">
-                  <Button onClick={handleChangePassword} disabled={passwordLoading}>
-                    {passwordLoading ? t('common.updating', 'Updating...') : t('settings.updatePassword', 'Update Password')}
+                  <Button
+                    onClick={handleChangePassword}
+                    disabled={passwordLoading}
+                  >
+                    {passwordLoading
+                      ? t("common.updating", "Updating...")
+                      : t("settings.updatePassword", "Update Password")}
                   </Button>
                 </div>
               </motion.div>
@@ -177,5 +271,5 @@ export default function Settings() {
         </motion.div>
       </div>
     </div>
-  )
+  );
 }

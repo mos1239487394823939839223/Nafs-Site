@@ -1,56 +1,144 @@
-import { NavLink } from 'react-router-dom'
-import { useAuth, Roles } from '../../contexts/AuthContext'
-import { useLanguage } from '../../contexts/LanguageContext'
-import RoleBadge from '../ui/RoleBadge'
-import { UserAvatar } from '../ui/Avatar'
-import { Home, CalendarToday as Calendar, ChatBubbleOutline as MessageSquare, Settings, Logout as LogOut, People as Users, ShowChart as Activity, AttachMoney as DollarSign, BarChart as BarChart3, PersonAdd as UserPlus, Medication as Pill, Science as TestTube, FolderOpen, AccessTime as Clock, TrendingUp, Headphones, Phone, ConfirmationNumber as TicketIcon, Article as ArticleIcon } from '@mui/icons-material'
+import { NavLink } from "react-router-dom";
+import { useAuth, Roles } from "../../contexts/AuthContext";
+import { useLanguage } from "../../contexts/LanguageContext";
+import RoleBadge from "../ui/RoleBadge";
+import { UserAvatar } from "../ui/Avatar";
+import {
+  Home,
+  CalendarToday as Calendar,
+  ChatBubbleOutline as MessageSquare,
+  Settings,
+  Logout as LogOut,
+  People as Users,
+  ShowChart as Activity,
+  AttachMoney as DollarSign,
+  BarChart as BarChart3,
+  PersonAdd as UserPlus,
+  Medication as Pill,
+  Science as TestTube,
+  FolderOpen,
+  AccessTime as Clock,
+  TrendingUp,
+  Headphones,
+  Phone,
+  ConfirmationNumber as TicketIcon,
+  Article as ArticleIcon,
+} from "@mui/icons-material";
 
 export default function DynamicSidebar({ isOpen, onClose }) {
-  const { role, user, logout } = useAuth()
-  const { t, isRTL } = useLanguage()
+  const { role, user, logout } = useAuth();
+  const { t, isRTL } = useLanguage();
 
   // Navigation items for each role
   const navigationConfig = {
     [Roles.PATIENT]: [
-      { name: t('nav.reserve'), path: '/dashboard/patient/reserve', icon: Calendar },
-      { name: t('nav.tests'), path: '/dashboard/patient/tests', icon: TestTube },
-      { name: t('nav.blogs'), path: '/dashboard/patient/blogs', icon: ArticleIcon },
-      { name: t('nav.messages'), path: '/dashboard/patient/messages', icon: MessageSquare },
-      { name: t('nav.profile'), path: '/dashboard/patient/profile', icon: Settings },
+      {
+        name: t("nav.reserve"),
+        path: "/dashboard/patient/reserve",
+        icon: Calendar,
+      },
+      {
+        name: t("nav.tests"),
+        path: "/dashboard/patient/tests",
+        icon: TestTube,
+      },
+      {
+        name: t("nav.blogs"),
+        path: "/dashboard/patient/blogs",
+        icon: ArticleIcon,
+      },
+      {
+        name: t("nav.messages"),
+        path: "/dashboard/patient/messages",
+        icon: MessageSquare,
+      },
+      {
+        name: t("nav.profile"),
+        path: "/dashboard/patient/profile",
+        icon: Settings,
+      },
     ],
     [Roles.DOCTOR]: [
-      { name: t('nav.dashboard'), path: '/dashboard/doctor', icon: Home },
-      { name: t('nav.queue'), path: '/dashboard/doctor/queue', icon: Users },
-      { name: t('nav.tests'), path: '/dashboard/doctor/tests', icon: TestTube },
-      { name: t('nav.blogs'), path: '/dashboard/doctor/blogs', icon: ArticleIcon },
-      { name: t('nav.schedule'), path: '/dashboard/doctor/schedule', icon: Calendar },
-      { name: t('nav.history'), path: '/dashboard/doctor/history', icon: Activity },
-      { name: t('nav.messages'), path: '/dashboard/doctor/messages', icon: MessageSquare },
-      { name: t('nav.profile'), path: '/dashboard/doctor/settings', icon: Settings },
+      { name: t("nav.dashboard"), path: "/dashboard/doctor", icon: Home },
+      { name: t("nav.queue"), path: "/dashboard/doctor/queue", icon: Users },
+      { name: t("nav.tests"), path: "/dashboard/doctor/tests", icon: TestTube },
+      {
+        name: t("nav.blogs"),
+        path: "/dashboard/doctor/blogs",
+        icon: ArticleIcon,
+      },
+      {
+        name: t("nav.schedule"),
+        path: "/dashboard/doctor/schedule",
+        icon: Calendar,
+      },
+      {
+        name: t("nav.history"),
+        path: "/dashboard/doctor/history",
+        icon: Activity,
+      },
+      {
+        name: t("nav.messages"),
+        path: "/dashboard/doctor/messages",
+        icon: MessageSquare,
+      },
+      {
+        name: t("nav.profile"),
+        path: "/dashboard/doctor/settings",
+        icon: Settings,
+      },
     ],
     [Roles.ADMIN]: [
-      { name: t('nav.users'), path: '/admin/users', icon: Users },
-      { name: t('nav.bookings'), path: '/admin/bookings', icon: Calendar },
-      { name: t('nav.blogs'), path: '/admin/blogs', icon: ArticleIcon },
-      { name: isRTL ? 'الاختبارات' : 'Tests', path: '/admin/tests', icon: TestTube },
-      { name: t('nav.inviteStaff'), path: '/admin/invite-staff', icon: UserPlus },
-      { name: t('nav.messages'), path: '/admin/messages', icon: MessageSquare },
-      { name: t('nav.profile'), path: '/admin/profile', icon: Settings },
+      { name: t("nav.users"), path: "/admin/users", icon: Users },
+      { name: t("nav.bookings"), path: "/admin/bookings", icon: Calendar },
+      {
+        name: t(
+          "nav.paymentDetails",
+          isRTL ? "بيانات الدفع" : "Payment Details",
+        ),
+        path: "/admin/payment-details",
+        icon: DollarSign,
+      },
+      { name: t("nav.blogs"), path: "/admin/blogs", icon: ArticleIcon },
+      {
+        name: isRTL ? "الاختبارات" : "Tests",
+        path: "/admin/tests",
+        icon: TestTube,
+      },
+      {
+        name: t("nav.inviteStaff"),
+        path: "/admin/invite-staff",
+        icon: UserPlus,
+      },
+      { name: t("nav.messages"), path: "/admin/messages", icon: MessageSquare },
+      { name: t("nav.profile"), path: "/admin/profile", icon: Settings },
     ],
     [Roles.STAFF]: [
-      { name: t('nav.dashboard'), path: '/dashboard/staff', icon: Home },
-      { name: t('nav.blogs'), path: '/dashboard/staff/blogs', icon: ArticleIcon },
-      { name: t('nav.messages'), path: '/dashboard/staff/messages', icon: MessageSquare },
-      { name: t('nav.profile'), path: '/dashboard/staff/profile', icon: Settings },
+      { name: t("nav.dashboard"), path: "/dashboard/staff", icon: Home },
+      {
+        name: t("nav.blogs"),
+        path: "/dashboard/staff/blogs",
+        icon: ArticleIcon,
+      },
+      {
+        name: t("nav.messages"),
+        path: "/dashboard/staff/messages",
+        icon: MessageSquare,
+      },
+      {
+        name: t("nav.profile"),
+        path: "/dashboard/staff/profile",
+        icon: Settings,
+      },
     ],
-  }
+  };
 
-  const navItems = navigationConfig[role] || []
+  const navItems = navigationConfig[role] || [];
 
   const handleLogout = () => {
-    logout()
-    if (onClose) onClose()
-  }
+    logout();
+    if (onClose) onClose();
+  };
 
   return (
     <>
@@ -67,18 +155,29 @@ export default function DynamicSidebar({ isOpen, onClose }) {
         className={`
           fixed top-0 h-full w-64 bg-background-paper
           transform transition-transform duration-300 ease-in-out z-50
-          ${isRTL
-            ? `right-0 border-l border-border ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}`
-            : `left-0 border-r border-border ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`
+          ${
+            isRTL
+              ? `right-0 border-l border-border ${
+                  isOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"
+                }`
+              : `left-0 border-r border-border ${
+                  isOpen
+                    ? "translate-x-0"
+                    : "-translate-x-full lg:translate-x-0"
+                }`
           }
         `}
-        dir={isRTL ? 'rtl' : 'ltr'}
+        dir={isRTL ? "rtl" : "ltr"}
       >
         <div className="flex flex-col h-full">
           {/* Header */}
           <div className="p-6 border-b border-border">
-            <h1 className="text-2xl font-bold text-primary">{t('auth.platformName')}</h1>
-            <p className="text-sm text-text-light mt-1">{t('auth.platformTagline')}</p>
+            <h1 className="text-2xl font-bold text-primary">
+              {t("auth.platformName")}
+            </h1>
+            <p className="text-sm text-text-light mt-1">
+              {t("auth.platformTagline")}
+            </p>
           </div>
 
           {/* User Info */}
@@ -91,7 +190,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
               />
               <div className="flex-1 min-w-0">
                 <p className="font-medium text-text truncate">
-                  {user?.name || user?.Name || 'User'}
+                  {user?.name || user?.Name || "User"}
                 </p>
                 <RoleBadge role={role} size="sm" />
               </div>
@@ -102,20 +201,23 @@ export default function DynamicSidebar({ isOpen, onClose }) {
           <nav className="flex-1 overflow-y-auto p-4">
             <ul className="space-y-1">
               {navItems.map((item) => {
-                const Icon = item.icon
+                const Icon = item.icon;
                 return (
                   <li key={item.path}>
                     <NavLink
                       to={item.path}
                       end
                       onClick={() => {
-                        if (onClose && window.innerWidth < 1024) onClose()
+                        if (onClose && window.innerWidth < 1024) onClose();
                       }}
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
-                        ${isActive
-                          ? `bg-primary/10 text-primary ${isRTL ? 'border-r-4' : 'border-l-4'} border-primary`
-                          : 'text-text hover:bg-background-gray hover:text-primary'
+                        ${
+                          isActive
+                            ? `bg-primary/10 text-primary ${
+                                isRTL ? "border-r-4" : "border-l-4"
+                              } border-primary`
+                            : "text-text hover:bg-background-gray hover:text-primary"
                         }`
                       }
                     >
@@ -123,7 +225,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                       <span className="font-medium">{item.name}</span>
                     </NavLink>
                   </li>
-                )
+                );
               })}
             </ul>
           </nav>
@@ -135,11 +237,11 @@ export default function DynamicSidebar({ isOpen, onClose }) {
               className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-text hover:bg-red-50 hover:text-red-600 transition-all duration-200"
             >
               <LogOut className="w-5 h-5" />
-              <span className="font-medium">{t('auth.logout')}</span>
+              <span className="font-medium">{t("auth.logout")}</span>
             </button>
           </div>
         </div>
       </aside>
     </>
-  )
+  );
 }
