@@ -7,7 +7,6 @@ import LocalDocumentsManager from "../../components/shared/LocalDocumentsManager
 import {
   userAPI,
   filesAPI,
-  adminAPI,
   extractErrorMessage,
 } from "../../lib/api";
 import Input from "../../components/ui/Input";
@@ -39,6 +38,19 @@ export default function Settings() {
     phone: user?.phone || user?.PhoneNumber || "",
     specialty: user?.specialty || user?.Specialist?.[0] || "",
     bio: user?.bio || user?.Description || "",
+    birthday: user?.birthday || user?.Birthday || "",
+    gender:
+      user?.gender !== undefined && user?.gender !== null
+        ? String(user.gender)
+        : user?.Gender !== undefined && user?.Gender !== null
+        ? String(user.Gender)
+        : "",
+    sessionPrice:
+      user?.sessionPrice !== undefined && user?.sessionPrice !== null
+        ? String(user.sessionPrice)
+        : user?.SessionPrice !== undefined && user?.SessionPrice !== null
+        ? String(user.SessionPrice)
+        : "",
   });
   const [avatar, setAvatar] = useState(user?.image || user?.Image || null);
   const [saving, setSaving] = useState(false);
@@ -69,8 +81,56 @@ export default function Settings() {
       phone: user?.phone || user?.PhoneNumber || "",
       specialty: user?.specialty || user?.Specialist?.[0] || "",
       bio: user?.bio || user?.Description || "",
+      birthday: user?.birthday || user?.Birthday || "",
+      gender:
+        user?.gender !== undefined && user?.gender !== null
+          ? String(user.gender)
+          : user?.Gender !== undefined && user?.Gender !== null
+          ? String(user.Gender)
+          : "",
+      sessionPrice:
+        user?.sessionPrice !== undefined && user?.sessionPrice !== null
+          ? String(user.sessionPrice)
+          : user?.SessionPrice !== undefined && user?.SessionPrice !== null
+          ? String(user.SessionPrice)
+          : "",
     });
   }, [user]);
+
+  useEffect(() => {
+    const loadCurrentUser = async () => {
+      try {
+        const response = await userAPI.getCurrentUser();
+        if (response?.IsSuccess !== false && response?.Data) {
+          const current = response.Data;
+          updateProfile(current);
+          setFormData({
+            name: current.Name || "",
+            email: current.Email || "",
+            phone: current.PhoneNumber || "",
+            specialty: Array.isArray(current.Specialist)
+              ? current.Specialist[0] || ""
+              : "",
+            bio: current.Description || "",
+            birthday: current.Birthday || "",
+            gender:
+              current.Gender === null || current.Gender === undefined
+                ? ""
+                : String(current.Gender),
+            sessionPrice:
+              current.SessionPrice === null ||
+              current.SessionPrice === undefined
+                ? ""
+                : String(current.SessionPrice),
+          });
+        }
+      } catch {
+        // Keep fallback from auth context if refresh fails.
+      }
+    };
+
+    loadCurrentUser();
+  }, []);
 
   const doctorDocumentsStorageKey = useMemo(() => {
     const userId = userAPI.resolveUserId(user) || "doctor-current";
@@ -116,34 +176,26 @@ export default function Settings() {
     try {
       const normalizedSpecialty = formData.specialty.trim();
       const normalizedBio = formData.bio.trim();
+      const normalizedBirthday = formData.birthday
+        ? new Date(formData.birthday).toISOString()
+        : null;
+      const normalizedGender =
+        formData.gender === "" ? null : Number(formData.gender);
+      const normalizedSessionPrice =
+        formData.sessionPrice === "" ? null : Number(formData.sessionPrice);
 
       const response = await userAPI.editMainInfo({
         name: formData.name,
         phoneNumber: formData.phone,
         email: formData.email,
+        description: normalizedBio || null,
+        specialist: normalizedSpecialty ? [normalizedSpecialty] : [],
+        birthday: normalizedBirthday,
+        gender: normalizedGender,
+        sessionPrice: normalizedSessionPrice,
       });
 
       if (response?.IsSuccess === true) {
-        if (doctorUserId) {
-          const updateDoctorResponse = await adminAPI.updateDoctor(
-            Number(doctorUserId),
-            {
-              name: formData.name,
-              email: formData.email,
-              phoneNumber: formData.phone,
-              description: normalizedBio || null,
-              specialist: normalizedSpecialty ? [normalizedSpecialty] : [],
-            },
-          );
-
-          if (updateDoctorResponse?.IsSuccess !== true) {
-            toast.error(
-              updateDoctorResponse?.Message || t("errors.somethingWentWrong"),
-            );
-            return;
-          }
-        }
-
         updateProfile({
           name: formData.name,
           Name: formData.name,
@@ -155,6 +207,12 @@ export default function Settings() {
           Specialist: normalizedSpecialty ? [normalizedSpecialty] : [],
           bio: normalizedBio,
           Description: normalizedBio,
+          birthday: normalizedBirthday,
+          Birthday: normalizedBirthday,
+          gender: normalizedGender,
+          Gender: normalizedGender,
+          sessionPrice: normalizedSessionPrice,
+          SessionPrice: normalizedSessionPrice,
         });
         toast.success(
           t("success.profileUpdated", "Profile updated successfully"),
@@ -344,6 +402,13 @@ export default function Settings() {
               label: t("common.specialty", "Specialty"),
               value: formData.specialty || "—",
             },
+            {
+              label: t("settings.consultationFee", "Session Price"),
+              value:
+                formData.sessionPrice !== "" && formData.sessionPrice !== null
+                  ? `${formData.sessionPrice} EGP`
+                  : "—",
+            },
           ].map((stat, i) => (
             <motion.div
               key={i}
@@ -460,7 +525,7 @@ export default function Settings() {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-lg bg-background-paper rounded-2xl shadow-2xl border border-border overflow-hidden z-10"
+              className="relative w-full max-w-2xl max-h-[88vh] bg-background-paper rounded-2xl shadow-2xl border border-border overflow-y-auto z-10"
             >
               <div className="px-6 pt-6 pb-4 bg-gradient-to-r from-primary/10 to-secondary/5 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-3">
@@ -512,6 +577,39 @@ export default function Settings() {
                   onChange={(e) => handleChange("specialty", e.target.value)}
                   icon={Stethoscope}
                 />
+                <Input
+                  label={t("settings.consultationFee", "Session Price")}
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.sessionPrice}
+                  onChange={(e) => handleChange("sessionPrice", e.target.value)}
+                  icon={Stethoscope}
+                />
+                <Input
+                  label={t("settings.dateOfBirth", "Date of Birth")}
+                  type="date"
+                  value={
+                    formData.birthday
+                      ? String(formData.birthday).slice(0, 10)
+                      : ""
+                  }
+                  onChange={(e) => handleChange("birthday", e.target.value)}
+                />
+                <div>
+                  <label className="block text-sm font-medium text-text-muted mb-1.5">
+                    {t("common.gender", "Gender")}
+                  </label>
+                  <select
+                    value={formData.gender}
+                    onChange={(e) => handleChange("gender", e.target.value)}
+                    className="w-full px-4 py-2.5 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 bg-background text-text transition-all"
+                  >
+                    <option value="">{t("common.none", "None")}</option>
+                    <option value="1">{t("common.male", "Male")}</option>
+                    <option value="2">{t("common.female", "Female")}</option>
+                  </select>
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-text-muted mb-1.5">
                     {t("settings.bio", "Bio")}

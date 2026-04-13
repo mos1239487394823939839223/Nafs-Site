@@ -263,6 +263,7 @@ export default {
     medicalHistory: "التاريخ الطبي",
     reserve: "حجز موعد",
     tests: "تحاليلي",
+    earnings: "الأرباح",
     articles: "المقالات",
     users: "إدارة المستخدمين",
     bookings: "الحجوزات",
@@ -311,6 +312,11 @@ export default {
     bookingSummary: "ملخص الحجز",
     selectedTime: "الوقت المحدد",
     confirmAppointment: "تأكيد الموعد",
+
+  doctor: {
+    earningsTitle: "الأرباح",
+    earningsSubtitle: "راجع ملخص أرباحك وحركة المدفوعات",
+  },
     bookingConfirmed: "تم تأكيد الحجز!",
     bookingConfirmedTitle: "تم تأكيد الحجز!",
     bookingConfirmedDesc:
@@ -562,6 +568,23 @@ export default {
     doctorStatus: "الحالة",
     manageBookingsDesc: "إدارة ومراقبة جميع حجوزات المنصة",
     searchPatientsDocs: "البحث باسم المريض أو الطبيب...",
+    paymentInstructionDeleteTitle: "تأكيد حذف تعليمات الدفع",
+    paymentInstructionDeleteDescription:
+      "سيتم حذف تعليمات الدفع الخاصة بوسيلة الدفع المحددة. يمكنك إضافتها مرة أخرى لاحقًا إذا لزم الأمر.",
+    paymentInstructionDeleteButton: "حذف التعليمات",
+    paymentInstructionDeleteConfirm: "تأكيد الحذف",
+    paymentInstructionDeleting: "جار الحذف...",
+    paymentInstructionDeletedSuccess: "تم حذف تعليمات الدفع بنجاح",
+    paymentInstructionDeleteFailed: "تعذر حذف تعليمات الدفع",
+    doctorFinanceTitle: "نظرة مالية للطبيب",
+    totalConfirmed: "إجمالي المؤكد",
+    totalPending: "إجمالي المعلّق",
+    totalPayedOut: "إجمالي المصروف",
+    remainingBalance: "الرصيد المتبقي",
+    createPayout: "إنشاء دفعة",
+    payoutAmount: "المبلغ",
+    payoutHistory: "سجل الدفعات",
+    noPayoutsYet: "لا توجد دفعات بعد",
   },
 
   // Chat

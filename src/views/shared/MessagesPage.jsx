@@ -39,11 +39,16 @@ const normalizeValue = (v) => String(v ?? '').trim().toLowerCase()
 
 const getMessageUniqueKey = (msg) => {
   const id = msg?.Id ?? msg?.id
-  if (id !== undefined && id !== null && String(id).trim() !== '') return `id:${String(id)}`
   const sender = normalizeValue(msg?.SenderId ?? msg?.senderId ?? msg?.From ?? msg?.from ?? msg?.sender)
   const content = normalizeValue(getIncomingContent(msg))
   const createdAt = normalizeValue(msg?.CreatedAt ?? msg?.createdAt ?? msg?.timestamp)
   const attachmentUrl = normalizeValue(getIncomingAttachmentUrl(msg))
+
+  // Keep a composite key to avoid collisions when backend IDs are int64 values.
+  if (id !== undefined && id !== null && String(id).trim() !== '') {
+    return `id:${String(id)}|${sender}|${createdAt}|${content}|${attachmentUrl}`
+  }
+
   return `fallback:${sender}|${content}|${createdAt}|${attachmentUrl}`
 }
 
@@ -66,9 +71,25 @@ const mergeMessages = (currentMessages, fetchedMessages) => {
 
 const extractMessagesFromResponse = (response) => {
   if (!response) return []
-  if (Array.isArray(response?.Data)) return response.Data
-  if (Array.isArray(response?.Data?.Items)) return response.Data.Items
   if (Array.isArray(response)) return response
+
+  const candidates = [
+    response?.Data,
+    response?.data,
+    response?.Data?.Items,
+    response?.Data?.items,
+    response?.data?.Items,
+    response?.data?.items,
+    response?.Data?.Messages,
+    response?.Data?.messages,
+    response?.data?.Messages,
+    response?.data?.messages,
+  ]
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) return candidate
+  }
+
   return []
 }
 
@@ -87,6 +108,11 @@ const formatLastSeen = (timestamp) => {
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
 
+const logSupportDebug = (...args) => {
+  if (!import.meta.env.DEV) return
+  console.log('[SupportChat]', ...args)
+}
+
 /**
  * ChatRoomDto from API:
  * Id, DoctorId, DoctorName, DoctorImage, PatientId, PatientName, PatientImage,
@@ -95,6 +121,26 @@ const formatLastSeen = (timestamp) => {
  * We need to figure out "the other participant" relative to the current user.
  */
 const resolveParticipant = (room, currentUserId) => {
+  const otherName = room.OtherParticipantName || room.otherParticipantName
+  const otherImage = room.OtherParticipantImage || room.otherParticipantImage
+  const otherRole = String(room.OtherParticipantRole || room.otherParticipantRole || '').toLowerCase()
+
+  if (otherName) {
+    return {
+      name: otherName,
+      image: otherImage || null,
+      role: otherRole || 'user',
+    }
+  }
+
+  if (room.SupportAgentName || room.supportAgentName) {
+    return {
+      name: room.SupportAgentName || room.supportAgentName || 'Technical Support',
+      image: null,
+      role: 'support',
+    }
+  }
+
   const doctorId = String(room.DoctorId || room.doctorId || '')
   const patientId = String(room.PatientId || room.patientId || '')
   const uid = String(currentUserId || '')
@@ -133,7 +179,7 @@ const resolveParticipant = (room, currentUserId) => {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function MessagesPage() {
-  const { user } = useAuth()
+  const { user, role } = useAuth()
   const { t, isRTL } = useLanguage()
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -149,11 +195,45 @@ export default function MessagesPage() {
   const [rooms, setRooms] = useState([])
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false)
+  const [supportRoomLoading, setSupportRoomLoading] = useState(false)
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const connectionRef = useRef(null)
   const activeRoomRef = useRef(null)
   const hydrationTimersRef = useRef({})
+  const supportRoomIdsRef = useRef(new Set())
+  const supportRoomMetaRef = useRef({})
+
+  const normalizeRoomId = useCallback((room) => String(room?.Id || room?.id || ''), [])
+
+  const enrichRoomsWithSupportMeta = useCallback((roomsList) => {
+    const enriched = roomsList.map((room) => {
+      const roomId = normalizeRoomId(room)
+      const supportMeta = supportRoomMetaRef.current[roomId]
+      if (!supportMeta) return room
+
+      return {
+        ...room,
+        OtherParticipantRole: room?.OtherParticipantRole || supportMeta.role || 'support',
+        OtherParticipantName:
+          room?.OtherParticipantName ||
+          room?.otherParticipantName ||
+          supportMeta.name ||
+          t('chat.technicalTeam', 'Technical Support'),
+      }
+    })
+
+    if (role !== Roles.PATIENT) return enriched
+
+    return [...enriched].sort((a, b) => {
+      const aId = normalizeRoomId(a)
+      const bId = normalizeRoomId(b)
+      const aIsSupport = supportRoomIdsRef.current.has(aId)
+      const bIsSupport = supportRoomIdsRef.current.has(bId)
+      if (aIsSupport === bIsSupport) return 0
+      return aIsSupport ? -1 : 1
+    })
+  }, [normalizeRoomId, role, t])
 
   // ── isCurrentUserMessage ────────────────────────────────────────────────────
   const isCurrentUserMessage = useCallback((msg) => {
@@ -212,28 +292,147 @@ export default function MessagesPage() {
   const fetchRooms = useCallback(async () => {
     setLoading(true)
     try {
+      logSupportDebug('fetchRooms:start', { role })
       const response = await chatAPI.getRooms()
-      if (response?.Data) {
-        setRooms(Array.isArray(response.Data) ? response.Data : response.Data.Items || [])
-      } else if (Array.isArray(response)) {
-        setRooms(response)
+      const incomingRooms = response?.Data
+        ? (Array.isArray(response.Data) ? response.Data : response.Data.Items || [])
+        : (Array.isArray(response) ? response : [])
+      const normalizedRooms = enrichRoomsWithSupportMeta(incomingRooms)
+
+      const activeRoomId = String(activeRoomRef.current?.Id || activeRoomRef.current?.id || '')
+      const activeRole = String(activeRoomRef.current?.OtherParticipantRole || '').toLowerCase()
+      const activeName = String(activeRoomRef.current?.OtherParticipantName || '').toLowerCase()
+      const activeRoomKnownAsSupport =
+        supportRoomIdsRef.current.has(activeRoomId) ||
+        activeRole === 'support' ||
+        activeRole === 'staff' ||
+        activeRole === 'admin' ||
+        activeName.includes('support') ||
+        activeName.includes('الدعم')
+      const shouldKeepSyntheticSupport =
+        role === Roles.PATIENT &&
+        activeRoomId &&
+        activeRoomKnownAsSupport &&
+        !normalizedRooms.some((room) => String(room?.Id || room?.id || '') === activeRoomId)
+
+      logSupportDebug('fetchRooms:result', {
+        incomingCount: incomingRooms.length,
+        normalizedCount: normalizedRooms.length,
+        activeRoomId,
+        activeRole,
+        activeRoomKnownAsSupport,
+        shouldKeepSyntheticSupport,
+      })
+
+      if (shouldKeepSyntheticSupport) {
+        logSupportDebug('fetchRooms:keepSyntheticSupport', {
+          id: activeRoomId,
+          name: activeRoomRef.current?.OtherParticipantName || null,
+        })
+        setRooms([
+          {
+            Id: activeRoomId,
+            OtherParticipantName: activeRoomRef.current?.OtherParticipantName || t('chat.technicalTeam', 'Technical Support'),
+            OtherParticipantRole: 'support',
+            LastMessage: activeRoomRef.current?.LastMessage || '',
+            LastMessageAt: activeRoomRef.current?.LastMessageAt || new Date().toISOString(),
+            UnreadCount: activeRoomRef.current?.UnreadCount || 0,
+          },
+          ...normalizedRooms,
+        ])
+      } else {
+        setRooms(normalizedRooms)
       }
     } catch (error) {
+      logSupportDebug('fetchRooms:error', {
+        message: error?.message,
+        status: error?.response?.status,
+        data: error?.response?.data,
+      })
       console.error('Failed to fetch chat rooms:', error)
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [enrichRoomsWithSupportMeta, role, t])
 
   // ── Fetch Messages ──────────────────────────────────────────────────────────
   const fetchLatestMessages = useCallback(async (roomId) => {
-    const [pageZero, pageOne] = await Promise.allSettled([
-      chatAPI.getRoomMessages(roomId, 0, 100),
-      chatAPI.getRoomMessages(roomId, 1, 100),
+    const pageSize = 50
+
+    const readPagesFromResponse = (response) => {
+      const pages = Number(response?.Data?.Pages ?? response?.data?.Pages ?? 1)
+      if (!Number.isFinite(pages) || pages <= 0) return 1
+      return Math.min(pages, 20)
+    }
+
+    const collectByStartIndex = async (startIndex) => {
+      const first = await chatAPI.getRoomMessages(roomId, startIndex, pageSize)
+      const firstFailed = first?.IsSuccess === false
+      const firstMessages = firstFailed ? [] : extractMessagesFromResponse(first)
+      const pages = firstFailed ? 0 : readPagesFromResponse(first)
+
+      if (pages <= 1) {
+        return {
+          messages: firstMessages,
+          pages,
+          failed: firstFailed,
+          strategy: startIndex,
+        }
+      }
+
+      const nextPageIndexes = Array.from({ length: pages - 1 }, (_, idx) => startIndex + idx + 1)
+      const nextResults = await Promise.allSettled(
+        nextPageIndexes.map((pageIndex) => chatAPI.getRoomMessages(roomId, pageIndex, pageSize)),
+      )
+
+      const allMessages = [...firstMessages]
+      let failedCalls = firstFailed ? 1 : 0
+      for (const result of nextResults) {
+        if (result.status !== 'fulfilled') {
+          failedCalls += 1
+          continue
+        }
+        const response = result.value
+        if (response?.IsSuccess === false) {
+          failedCalls += 1
+          continue
+        }
+        allMessages.push(...extractMessagesFromResponse(response))
+      }
+
+      return {
+        messages: allMessages,
+        pages,
+        failed: failedCalls > 0,
+        strategy: startIndex,
+      }
+    }
+
+    const [oneBased, zeroBased] = await Promise.allSettled([
+      collectByStartIndex(1),
+      collectByStartIndex(0),
     ])
-    const merged = []
-    if (pageZero.status === 'fulfilled') merged.push(...extractMessagesFromResponse(pageZero.value))
-    if (pageOne.status === 'fulfilled') merged.push(...extractMessagesFromResponse(pageOne.value))
+
+    const oneBasedData = oneBased.status === 'fulfilled' ? oneBased.value : { messages: [], pages: 0, failed: true, strategy: 1 }
+    const zeroBasedData = zeroBased.status === 'fulfilled' ? zeroBased.value : { messages: [], pages: 0, failed: true, strategy: 0 }
+
+    const selected = oneBasedData.messages.length >= zeroBasedData.messages.length
+      ? oneBasedData
+      : zeroBasedData
+    const merged = selected.messages
+
+    logSupportDebug('fetchLatestMessages:loaded', {
+      roomId: String(roomId),
+      count: merged.length,
+      selectedStrategy: selected.strategy,
+      oneBasedCount: oneBasedData.messages.length,
+      zeroBasedCount: zeroBasedData.messages.length,
+      oneBasedPages: oneBasedData.pages,
+      zeroBasedPages: zeroBasedData.pages,
+      oneBasedHadFailures: oneBasedData.failed,
+      zeroBasedHadFailures: zeroBasedData.failed,
+    })
+
     const deduped = []
     const seen = new Set()
     for (const msg of merged) {
@@ -242,6 +441,11 @@ export default function MessagesPage() {
       seen.add(key)
       deduped.push(msg)
     }
+    logSupportDebug('fetchLatestMessages:deduped', {
+      roomId: String(roomId),
+      rawCount: merged.length,
+      dedupedCount: deduped.length,
+    })
     return sortMessagesByTime(deduped)
   }, [])
 
@@ -291,7 +495,7 @@ export default function MessagesPage() {
           if (currentRoomId && currentRoomId === msgRoomId) {
             if (fromCurrentUser && !hasStableId) { scheduleSilentHydration(msgRoomId); return }
             const uiMessage = {
-              id: msg.Id || msg.id || Date.now(),
+              id: getMessageUniqueKey(msg),
               sender: fromCurrentUser ? 'current-user' : 'other',
               content: getIncomingContent(msg),
               messageType: getIncomingMessageType(msg),
@@ -359,8 +563,8 @@ export default function MessagesPage() {
         role: participant.role,
         online: true,
       },
-      messages: messages.map(msg => ({
-        id: msg.Id || msg.id || Math.random(),
+      messages: messages.map((msg, idx) => ({
+        id: `${getMessageUniqueKey(msg)}:${idx}`,
         sender: isCurrentUserMessage(msg) ? 'current-user' : 'other',
         content: getIncomingContent(msg),
         timestamp: msg.CreatedAt || msg.timestamp || new Date().toISOString(),
@@ -370,6 +574,20 @@ export default function MessagesPage() {
   }
 
   const currentConversation = getConversation(activeRoom)
+  const safeConversation = currentConversation && Array.isArray(currentConversation.messages) && currentConversation.messages.length === 0 && (activeRoom?.LastMessage || activeRoom?.lastMessage)
+    ? {
+      ...currentConversation,
+      messages: [
+        {
+          id: `fallback-last-${String(activeRoom?.Id || activeRoom?.id || Date.now())}`,
+          sender: 'other',
+          content: String(activeRoom?.LastMessage || activeRoom?.lastMessage || ''),
+          timestamp: activeRoom?.LastMessageAt || activeRoom?.lastMessageAt || new Date().toISOString(),
+          attachments: [],
+        },
+      ],
+    }
+    : currentConversation
 
   const filteredRooms = rooms.filter(r => {
     const participant = resolveParticipant(r, currentUserId)
@@ -377,6 +595,118 @@ export default function MessagesPage() {
   })
 
   const unreadTotal = rooms.reduce((acc, r) => acc + (r.UnreadCount || 0), 0)
+  const isPatient = role === Roles.PATIENT
+
+  const openSupportChat = useCallback(async () => {
+    if (!isPatient) return
+
+    setSupportRoomLoading(true)
+    try {
+      logSupportDebug('openSupportChat:start')
+      const supportResponse = await chatAPI.createOrGetPatientSupportRoom()
+      logSupportDebug('openSupportChat:response', supportResponse)
+      if (supportResponse?.IsSuccess === false) {
+        throw new Error(supportResponse?.Message || 'Failed to open support chat')
+      }
+
+      const supportRoomId = String(
+        supportResponse?.Data?.RoomId ||
+        supportResponse?.Data?.roomId ||
+        supportResponse?.Data?.Id ||
+        supportResponse?.Data?.id ||
+        ''
+      )
+      const supportAgentName =
+        supportResponse?.Data?.SupportAgentName ||
+        supportResponse?.Data?.supportAgentName ||
+        t('chat.technicalTeam', 'Technical Support')
+
+      if (supportRoomId) {
+        supportRoomIdsRef.current.add(supportRoomId)
+        supportRoomMetaRef.current[supportRoomId] = {
+          role: 'support',
+          name: supportAgentName,
+        }
+      }
+
+      const roomsResponse = await chatAPI.getRooms()
+      const roomList = Array.isArray(roomsResponse?.Data)
+        ? roomsResponse.Data
+        : Array.isArray(roomsResponse?.Data?.Items)
+          ? roomsResponse.Data.Items
+          : Array.isArray(roomsResponse)
+            ? roomsResponse
+            : []
+
+      logSupportDebug('openSupportChat:roomsLoaded', {
+        supportRoomId,
+        roomCount: roomList.length,
+      })
+
+      const normalizedRooms = enrichRoomsWithSupportMeta(roomList)
+      setRooms(normalizedRooms)
+
+      const matchedRoom = normalizedRooms.find((room) => {
+        const id = String(room?.Id || room?.id || '')
+        if (supportRoomId && id === supportRoomId) return true
+
+        const participantRole = String(room?.OtherParticipantRole || room?.otherParticipantRole || '').toLowerCase()
+        if (participantRole === 'staff' || participantRole === 'support' || participantRole === 'admin' || participantRole === '2' || participantRole === '3') return true
+
+        const participantName = String(
+          room?.OtherParticipantName ||
+          room?.otherParticipantName ||
+          room?.SupportAgentName ||
+          room?.supportAgentName ||
+          room?.Name ||
+          ''
+        ).toLowerCase()
+
+        return participantName.includes('support') || participantName.includes('الدعم')
+      })
+
+      if (matchedRoom) {
+        logSupportDebug('openSupportChat:matchedRoom', {
+          matchedRoomId: String(matchedRoom?.Id || matchedRoom?.id || ''),
+          participantName: matchedRoom?.OtherParticipantName || matchedRoom?.Name || null,
+          participantRole: matchedRoom?.OtherParticipantRole || null,
+        })
+        setActiveRoom(matchedRoom)
+        return
+      }
+
+      if (supportRoomId) {
+        const syntheticSupportRoom = {
+          Id: supportRoomId,
+          OtherParticipantName: supportAgentName,
+          OtherParticipantRole: 'support',
+          LastMessage: '',
+          LastMessageAt: new Date().toISOString(),
+          UnreadCount: 0,
+        }
+
+        setRooms((prev) => {
+          const filtered = prev.filter((room) => String(room?.Id || room?.id || '') !== String(supportRoomId))
+          return [syntheticSupportRoom, ...filtered]
+        })
+
+        logSupportDebug('openSupportChat:syntheticRoomCreated', {
+          supportRoomId,
+          syntheticName: syntheticSupportRoom.OtherParticipantName,
+        })
+        setActiveRoom(syntheticSupportRoom)
+      }
+    } catch (error) {
+      logSupportDebug('openSupportChat:error', {
+        message: error?.message,
+        status: error?.response?.status,
+        data: error?.response?.data,
+      })
+      console.error('Failed to open support chat room:', error)
+    } finally {
+      setSupportRoomLoading(false)
+    }
+  }, [enrichRoomsWithSupportMeta, isPatient, t])
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
@@ -406,13 +736,31 @@ export default function MessagesPage() {
                 </span>
               )}
             </div>
-            <button
-              onClick={fetchRooms}
-              disabled={loading}
-              className="p-2 hover:bg-background-subtle rounded-xl transition-colors text-text-muted hover:text-primary"
-            >
-              <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-            </button>
+
+            <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+              {isPatient && (
+                <button
+                  onClick={openSupportChat}
+                  disabled={supportRoomLoading}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary/10 hover:bg-secondary/20 text-secondary text-xs font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {supportRoomLoading ? (
+                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                  ) : (
+                    <SupportAgent className="w-3.5 h-3.5" />
+                  )}
+                  <span>{t('nav.talkToSupport', 'Talk to Support')}</span>
+                </button>
+              )}
+
+              <button
+                onClick={fetchRooms}
+                disabled={loading}
+                className="p-2 hover:bg-background-subtle rounded-xl transition-colors text-text-muted hover:text-primary"
+              >
+                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+              </button>
+            </div>
           </div>
 
           {/* Search */}
@@ -528,7 +876,7 @@ export default function MessagesPage() {
             </div>
           ) : (
             <ChatWindow
-              conversation={currentConversation}
+              conversation={safeConversation}
               onSendMessage={handleSendMessage}
               onBack={() => { setActiveRoom(null); setMessages([]) }}
             />

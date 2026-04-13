@@ -59,13 +59,12 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       },
     ],
     [Roles.DOCTOR]: [
-      { name: t("nav.dashboard"), path: "/dashboard/doctor", icon: Home },
+      { name: t("nav.queue"), path: "/dashboard/doctor/queue", icon: Home },
       {
         name: t("nav.schedule"),
         path: "/dashboard/doctor/schedule",
         icon: Calendar,
       },
-      { name: t("nav.queue"), path: "/dashboard/doctor/queue", icon: Users },
       { name: t("nav.tests"), path: "/dashboard/doctor/tests", icon: TestTube },
       {
         name: t("nav.blogs"),
@@ -76,6 +75,11 @@ export default function DynamicSidebar({ isOpen, onClose }) {
         name: t("nav.history"),
         path: "/dashboard/doctor/history",
         icon: Activity,
+      },
+      {
+        name: t("nav.earnings", isRTL ? "الأرباح" : "Earnings"),
+        path: "/dashboard/doctor/earnings",
+        icon: DollarSign,
       },
       {
         name: t("nav.messages"),

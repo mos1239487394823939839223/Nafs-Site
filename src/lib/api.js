@@ -229,13 +229,30 @@ export const userAPI = {
     return response.data;
   },
 
-  // Edit main info (name, username, phone, email)
+  // Edit main info and optional profile fields
   editMainInfo: async (data) => {
+    const birthday = data.birthday || data.Birthday || null;
+    const specialist = data.specialist || data.Specialist || null;
+    const sessionPrice = data.sessionPrice ?? data.SessionPrice;
+    const gender = data.gender ?? data.Gender;
+
     const response = await api.put("/user/EditMainInfo", {
-      Name: data.name || null,
-      Username: data.username || null,
-      PhoneNumber: data.phoneNumber || null,
-      Email: data.email || null,
+      Name: data.name || data.Name || null,
+      PhoneNumber: data.phoneNumber || data.PhoneNumber || null,
+      Email: data.email || data.Email || null,
+      Description: data.description || data.Description || null,
+      Specialist: Array.isArray(specialist) ? specialist : null,
+      Birthday: birthday ? new Date(birthday).toISOString() : null,
+      Gender:
+        gender === null || gender === undefined || gender === ""
+          ? null
+          : Number(gender),
+      SessionPrice:
+        sessionPrice === null ||
+        sessionPrice === undefined ||
+        sessionPrice === ""
+          ? null
+          : Number(sessionPrice),
     });
     return response.data;
   },
@@ -375,6 +392,22 @@ export const doctorAPI = {
     return response.data;
   },
 
+  // Get doctor earnings overview with paginated transactions
+  getEarnings: async (pageIndex = 1, pageSize = 20) => {
+    const response = await api.get("/Doctor/Earnings", {
+      params: { pageIndex, pageSize },
+    });
+    return response.data;
+  },
+
+  // Update booking status by id (Doctor endpoint)
+  updateBookingStatus: async (bookingId, newStatus) => {
+    const response = await api.put(`/Doctor/Booking/${bookingId}/Status`, {
+      NewStatus: Number(newStatus),
+    });
+    return response.data;
+  },
+
   // Cancel booking (backend authorization decides if doctor can cancel)
   cancelBooking: async (bookingId, reason = null) => {
     const response = await api.post(`/Patient/Booking/${bookingId}/Cancel`, {
@@ -483,6 +516,28 @@ export const adminAPI = {
     return response.data;
   },
 
+  getDoctorEarnings: async (doctorId, pageIndex = 1, pageSize = 20) => {
+    const response = await api.get(`/Admin/Doctor/${doctorId}/Earnings`, {
+      params: { pageIndex, pageSize },
+    });
+    return response.data;
+  },
+
+  getDoctorPayouts: async (doctorId, pageIndex = 1, pageSize = 20) => {
+    const response = await api.get(`/Admin/Doctor/${doctorId}/Payouts`, {
+      params: { pageIndex, pageSize },
+    });
+    return response.data;
+  },
+
+  createDoctorPayout: async (doctorId, payload) => {
+    const response = await api.post(`/Admin/Doctor/${doctorId}/Payout`, {
+      Amount: Number(payload.amount),
+      Notes: payload.notes || null,
+    });
+    return response.data;
+  },
+
   // Get all bookings (admin view)
   getBookings: async (params = {}) => {
     const queryParams = {
@@ -499,13 +554,27 @@ export const adminAPI = {
     return response.data;
   },
 
-  getPaymentDetails: async () => {
-    const response = await api.get("/Admin/PaymentDetails");
+  getPaymentInstructions: async (provider = null) => {
+    const params = {};
+    if (provider !== null && provider !== undefined && provider !== "") {
+      params.provider = provider;
+    }
+    const response = await api.get("/PaymentInstructions", { params });
     return response.data;
   },
 
-  updatePaymentDetails: async (payload) => {
-    const response = await api.put("/Admin/PaymentDetails", payload);
+  createPaymentInstruction: async (payload) => {
+    const response = await api.post("/Admin/PaymentInstructions", payload);
+    return response.data;
+  },
+
+  updatePaymentInstruction: async (id, payload) => {
+    const response = await api.put(`/Admin/PaymentInstructions/${id}`, payload);
+    return response.data;
+  },
+
+  deletePaymentInstruction: async (id) => {
+    const response = await api.delete(`/Admin/PaymentInstructions/${id}`);
     return response.data;
   },
 };
@@ -522,6 +591,12 @@ export const chatAPI = {
   // Get all chat rooms
   getRooms: async () => {
     const response = await api.get("/Chat/Rooms");
+    return response.data;
+  },
+
+  // Create or get patient support chat room
+  createOrGetPatientSupportRoom: async () => {
+    const response = await api.post("/Patient/Support/Chat");
     return response.data;
   },
 
@@ -736,6 +811,15 @@ export const paymentAPI = {
 
   getProviders: async () => {
     const response = await api.get("/Payment/Providers");
+    return response.data;
+  },
+
+  getPaymentInstructions: async (provider = null) => {
+    const params = {};
+    if (provider !== null && provider !== undefined && provider !== "") {
+      params.provider = provider;
+    }
+    const response = await api.get("/PaymentInstructions", { params });
     return response.data;
   },
 

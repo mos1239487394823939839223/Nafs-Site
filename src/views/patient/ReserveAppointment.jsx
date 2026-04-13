@@ -99,9 +99,12 @@ export default function ReserveAppointment() {
 
   // Documents modal state
   const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
-  const [selectedPaymentProvider, setSelectedPaymentProvider] = useState(2);
+  const [selectedPaymentProvider, setSelectedPaymentProvider] = useState("");
   const [paymentProviders, setPaymentProviders] = useState([]);
   const [paymentProvidersLoading, setPaymentProvidersLoading] = useState(false);
+  const [paymentInstruction, setPaymentInstruction] = useState(null);
+  const [paymentInstructionLoading, setPaymentInstructionLoading] =
+    useState(false);
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [paymentScreenshot, setPaymentScreenshot] = useState(null);
@@ -111,11 +114,6 @@ export default function ReserveAppointment() {
     setPendingManualPaymentBookingId,
   ] = useState(null);
   const [bookingPendingReview, setBookingPendingReview] = useState(false);
-
-  const fallbackPaymentProviders = [
-    { ID: 2, Name: "InstaPay" },
-    { ID: 3, Name: isRTL ? "كاش وولت" : "Cash Wallet" },
-  ];
 
   const getNumericFee = (doctor) => {
     const rawFee = doctor?.ConsultationFee ?? doctor?.price ?? 0;
@@ -137,13 +135,25 @@ export default function ReserveAppointment() {
     `${Number(amount || 0).toLocaleString(isRTL ? "ar-EG" : "en-US")} EGP`;
 
   const getProviderUiMeta = (provider) => {
+    if (!provider) {
+      return {
+        icon: AccountBalanceWallet,
+        label: isRTL ? "غير محدد" : "Not selected",
+        desc: isRTL ? "اختر وسيلة الدفع" : "Select payment provider",
+        accent: "from-slate-100 to-slate-50",
+        iconBg: "bg-slate-100",
+        iconColor: "text-slate-600",
+        requireReference: false,
+      };
+    }
+
     const name = String(provider?.Name || "").toLowerCase();
     const id = Number(provider?.ID);
     const isInsta = name.includes("insta") || id === 2;
     if (isInsta) {
       return {
         icon: FlashOn,
-        label: provider?.Name || "InstaPay",
+        label: provider?.Name || (isRTL ? "إنستا باي" : "InstaPay"),
         desc: isRTL ? "تحويل فوري" : "Instant transfer",
         accent: "from-amber-100 to-orange-50",
         iconBg: "bg-amber-100",
@@ -300,24 +310,12 @@ export default function ReserveAppointment() {
             setSelectedPaymentProvider(response.Data[0].ID);
           }
         } else {
-          setPaymentProviders(fallbackPaymentProviders);
-          if (
-            !fallbackPaymentProviders.some(
-              (p) => Number(p.ID) === Number(selectedPaymentProvider),
-            )
-          ) {
-            setSelectedPaymentProvider(fallbackPaymentProviders[0].ID);
-          }
+          setPaymentProviders([]);
+          setSelectedPaymentProvider("");
         }
       } catch {
-        setPaymentProviders(fallbackPaymentProviders);
-        if (
-          !fallbackPaymentProviders.some(
-            (p) => Number(p.ID) === Number(selectedPaymentProvider),
-          )
-        ) {
-          setSelectedPaymentProvider(fallbackPaymentProviders[0].ID);
-        }
+        setPaymentProviders([]);
+        setSelectedPaymentProvider("");
       } finally {
         setPaymentProvidersLoading(false);
       }
@@ -325,6 +323,46 @@ export default function ReserveAppointment() {
 
     fetchPaymentProviders();
   }, []);
+
+  useEffect(() => {
+    const fetchPaymentInstructions = async () => {
+      if (
+        selectedPaymentProvider === null ||
+        selectedPaymentProvider === undefined ||
+        selectedPaymentProvider === ""
+      ) {
+        setPaymentInstruction(null);
+        return;
+      }
+
+      setPaymentInstructionLoading(true);
+      try {
+        const response = await paymentAPI.getPaymentInstructions(
+          Number(selectedPaymentProvider),
+        );
+
+        if (response?.IsSuccess === false) {
+          setPaymentInstruction(null);
+          return;
+        }
+
+        const instructions = Array.isArray(response?.Data)
+          ? response.Data
+          : [];
+        const matchedInstruction = instructions.find(
+          (item) => Number(item?.Provider) === Number(selectedPaymentProvider),
+        );
+
+        setPaymentInstruction(matchedInstruction || instructions[0] || null);
+      } catch {
+        setPaymentInstruction(null);
+      } finally {
+        setPaymentInstructionLoading(false);
+      }
+    };
+
+    fetchPaymentInstructions();
+  }, [selectedPaymentProvider]);
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= pagination.totalPages) {
@@ -749,6 +787,20 @@ export default function ReserveAppointment() {
 
   const submitManualPaymentForBooking = async (bookingId) => {
     if (!bookingId) return false;
+    const hasSelectedProvider =
+      selectedPaymentProvider !== null &&
+      selectedPaymentProvider !== undefined &&
+      selectedPaymentProvider !== "";
+
+    if (!hasSelectedProvider) {
+      toast.error(
+        isRTL
+          ? "يرجى اختيار وسيلة دفع أولًا"
+          : "Please choose a payment provider first",
+      );
+      return false;
+    }
+
     if (!paymentScreenshot) {
       toast.error(
         isRTL
@@ -816,6 +868,19 @@ export default function ReserveAppointment() {
   };
 
   const handlePaymentSubmit = async () => {
+    if (
+      selectedPaymentProvider === null ||
+      selectedPaymentProvider === undefined ||
+      selectedPaymentProvider === ""
+    ) {
+      toast.error(
+        isRTL
+          ? "يرجى اختيار وسيلة دفع أولًا"
+          : "Please choose a payment provider first",
+      );
+      return;
+    }
+
     if (!paymentScreenshot) {
       toast.error(
         isRTL
@@ -1049,13 +1114,12 @@ export default function ReserveAppointment() {
     return weekDates;
   };
 
-  const availablePaymentProviders =
-    paymentProviders.length > 0 ? paymentProviders : fallbackPaymentProviders;
+  const availablePaymentProviders = paymentProviders;
   const activeProvider =
     availablePaymentProviders.find(
       (p) => Number(p.ID) === Number(selectedPaymentProvider),
-    ) || availablePaymentProviders[0];
-  const activeProviderMeta = getProviderUiMeta(activeProvider || {});
+    ) || null;
+  const activeProviderMeta = getProviderUiMeta(activeProvider);
   const selectedDoctorTheme = getDoctorSpecialtyTheme(
     selectedDoctor?.Specialist || selectedDoctor?.specialty || [],
   );
@@ -2321,11 +2385,21 @@ export default function ReserveAppointment() {
                               value={selectedPaymentProvider}
                               onChange={(e) =>
                                 handlePaymentProviderSelect(
-                                  Number(e.target.value),
+                                  e.target.value === ""
+                                    ? ""
+                                    : Number(e.target.value),
                                 )
                               }
+                              disabled={availablePaymentProviders.length === 0}
                               className="w-full px-3 py-2.5 rounded-lg border border-border bg-background-paper text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                             >
+                              {availablePaymentProviders.length === 0 ? (
+                                <option value="">
+                                  {isRTL
+                                    ? "لا توجد وسائل دفع متاحة حاليًا"
+                                    : "No payment providers available right now"}
+                                </option>
+                              ) : null}
                               {availablePaymentProviders.map((provider) => (
                                 <option key={provider.ID} value={provider.ID}>
                                   {provider.Name}
@@ -2336,6 +2410,52 @@ export default function ReserveAppointment() {
                               {activeProviderMeta.label} -{" "}
                               {activeProviderMeta.desc}
                             </p>
+                          </div>
+
+                          <div className="rounded-xl border border-border bg-background-paper p-3 mt-3 space-y-2">
+                            <p className="text-[11px] text-text-muted">
+                              {isRTL ? "تعليمات الدفع" : "Payment Instructions"}
+                            </p>
+
+                            {paymentInstructionLoading ? (
+                              <p className="text-xs text-text-muted">
+                                {isRTL
+                                  ? "جاري تحميل تعليمات الدفع..."
+                                  : "Loading payment instructions..."}
+                              </p>
+                            ) : paymentInstruction ? (
+                              <>
+                                {paymentInstruction?.Title ? (
+                                  <p className="text-sm font-semibold text-text-heading">
+                                    {paymentInstruction.Title}
+                                  </p>
+                                ) : null}
+
+                                {paymentInstruction?.AccountNumber ? (
+                                  <p className="text-xs text-text-muted">
+                                    {isRTL ? "رقم الحساب:" : "Account Number:"}{" "}
+                                    <span className="font-mono text-text-heading font-semibold">
+                                      {paymentInstruction.AccountNumber}
+                                    </span>
+                                  </p>
+                                ) : null}
+
+                                {paymentInstruction?.AccountName ? (
+                                  <p className="text-xs text-text-muted">
+                                    {isRTL ? "اسم الحساب:" : "Account Name:"}{" "}
+                                    <span className="text-text-heading font-medium">
+                                      {paymentInstruction.AccountName}
+                                    </span>
+                                  </p>
+                                ) : null}
+                              </>
+                            ) : (
+                              <p className="text-xs text-text-muted">
+                                {isRTL
+                                  ? "لا توجد تعليمات متاحة لهذه الوسيلة حاليًا."
+                                  : "No instructions are currently available for this provider."}
+                              </p>
+                            )}
                           </div>
                         </div>
 
@@ -2385,7 +2505,7 @@ export default function ReserveAppointment() {
 
                       <Button
                         className="w-full mt-6"
-                        disabled={!bookedSlot}
+                        disabled={!bookedSlot || !activeProvider}
                         onClick={handleConfirmBookingClick}
                       >
                         {loading ? (
@@ -2463,18 +2583,25 @@ export default function ReserveAppointment() {
                               {isRTL ? "إلى الحساب:" : "To account:"}
                             </p>
                             <p className="font-mono text-primary text-base font-bold mt-0.5">
-                              01XXXXXXXXXX
+                              {paymentInstruction?.AccountNumber || "—"}
                             </p>
                             <p className="text-xs text-text-muted mt-0.5">
-                              {isRTL
-                                ? "اسم الحساب: نفس للصحة النفسية"
-                                : "Account name: Nafs Mental Health"}
+                              {isRTL ? "اسم الحساب:" : "Account name:"}{" "}
+                              {paymentInstruction?.AccountName || "—"}
                             </p>
                           </div>
                         </div>
+                        {paymentInstruction?.Instructions ? (
+                          <div className="flex items-start gap-2">
+                            <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
+                              3
+                            </span>
+                            <p>{paymentInstruction.Instructions}</p>
+                          </div>
+                        ) : null}
                         <div className="flex items-start gap-2">
                           <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                            3
+                            {paymentInstruction?.Instructions ? 4 : 3}
                           </span>
                           <p>
                             {isRTL ? "رسوم الجلسة:" : "Session Fee:"}{" "}
@@ -2487,7 +2614,7 @@ export default function ReserveAppointment() {
                         </div>
                         <div className="flex items-start gap-2">
                           <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                            4
+                            {paymentInstruction?.Instructions ? 5 : 4}
                           </span>
                           <p>
                             {isRTL ? "رسوم التحويل:" : "Transfer Fees:"}{" "}
@@ -2500,7 +2627,7 @@ export default function ReserveAppointment() {
                         </div>
                         <div className="flex items-start gap-2">
                           <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                            5
+                            {paymentInstruction?.Instructions ? 6 : 5}
                           </span>
                           <p>
                             {isRTL ? "الإجمالي المطلوب:" : "Total amount:"}{" "}
@@ -2513,7 +2640,7 @@ export default function ReserveAppointment() {
                         </div>
                         <div className="flex items-start gap-2">
                           <span className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5">
-                            6
+                            {paymentInstruction?.Instructions ? 7 : 6}
                           </span>
                           <p>
                             {isRTL

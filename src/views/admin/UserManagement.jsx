@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Button from '../../components/ui/Button'
 import Input, { Textarea } from '../../components/ui/Input'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table'
@@ -17,7 +18,7 @@ import { UserAvatar } from '../../components/ui/Avatar'
 import Spinner from '../../components/ui/Spinner'
 import Pagination from '../../components/ui/Pagination'
 import { useToast } from '../../components/ui/Toast'
-import { People as Users, PersonAdd as UserPlus, Search, Mail, MedicalServices as Stethoscope, Person as User, Refresh as RefreshCw, Phone, Lock, Description as FileText, ToggleOff as ToggleLeft, ToggleOn as ToggleRight, VerifiedUser as ShieldCheck, ShowChart as Activity, Close as X, PhotoCamera as Camera } from '@mui/icons-material'
+import { People as Users, PersonAdd as UserPlus, Search, Mail, MedicalServices as Stethoscope, Person as User, Refresh as RefreshCw, Phone, Lock, Description as FileText, ToggleOff as ToggleLeft, ToggleOn as ToggleRight, VerifiedUser as ShieldCheck, ShowChart as Activity, Close as X, PhotoCamera as Camera, Visibility as Eye } from '@mui/icons-material'
 import { adminAPI, userAPI, documentsAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 import LocalDocumentsManager from '../../components/shared/LocalDocumentsManager'
@@ -77,6 +78,7 @@ const normalizeDocumentType = (value) => {
 }
 
 export default function UserManagement() {
+    const navigate = useNavigate()
     const toast = useToast()
     const { t } = useLanguage()
     const [modalOpen, setModalOpen] = useState(false)
@@ -88,7 +90,6 @@ export default function UserManagement() {
     const [resetTarget, setResetTarget] = useState(null)
     const [resetPasswordValue, setResetPasswordValue] = useState('')
     const [resetSubmitting, setResetSubmitting] = useState(false)
-
     // Doctors data
     const [doctors, setDoctors] = useState([])
     const [doctorsPage, setDoctorsPage] = useState(1)
@@ -288,6 +289,20 @@ export default function UserManagement() {
         }
     }
 
+    const openDoctorFinancePage = (doctor) => {
+        const doctorId = doctor?.Id || doctor?.ID || doctor?.id
+        if (!doctorId) {
+            toast.error(t('errors.somethingWentWrong'))
+            return
+        }
+
+        navigate(`/admin/users/${doctorId}/finance`, {
+            state: {
+                doctor,
+            },
+        })
+    }
+
     const filteredDoctors = useMemo(() =>
         doctors.filter(d => {
             const name = (d.Name || d.name || '').toLowerCase()
@@ -420,6 +435,20 @@ export default function UserManagement() {
                                                     </TableCell>
                                                     <TableCell className="text-center">
                                                         <div className="flex items-center justify-center gap-2">
+                                                            <Tooltip>
+                                                                <TooltipTrigger asChild>
+                                                                    <button
+                                                                        onClick={() => openDoctorFinancePage(doctor)}
+                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors"
+                                                                    >
+                                                                        <Eye className="w-4 h-4 text-secondary" />
+                                                                    </button>
+                                                                </TooltipTrigger>
+                                                                <TooltipContent>
+                                                                    {t('common.view')}
+                                                                </TooltipContent>
+                                                            </Tooltip>
+
                                                             <Tooltip>
                                                                 <TooltipTrigger asChild>
                                                                     <button
@@ -760,6 +789,7 @@ export default function UserManagement() {
                         </DialogFooter>
                     </DialogContent>
                 </Dialog>
+
             </div>
         </TooltipProvider>
     )

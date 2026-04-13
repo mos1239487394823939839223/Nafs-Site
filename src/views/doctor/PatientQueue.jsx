@@ -185,9 +185,9 @@ export default function PatientQueue() {
   const handleCancel = async (patient) => {
     setActionLoading({ type: "cancel", bookingId: patient.bookingId });
     try {
-      const response = await doctorAPI.cancelBooking(
+      const response = await doctorAPI.updateBookingStatus(
         patient.bookingId,
-        isRTL ? "تم الإلغاء بواسطة الطبيب" : "Cancelled by doctor",
+        APPOINTMENT_STATUS.CANCELLED,
       );
       if (response?.IsSuccess === false) {
         toast.error(response?.Message || t("errors.failedCancelAppointment"));

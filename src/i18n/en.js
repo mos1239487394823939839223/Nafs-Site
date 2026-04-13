@@ -218,6 +218,11 @@ export default {
     minimumFee: "Minimum consultation fee is 100 EGP",
   },
 
+  doctor: {
+    earningsTitle: "Earnings",
+    earningsSubtitle: "Review your earnings summary and payment transactions",
+  },
+
   // Navigation
   nav: {
     dashboard: "Dashboard",
@@ -231,6 +236,7 @@ export default {
     medicalHistory: "Medical History",
     reserve: "Reserve Appointment",
     tests: "My Tests",
+    earnings: "Earnings",
     articles: "Articles",
     users: "User Management",
     bookings: "Bookings",
@@ -528,6 +534,23 @@ export default {
     uploadProfessionalPhoto: "Upload a professional photo.",
     searchPlaceholder: "Search",
     doctorStatus: "Status",
+    paymentInstructionDeleteTitle: "Confirm Payment Instructions Deletion",
+    paymentInstructionDeleteDescription:
+      "The payment instructions for the selected provider will be removed. You can add them again later if needed.",
+    paymentInstructionDeleteButton: "Delete Instructions",
+    paymentInstructionDeleteConfirm: "Confirm Delete",
+    paymentInstructionDeleting: "Deleting...",
+    paymentInstructionDeletedSuccess: "Payment instructions deleted successfully",
+    paymentInstructionDeleteFailed: "Failed to delete payment instructions",
+    doctorFinanceTitle: "Doctor Finance Overview",
+    totalConfirmed: "Total Confirmed",
+    totalPending: "Total Pending",
+    totalPayedOut: "Total Paid Out",
+    remainingBalance: "Remaining Balance",
+    createPayout: "Create Payout",
+    payoutAmount: "Amount",
+    payoutHistory: "Payout History",
+    noPayoutsYet: "No payouts yet",
   },
 
   // Chat

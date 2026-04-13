@@ -13,10 +13,10 @@ import PatientProfile from "./views/patient/Profile";
 import ReserveAppointment from "./views/patient/ReserveAppointment";
 import PatientTests from "./views/patient/Tests";
 import PatientArticles from "./views/patient/Articles";
-import DoctorDashboard from "./views/doctor/Dashboard";
 import Schedule from "./views/doctor/Schedule";
 import PatientQueue from "./views/doctor/PatientQueue";
 import SessionHistory from "./views/doctor/SessionHistory";
+import DoctorEarnings from "./views/doctor/Earnings";
 import DoctorTests from "./views/doctor/Tests";
 import Settings from "./views/doctor/Settings";
 import UserManagement from "./views/admin/UserManagement";
@@ -38,6 +38,7 @@ import AdminBlogs from "./views/admin/Blogs";
 import BlogDetail from "./views/admin/BlogDetail";
 import AdminTests from "./views/admin/Tests";
 import AdminPaymentDetails from "./views/admin/PaymentDetails";
+import DoctorFinance from "./views/admin/DoctorFinance";
 import PatientBlogs from "./views/patient/Blogs";
 import MessagesPage from "./views/shared/MessagesPage";
 import DocumentViewer from "./views/shared/DocumentViewer";
@@ -144,9 +145,7 @@ function AppRoutes() {
           path="/dashboard/doctor"
           element={
             <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
-              <Layout>
-                <DoctorDashboard />
-              </Layout>
+              <Navigate to="/dashboard/doctor/queue" replace />
             </ProtectedRoute>
           }
         />
@@ -194,6 +193,16 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
               <Layout>
                 <SessionHistory />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/doctor/earnings"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
+              <Layout>
+                <DoctorEarnings />
               </Layout>
             </ProtectedRoute>
           }
@@ -393,6 +402,16 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
               <Layout>
                 <AdminPaymentDetails />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users/:doctorId/finance"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+              <Layout>
+                <DoctorFinance />
               </Layout>
             </ProtectedRoute>
           }
