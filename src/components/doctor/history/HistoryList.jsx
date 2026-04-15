@@ -18,19 +18,30 @@ export default function HistoryList({ sessions, onNoteClick }) {
           {t("bookingStatus.completed", "Completed")}
         </Badge>
       );
-    } else if (session.statusKey === "approved") {
+    } else if (session.statusKey === "confirmed") {
       return (
         <Badge variant="primary">
-          {t("bookingStatus.approved", "Approved")}
+          {t("bookingStatus.confirmed", "Confirmed")}
         </Badge>
       );
-    } else if (
-      session.statusKey === "cancelled" ||
-      session.statusKey === "rejected"
-    ) {
+    } else if (session.statusKey === "inProgress") {
+      return (
+        <Badge variant="primary">
+          {t("bookingStatus.inProgress", "In Progress")}
+        </Badge>
+      );
+    } else if (session.statusKey === "pendingPayment") {
+      return (
+        <Badge variant="warning">
+          {t("bookingStatus.pendingPayment", "Pending Payment")}
+        </Badge>
+      );
+    } else if (session.statusKey === "cancelled" || session.statusKey === "noShow") {
       return (
         <Badge variant="error" className="bg-red-100 text-red-700">
-          {t("bookingStatus.cancelled", "Cancelled")}
+          {session.statusKey === "noShow"
+            ? t("bookingStatus.noShow", "No Show")
+            : t("bookingStatus.cancelled", "Cancelled")}
         </Badge>
       );
     } else {
@@ -61,13 +72,6 @@ export default function HistoryList({ sessions, onNoteClick }) {
                 }`}
               >
                 {t("common.patient", "Patient")}
-              </th>
-              <th
-                className={`px-6 py-4 text-sm font-semibold text-text-muted ${
-                  isRTL ? "text-right" : "text-left"
-                }`}
-              >
-                {t("common.type", "Type")}
               </th>
               <th
                 className={`px-6 py-4 text-sm font-semibold text-text-muted ${
@@ -122,11 +126,6 @@ export default function HistoryList({ sessions, onNoteClick }) {
                       </p>
                     </div>
                   </div>
-                </td>
-                <td className="px-6 py-4">
-                  <span className="text-sm text-text-muted">
-                    {session.type}
-                  </span>
                 </td>
                 <td className="px-6 py-4">
                   <div className="flex items-center gap-1.5 text-sm text-text-muted">

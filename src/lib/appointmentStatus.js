@@ -1,24 +1,11 @@
 export const APPOINTMENT_STATUS = {
-  PENDING: 0,
-  APPROVED: 1,
-  LEGACY_IN_PROGRESS: 2,
-  COMPLETED: 3,
-  CANCELLED: 4,
-  NO_SHOW: 5,
-};
-
-import { normalizePaymentStatus, PAYMENT_STATUS } from "./paymentStatus";
-
-const REJECT_REASON_REGEX = /reject|declin|refus|مرفوض|رفض/i;
-
-const isPaidBooking = (booking) => {
-  const paymentStatus = normalizePaymentStatus(
-    booking?.PaymentStatus ?? booking?.paymentStatus,
-  );
-  return (
-    booking?.PaymentConfirmed === true ||
-    paymentStatus === PAYMENT_STATUS.COMPLETED
-  );
+  PENDING: 1,
+  CONFIRMED: 2,
+  IN_PROGRESS: 3,
+  COMPLETED: 4,
+  CANCELLED: 5,
+  NO_SHOW: 6,
+  PENDING_PAYMENT: 7,
 };
 
 const normalizeStatusValue = (status) => {
@@ -27,47 +14,33 @@ const normalizeStatusValue = (status) => {
   return String(status || "").toLowerCase();
 };
 
-const isRejectedBooking = (booking) =>
-  REJECT_REASON_REGEX.test(
-    String(booking?.CancellationReason || booking?.RejectionReason || ""),
-  );
-
 export const getAppointmentStatusKey = (status, booking) => {
   const normalized = normalizeStatusValue(status);
 
   if (typeof normalized === "number") {
+    // Keep legacy pending=0 compatible with older records.
+    if (normalized === 0) return "pending";
     if (normalized === APPOINTMENT_STATUS.PENDING) return "pending";
-    if (
-      normalized === APPOINTMENT_STATUS.APPROVED ||
-      normalized === APPOINTMENT_STATUS.LEGACY_IN_PROGRESS
-    ) {
-      return isPaidBooking(booking) ? "paid" : "approved";
-    }
+    if (normalized === APPOINTMENT_STATUS.CONFIRMED) return "confirmed";
+    if (normalized === APPOINTMENT_STATUS.PENDING_PAYMENT)
+      return "pendingPayment";
+    if (normalized === APPOINTMENT_STATUS.IN_PROGRESS) return "inProgress";
     if (normalized === APPOINTMENT_STATUS.COMPLETED) return "completed";
-    if (normalized === APPOINTMENT_STATUS.CANCELLED) {
-      return isRejectedBooking(booking) ? "rejected" : "cancelled";
-    }
+    if (normalized === APPOINTMENT_STATUS.CANCELLED) return "cancelled";
     if (normalized === APPOINTMENT_STATUS.NO_SHOW) return "noShow";
     return "pending";
   }
 
-  if (
-    normalized.includes("reject") ||
-    normalized.includes("declin") ||
-    normalized.includes("refin")
-  ) {
-    return "rejected";
-  }
+  if (normalized.includes("pending") && normalized.includes("pay"))
+    return "pendingPayment";
+  if (normalized.includes("confirm") || normalized.includes("approve"))
+    return "confirmed";
+  if (normalized.includes("progress")) return "inProgress";
   if (normalized.includes("cancel")) return "cancelled";
+  if (normalized.includes("reject") || normalized.includes("declin"))
+    return "cancelled";
   if (normalized.includes("no") && normalized.includes("show")) return "noShow";
   if (normalized.includes("complete")) return "completed";
-  if (
-    normalized.includes("approve") ||
-    normalized.includes("confirm") ||
-    normalized.includes("progress")
-  ) {
-    return "approved";
-  }
   if (normalized.includes("pend") || normalized.includes("wait"))
     return "pending";
   return "pending";
@@ -82,13 +55,23 @@ export const getAppointmentStatusMeta = (status, options = {}) => {
       label: t("bookingStatus.pending", isRTL ? "قيد الانتظار" : "Pending"),
       variant: "warning",
     },
-    approved: {
-      label: t("bookingStatus.approved", isRTL ? "تمت الموافقة" : "Approved"),
+    confirmed: {
+      label: t("bookingStatus.confirmed", isRTL ? "مؤكد" : "Confirmed"),
       variant: "primary",
     },
-    paid: {
-      label: t("bookingStatus.paid", isRTL ? "مدفوع" : "Paid"),
-      variant: "success",
+    pendingPayment: {
+      label: t(
+        "bookingStatus.pendingPayment",
+        isRTL ? "في انتظار الدفع" : "Pending Payment",
+      ),
+      variant: "warning",
+    },
+    inProgress: {
+      label: t(
+        "bookingStatus.inProgress",
+        isRTL ? "قيد التنفيذ" : "In Progress",
+      ),
+      variant: "primary",
     },
     completed: {
       label: t("bookingStatus.completed", isRTL ? "مكتمل" : "Completed"),
@@ -96,10 +79,6 @@ export const getAppointmentStatusMeta = (status, options = {}) => {
     },
     cancelled: {
       label: t("bookingStatus.cancelled", isRTL ? "ملغي" : "Cancelled"),
-      variant: "danger",
-    },
-    rejected: {
-      label: t("bookingStatus.rejected", isRTL ? "مرفوض" : "Rejected"),
       variant: "danger",
     },
     noShow: {

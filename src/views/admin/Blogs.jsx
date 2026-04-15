@@ -347,7 +347,7 @@ function CreateTagModal({ isOpen, onClose, onSave, isCreating }) {
 
 // ─── Article Card ─────────────────────────────────────────────────────────────
 
-function BlogCard({ blog, onEdit, onDelete, isAdmin }) {
+function BlogCard({ blog, onEdit, onDelete, isAdmin, detailsPathPrefix }) {
   const { t, isRTL } = useLanguage()
   const navigate = useNavigate()
   const [confirmDelete, setConfirmDelete] = useState(false)
@@ -359,6 +359,10 @@ function BlogCard({ blog, onEdit, onDelete, isAdmin }) {
       day: 'numeric',
     })
 
+  const handleOpenDetails = () => {
+    navigate(`${detailsPathPrefix}/${blog.id}`)
+  }
+
   const thumbnail = blog.Images?.[0] || blog.images?.[0]
 
   return (
@@ -367,7 +371,16 @@ function BlogCard({ blog, onEdit, onDelete, isAdmin }) {
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="bg-background-paper border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col"
+      className="bg-background-paper border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col cursor-pointer"
+      onClick={handleOpenDetails}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          handleOpenDetails()
+        }
+      }}
     >
       {thumbnail && (
         <div className="aspect-video overflow-hidden relative border-b border-border">
@@ -391,7 +404,10 @@ function BlogCard({ blog, onEdit, onDelete, isAdmin }) {
         </p>
 
         <button
-          onClick={() => navigate(`/admin/blogs/${blog.id}`)}
+          onClick={(event) => {
+            event.stopPropagation()
+            handleOpenDetails()
+          }}
           className="text-xs font-semibold text-primary hover:text-primary/80 hover:underline transition-all cursor-pointer w-fit"
         >
           {isRTL ? 'قراءة المزيد ←' : 'Read More →'}
@@ -421,7 +437,10 @@ function BlogCard({ blog, onEdit, onDelete, isAdmin }) {
             {isAdmin && (
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => onEdit(blog)}
+                  onClick={(event) => {
+                    event.stopPropagation()
+                    onEdit(blog)
+                  }}
                   className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/8 rounded-lg transition-all"
                   title={t('common.edit')}
                 >
@@ -430,7 +449,8 @@ function BlogCard({ blog, onEdit, onDelete, isAdmin }) {
                 {confirmDelete ? (
                   <div className="flex items-center gap-1">
                     <button
-                      onClick={() => {
+                      onClick={(event) => {
+                        event.stopPropagation()
                         onDelete(blog.id)
                         setConfirmDelete(false)
                       }}
@@ -439,7 +459,10 @@ function BlogCard({ blog, onEdit, onDelete, isAdmin }) {
                       {t('blogs.confirmDelete')}
                     </button>
                     <button
-                      onClick={() => setConfirmDelete(false)}
+                      onClick={(event) => {
+                        event.stopPropagation()
+                        setConfirmDelete(false)
+                      }}
                       className="px-2 py-0.5 text-[10px] bg-background-subtle text-text-muted rounded-lg hover:bg-border transition-colors"
                     >
                       {t('blogs.confirmNo')}
@@ -447,7 +470,10 @@ function BlogCard({ blog, onEdit, onDelete, isAdmin }) {
                   </div>
                 ) : (
                   <button
-                    onClick={() => setConfirmDelete(true)}
+                    onClick={(event) => {
+                      event.stopPropagation()
+                      setConfirmDelete(true)
+                    }}
                     className="p-1.5 text-text-muted hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
                     title={t('common.delete')}
                   >
@@ -492,6 +518,14 @@ export default function AdminBlogs() {
   const { role } = useAuth()
   const isAdmin = role === Roles.ADMIN
   const toast = useToast()
+  const detailsPathPrefix =
+    role === Roles.ADMIN
+      ? '/admin/blogs'
+      : role === Roles.DOCTOR
+      ? '/dashboard/doctor/blogs'
+      : role === Roles.STAFF
+      ? '/dashboard/staff/blogs'
+      : '/dashboard/patient/blogs'
 
   // Tab state
   const [activeTab, setActiveTab] = useState('articles')
@@ -805,7 +839,14 @@ export default function AdminBlogs() {
             <motion.div layout className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
               <AnimatePresence>
                 {filtered.map((blog) => (
-                  <BlogCard key={blog.id} blog={blog} isAdmin={isAdmin} onEdit={handleEdit} onDelete={handleDelete} />
+                  <BlogCard
+                    key={blog.id}
+                    blog={blog}
+                    isAdmin={isAdmin}
+                    onEdit={handleEdit}
+                    onDelete={handleDelete}
+                    detailsPathPrefix={detailsPathPrefix}
+                  />
                 ))}
               </AnimatePresence>
             </motion.div>

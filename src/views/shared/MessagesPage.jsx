@@ -9,6 +9,7 @@ import {
   Refresh as RefreshCw, MedicalServices as Stethoscope, Person as User,
   Headphones, Support as SupportAgent, EditNote as EditNoteIcon,
 } from '@mui/icons-material'
+import { useToast } from '../../components/ui/Toast'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { startChatConnection } from '../../lib/signalr'
 
@@ -181,6 +182,7 @@ const resolveParticipant = (room, currentUserId) => {
 export default function MessagesPage() {
   const { user, role } = useAuth()
   const { t, isRTL } = useLanguage()
+  const toast = useToast()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const initialRoomId = searchParams.get('room')
@@ -203,6 +205,8 @@ export default function MessagesPage() {
   const hydrationTimersRef = useRef({})
   const supportRoomIdsRef = useRef(new Set())
   const supportRoomMetaRef = useRef({})
+  const messagesFetchInFlightRef = useRef(new Map())
+  const lastMessagesFetchAtRef = useRef(new Map())
 
   const normalizeRoomId = useCallback((room) => String(room?.Id || room?.id || ''), [])
 
@@ -408,29 +412,16 @@ export default function MessagesPage() {
       }
     }
 
-    const [oneBased, zeroBased] = await Promise.allSettled([
-      collectByStartIndex(1),
-      collectByStartIndex(0),
-    ])
-
-    const oneBasedData = oneBased.status === 'fulfilled' ? oneBased.value : { messages: [], pages: 0, failed: true, strategy: 1 }
-    const zeroBasedData = zeroBased.status === 'fulfilled' ? zeroBased.value : { messages: [], pages: 0, failed: true, strategy: 0 }
-
-    const selected = oneBasedData.messages.length >= zeroBasedData.messages.length
-      ? oneBasedData
-      : zeroBasedData
+    // Keep one request strategy to avoid duplicate room message calls.
+    const selected = await collectByStartIndex(1)
     const merged = selected.messages
 
     logSupportDebug('fetchLatestMessages:loaded', {
       roomId: String(roomId),
       count: merged.length,
       selectedStrategy: selected.strategy,
-      oneBasedCount: oneBasedData.messages.length,
-      zeroBasedCount: zeroBasedData.messages.length,
-      oneBasedPages: oneBasedData.pages,
-      zeroBasedPages: zeroBasedData.pages,
-      oneBasedHadFailures: oneBasedData.failed,
-      zeroBasedHadFailures: zeroBasedData.failed,
+      pages: selected.pages,
+      hadFailures: selected.failed,
     })
 
     const deduped = []
@@ -450,20 +441,51 @@ export default function MessagesPage() {
   }, [])
 
   const fetchMessages = useCallback(async (roomId, options = {}) => {
-    const { silent = false } = options
-    if (!silent) setMessagesLoading(true)
-    try {
-      const msgs = await fetchLatestMessages(roomId)
-      if (silent) {
-        setMessages((prev) => mergeMessages(prev, msgs))
-      } else {
-        setMessages(msgs)
+    const { silent = false, force = false } = options
+    const roomKey = String(roomId || '')
+    if (!roomKey) return
+
+    const inFlight = messagesFetchInFlightRef.current.get(roomKey)
+    if (inFlight) {
+      await inFlight
+      return
+    }
+
+    const now = Date.now()
+    const lastFetchAt = lastMessagesFetchAtRef.current.get(roomKey) || 0
+    const minFetchIntervalMs = silent ? 1500 : 900
+    if (!force && now - lastFetchAt < minFetchIntervalMs) {
+      logSupportDebug('fetchMessages:skippedCooldown', {
+        roomId: roomKey,
+        silent,
+        elapsedMs: now - lastFetchAt,
+      })
+      return
+    }
+
+    const run = (async () => {
+      if (!silent) setMessagesLoading(true)
+      try {
+        const msgs = await fetchLatestMessages(roomKey)
+        if (silent) {
+          setMessages((prev) => mergeMessages(prev, msgs))
+        } else {
+          setMessages(msgs)
+        }
+        lastMessagesFetchAtRef.current.set(roomKey, Date.now())
+        await chatAPI.markAsRead(roomKey).catch(() => {})
+      } catch (error) {
+        console.error('Failed to fetch messages:', error)
+      } finally {
+        if (!silent) setMessagesLoading(false)
       }
-      await chatAPI.markAsRead(roomId).catch(() => {})
-    } catch (error) {
-      console.error('Failed to fetch messages:', error)
+    })()
+
+    messagesFetchInFlightRef.current.set(roomKey, run)
+    try {
+      await run
     } finally {
-      if (!silent) setMessagesLoading(false)
+      messagesFetchInFlightRef.current.delete(roomKey)
     }
   }, [fetchLatestMessages])
 
@@ -504,7 +526,9 @@ export default function MessagesPage() {
             }
             setMessages(prev => [...prev, uiMessage])
             chatAPI.markAsRead(msgRoomId).catch(() => {})
-            scheduleSilentHydration(msgRoomId)
+            if (!hasStableId) {
+              scheduleSilentHydration(msgRoomId)
+            }
           }
           fetchRooms()
         })
@@ -523,9 +547,12 @@ export default function MessagesPage() {
 
   useEffect(() => { fetchRooms() }, [fetchRooms])
 
+  const activeRoomId = String(activeRoom?.Id || activeRoom?.id || '')
+
   useEffect(() => {
-    if (activeRoom) fetchMessages(activeRoom.Id || activeRoom.id)
-  }, [activeRoom, fetchMessages])
+    if (!activeRoomId) return
+    fetchMessages(activeRoomId, { force: true })
+  }, [activeRoomId, fetchMessages])
 
   // ── Send ────────────────────────────────────────────────────────────────────
   const handleSendMessage = async (msgData) => {
@@ -536,6 +563,8 @@ export default function MessagesPage() {
       if (outgoingAttachments.length === 0) {
         const response = await chatAPI.sendMessage(roomId, msgData.content)
         if (response?.IsSuccess === false) throw new Error(response?.Message || 'Failed to send message')
+        await fetchMessages(roomId, { force: true })
+        fetchRooms()
         return
       }
       for (let i = 0; i < outgoingAttachments.length; i++) {
@@ -545,9 +574,12 @@ export default function MessagesPage() {
         const name = uploadResponse?.Data?.FileName || attachment.name
         await chatAPI.sendMessage(roomId, i === 0 ? (msgData.content || '') : '', MessageType.Attachment, url || attachment.url, name)
       }
-      await fetchMessages(roomId)
+      await fetchMessages(roomId, { force: true })
+      fetchRooms()
     } catch (error) {
       console.error('Failed to send message:', error)
+      const fallback = isRTL ? 'تعذر إرسال الرسالة' : 'Failed to send message'
+      toast.error(String(error?.message || fallback))
     }
   }
 

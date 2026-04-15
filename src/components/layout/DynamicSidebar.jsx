@@ -77,11 +77,6 @@ export default function DynamicSidebar({ isOpen, onClose }) {
         icon: Activity,
       },
       {
-        name: t("nav.earnings", isRTL ? "الأرباح" : "Earnings"),
-        path: "/dashboard/doctor/earnings",
-        icon: DollarSign,
-      },
-      {
         name: t("nav.messages"),
         path: "/dashboard/doctor/messages",
         icon: MessageSquare,

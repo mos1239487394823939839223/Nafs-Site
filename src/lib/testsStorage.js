@@ -166,6 +166,7 @@ export function addAvailableTest(testInput) {
   const currentTags = getTestTags()
   const tagId = cleanText(testInput.tagId)
   const selectedTag = currentTags.find(tag => String(tag.id) === String(tagId))
+  const providedTagName = cleanText(testInput.tagName || testInput.tag)
 
   const nextTest = {
     id: randomId('test'),
@@ -173,7 +174,7 @@ export function addAvailableTest(testInput) {
     description: cleanText(testInput.description),
     url: cleanText(testInput.url),
     tagId,
-    tagName: selectedTag?.name || '',
+    tagName: selectedTag?.name || providedTagName || '',
     createdAt: new Date().toISOString(),
   }
 

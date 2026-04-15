@@ -15,22 +15,22 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
   const { t, isRTL } = useLanguage();
   const statusColors = {
     pending: "bg-yellow-500/10 text-yellow-500 border-yellow-500/20",
-    approved: "bg-green-500/10 text-green-500 border-green-500/20",
-    paid: "bg-emerald-500/10 text-emerald-600 border-emerald-500/20",
+    confirmed: "bg-green-500/10 text-green-500 border-green-500/20",
+    pendingPayment: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+    inProgress: "bg-blue-500/10 text-blue-600 border-blue-500/20",
     completed: "bg-green-500/10 text-green-500 border-green-500/20",
     cancelled: "bg-red-500/10 text-red-500 border-red-500/20",
-    rejected: "bg-red-500/10 text-red-500 border-red-500/20",
     noShow: "bg-slate-500/10 text-slate-600 border-slate-400/20",
     unknown: "bg-amber-500/10 text-amber-600 border-amber-500/20",
   };
 
   const statusLabelMap = {
     pending: t("bookingStatus.pending", "Pending"),
-    approved: t("bookingStatus.approved", "Approved"),
-    paid: t("bookingStatus.paid", "Paid"),
+    confirmed: t("bookingStatus.confirmed", "Confirmed"),
+    pendingPayment: t("bookingStatus.pendingPayment", "Pending Payment"),
+    inProgress: t("bookingStatus.inProgress", "In Progress"),
     completed: t("bookingStatus.completed", "Completed"),
     cancelled: t("bookingStatus.cancelled", "Cancelled"),
-    rejected: t("bookingStatus.rejected", "Rejected"),
     noShow: t("bookingStatus.noShow", "No Show"),
     unknown: t("bookingStatus.pending", "Pending"),
   };
@@ -73,7 +73,7 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
             {patient.paymentConfirmed && (
               <Badge variant="success" className="text-xs">
                 <PaymentIcon className="w-3 h-3 mr-0.5" />
-                {t("bookingStatus.paid", "Paid")}
+                {t("common.paid", "Paid")}
               </Badge>
             )}
           </div>
@@ -192,8 +192,9 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
         )}
 
         {(patient.status === "pending" ||
-          patient.status === "approved" ||
-          patient.status === "paid") &&
+          patient.status === "confirmed" ||
+          patient.status === "pendingPayment" ||
+          patient.status === "inProgress") &&
           !patient.showJoin &&
           !patient.canCancel && (
             <Button size="sm" variant="outline" disabled className="opacity-60">

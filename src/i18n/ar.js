@@ -609,15 +609,16 @@ export default {
   // Booking Status
   bookingStatus: {
     pending: "في الانتظار",
-    confirmed: "تمت الموافقة",
-    approved: "تمت الموافقة",
+    confirmed: "مؤكد",
+    approved: "مؤكد",
+    pendingPayment: "في انتظار الدفع",
     paid: "مدفوع",
+    inProgress: "قيد التنفيذ",
     completed: "مكتمل",
     cancelled: "ملغى",
     rejected: "مرفوض",
     refined: "مرفوض",
     noShow: "لم يحضر",
-    inProgress: "تمت الموافقة",
   },
 
   // Customer Service

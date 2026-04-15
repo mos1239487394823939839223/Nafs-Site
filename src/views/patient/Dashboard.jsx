@@ -90,7 +90,12 @@ export default function PatientDashboard() {
   const upcomingAppointments = bookings
     .filter((b) => {
       const statusKey = getAppointmentStatusKey(b.Status, b);
-      return statusKey === "pending" || statusKey === "approved";
+      return (
+        statusKey === "pending" ||
+        statusKey === "confirmed" ||
+        statusKey === "pendingPayment" ||
+        statusKey === "inProgress"
+      );
     })
     .sort((a, b) => new Date(a.SessionStartTime) - new Date(b.SessionStartTime))
     .slice(0, 3)
@@ -179,7 +184,11 @@ export default function PatientDashboard() {
               </p>
               <p className="text-3xl font-bold mt-1">{bookings.length}</p>
               <p className="text-white/60 text-xs mt-1">
-                {bookings.filter((b) => b.Status === 3).length}{" "}
+                {
+                  bookings.filter(
+                    (b) => getAppointmentStatusKey(b.Status, b) === "completed",
+                  ).length
+                }{" "}
                 {t("patient.completed")}
               </p>
             </div>

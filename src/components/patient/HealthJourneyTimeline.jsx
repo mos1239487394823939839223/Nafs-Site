@@ -57,14 +57,14 @@ export default function HealthJourneyTimeline() {
     const fetchBookings = async () => {
       setLoading(true);
       try {
-        // Fetch completed and approved bookings as journey events.
-        const completedRes = await patientAPI.getPatientBookings(0, 20, 3); // Completed
-        const confirmedRes = await patientAPI.getPatientBookings(0, 20, 1); // Confirmed
-        const legacyInProgressRes = await patientAPI.getPatientBookings(
+        // Fetch completed, confirmed, and in-progress bookings as journey events.
+        const completedRes = await patientAPI.getPatientBookings(0, 20, 4); // Completed
+        const confirmedRes = await patientAPI.getPatientBookings(0, 20, 2); // Confirmed
+        const inProgressRes = await patientAPI.getPatientBookings(
           0,
           20,
-          2,
-        ); // Legacy in-progress
+          3,
+        ); // In progress
 
         let allBookings = [];
         if (completedRes?.IsSuccess !== false && completedRes?.Data?.Items) {
@@ -73,11 +73,8 @@ export default function HealthJourneyTimeline() {
         if (confirmedRes?.IsSuccess !== false && confirmedRes?.Data?.Items) {
           allBookings = [...allBookings, ...confirmedRes.Data.Items];
         }
-        if (
-          legacyInProgressRes?.IsSuccess !== false &&
-          legacyInProgressRes?.Data?.Items
-        ) {
-          allBookings = [...allBookings, ...legacyInProgressRes.Data.Items];
+        if (inProgressRes?.IsSuccess !== false && inProgressRes?.Data?.Items) {
+          allBookings = [...allBookings, ...inProgressRes.Data.Items];
         }
 
         const events = allBookings.map((booking) => ({
@@ -257,7 +254,9 @@ export default function HealthJourneyTimeline() {
                             {getStatusText(event.status)}
                           </span>
                         ) : getAppointmentStatusKey(event.status, event) ===
-                          "approved" ? (
+                            "confirmed" ||
+                          getAppointmentStatusKey(event.status, event) ===
+                            "inProgress" ? (
                           <span className="flex items-center gap-1 text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded-full">
                             <Clock className="w-3 h-3" />
                             {getStatusText(event.status)}

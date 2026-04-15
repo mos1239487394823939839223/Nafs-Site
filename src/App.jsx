@@ -16,7 +16,6 @@ import PatientArticles from "./views/patient/Articles";
 import Schedule from "./views/doctor/Schedule";
 import PatientQueue from "./views/doctor/PatientQueue";
 import SessionHistory from "./views/doctor/SessionHistory";
-import DoctorEarnings from "./views/doctor/Earnings";
 import DoctorTests from "./views/doctor/Tests";
 import Settings from "./views/doctor/Settings";
 import UserManagement from "./views/admin/UserManagement";
@@ -193,16 +192,6 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
               <Layout>
                 <SessionHistory />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/dashboard/doctor/earnings"
-          element={
-            <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
-              <Layout>
-                <DoctorEarnings />
               </Layout>
             </ProtectedRoute>
           }

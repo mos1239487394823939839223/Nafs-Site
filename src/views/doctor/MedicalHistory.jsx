@@ -10,6 +10,7 @@ import { useToast } from '../../components/ui/Toast'
 import { doctorAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { medicalAPI } from '../../lib/api'
+import { getAppointmentStatusKey } from '../../lib/appointmentStatus'
 
 export default function MedicalHistory() {
     const { user } = useAuth()
@@ -106,7 +107,9 @@ export default function MedicalHistory() {
             seenPatients.add(patientId)
             // Count bookings for this patient
             const patientBookings = bookings.filter(b => b.PatientId === patientId)
-            const completedSessions = patientBookings.filter(b => b.Status === 3).length
+            const completedSessions = patientBookings.filter(
+                b => getAppointmentStatusKey(b.Status, b) === 'completed'
+            ).length
             const lastSession = patientBookings
                 .filter(b => b.SessionStartTime)
                 .sort((a, b) => new Date(b.SessionStartTime) - new Date(a.SessionStartTime))[0]

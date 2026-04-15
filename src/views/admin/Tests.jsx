@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
@@ -12,20 +12,16 @@ import { useLanguage } from '../../contexts/LanguageContext'
 import {
   Science,
   AddCircleOutline,
-  DeleteOutline,
   OpenInNew,
   LocalOffer,
   AssignmentTurnedIn,
   Search,
+  Sync as Loader2,
 } from '@mui/icons-material'
 import {
-  addAvailableTest,
-  addTestTag,
-  deleteAvailableTest,
   getAllTestResults,
-  getAvailableTests,
-  getTestTags,
 } from '../../lib/testsStorage'
+import { extractErrorMessage, medicalAPI } from '../../lib/api'
 
 const initialForm = {
   name: '',
@@ -36,6 +32,7 @@ const initialForm = {
 
 const initialTagForm = {
   name: '',
+  description: '',
 }
 
 function isValidUrl(url) {
@@ -60,9 +57,139 @@ export default function AdminTests() {
   const [tagErrors, setTagErrors] = useState({})
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [isCreateTagModalOpen, setIsCreateTagModalOpen] = useState(false)
-  const [tests, setTests] = useState(() => getAvailableTests())
-  const [tags, setTags] = useState(() => getTestTags())
+  const [tests, setTests] = useState([])
+  const [testsLoading, setTestsLoading] = useState(true)
+  const [isCreatingTest, setIsCreatingTest] = useState(false)
+  const [selectedDiseaseFilter, setSelectedDiseaseFilter] = useState('')
+  const [tags, setTags] = useState([])
+  const [tagsLoading, setTagsLoading] = useState(true)
+  const [isCreatingTag, setIsCreatingTag] = useState(false)
   const [results, setResults] = useState(() => getAllTestResults())
+
+  const normalizeDiseaseTag = (item) => {
+    const id = item?.ID ?? item?.Id ?? item?.id ?? item?.DiseaseID ?? item?.DiseaseId
+    const name = String(item?.Name ?? item?.name ?? '').trim()
+
+    if (!id || !name) return null
+
+    return {
+      id: String(id),
+      name,
+      createdAt: item?.CreatedAt || new Date().toISOString(),
+    }
+  }
+
+  const normalizeTestType = (item) => {
+    const id = item?.ID ?? item?.Id ?? item?.id
+    const name = String(item?.Name ?? item?.name ?? '').trim()
+
+    if (!id || !name) return null
+
+    const diseaseIds = Array.isArray(item?.DiseaseIds)
+      ? item.DiseaseIds
+          .map((value) => Number(value))
+          .filter((value) => Number.isFinite(value) && value > 0)
+      : []
+
+    const rawTags = Array.isArray(item?.Tags)
+      ? item.Tags
+      : Array.isArray(item?.tags)
+      ? item.tags
+      : []
+
+    const tagNames = rawTags
+      .map((tag) => {
+        if (typeof tag === 'string') return tag.trim()
+        return String(tag?.Name ?? tag?.name ?? '').trim()
+      })
+      .filter(Boolean)
+
+    return {
+      id: String(id),
+      name,
+      description: String(item?.Description ?? item?.description ?? '').trim(),
+      url: String(item?.Url ?? item?.url ?? '').trim(),
+      diseaseIds,
+      tagNames,
+    }
+  }
+
+  const loadDiseaseTags = useCallback(async () => {
+    setTagsLoading(true)
+    try {
+      const response = await medicalAPI.getDiseases(1, 200)
+      const data = response?.Data ?? response?.data ?? response
+      const items = Array.isArray(data?.Items)
+        ? data.Items
+        : Array.isArray(data?.items)
+        ? data.items
+        : Array.isArray(data)
+        ? data
+        : []
+
+      const normalized = items
+        .map(normalizeDiseaseTag)
+        .filter(Boolean)
+
+      setTags(normalized)
+    } catch (error) {
+      setTags([])
+      toast.error(extractErrorMessage(error, isRTL ? 'فشل تحميل الوسوم' : 'Failed to load tags'))
+    } finally {
+      setTagsLoading(false)
+    }
+  }, [isRTL, toast])
+
+  const loadTests = useCallback(async () => {
+    setTestsLoading(true)
+    try {
+      const diseaseId = selectedDiseaseFilter ? Number(selectedDiseaseFilter) : null
+      const response = await medicalAPI.getTestTypes(1, 50, diseaseId)
+      const data = response?.Data ?? response?.data ?? response
+      const items = Array.isArray(data?.Items)
+        ? data.Items
+        : Array.isArray(data?.items)
+        ? data.items
+        : Array.isArray(data)
+        ? data
+        : []
+
+      const normalized = items.map(normalizeTestType).filter(Boolean)
+      setTests(normalized)
+    } catch (error) {
+      setTests([])
+      toast.error(extractErrorMessage(error, isRTL ? 'فشل تحميل الاختبارات' : 'Failed to load tests'))
+    } finally {
+      setTestsLoading(false)
+    }
+  }, [isRTL, selectedDiseaseFilter, toast])
+
+  useEffect(() => {
+    loadDiseaseTags()
+  }, [loadDiseaseTags])
+
+  useEffect(() => {
+    loadTests()
+  }, [loadTests])
+
+  const diseaseNameById = useMemo(() => {
+    return new Map(tags.map((tag) => [String(tag.id), tag.name]))
+  }, [tags])
+
+  const testsWithTags = useMemo(() => {
+    return tests.map((test) => {
+      const diseaseNames = (test.diseaseIds || [])
+        .map((id) => diseaseNameById.get(String(id)))
+        .filter(Boolean)
+
+      const resolvedTagNames = diseaseNames.length > 0 ? diseaseNames : (test.tagNames || [])
+
+      return {
+        ...test,
+        tagName: resolvedTagNames.join(', '),
+      }
+    })
+  }, [diseaseNameById, tests])
 
   const tagsCount = useMemo(() => {
     return tags.length
@@ -71,25 +198,25 @@ export default function AdminTests() {
   const resultsCount = useMemo(() => results.length, [results])
 
   const testsById = useMemo(() => {
-    return tests.reduce((acc, test) => {
+    return testsWithTags.reduce((acc, test) => {
       acc[String(test.id)] = test
       return acc
     }, {})
-  }, [tests])
+  }, [testsWithTags])
 
   const filteredTests = useMemo(() => {
     const query = search.trim().toLowerCase()
 
-    if (!query) return tests
+    if (!query) return testsWithTags
 
-    return tests.filter((test) => {
+    return testsWithTags.filter((test) => {
       return (
         test.name.toLowerCase().includes(query)
         || test.description.toLowerCase().includes(query)
         || test.tagName.toLowerCase().includes(query)
       )
     })
-  }, [tests, search])
+  }, [testsWithTags, search])
 
   const filteredResults = useMemo(() => {
     const query = resultsSearch.trim().toLowerCase()
@@ -173,26 +300,48 @@ export default function AdminTests() {
       return
     }
 
-    const updatedTests = addAvailableTest(formData)
-    setTests(updatedTests)
-    setResults(getAllTestResults())
-    setFormData(initialForm)
-    setErrors({})
-    setIsCreateModalOpen(false)
-    toast.success(isRTL ? 'تمت إضافة الاختبار بنجاح' : 'Test added successfully')
+    const createTest = async () => {
+      setIsCreatingTest(true)
+      try {
+        const selectedTag = tags.find((tag) => String(tag.id) === String(formData.tagId))
+        const selectedTagName = String(selectedTag?.name || '').trim()
+        if (!selectedTagName) {
+          toast.error(isRTL ? 'الوسم المحدد غير صالح' : 'Selected tag is invalid')
+          return
+        }
+
+        const payload = {
+          Name: formData.name.trim(),
+          Description: formData.description.trim(),
+          Url: formData.url.trim(),
+          Tags: [selectedTagName],
+        }
+
+        const response = await medicalAPI.createTestType(payload)
+        if (response?.IsSuccess === false) {
+          toast.error(response?.Message || (isRTL ? 'فشل إنشاء الاختبار' : 'Failed to create test'))
+          return
+        }
+
+        await loadTests()
+        setFormData(initialForm)
+        setErrors({})
+        setIsCreateModalOpen(false)
+        toast.success(isRTL ? 'تمت إضافة الاختبار بنجاح' : 'Test added successfully')
+      } catch (error) {
+        toast.error(extractErrorMessage(error, isRTL ? 'فشل إنشاء الاختبار' : 'Failed to create test'))
+      } finally {
+        setIsCreatingTest(false)
+      }
+    }
+
+    createTest()
   }
 
   const closeCreateModal = () => {
     setIsCreateModalOpen(false)
     setFormData(initialForm)
     setErrors({})
-  }
-
-  const handleDelete = (testId) => {
-    const updatedTests = deleteAvailableTest(testId)
-    setTests(updatedTests)
-    setResults(getAllTestResults())
-    toast.success(isRTL ? 'تم حذف الاختبار' : 'Test removed')
   }
 
   const validateTag = () => {
@@ -212,19 +361,34 @@ export default function AdminTests() {
       return
     }
 
-    const before = getTestTags()
-    const updated = addTestTag(tagForm.name)
-    setTags(updated)
+    const createTag = async () => {
+      setIsCreatingTag(true)
+      try {
+        const payload = {
+          Name: tagForm.name.trim(),
+          Description: String(tagForm.description || '').trim() || tagForm.name.trim(),
+        }
 
-    if (updated.length === before.length) {
-      toast.error(isRTL ? 'الوسم موجود بالفعل' : 'Tag already exists')
-      return
+        const response = await medicalAPI.createDisease(payload)
+
+        if (response?.IsSuccess === false) {
+          toast.error(response?.Message || (isRTL ? 'فشل إنشاء الوسم' : 'Failed to create tag'))
+          return
+        }
+
+        await loadDiseaseTags()
+        setTagForm(initialTagForm)
+        setTagErrors({})
+        setIsCreateTagModalOpen(false)
+        toast.success(isRTL ? 'تم إنشاء الوسم بنجاح' : 'Tag created successfully')
+      } catch (error) {
+        toast.error(extractErrorMessage(error, isRTL ? 'فشل إنشاء الوسم' : 'Failed to create tag'))
+      } finally {
+        setIsCreatingTag(false)
+      }
     }
 
-    setTagForm(initialTagForm)
-    setTagErrors({})
-    setIsCreateTagModalOpen(false)
-    toast.success(isRTL ? 'تم إنشاء الوسم بنجاح' : 'Tag created successfully')
+    createTag()
   }
 
   const closeCreateTagModal = () => {
@@ -275,7 +439,7 @@ export default function AdminTests() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4">
           <p className="text-sm text-text-muted">{isRTL ? 'إجمالي الاختبارات' : 'Total Tests'}</p>
-          <p className="text-3xl font-bold text-text-heading mt-1">{tests.length}</p>
+          <p className="text-3xl font-bold text-text-heading mt-1">{testsWithTags.length}</p>
         </Card>
         <Card className="p-4">
           <p className="text-sm text-text-muted">{isRTL ? 'التصنيفات' : 'Tags'}</p>
@@ -319,17 +483,28 @@ export default function AdminTests() {
           transition={{ duration: 0.2 }}
           className="space-y-5"
         >
-          <div className="relative">
-            <Search
-              className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-text-muted`}
-              style={{ width: 18, height: 18 }}
-            />
-            <input
-              type="text"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder={isRTL ? 'ابحث باسم الاختبار أو الوصف أو الوسم' : 'Search by test name, description, or tag'}
-              className={`w-full ${isRTL ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text transition-all`}
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-3">
+            <div className="relative">
+              <Search
+                className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-text-muted`}
+                style={{ width: 18, height: 18 }}
+              />
+              <input
+                type="text"
+                value={search}
+                onChange={(event) => setSearch(event.target.value)}
+                placeholder={isRTL ? 'ابحث باسم الاختبار أو الوصف أو الوسم' : 'Search by test name, description, or tag'}
+                className={`w-full ${isRTL ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text transition-all`}
+              />
+            </div>
+            <SelectDropdown
+              value={selectedDiseaseFilter}
+              onChange={(value) => setSelectedDiseaseFilter(String(value || ''))}
+              options={[
+                { value: '', label: isRTL ? 'كل التصنيفات' : 'All Tags' },
+                ...tagOptions,
+              ]}
+              placeholder={isRTL ? 'تصفية بالتصنيف' : 'Filter by tag'}
             />
           </div>
 
@@ -338,7 +513,12 @@ export default function AdminTests() {
               <CardTitle>{isRTL ? 'الاختبارات الحالية' : 'Current Tests'}</CardTitle>
             </CardHeader>
             <CardContent>
-              {filteredTests.length === 0 ? (
+              {testsLoading ? (
+                <div className="text-center py-12 text-text-muted">
+                  <Loader2 className="w-12 h-12 mx-auto mb-3 opacity-40 animate-spin" />
+                  <p>{isRTL ? 'جاري تحميل الاختبارات...' : 'Loading tests...'}</p>
+                </div>
+              ) : filteredTests.length === 0 ? (
                 <div className="text-center py-12 text-text-muted">
                   <Science className="w-12 h-12 mx-auto mb-3 opacity-30" />
                   <p>
@@ -360,22 +540,17 @@ export default function AdminTests() {
                           <Badge variant="secondary">{test.tagName || (isRTL ? 'بدون وسم' : 'No tag')}</Badge>
                         </div>
                         <p className="text-sm text-text-muted">{test.description}</p>
-                        <a
-                          href={test.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-primary text-sm hover:underline"
-                        >
-                          <OpenInNew className="w-4 h-4" />
-                          {isRTL ? 'فتح الرابط' : 'Open URL'}
-                        </a>
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => handleDelete(test.id)}>
-                          <DeleteOutline className="w-4 h-4 mr-1" />
-                          {isRTL ? 'حذف' : 'Delete'}
-                        </Button>
+                        {test.url && (
+                          <a
+                            href={test.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-primary text-sm hover:underline"
+                          >
+                            <OpenInNew className="w-4 h-4" />
+                            {isRTL ? 'فتح الرابط' : 'Open URL'}
+                          </a>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -398,7 +573,12 @@ export default function AdminTests() {
               <CardTitle>{isRTL ? 'وسوم الاختبارات' : 'Test Tags'}</CardTitle>
             </CardHeader>
             <CardContent>
-              {tags.length === 0 ? (
+              {tagsLoading ? (
+                <div className="text-center py-12 text-text-muted">
+                  <LocalOffer className="w-12 h-12 mx-auto mb-3 opacity-30 animate-pulse" />
+                  <p>{isRTL ? 'جاري تحميل الوسوم...' : 'Loading tags...'}</p>
+                </div>
+              ) : tags.length === 0 ? (
                 <div className="text-center py-12 text-text-muted">
                   <LocalOffer className="w-12 h-12 mx-auto mb-3 opacity-30" />
                   <p>{isRTL ? 'لا توجد وسوم بعد' : 'No tags yet'}</p>
@@ -532,9 +712,11 @@ export default function AdminTests() {
             <Button type="button" variant="outline" onClick={closeCreateModal}>
               {isRTL ? 'إلغاء' : 'Cancel'}
             </Button>
-            <Button type="submit">
-              <AddCircleOutline className="w-4 h-4 mr-2" />
-              {isRTL ? 'إنشاء الاختبار' : 'Create Test'}
+            <Button type="submit" disabled={isCreatingTest}>
+              {!isCreatingTest && <AddCircleOutline className="w-4 h-4 mr-2" />}
+              {isCreatingTest
+                ? (isRTL ? 'جار الإنشاء...' : 'Creating...')
+                : (isRTL ? 'إنشاء الاختبار' : 'Create Test')}
             </Button>
           </div>
         </form>
@@ -552,7 +734,7 @@ export default function AdminTests() {
             name="name"
             value={tagForm.name}
             onChange={(event) => {
-              setTagForm({ name: event.target.value })
+              setTagForm((prev) => ({ ...prev, name: event.target.value }))
               if (tagErrors.name) {
                 setTagErrors({})
               }
@@ -561,13 +743,26 @@ export default function AdminTests() {
             placeholder={isRTL ? 'مثل: نفسي / سلوكي / قلق' : 'e.g. Psychological / Behavioral / Anxiety'}
           />
 
+          <Textarea
+            label={isRTL ? 'الوصف' : 'Description'}
+            name="description"
+            rows={3}
+            value={tagForm.description}
+            onChange={(event) => {
+              setTagForm((prev) => ({ ...prev, description: event.target.value }))
+            }}
+            placeholder={isRTL ? 'وصف اختياري للتصنيف المرضي' : 'Optional disease category description'}
+          />
+
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={closeCreateTagModal}>
               {isRTL ? 'إلغاء' : 'Cancel'}
             </Button>
-            <Button type="submit">
+            <Button type="submit" disabled={isCreatingTag}>
               <AddCircleOutline className="w-4 h-4 mr-2" />
-              {isRTL ? 'إنشاء الوسم' : 'Create Tag'}
+              {isCreatingTag
+                ? (isRTL ? 'جار الإنشاء...' : 'Creating...')
+                : (isRTL ? 'إنشاء الوسم' : 'Create Tag')}
             </Button>
           </div>
         </form>

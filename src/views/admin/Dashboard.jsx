@@ -76,10 +76,17 @@ export default function AdminDashboard() {
   }, []);
 
   // Stats from real data
-  const completedBookings = bookings.filter((b) => b.Status === 3).length;
+  const completedBookings = bookings.filter(
+    (b) => getAppointmentStatusKey(b.Status, b) === "completed",
+  ).length;
   const activeBookings = bookings.filter((b) => {
     const key = getAppointmentStatusKey(b.Status, b);
-    return key === "pending" || key === "approved";
+    return (
+      key === "pending" ||
+      key === "confirmed" ||
+      key === "pendingPayment" ||
+      key === "inProgress"
+    );
   }).length;
   const activeDoctors = doctors.filter((d) => d.IsActive !== false).length;
 
@@ -104,7 +111,9 @@ export default function AdminDashboard() {
       };
     }
     doctorBookingCount[dId].sessions++;
-    if (b.Status === 3) doctorBookingCount[dId].completed++;
+    if (getAppointmentStatusKey(b.Status, b) === "completed") {
+      doctorBookingCount[dId].completed++;
+    }
   });
 
   const topDoctors = Object.values(doctorBookingCount)

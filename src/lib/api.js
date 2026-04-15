@@ -547,6 +547,8 @@ export const adminAPI = {
     if (params.doctorId) queryParams.DoctorId = params.doctorId;
     if (params.status !== undefined && params.status !== null)
       queryParams.Status = params.status;
+    if (params.paymentStatus !== undefined && params.paymentStatus !== null)
+      queryParams.PaymentStatus = params.paymentStatus;
     if (params.startDate) queryParams.StartDate = params.startDate;
     if (params.endDate) queryParams.EndDate = params.endDate;
 
@@ -696,9 +698,29 @@ export const blogAPI = {
 
 // ─── Medical API Functions ───────────────────────────────────────────────────
 export const medicalAPI = {
-  getTestTypes: async (pageIndex = 1, pageSize = 50) => {
+  getDiseases: async (pageIndex = 1, pageSize = 50, name = "") => {
+    const params = { pageIndex, pageSize };
+    if (name && String(name).trim()) {
+      params.name = String(name).trim();
+    }
+
+    const response = await api.get("/Medical/Diseases", { params });
+    return response.data;
+  },
+
+  createDisease: async (payload) => {
+    const response = await api.post("/Medical/Diseases", payload);
+    return response.data;
+  },
+
+  getTestTypes: async (pageIndex = 1, pageSize = 50, diseaseId = null) => {
+    const params = { pageIndex, pageSize };
+    if (diseaseId !== null && diseaseId !== undefined && diseaseId !== "") {
+      params.diseaseId = diseaseId;
+    }
+
     const response = await api.get("/medical/test-types", {
-      params: { pageIndex, pageSize },
+      params,
     });
     return response.data;
   },

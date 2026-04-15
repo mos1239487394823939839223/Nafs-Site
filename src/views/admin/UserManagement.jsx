@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
+import Card, { CardContent } from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Input, { Textarea } from '../../components/ui/Input'
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table'
@@ -80,7 +81,7 @@ const normalizeDocumentType = (value) => {
 export default function UserManagement() {
     const navigate = useNavigate()
     const toast = useToast()
-    const { t } = useLanguage()
+    const { t, isRTL } = useLanguage()
     const [modalOpen, setModalOpen] = useState(false)
     const [activeTab, setActiveTab] = useState('doctors')
     const [searchTerm, setSearchTerm] = useState('')
@@ -319,37 +320,79 @@ export default function UserManagement() {
         }), [patients, searchTerm]
     )
 
+    const doctorsStats = useMemo(() => {
+        const active = doctors.filter((doctor) => doctor.IsActive !== false).length
+        const inactive = Math.max(0, doctors.length - active)
+        return { active, inactive }
+    }, [doctors])
+
+    const patientsStats = useMemo(() => {
+        const active = patients.filter((patient) => patient.IsActive !== false).length
+        return { active }
+    }, [patients])
+
     return (
         <TooltipProvider>
-            <div className="space-y-6">
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h2 className="text-2xl font-bold text-text-heading">{t('admin.userManagement')}</h2>
-                        <p className="text-text-muted mt-1 text-sm">{t('admin.manageDoctorsPatients')}</p>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={activeTab === 'doctors' ? fetchDoctors : fetchPatients}
-                            disabled={loading}
-                        >
-                            <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                            {t('common.refresh')}
-                        </Button>
-                        {activeTab === 'doctors' && (
-                            <Button size="sm" onClick={() => setModalOpen(true)}>
-                                <UserPlus className="w-4 h-4" />
-                                {t('admin.addDoctor')}
+            <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+                {/* Hero */}
+                <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-secondary/10 to-background-paper p-6">
+                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div>
+                            <h2 className="text-2xl md:text-3xl font-bold text-text-heading flex items-center gap-2">
+                                <Users className="w-8 h-8 text-primary" />
+                                {t('admin.userManagement')}
+                            </h2>
+                            <p className="text-text-muted mt-2">{t('admin.manageDoctorsPatients')}</p>
+                        </div>
+                        <div className={`flex flex-wrap gap-2 ${isRTL ? 'justify-start lg:justify-end' : ''}`}>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={activeTab === 'doctors' ? fetchDoctors : fetchPatients}
+                                disabled={loading}
+                                className="gap-2"
+                            >
+                                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
+                                {t('common.refresh')}
                             </Button>
-                        )}
+                            {activeTab === 'doctors' && (
+                                <Button size="sm" onClick={() => setModalOpen(true)} className="gap-2 shadow-lg shadow-primary/20">
+                                    <UserPlus className="w-4 h-4" />
+                                    {t('admin.addDoctor')}
+                                </Button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+
+                {/* KPI Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                    <div className="rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-white p-5 shadow-sm">
+                        <p className="text-sm text-white/80">{t('admin.doctors')}</p>
+                        <p className="text-3xl font-bold mt-1">{doctors.length}</p>
+                    </div>
+                    <div className="rounded-2xl bg-gradient-to-br from-secondary to-secondary-dark text-white p-5 shadow-sm">
+                        <p className="text-sm text-white/80">{t('common.active')}</p>
+                        <p className="text-3xl font-bold mt-1">{doctorsStats.active}</p>
+                    </div>
+                    <div className="rounded-2xl bg-gradient-to-br from-accent to-accent-dark text-white p-5 shadow-sm">
+                        <p className="text-sm text-white/80">{t('common.inactive')}</p>
+                        <p className="text-3xl font-bold mt-1">{doctorsStats.inactive}</p>
+                    </div>
+                    <div className="rounded-2xl bg-gradient-to-br from-primary-dark to-secondary text-white p-5 shadow-sm">
+                        <p className="text-sm text-white/80">{t('admin.users')}</p>
+                        <p className="text-3xl font-bold mt-1">{patients.length}</p>
+                        <p className="text-xs text-white/70 mt-1">
+                            {t('common.active')}: {patientsStats.active}
+                        </p>
                     </div>
                 </div>
 
                 {/* Tabs */}
-                <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSearchTerm('') }}>
-                    <TabsList>
+                <Card className="border border-border shadow-sm">
+                    <CardContent className="space-y-5">
+                        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSearchTerm('') }}>
+                            <TabsList className="w-full sm:w-auto bg-background-subtle rounded-xl p-1">
                         <TabsTrigger value="doctors">
                             <Stethoscope className="w-4 h-4" />
                             {t('admin.doctors')}
@@ -364,27 +407,27 @@ export default function UserManagement() {
                                 {patients.length}
                             </span>
                         </TabsTrigger>
-                    </TabsList>
+                            </TabsList>
 
-                    {/* Search Bar */}
-                    <div className="mt-4 relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light" />
+                            {/* Search Bar */}
+                            <div className="relative">
+                        <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-text-light`} />
                         <input
                             type="text"
                             placeholder={`${t('common.search')} ${activeTab === 'doctors' ? t('admin.doctors') : t('admin.users')}...`}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full sm:max-w-sm h-10 pl-10 pr-10 rounded-xl border border-border-light bg-background-subtle/50 text-sm text-text placeholder:text-text-light/50 hover:bg-background-subtle hover:border-border-dark focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-background transition-all"
+                            className={`w-full sm:max-w-sm h-10 ${isRTL ? 'pr-10 pl-10' : 'pl-10 pr-10'} rounded-xl border border-border-light bg-background-subtle/50 text-sm text-text placeholder:text-text-light/50 hover:bg-background-subtle hover:border-border-dark focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-background transition-all`}
                         />
                         {searchTerm && (
                             <button
                                 onClick={() => setSearchTerm('')}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-light hover:text-text transition-colors"
+                                className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-text-light hover:text-text transition-colors`}
                             >
                                 <X className="w-4 h-4" />
                             </button>
                         )}
-                    </div>
+                            </div>
 
                     {/* Doctors Tab */}
                     <TabsContent value="doctors">
@@ -599,7 +642,9 @@ export default function UserManagement() {
                             </>
                         )}
                     </TabsContent>
-                </Tabs>
+                        </Tabs>
+                    </CardContent>
+                </Card>
 
                 {/* Add Doctor Dialog */}
                 <Dialog open={modalOpen} onOpenChange={setModalOpen}>

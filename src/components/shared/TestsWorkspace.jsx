@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import Card, { CardContent } from '../ui/Card'
 import Badge from '../ui/Badge'
 import Input from '../ui/Input'
@@ -6,14 +6,8 @@ import Button from '../ui/Button'
 import { useToast } from '../ui/Toast'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useAuth } from '../../contexts/AuthContext'
-import { userAPI } from '../../lib/api'
-import { Science, OpenInNew, AssignmentTurnedIn } from '@mui/icons-material'
-import { getAvailableTests, getUserTestResults, submitTestResult } from '../../lib/testsStorage'
-
-function getUserDisplayName(user, fallback) {
-  const name = user?.Name || user?.name || user?.FullName || user?.fullName
-  return String(name || fallback || '').trim()
-}
+import { extractErrorMessage, medicalAPI, userAPI } from '../../lib/api'
+import { Science, OpenInNew, AssignmentTurnedIn, Sync as Loader2 } from '@mui/icons-material'
 
 function UserResultCard({
   test,
@@ -83,93 +77,274 @@ function UserResultCard({
 
 export default function TestsWorkspace({ roleLabel = 'user' }) {
   const { isRTL } = useLanguage()
-  const { user, role } = useAuth()
+  const { user } = useAuth()
   const toast = useToast()
 
   const [search, setSearch] = useState('')
   const [selectedTag, setSelectedTag] = useState('all')
   const [resultDrafts, setResultDrafts] = useState({})
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [refreshTick, setRefreshTick] = useState(0)
+  const [testsLoading, setTestsLoading] = useState(true)
+  const [tests, setTests] = useState([])
+  const [diseases, setDiseases] = useState([])
+  const [submittedResultsByTest, setSubmittedResultsByTest] = useState({})
+  const [resultsRefreshTick, setResultsRefreshTick] = useState(0)
 
-  const tests = useMemo(() => getAvailableTests(), [refreshTick])
+  useEffect(() => {
+    let cancelled = false
+
+    const loadTests = async () => {
+      setTestsLoading(true)
+      try {
+        const selectedDiseaseId = selectedTag === 'all' ? null : Number(selectedTag)
+        const [diseasesResponse, testsResponse] = await Promise.all([
+          medicalAPI.getDiseases(1, 200),
+          medicalAPI.getTestTypes(1, 50, selectedDiseaseId),
+        ])
+
+        const diseasesData = diseasesResponse?.Data ?? diseasesResponse?.data ?? diseasesResponse
+        const diseasesItems = Array.isArray(diseasesData?.Items)
+          ? diseasesData.Items
+          : Array.isArray(diseasesData?.items)
+          ? diseasesData.items
+          : Array.isArray(diseasesData)
+          ? diseasesData
+          : []
+
+        const normalizedDiseases = diseasesItems
+          .map((item) => {
+            const id = item?.ID ?? item?.Id ?? item?.id
+            const name = String(item?.Name ?? item?.name ?? '').trim()
+            if (!id || !name) return null
+            return { id: String(id), name }
+          })
+          .filter(Boolean)
+
+        if (!cancelled) {
+          setDiseases(normalizedDiseases)
+        }
+
+        const diseaseNameById = new Map(
+          normalizedDiseases.map((item) => [item.id, item.name]),
+        )
+
+        const testsData = testsResponse?.Data ?? testsResponse?.data ?? testsResponse
+        const testsItems = Array.isArray(testsData?.Items)
+          ? testsData.Items
+          : Array.isArray(testsData?.items)
+          ? testsData.items
+          : Array.isArray(testsData)
+          ? testsData
+          : []
+
+        const normalized = testsItems
+          .map((item) => {
+            const id = item?.ID ?? item?.Id ?? item?.id
+            const name = String(item?.Name ?? item?.name ?? '').trim()
+            if (!id || !name) return null
+
+            const diseaseIds = Array.isArray(item?.DiseaseIds)
+              ? item.DiseaseIds
+                  .map((value) => Number(value))
+                  .filter((value) => Number.isFinite(value) && value > 0)
+              : []
+
+            const tagNamesFromDiseases = diseaseIds
+              .map((diseaseId) => diseaseNameById.get(String(diseaseId)))
+              .filter(Boolean)
+
+            const rawTags = Array.isArray(item?.Tags)
+              ? item.Tags
+              : Array.isArray(item?.tags)
+              ? item.tags
+              : []
+
+            const tagNamesFromPayload = rawTags
+              .map((tag) => {
+                if (typeof tag === 'string') return tag.trim()
+                return String(tag?.Name ?? tag?.name ?? '').trim()
+              })
+              .filter(Boolean)
+
+            const resolvedTagNames =
+              tagNamesFromDiseases.length > 0 ? tagNamesFromDiseases : tagNamesFromPayload
+
+            return {
+              id: String(id),
+              name,
+              description: String(item?.Description ?? item?.description ?? '').trim(),
+              url: String(item?.Url ?? item?.url ?? '').trim(),
+              tagName: resolvedTagNames.join(', '),
+            }
+          })
+          .filter(Boolean)
+
+        if (!cancelled) {
+          setTests(normalized)
+        }
+      } catch (error) {
+        if (!cancelled) {
+          setTests([])
+          setDiseases([])
+          toast.error(extractErrorMessage(error, isRTL ? 'فشل تحميل الاختبارات' : 'Failed to load tests'))
+        }
+      } finally {
+        if (!cancelled) {
+          setTestsLoading(false)
+        }
+      }
+    }
+
+    loadTests()
+
+    return () => {
+      cancelled = true
+    }
+  }, [isRTL, toast, selectedTag])
 
   const userId = useMemo(() => {
     const resolved = userAPI.resolveUserId(user)
-    if (resolved) return String(resolved)
-    return `${roleLabel}_local_user`
-  }, [user, roleLabel])
+    return resolved ? String(resolved) : ''
+  }, [user])
 
-  const userName = useMemo(() => {
-    return getUserDisplayName(user, roleLabel)
-  }, [user, roleLabel])
+  useEffect(() => {
+    let cancelled = false
 
-  const userRoleLabel = useMemo(() => {
-    return String(role || roleLabel || 'user')
-  }, [role, roleLabel])
+    const loadSubmittedResults = async () => {
+      if (!userId) {
+        setSubmittedResultsByTest({})
+        return
+      }
 
-  const userResults = useMemo(() => {
-    const list = getUserTestResults(userId)
-    return list.reduce((acc, item) => {
-      acc[String(item.testId)] = item
-      return acc
-    }, {})
-  }, [userId, refreshTick])
+      try {
+        const response = await medicalAPI.getMyHistory(1, 200)
+        const data = response?.Data ?? response?.data ?? response
+        const items = Array.isArray(data?.Items)
+          ? data.Items
+          : Array.isArray(data?.items)
+          ? data.items
+          : Array.isArray(data)
+          ? data
+          : []
 
-  const tags = useMemo(() => {
-    const allTags = tests
-      .map(test => test.tagName)
-      .filter(Boolean)
-    return Array.from(new Set(allTags))
-  }, [tests])
+        const mapped = items.reduce((acc, item) => {
+          const testTypeId = item?.TestTypeID ?? item?.TestTypeId ?? item?.testTypeId
+          if (!testTypeId) return acc
+
+          const submittedAt =
+            item?.TestDate ||
+            item?.testDate ||
+            item?.CreatedAt ||
+            item?.createdAt ||
+            new Date().toISOString()
+
+          const resultText = String(
+            item?.Result ??
+            item?.result ??
+            item?.ExamNotes ??
+            item?.examNotes ??
+            '',
+          ).trim()
+
+          acc[String(testTypeId)] = {
+            testId: String(testTypeId),
+            resultText,
+            submittedAt,
+          }
+          return acc
+        }, {})
+
+        if (!cancelled) {
+          setSubmittedResultsByTest(mapped)
+        }
+      } catch {
+        if (!cancelled) {
+          setSubmittedResultsByTest({})
+        }
+      }
+    }
+
+    loadSubmittedResults()
+
+    return () => {
+      cancelled = true
+    }
+  }, [userId, resultsRefreshTick])
+
+  const tags = useMemo(() => diseases, [diseases])
+
+  const selectedTagName = useMemo(() => {
+    if (selectedTag === 'all') return ''
+    const found = diseases.find((item) => String(item.id) === String(selectedTag))
+    return String(found?.name || '').trim().toLowerCase()
+  }, [diseases, selectedTag])
 
   const filteredTests = useMemo(() => {
     const query = search.trim().toLowerCase()
 
     return tests.filter(test => {
-      const matchesTag = selectedTag === 'all' || test.tagName === selectedTag
+      const normalizedTagName = String(test.tagName || '').toLowerCase()
+      const matchesTag = selectedTag === 'all' || (selectedTagName && normalizedTagName.includes(selectedTagName))
       const matchesQuery = !query
         || test.name.toLowerCase().includes(query)
         || test.description.toLowerCase().includes(query)
-        || test.tagName.toLowerCase().includes(query)
+        || normalizedTagName.includes(query)
 
       return matchesTag && matchesQuery
     })
   }, [tests, search, selectedTag])
 
-  const submitResultForTest = (testId) => {
+  const submitResultForTest = async (testId) => {
     const draftValue = String(resultDrafts[testId] || '').trim()
     if (!draftValue) {
       toast.error(isRTL ? 'اكتب النتيجة أولا' : 'Please enter your result first')
       return
     }
 
+    const patientId = String(userId || '').trim()
+    if (!patientId) {
+      toast.error(isRTL ? 'تعذر تحديد هوية المستخدم' : 'Unable to resolve current user id')
+      return
+    }
+
+    const test = tests.find((item) => String(item.id) === String(testId))
+    const testTypeId = String(testId || '').trim()
+    if (!testTypeId) {
+      toast.error(isRTL ? 'نوع الاختبار غير صالح' : 'Invalid test type')
+      return
+    }
+
     setIsSubmitting(true)
-    const response = submitTestResult({
-      testId,
-      userId,
-      userRole: userRoleLabel,
-      userName,
-      resultText: draftValue,
-    })
+    try {
+      const response = await medicalAPI.addPatientTest({
+        PatientID: patientId,
+        TestTypeID: testTypeId,
+        ScanUrl: String(test?.url || ''),
+        ExamNotes: draftValue,
+        TestDate: new Date().toISOString(),
+      })
 
-    if (!response.ok && response.error === 'ALREADY_SUBMITTED') {
-      toast.error(isRTL ? 'لقد أدخلت نتيجة هذا الاختبار سابقا' : 'You already submitted this test result')
+      if (response?.IsSuccess === false) {
+        toast.error(response?.Message || (isRTL ? 'فشل حفظ النتيجة' : 'Failed to save result'))
+        return
+      }
+
+      setSubmittedResultsByTest((prev) => ({
+        ...prev,
+        [String(testId)]: {
+          testId: String(testId),
+          resultText: draftValue,
+          submittedAt: new Date().toISOString(),
+        },
+      }))
+      setResultsRefreshTick((prev) => prev + 1)
+      setResultDrafts(prev => ({ ...prev, [testId]: '' }))
+      toast.success(isRTL ? 'تم حفظ النتيجة بنجاح' : 'Result saved successfully')
+    } catch (error) {
+      toast.error(extractErrorMessage(error, isRTL ? 'فشل حفظ النتيجة' : 'Failed to save result'))
+    } finally {
       setIsSubmitting(false)
-      setRefreshTick(prev => prev + 1)
-      return
     }
-
-    if (!response.ok) {
-      toast.error(isRTL ? 'فشل حفظ النتيجة' : 'Failed to save result')
-      setIsSubmitting(false)
-      return
-    }
-
-    setResultDrafts(prev => ({ ...prev, [testId]: '' }))
-    setIsSubmitting(false)
-    setRefreshTick(prev => prev + 1)
-    toast.success(isRTL ? 'تم حفظ النتيجة بنجاح' : 'Result saved successfully')
   }
 
   const headerTitle = isRTL ? 'الاختبارات المتاحة' : 'Available Tests'
@@ -211,16 +386,16 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
 
             {tags.map(tag => (
               <button
-                key={tag}
+                key={tag.id}
                 type="button"
-                onClick={() => setSelectedTag(tag)}
+                onClick={() => setSelectedTag(tag.id)}
                 className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                  selectedTag === tag
+                  selectedTag === tag.id
                     ? 'border-primary bg-primary/10 text-primary'
                     : 'border-border text-text-muted hover:border-primary/60'
                 }`}
               >
-                {tag}
+                {tag.name}
               </button>
             ))}
           </div>
@@ -231,8 +406,17 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
         <Card>
           <CardContent>
             <div className="text-center py-12 text-text-muted">
-              <Science className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p>{isRTL ? 'لا توجد اختبارات متاحة حاليا' : 'No tests are available right now'}</p>
+              {testsLoading ? (
+                <>
+                  <Loader2 className="w-12 h-12 mx-auto mb-3 opacity-40 animate-spin" />
+                  <p>{isRTL ? 'جاري تحميل الاختبارات...' : 'Loading tests...'}</p>
+                </>
+              ) : (
+                <>
+                  <Science className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <p>{isRTL ? 'لا توجد اختبارات متاحة حاليا' : 'No tests are available right now'}</p>
+                </>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -242,7 +426,7 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
             <UserResultCard
               key={test.id}
               test={test}
-              result={userResults[String(test.id)]}
+              result={submittedResultsByTest[String(test.id)]}
               pendingValue={resultDrafts[test.id] || ''}
               onPendingChange={(id, value) => {
                 setResultDrafts(prev => ({ ...prev, [id]: value }))

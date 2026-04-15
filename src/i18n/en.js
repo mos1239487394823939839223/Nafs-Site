@@ -604,15 +604,16 @@ export default {
   // Booking Status
   bookingStatus: {
     pending: "Pending",
-    confirmed: "Approved",
-    approved: "Approved",
+    confirmed: "Confirmed",
+    approved: "Confirmed",
+    pendingPayment: "Pending Payment",
     paid: "Paid",
+    inProgress: "In Progress",
     completed: "Completed",
     cancelled: "Cancelled",
     rejected: "Rejected",
     refined: "Rejected",
     noShow: "No Show",
-    inProgress: "Approved",
   },
 
   // Customer Service

@@ -25,7 +25,11 @@ import {
 } from "@mui/icons-material";
 import { adminAPI, extractErrorMessage } from "../../lib/api";
 import { getAppointmentStatusMeta } from "../../lib/appointmentStatus";
-import { getPaymentStatusMeta } from "../../lib/paymentStatus";
+import {
+  getPaymentStatusFilterOptions,
+  getPaymentStatusMeta,
+  normalizePaymentStatus,
+} from "../../lib/paymentStatus";
 import { useToast } from "../../components/ui/Toast";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useSignalR } from "../../hooks/useSignalR";
@@ -40,6 +44,7 @@ export default function AdminBookings() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [statusFilter, setStatusFilter] = useState(null);
+  const [paymentFilter, setPaymentFilter] = useState(null);
   const [searchQuery, setSearchQuery] = useState("");
   const pageSize = 20;
 
@@ -52,6 +57,9 @@ export default function AdminBookings() {
       };
       if (statusFilter !== null) {
         params.status = statusFilter;
+      }
+      if (paymentFilter !== null) {
+        params.paymentStatus = paymentFilter;
       }
       const response = await adminAPI.getBookings(params);
       if (response?.IsSuccess === true && response?.Data) {
@@ -69,7 +77,7 @@ export default function AdminBookings() {
 
   useEffect(() => {
     fetchBookings();
-  }, [pageIndex, statusFilter]);
+  }, [pageIndex, statusFilter, paymentFilter]);
 
   useEffect(() => {
     const pollingId = setInterval(() => {
@@ -77,7 +85,7 @@ export default function AdminBookings() {
     }, 20000);
 
     return () => clearInterval(pollingId);
-  }, [pageIndex, statusFilter]);
+  }, [pageIndex, statusFilter, paymentFilter]);
 
   const pickEventField = (payload, keys = []) => {
     for (const key of keys) {
@@ -163,17 +171,24 @@ export default function AdminBookings() {
     });
   };
 
-  const filteredBookings = searchQuery
-    ? bookings.filter(
-        (b) =>
-          (b.PatientName || "")
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()) ||
-          (b.DoctorName || "")
-            .toLowerCase()
-            .includes(searchQuery.toLowerCase()),
-      )
-    : bookings;
+  const filteredBookings = bookings.filter((booking) => {
+    const matchesSearch =
+      !searchQuery ||
+      (booking.PatientName || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      (booking.DoctorName || "")
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase());
+
+    const normalizedPaymentStatus = normalizePaymentStatus(
+      booking.PaymentStatus ?? (booking.PaymentConfirmed ? 2 : 1),
+    );
+    const matchesPayment =
+      paymentFilter === null || normalizedPaymentStatus === paymentFilter;
+
+    return matchesSearch && matchesPayment;
+  });
 
   return (
     <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
@@ -231,11 +246,31 @@ export default function AdminBookings() {
                 size="sm"
                 options={[
                   { value: "", label: t("common.allStatus", "All Status") },
-                  { value: "0", label: t("bookingStatus.pending") },
-                  { value: "1", label: t("bookingStatus.approved") },
-                  { value: "3", label: t("bookingStatus.completed") },
-                  { value: "4", label: t("bookingStatus.cancelled") },
-                  { value: "5", label: t("bookingStatus.noShow") },
+                  { value: "1", label: t("bookingStatus.pending") },
+                  { value: "2", label: t("bookingStatus.confirmed") },
+                  { value: "7", label: t("bookingStatus.pendingPayment") },
+                  { value: "3", label: t("bookingStatus.inProgress") },
+                  { value: "4", label: t("bookingStatus.completed") },
+                  { value: "5", label: t("bookingStatus.cancelled") },
+                  { value: "6", label: t("bookingStatus.noShow") },
+                ]}
+                className="w-48"
+              />
+            </div>
+
+            {/* Payment filter */}
+            <div className="flex items-center gap-2">
+              <Filter className="w-4 h-4 text-text-muted" />
+              <SelectDropdown
+                value={paymentFilter === null ? "" : String(paymentFilter)}
+                onChange={(val) => {
+                  setPaymentFilter(val === "" ? null : parseInt(val));
+                  setPageIndex(1);
+                }}
+                size="sm"
+                options={[
+                  { value: "", label: t("admin.allPayments", "All Payments") },
+                  ...getPaymentStatusFilterOptions({ isRTL }),
                 ]}
                 className="w-48"
               />
@@ -272,7 +307,6 @@ export default function AdminBookings() {
                       <TableHead>{t("common.doctor")}</TableHead>
                       <TableHead>{t("common.date")}</TableHead>
                       <TableHead>{t("common.time")}</TableHead>
-                      <TableHead>{t("doctor.duration", "Duration")}</TableHead>
                       <TableHead>{t("common.status")}</TableHead>
                       <TableHead>{t("staff.payment", "Payment")}</TableHead>
                     </TableRow>
@@ -317,14 +351,6 @@ export default function AdminBookings() {
                           </TableCell>
                           <TableCell className="text-text-muted whitespace-nowrap">
                             {formatTime(booking.SessionStartTime)}
-                          </TableCell>
-                          <TableCell className="text-text-muted">
-                            {booking.DurationMinutes
-                              ? `${booking.DurationMinutes} ${t(
-                                  "common.min",
-                                  "min",
-                                )}`
-                              : t("common.none", "N/A")}
                           </TableCell>
                           <TableCell>
                             <Badge variant={statusInfo.variant}>

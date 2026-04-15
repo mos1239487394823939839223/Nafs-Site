@@ -15,7 +15,10 @@ import QueueItem from "../../components/doctor/queue/QueueItem";
 import QueueStats from "../../components/doctor/queue/QueueStats";
 import Button from "../../components/ui/Button";
 import { doctorAPI } from "../../lib/api";
-import { APPOINTMENT_STATUS, getAppointmentStatusKey } from "../../lib/appointmentStatus";
+import {
+  APPOINTMENT_STATUS,
+  getAppointmentStatusKey,
+} from "../../lib/appointmentStatus";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useSignalR } from "../../hooks/useSignalR";
 
@@ -39,9 +42,12 @@ export default function PatientQueue() {
   const filterToStatus = {
     all: null,
     pending: APPOINTMENT_STATUS.PENDING,
-    approved: APPOINTMENT_STATUS.APPROVED,
+    confirmed: APPOINTMENT_STATUS.CONFIRMED,
+    pendingPayment: APPOINTMENT_STATUS.PENDING_PAYMENT,
+    inProgress: APPOINTMENT_STATUS.IN_PROGRESS,
     completed: APPOINTMENT_STATUS.COMPLETED,
     cancelled: APPOINTMENT_STATUS.CANCELLED,
+    noShow: APPOINTMENT_STATUS.NO_SHOW,
   };
 
   // Fetch bookings from API
@@ -111,11 +117,11 @@ export default function PatientQueue() {
 
       const canCancel =
         (statusKey === "pending" ||
-        statusKey === "approved" ||
-        statusKey === "paid") &&
+          statusKey === "confirmed" ||
+          statusKey === "pendingPayment") &&
         diffMs >= twoDaysMs;
       const showJoin =
-        (statusKey === "approved" || statusKey === "paid") &&
+        (statusKey === "confirmed" || statusKey === "inProgress") &&
         diffMs >= 0 &&
         diffMs <= joinWindowMs;
 
@@ -128,8 +134,9 @@ export default function PatientQueue() {
         statusCode: booking.Status,
         waitTime:
           statusKey === "pending" ||
-          statusKey === "approved" ||
-          statusKey === "paid"
+          statusKey === "confirmed" ||
+          statusKey === "pendingPayment" ||
+          statusKey === "inProgress"
             ? waitTime
             : 0,
         specialty: "Consultation",
@@ -200,7 +207,7 @@ export default function PatientQueue() {
           booking.Id === patient.bookingId
             ? {
                 ...booking,
-                Status: 4,
+                Status: APPOINTMENT_STATUS.CANCELLED,
                 CancellationReason: isRTL
                   ? "تم الإلغاء بواسطة الطبيب"
                   : "Cancelled by doctor",
@@ -237,29 +244,36 @@ export default function PatientQueue() {
   const filters = [
     { id: "all", label: t("common.all") },
     { id: "pending", label: t("bookingStatus.pending") },
-    { id: "approved", label: t("bookingStatus.approved") },
+    { id: "confirmed", label: t("bookingStatus.confirmed") },
+    { id: "pendingPayment", label: t("bookingStatus.pendingPayment") },
+    { id: "inProgress", label: t("bookingStatus.inProgress") },
     { id: "completed", label: t("bookingStatus.completed") },
     { id: "cancelled", label: t("bookingStatus.cancelled") },
+    { id: "noShow", label: t("bookingStatus.noShow") },
   ];
 
-  // Sort: approved/paid first, then pending, then completed, then cancelled.
+  // Sort: active sessions first, then pending payment/pending, then completed, then terminal states.
   const sortedPatients = [...patients].sort((a, b) => {
     const statusOrder = {
-      approved: 0,
-      paid: 0,
-      pending: 1,
-      completed: 2,
-      cancelled: 3,
-      rejected: 3,
-      noShow: 4,
+      inProgress: 0,
+      confirmed: 1,
+      pendingPayment: 2,
+      pending: 3,
+      completed: 4,
+      cancelled: 5,
+      noShow: 6,
     };
-    return (statusOrder[a.status] || 4) - (statusOrder[b.status] || 4);
+    return (statusOrder[a.status] || 6) - (statusOrder[b.status] || 6);
   });
 
   // Compute stats from current page
   const stats = {
     waiting: patients.filter(
-      (p) => p.status === "pending" || p.status === "approved" || p.status === "paid"
+      (p) =>
+        p.status === "pending" ||
+        p.status === "confirmed" ||
+        p.status === "pendingPayment" ||
+        p.status === "inProgress"
     ).length,
     avgWait:
       patients.filter((p) => p.waitTime > 0).length > 0

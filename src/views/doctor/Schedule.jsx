@@ -154,7 +154,6 @@ export default function Schedule() {
     StartTime: "09:00",
     EndTime: "09:30",
     SlotDuration: 30,
-    SessionFee: Number(user?.ConsultationFee || user?.consultationFee || 0),
   });
 
   // Block time form
@@ -212,13 +211,9 @@ export default function Schedule() {
       return;
     }
 
-    const normalizedSessionFee = Number(slotForm.SessionFee);
-    if (!Number.isFinite(normalizedSessionFee) || normalizedSessionFee < 0) {
-      toast.error(
-        t("errors.invalidFee", "Consultation fee cannot be negative"),
-      );
-      return;
-    }
+    const defaultFee = Number(user?.ConsultationFee ?? user?.consultationFee);
+    const normalizedSessionFee =
+      Number.isFinite(defaultFee) && defaultFee >= 0 ? defaultFee : 0;
 
     try {
       setSaving(true);
@@ -237,9 +232,6 @@ export default function Schedule() {
           StartTime: "09:00",
           EndTime: "09:30",
           SlotDuration: 30,
-          SessionFee: Number(
-            user?.ConsultationFee || user?.consultationFee || 0,
-          ),
         });
         fetchAvailability();
       } else {
@@ -889,35 +881,6 @@ export default function Schedule() {
               label,
             }))}
           />
-          <div>
-            <label className="text-sm font-semibold text-text-muted mb-1 block">
-              {t("patient.consultationFee")}
-            </label>
-            <input
-              type="number"
-              min="0"
-              step="1"
-              value={slotForm.SessionFee}
-              onKeyDown={(e) => {
-                if (
-                  e.key === "-" ||
-                  e.key === "e" ||
-                  e.key === "E" ||
-                  e.key === "+"
-                ) {
-                  e.preventDefault();
-                }
-              }}
-              onChange={(e) =>
-                setSlotForm((prev) => ({
-                  ...prev,
-                  SessionFee: Math.max(0, Number(e.target.value) || 0),
-                }))
-              }
-              className="w-full p-3 border border-border rounded-xl bg-background text-text"
-              placeholder="0"
-            />
-          </div>
           <div className="flex gap-3 pt-4 border-t border-border">
             <Button
               variant="outline"

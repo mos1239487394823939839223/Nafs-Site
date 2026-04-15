@@ -93,7 +93,6 @@ export default function SessionHistory() {
       time: formatTime(booking.SessionStartTime),
       patientName: booking.PatientName,
       patientId: `ID-${booking.PatientId}`,
-      type: t("patient.consultation", "Consultation"),
       duration: booking.DurationMinutes || 0,
       statusKey: statusInfo.key,
       outcome: statusInfo.label,
@@ -109,7 +108,7 @@ export default function SessionHistory() {
       Math.round((sessions.reduce((acc, s) => acc + s.duration, 0) / 60) * 10) /
       10,
     earnings: sessions.reduce(
-      (acc, s) => acc + (s.outcome === t("bookingStatus.completed") ? 500 : 0),
+      (acc, s) => acc + (s.statusKey === "completed" ? 500 : 0),
       0,
     ),
   };
@@ -183,11 +182,13 @@ export default function SessionHistory() {
             size="sm"
             options={[
               { value: "", label: t("common.allStatus") },
-              { value: "0", label: t("bookingStatus.pending") },
-              { value: "1", label: t("bookingStatus.approved") },
-              { value: "3", label: t("bookingStatus.completed") },
-              { value: "4", label: t("bookingStatus.cancelled") },
-              { value: "5", label: t("bookingStatus.noShow") },
+              { value: "1", label: t("bookingStatus.pending") },
+              { value: "2", label: t("bookingStatus.confirmed") },
+              { value: "7", label: t("bookingStatus.pendingPayment") },
+              { value: "3", label: t("bookingStatus.inProgress") },
+              { value: "4", label: t("bookingStatus.completed") },
+              { value: "5", label: t("bookingStatus.cancelled") },
+              { value: "6", label: t("bookingStatus.noShow") },
             ]}
             className="w-48"
           />
