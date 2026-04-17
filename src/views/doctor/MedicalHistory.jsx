@@ -143,10 +143,16 @@ export default function MedicalHistory() {
                     return
                 }
 
+                const selectedType = testTypes.find((type) => {
+                    const typeId = type?.ID ?? type?.Id ?? type?.id
+                    return String(typeId) === String(selectedTestTypeId)
+                })
+                const selectedTypeScanUrl = String(selectedType?.Url ?? selectedType?.url ?? '').trim()
+
                 const response = await medicalAPI.addPatientTest({
-                    PatientID: selectedPatient.id,
-                    TestTypeID: Number(selectedTestTypeId),
-                    ScanUrl: null,
+                    PatientID: String(selectedPatient.id),
+                    TestTypeID: String(selectedTestTypeId),
+                    ScanUrl: selectedTypeScanUrl || null,
                     ExamNotes: newRecord.summary,
                     TestDate: new Date().toISOString(),
                 })

@@ -195,14 +195,34 @@ export const authAPI = {
 export const userAPI = {
   // Resolve user id from different backend/frontend naming conventions
   resolveUserId: (user) => {
-    const directId = user?.ID || user?.Id || user?.id;
+    const directId =
+      user?.ID ||
+      user?.Id ||
+      user?.id ||
+      user?.UserID ||
+      user?.UserId ||
+      user?.userId ||
+      user?.PatientID ||
+      user?.PatientId ||
+      user?.patientId;
     if (directId) return directId;
 
     try {
       const storedAuth = localStorage.getItem("auth");
       if (!storedAuth) return null;
       const parsed = JSON.parse(storedAuth);
-      return parsed?.user?.ID || parsed?.user?.Id || parsed?.user?.id || null;
+      return (
+        parsed?.user?.ID ||
+        parsed?.user?.Id ||
+        parsed?.user?.id ||
+        parsed?.user?.UserID ||
+        parsed?.user?.UserId ||
+        parsed?.user?.userId ||
+        parsed?.user?.PatientID ||
+        parsed?.user?.PatientId ||
+        parsed?.user?.patientId ||
+        null
+      );
     } catch {
       return null;
     }
@@ -410,7 +430,7 @@ export const doctorAPI = {
 
   // Cancel booking (backend authorization decides if doctor can cancel)
   cancelBooking: async (bookingId, reason = null) => {
-    const response = await api.post(`/Patient/Booking/${bookingId}/Cancel`, {
+    const response = await api.post(`/Doctor/Booking/${bookingId}/Cancel`, {
       CancellationReason: reason,
     });
     return response.data;
@@ -596,10 +616,50 @@ export const chatAPI = {
     return response.data;
   },
 
-  // Create or get patient support chat room
-  createOrGetPatientSupportRoom: async () => {
-    const response = await api.post("/Patient/Support/Chat");
-    return response.data;
+  // Open patient technical support chat room
+  openPatientSupportChat: async (patientId) => {
+    const parsedPatientId = Number(patientId);
+    const patientIdValue =
+      Number.isFinite(parsedPatientId) && String(patientId).trim() !== ""
+        ? parsedPatientId
+        : patientId;
+
+    try {
+      const response = await api.post("/CustomerSupport/Chat", {
+        patientId: patientIdValue,
+        PatientId: patientIdValue,
+      });
+      const payload = response.data;
+      const message = String(payload?.Message || payload?.message || "");
+      const errorCode = Number(payload?.ErrorCode ?? payload?.errorCode);
+      const failed = payload?.IsSuccess === false || payload?.isSuccess === false;
+      const unauthorizedByBody =
+        failed &&
+        (errorCode === 531 ||
+          message.includes("غير مصرح") ||
+          message.toLowerCase().includes("not authorized"));
+
+      if (!unauthorizedByBody) {
+        return payload;
+      }
+
+      const fallback = await api.post("/Patient/Support/Chat");
+      return fallback.data;
+    } catch (error) {
+      // Some deployments restrict this endpoint to support roles only.
+      // For patient tokens, fallback to the dedicated patient endpoint.
+      const status = error?.response?.status;
+      if (status === 401 || status === 403) {
+        const fallback = await api.post("/Patient/Support/Chat");
+        return fallback.data;
+      }
+      throw error;
+    }
+  },
+
+  // Backward-compatible alias for existing callers
+  createOrGetPatientSupportRoom: async (patientId) => {
+    return chatAPI.openPatientSupportChat(patientId);
   },
 
   // Get messages for a specific room (paginated)
@@ -883,6 +943,29 @@ export const customerSupportAPI = {
         RejectionReason: rejectionReason || null,
       },
     );
+    return response.data;
+  },
+
+  getRefunds: async (pageIndex = 1, pageSize = 20, status = null) => {
+    const params = {
+      page: pageIndex,
+      pageSize,
+    };
+
+    if (status !== null && status !== undefined && status !== "") {
+      params.status = status;
+    }
+
+    const response = await api.get("/CustomerSupport/Refunds", {
+      params,
+    });
+    return response.data;
+  },
+
+  processRefund: async (id, notes = null) => {
+    const response = await api.put(`/CustomerSupport/Refunds/${id}/Process`, {
+      Notes: notes || null,
+    });
     return response.data;
   },
 };

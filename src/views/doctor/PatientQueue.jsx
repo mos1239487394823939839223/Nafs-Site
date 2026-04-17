@@ -8,13 +8,15 @@ import {
   ChevronLeft,
   ChevronRight,
   Close as XCircle,
+  Biotech as TestTube,
+  AssignmentTurnedIn as ResultsIcon,
 } from "@mui/icons-material";
 import { useToast } from "../../components/ui/Toast";
 
 import QueueItem from "../../components/doctor/queue/QueueItem";
 import QueueStats from "../../components/doctor/queue/QueueStats";
 import Button from "../../components/ui/Button";
-import { doctorAPI } from "../../lib/api";
+import { doctorAPI, medicalAPI } from "../../lib/api";
 import {
   APPOINTMENT_STATUS,
   getAppointmentStatusKey,
@@ -36,6 +38,18 @@ export default function PatientQueue() {
   const [pageIndex, setPageIndex] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [cancelConfirmPatient, setCancelConfirmPatient] = useState(null);
+  const [showResultPatient, setShowResultPatient] = useState(null);
+  const [showResultLoading, setShowResultLoading] = useState(false);
+  const [showResultItems, setShowResultItems] = useState([]);
+  const [addTestPatient, setAddTestPatient] = useState(null);
+  const [testTypes, setTestTypes] = useState([]);
+  const [loadingTestTypes, setLoadingTestTypes] = useState(false);
+  const [addTestForm, setAddTestForm] = useState({
+    testTypeId: "",
+    scanUrl: "",
+    examNotes: "",
+    testDate: "",
+  });
   const pageSize = 20;
 
   // Map filter key to API BookingStatus value
@@ -83,6 +97,22 @@ export default function PatientQueue() {
       SlotDeleted: fetchBookings,
     },
   });
+
+  const loadTestTypes = async () => {
+    try {
+      setLoadingTestTypes(true);
+      const response = await medicalAPI.getTestTypes(1, 200);
+      const items = response?.Data?.Items || [];
+      setTestTypes(items);
+      return items;
+    } catch {
+      setTestTypes([]);
+      toast.error(isRTL ? "فشل تحميل أنواع التحاليل" : "Failed to load test types");
+      return [];
+    } finally {
+      setLoadingTestTypes(false);
+    }
+  };
 
   const formatTime = (dateTimeStr) => {
     if (!dateTimeStr) return "";
@@ -192,9 +222,9 @@ export default function PatientQueue() {
   const handleCancel = async (patient) => {
     setActionLoading({ type: "cancel", bookingId: patient.bookingId });
     try {
-      const response = await doctorAPI.updateBookingStatus(
+      const response = await doctorAPI.cancelBooking(
         patient.bookingId,
-        APPOINTMENT_STATUS.CANCELLED,
+        isRTL ? "تم الإلغاء بواسطة الطبيب" : "Cancelled by doctor",
       );
       if (response?.IsSuccess === false) {
         toast.error(response?.Message || t("errors.failedCancelAppointment"));
@@ -227,6 +257,60 @@ export default function PatientQueue() {
     }
   };
 
+  const handleShowResults = async (patient) => {
+    if (!patient?.patientId) {
+      toast.error(isRTL ? "لا يوجد معرف مريض" : "Patient ID is missing");
+      return;
+    }
+
+    setActionLoading({ type: "showResults", bookingId: patient.bookingId });
+    setShowResultLoading(true);
+    setShowResultPatient(patient);
+
+    try {
+      const response = await medicalAPI.getPatientHistory(
+        String(patient.patientId),
+        1,
+        200,
+      );
+      const records = response?.Data?.Items || [];
+      const mapped = records
+        .map((record) => ({
+          id: String(record?.RecordID ?? record?.RecordId ?? record?.id ?? ""),
+          testTypeName:
+            record?.TestTypeName ||
+            record?.testTypeName ||
+            (isRTL ? "تحليل" : "Test"),
+          testDate:
+            record?.TestDate ||
+            record?.testDate ||
+            record?.CreatedAt ||
+            record?.createdAt ||
+            null,
+          result: String(record?.Result ?? record?.result ?? "").trim(),
+          examNotes: String(
+            record?.ExamNotes ?? record?.examNotes ?? "",
+          ).trim(),
+        }))
+        .sort((a, b) => {
+          const aDate = a.testDate ? new Date(a.testDate).getTime() : 0;
+          const bDate = b.testDate ? new Date(b.testDate).getTime() : 0;
+          return bDate - aDate;
+        });
+
+      setShowResultItems(mapped);
+    } catch (error) {
+      setShowResultItems([]);
+      toast.error(
+        error?.response?.data?.Message ||
+          (isRTL ? "فشل تحميل النتائج" : "Failed to load results"),
+      );
+    } finally {
+      setShowResultLoading(false);
+      setActionLoading({ type: null, bookingId: null });
+    }
+  };
+
   const handleAction = (action, patient) => {
     if (action === "join") {
       handleJoin(patient);
@@ -238,7 +322,98 @@ export default function PatientQueue() {
       return;
     }
 
+    if (action === "showResults") {
+      handleShowResults(patient);
+      return;
+    }
+
+    if (action === "addTest") {
+      const openModal = async () => {
+        if (!patient?.patientId) {
+          toast.error(isRTL ? "لا يوجد معرف مريض" : "Patient ID is missing");
+          return;
+        }
+
+        setActionLoading({ type: "addTest", bookingId: patient.bookingId });
+        try {
+          let availableTypes = testTypes;
+          if (!availableTypes.length) {
+            availableTypes = await loadTestTypes();
+          }
+
+          const now = new Date();
+          const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+            .toISOString()
+            .slice(0, 16);
+          const firstType = availableTypes[0];
+          const firstTypeId = firstType?.ID ?? firstType?.Id ?? firstType?.id ?? "";
+
+          setAddTestForm({
+            testTypeId: firstTypeId ? String(firstTypeId) : "",
+            scanUrl: String(firstType?.Url ?? firstType?.url ?? "").trim(),
+            examNotes: "",
+            testDate: localDateTime,
+          });
+          setAddTestPatient(patient);
+        } finally {
+          setActionLoading({ type: null, bookingId: null });
+        }
+      };
+
+      openModal();
+      return;
+    }
+
     toast.error(isRTL ? "إجراء غير مدعوم" : "Unsupported action");
+  };
+
+  const handleSubmitAddTest = async () => {
+    if (!addTestPatient?.patientId) {
+      toast.error(isRTL ? "لا يوجد معرف مريض" : "Patient ID is missing");
+      return;
+    }
+
+    if (!addTestForm.testTypeId) {
+      toast.error(isRTL ? "اختر نوع التحليل" : "Please select a test type");
+      return;
+    }
+
+    setActionLoading({ type: "addTest", bookingId: addTestPatient.bookingId });
+    try {
+      const selectedType = testTypes.find((type) => {
+        const typeId = type?.ID ?? type?.Id ?? type?.id;
+        return String(typeId) === String(addTestForm.testTypeId);
+      });
+      const selectedTypeScanUrl = String(
+        selectedType?.Url ?? selectedType?.url ?? "",
+      ).trim();
+
+      const payload = {
+        PatientID: String(addTestPatient.patientId),
+        TestTypeID: String(addTestForm.testTypeId),
+        ScanUrl: selectedTypeScanUrl || null,
+        ExamNotes: addTestForm.examNotes?.trim() || null,
+        TestDate: addTestForm.testDate
+          ? new Date(addTestForm.testDate).toISOString()
+          : new Date().toISOString(),
+      };
+
+      const response = await medicalAPI.addPatientTest(payload);
+      if (response?.IsSuccess === false) {
+        toast.error(response?.Message || (isRTL ? "فشل إضافة التحليل" : "Failed to add test"));
+        return;
+      }
+
+      toast.success(isRTL ? "تمت إضافة التحليل" : "Test added successfully");
+      setAddTestPatient(null);
+    } catch (error) {
+      toast.error(
+        error?.response?.data?.Message ||
+          (isRTL ? "فشل إضافة التحليل" : "Failed to add test"),
+      );
+    } finally {
+      setActionLoading({ type: null, bookingId: null });
+    }
   };
 
   const filters = [
@@ -439,6 +614,241 @@ export default function PatientQueue() {
                     }
                   >
                     {isRTL ? "نعم، إلغاء الموعد" : "Yes, Cancel"}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Test Modal */}
+      <AnimatePresence>
+        {addTestPatient && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setAddTestPatient(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-lg bg-background-paper rounded-2xl shadow-2xl border border-border overflow-hidden z-10"
+            >
+              <div className="p-6">
+                <div className={`flex items-center gap-2 mb-5 ${isRTL ? "flex-row-reverse" : ""}`}>
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <TestTube className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className={isRTL ? "text-right" : "text-left"}>
+                    <h3 className="text-lg font-bold text-text-heading">
+                      {isRTL ? "إضافة تحليل للمريض" : "Add Test For Patient"}
+                    </h3>
+                    <p className="text-sm text-text-muted">{addTestPatient.name}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-text-heading mb-1">
+                      {isRTL ? "نوع التحليل" : "Test Type"}
+                    </label>
+                    <select
+                      value={addTestForm.testTypeId}
+                      onChange={(e) => {
+                        const selectedId = e.target.value;
+                        const selectedType = testTypes.find((type) => {
+                          const typeId = type?.ID ?? type?.Id ?? type?.id;
+                          return String(typeId) === String(selectedId);
+                        });
+                        const selectedTypeScanUrl = String(
+                          selectedType?.Url ?? selectedType?.url ?? "",
+                        ).trim();
+
+                        setAddTestForm((prev) => ({
+                          ...prev,
+                          testTypeId: selectedId,
+                          scanUrl: selectedTypeScanUrl,
+                        }));
+                      }}
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text outline-none focus:ring-2 focus:ring-primary/20"
+                      disabled={loadingTestTypes}
+                    >
+                      <option value="">{isRTL ? "اختر نوع التحليل" : "Select test type"}</option>
+                      {testTypes.map((type) => {
+                        const typeId = type?.ID ?? type?.Id ?? type?.id;
+                        const typeName =
+                          type?.Name ||
+                          type?.name ||
+                          type?.Title ||
+                          type?.title ||
+                          `${isRTL ? "تحليل" : "Test"} ${typeId}`;
+                        return (
+                          <option key={String(typeId)} value={String(typeId)}>
+                            {typeName}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-text-heading mb-1">
+                      {isRTL ? "رابط الفحص (من نوع التحليل)" : "Scan URL (from test type)"}
+                    </label>
+                    <input
+                      type="url"
+                      value={addTestForm.scanUrl}
+                      readOnly
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text outline-none focus:ring-2 focus:ring-primary/20"
+                      placeholder={
+                        isRTL
+                          ? "لا يوجد رابط محدد لهذا النوع"
+                          : "No URL configured for this test type"
+                      }
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-text-heading mb-1">
+                      {isRTL ? "ملاحظات الفحص" : "Exam Notes"}
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={addTestForm.examNotes}
+                      onChange={(e) =>
+                        setAddTestForm((prev) => ({ ...prev, examNotes: e.target.value }))
+                      }
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                      placeholder={isRTL ? "أضف الملاحظات" : "Add notes"}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-text-heading mb-1">
+                      {isRTL ? "تاريخ التحليل" : "Test Date"}
+                    </label>
+                    <input
+                      type="datetime-local"
+                      value={addTestForm.testDate}
+                      onChange={(e) =>
+                        setAddTestForm((prev) => ({ ...prev, testDate: e.target.value }))
+                      }
+                      className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text outline-none focus:ring-2 focus:ring-primary/20"
+                    />
+                  </div>
+                </div>
+
+                <div className={`mt-6 flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setAddTestPatient(null)}
+                    className="flex-1"
+                    disabled={actionLoading?.type === "addTest"}
+                  >
+                    {isRTL ? "إلغاء" : "Cancel"}
+                  </Button>
+                  <Button
+                    onClick={handleSubmitAddTest}
+                    className="flex-1"
+                    isLoading={actionLoading?.type === "addTest"}
+                  >
+                    {isRTL ? "حفظ التحليل" : "Save Test"}
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Show Results Modal */}
+      <AnimatePresence>
+        {showResultPatient && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+              onClick={() => setShowResultPatient(null)}
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-3xl bg-background-paper rounded-2xl shadow-2xl border border-border overflow-hidden z-10"
+            >
+              <div className="p-6">
+                <div className={`flex items-center gap-2 mb-5 ${isRTL ? "flex-row-reverse" : ""}`}>
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <ResultsIcon className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className={isRTL ? "text-right" : "text-left"}>
+                    <h3 className="text-lg font-bold text-text-heading">
+                      {isRTL ? "نتائج التحاليل" : "Test Results"}
+                    </h3>
+                    <p className="text-sm text-text-muted">{showResultPatient.name}</p>
+                  </div>
+                </div>
+
+                {showResultLoading ? (
+                  <div className="py-14 flex items-center justify-center">
+                    <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                  </div>
+                ) : showResultItems.length === 0 ? (
+                  <div className="py-14 text-center text-text-muted border border-dashed border-border rounded-xl">
+                    {isRTL ? "لا توجد نتائج متاحة لهذا المريض" : "No test results found for this patient"}
+                  </div>
+                ) : (
+                  <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-1">
+                    {showResultItems.map((item) => (
+                      <div
+                        key={item.id}
+                        className="p-4 rounded-xl border border-border bg-background"
+                      >
+                        <div className={`flex items-center justify-between gap-3 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
+                          <h4 className="font-semibold text-text-heading">{item.testTypeName}</h4>
+                          <span className="text-xs text-text-muted">
+                            {item.testDate
+                              ? new Date(item.testDate).toLocaleString(
+                                  isRTL ? "ar-EG" : "en-US",
+                                )
+                              : "-"}
+                          </span>
+                        </div>
+
+                        <div className="space-y-1">
+                          <p className="text-sm text-text-muted">
+                            {isRTL ? "النتيجة:" : "Result:"}
+                          </p>
+                          <p className="text-sm text-text-heading whitespace-pre-wrap">
+                            {item.result || (isRTL ? "لا توجد نتيجة بعد" : "No result submitted yet")}
+                          </p>
+                        </div>
+
+                        {item.examNotes ? (
+                          <div className="mt-3 pt-3 border-t border-border">
+                            <p className="text-sm text-text-muted">
+                              {isRTL ? "ملاحظات الفحص:" : "Exam Notes:"}
+                            </p>
+                            <p className="text-sm text-text-heading whitespace-pre-wrap">
+                              {item.examNotes}
+                            </p>
+                          </div>
+                        ) : null}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className={`mt-6 flex ${isRTL ? "justify-start" : "justify-end"}`}>
+                  <Button variant="outline" onClick={() => setShowResultPatient(null)}>
+                    {isRTL ? "إغلاق" : "Close"}
                   </Button>
                 </div>
               </div>

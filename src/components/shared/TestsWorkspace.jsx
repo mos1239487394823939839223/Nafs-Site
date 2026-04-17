@@ -18,7 +18,7 @@ function UserResultCard({
   isSubmitting,
   isRTL,
 }) {
-  const hasResult = Boolean(result)
+  const hasResult = Boolean(String(result?.resultText || '').trim())
 
   return (
     <Card className="h-full">
@@ -30,15 +30,17 @@ function UserResultCard({
 
         <p className="text-sm text-text-muted leading-relaxed">{test.description}</p>
 
-        <a
-          href={test.url}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-1 text-primary text-sm font-medium hover:underline"
-        >
-          <OpenInNew className="w-4 h-4" />
-          {isRTL ? 'فتح الاختبار' : 'Open Test'}
-        </a>
+        {test.url ? (
+          <a
+            href={test.url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 text-primary text-sm font-medium hover:underline"
+          >
+            <OpenInNew className="w-4 h-4" />
+            {isRTL ? 'فتح الاختبار' : 'Open Test'}
+          </a>
+        ) : null}
 
         {hasResult ? (
           <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
@@ -79,6 +81,12 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
   const { isRTL } = useLanguage()
   const { user } = useAuth()
   const toast = useToast()
+  const isPatientView = String(roleLabel).toLowerCase() === 'patient'
+
+  const userId = useMemo(() => {
+    const resolved = userAPI.resolveUserId(user)
+    return resolved ? String(resolved) : ''
+  }, [user])
 
   const [search, setSearch] = useState('')
   const [selectedTag, setSelectedTag] = useState('all')
@@ -96,6 +104,71 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
     const loadTests = async () => {
       setTestsLoading(true)
       try {
+        if (isPatientView) {
+          if (!userId) {
+            if (!cancelled) {
+              setTests([])
+              setDiseases([])
+              setSubmittedResultsByTest({})
+            }
+            return
+          }
+
+          const response = await medicalAPI.getPatientHistory(userId, 1, 200)
+          const data = response?.Data ?? response?.data ?? response
+          const items = Array.isArray(data?.Items)
+            ? data.Items
+            : Array.isArray(data?.items)
+            ? data.items
+            : Array.isArray(data)
+            ? data
+            : []
+
+          const normalized = items
+            .map((item) => {
+              const recordId = item?.RecordID ?? item?.RecordId ?? item?.recordId ?? item?.ID ?? item?.Id ?? item?.id
+              if (!recordId) return null
+
+              const testName = String(
+                item?.TestTypeName ?? item?.testTypeName ?? item?.Name ?? item?.name ?? '',
+              ).trim()
+
+              const description = String(item?.ExamNotes ?? item?.examNotes ?? '').trim()
+              const scanUrl = String(item?.ScanUrl ?? item?.scanUrl ?? '').trim()
+              const testDate = item?.TestDate ?? item?.testDate ?? item?.CreatedAt ?? item?.createdAt
+              const doctorName = String(item?.DoctorName ?? item?.doctorName ?? '').trim()
+
+              return {
+                id: String(recordId),
+                name: testName || (isRTL ? 'اختبار طبي' : 'Medical Test'),
+                description,
+                url: scanUrl,
+                tagName: doctorName || (testDate ? new Date(testDate).toLocaleDateString() : ''),
+                resultText: String(item?.Result ?? item?.result ?? '').trim(),
+                submittedAt: testDate || new Date().toISOString(),
+              }
+            })
+            .filter(Boolean)
+
+          const mappedResults = normalized.reduce((acc, item) => {
+            if (!String(item.resultText || '').trim()) return acc
+            acc[String(item.id)] = {
+              testId: String(item.id),
+              resultText: item.resultText,
+              submittedAt: item.submittedAt,
+            }
+            return acc
+          }, {})
+
+          if (!cancelled) {
+            setDiseases([])
+            setTests(normalized)
+            setSubmittedResultsByTest(mappedResults)
+          }
+
+          return
+        }
+
         const selectedDiseaseId = selectedTag === 'all' ? null : Number(selectedTag)
         const [diseasesResponse, testsResponse] = await Promise.all([
           medicalAPI.getDiseases(1, 200),
@@ -200,14 +273,13 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
     return () => {
       cancelled = true
     }
-  }, [isRTL, toast, selectedTag])
-
-  const userId = useMemo(() => {
-    const resolved = userAPI.resolveUserId(user)
-    return resolved ? String(resolved) : ''
-  }, [user])
+  }, [isRTL, toast, selectedTag, isPatientView, userId, resultsRefreshTick])
 
   useEffect(() => {
+    if (isPatientView) {
+      return
+    }
+
     let cancelled = false
 
     const loadSubmittedResults = async () => {
@@ -269,7 +341,7 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
     return () => {
       cancelled = true
     }
-  }, [userId, resultsRefreshTick])
+  }, [userId, resultsRefreshTick, isPatientView])
 
   const tags = useMemo(() => diseases, [diseases])
 
@@ -301,28 +373,32 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
       return
     }
 
-    const patientId = String(userId || '').trim()
-    if (!patientId) {
-      toast.error(isRTL ? 'تعذر تحديد هوية المستخدم' : 'Unable to resolve current user id')
-      return
-    }
-
     const test = tests.find((item) => String(item.id) === String(testId))
-    const testTypeId = String(testId || '').trim()
-    if (!testTypeId) {
+    const recordId = String(testId || '').trim()
+    if (!recordId) {
       toast.error(isRTL ? 'نوع الاختبار غير صالح' : 'Invalid test type')
       return
     }
 
+    if (!isPatientView) {
+      const patientId = String(userId || '').trim()
+      if (!patientId) {
+        toast.error(isRTL ? 'تعذر تحديد هوية المستخدم' : 'Unable to resolve current user id')
+        return
+      }
+    }
+
     setIsSubmitting(true)
     try {
-      const response = await medicalAPI.addPatientTest({
-        PatientID: patientId,
-        TestTypeID: testTypeId,
-        ScanUrl: String(test?.url || ''),
-        ExamNotes: draftValue,
-        TestDate: new Date().toISOString(),
-      })
+      const response = isPatientView
+        ? await medicalAPI.updatePatientTestResult(recordId, draftValue)
+        : await medicalAPI.addPatientTest({
+            PatientID: String(userId || '').trim(),
+            TestTypeID: String(testId || '').trim(),
+            ScanUrl: String(test?.url || ''),
+            ExamNotes: draftValue,
+            TestDate: new Date().toISOString(),
+          })
 
       if (response?.IsSuccess === false) {
         toast.error(response?.Message || (isRTL ? 'فشل حفظ النتيجة' : 'Failed to save result'))

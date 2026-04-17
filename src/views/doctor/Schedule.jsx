@@ -87,6 +87,26 @@ const buildSpecificSlotDateTime = (specificDate, startTime) => {
   return dateTime;
 };
 
+const slotHasBookings = (slot) => {
+  const bookingCount = Number(
+    slot?.BookingCount ??
+      slot?.BookingsCount ??
+      slot?.ReservedCount ??
+      slot?.ReservationCount,
+  );
+
+  if (Number.isFinite(bookingCount) && bookingCount > 0) {
+    return true;
+  }
+
+  return Boolean(
+    slot?.HasBookings ??
+      slot?.HasBooking ??
+      slot?.IsReserved ??
+      slot?.IsBooked,
+  );
+};
+
 export default function Schedule() {
   const toast = useToast();
   const { user } = useAuth();
@@ -298,6 +318,13 @@ export default function Schedule() {
   };
 
   const canCancelSpecificSlot = (slot) => {
+    const hasBookings = slotHasBookings(slot);
+    if (!hasBookings) {
+      return {
+        canCancel: true,
+      };
+    }
+
     const slotDateTime = buildSpecificSlotDateTime(
       slot?.SpecificDate,
       slot?.StartTime,
@@ -305,7 +332,7 @@ export default function Schedule() {
 
     if (!slotDateTime) {
       return {
-        canCancel: true,
+        canCancel: false,
       };
     }
 
@@ -579,8 +606,8 @@ export default function Schedule() {
                               if (!canCancel) {
                                 toast.error(
                                   t(
-                                    "doctor.cancelWindowPassed",
-                                    "Cancellation window has passed. Slots can only be canceled at least 2 days before start time.",
+                                    "doctor.slotDeleteWindowPassed",
+                                    "This slot has bookings and can only be deleted at least 48 hours before start time.",
                                   ),
                                 );
                                 return;
@@ -592,8 +619,8 @@ export default function Schedule() {
                               canCancel
                                 ? t("common.delete", "Delete")
                                 : t(
-                                    "doctor.cancelWindowPassed",
-                                    "Cancellation window has passed. Slots can only be canceled at least 2 days before start time.",
+                                    "doctor.slotDeleteWindowPassed",
+                                    "This slot has bookings and can only be deleted at least 48 hours before start time.",
                                   )
                             }
                             className={`p-2 rounded-lg transition-colors disabled:opacity-50 ${

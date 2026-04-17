@@ -49,7 +49,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       },
       {
         name: t("nav.messages"),
-        path: "/dashboard/patient/messages",
+        path: "/dashboard/patient/messages?support=1",
         icon: MessageSquare,
       },
       {
@@ -65,7 +65,6 @@ export default function DynamicSidebar({ isOpen, onClose }) {
         path: "/dashboard/doctor/schedule",
         icon: Calendar,
       },
-      { name: t("nav.tests"), path: "/dashboard/doctor/tests", icon: TestTube },
       {
         name: t("nav.blogs"),
         path: "/dashboard/doctor/blogs",

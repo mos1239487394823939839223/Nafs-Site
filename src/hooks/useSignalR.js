@@ -67,7 +67,17 @@ export function useSignalR({
           console.log("[SignalR] Connected. State:", conn.state);
         }
       } catch (err) {
-        console.error("[SignalR] Connection error:", err);
+        const errorMessage = String(err?.message || "").toLowerCase();
+        const expectedAbort =
+          err?.name === "AbortError" ||
+          errorMessage.includes("before stop() was called");
+
+        if (!expectedAbort) {
+          console.error("[SignalR] Connection error:", err);
+        } else if (import.meta.env.DEV) {
+          console.debug("[SignalR] Start/stop race (dev):", err?.message || err);
+        }
+
         if (typeof onConnectionError === "function") {
           onConnectionError(err);
         }

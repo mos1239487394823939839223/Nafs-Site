@@ -936,10 +936,7 @@
             "required": true,
             "schema": {
               "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": [
-                "integer",
-                "string"
-              ],
+              "type": "integer",
               "format": "int64"
             }
           }
@@ -1886,6 +1883,55 @@
         ]
       }
     },
+    "/Doctor/Booking/{id}/Cancel": {
+      "post": {
+        "tags": [
+          "Doctor"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DoctorCancelBookingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfboolean"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
     "/Doctor/Availability/Weekly": {
       "post": {
         "tags": [
@@ -2048,6 +2094,154 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EndPointResponseOflong"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/CustomerSupport/Refunds": {
+      "get": {
+        "tags": [
+          "CustomerSupport"
+        ],
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/RefundStatus"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfPagingDtoOfRefundDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/CustomerSupport/Refunds/{id}/Process": {
+      "put": {
+        "tags": [
+          "CustomerSupport"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProcessRefundRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfboolean"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/CustomerSupport/Chat": {
+      "post": {
+        "tags": [
+          "CustomerSupport"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OpenCustomerSupportChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfSupportChatRoomDto"
                 }
               }
             }
@@ -2228,6 +2422,94 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/EndPointResponseOfPagingDtoOfChatMessageDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/Chat/Rooms/{id}/End": {
+      "put": {
+        "tags": [
+          "Chat"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfboolean"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/Booking/{id}/Note": {
+      "put": {
+        "tags": [
+          "Booking"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddBookingNoteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfboolean"
                 }
               }
             }
@@ -3679,6 +3961,14 @@
   },
   "components": {
     "schemas": {
+      "AddBookingNoteRequest": {
+        "type": "object",
+        "properties": {
+          "Note": {
+            "type": "string"
+          }
+        }
+      },
       "AddPatientTestRequest": {
         "type": "object",
         "properties": {
@@ -4454,6 +4744,20 @@
               "null",
               "string"
             ]
+          },
+          "DiseaseIds": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int64"
+            }
           }
         }
       },
@@ -4552,6 +4856,17 @@
             "type": "string"
           },
           "Description": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "DoctorCancelBookingRequest": {
+        "type": "object",
+        "properties": {
+          "CancellationReason": {
             "type": [
               "null",
               "string"
@@ -5716,6 +6031,40 @@
           }
         }
       },
+      "EndPointResponseOfPagingDtoOfRefundDto": {
+        "required": [
+          "Data",
+          "IsSuccess",
+          "Message",
+          "ErrorCode",
+          "IsAuthorized"
+        ],
+        "type": "object",
+        "properties": {
+          "Data": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PagingDtoOfRefundDto"
+              }
+            ]
+          },
+          "IsSuccess": {
+            "type": "boolean"
+          },
+          "Message": {
+            "type": "string"
+          },
+          "ErrorCode": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "IsAuthorized": {
+            "type": "boolean"
+          }
+        }
+      },
       "EndPointResponseOfPagingDtoOfSessionHistoryDto": {
         "required": [
           "Data",
@@ -6259,6 +6608,15 @@
             "items": {
               "$ref": "#/components/schemas/ReviewDto"
             }
+          },
+          "SessionPrice": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "null",
+              "number",
+              "string"
+            ],
+            "format": "double"
           }
         }
       },
@@ -6452,6 +6810,19 @@
       },
       "MessageType": {
         "type": "integer"
+      },
+      "OpenCustomerSupportChatRequest": {
+        "type": "object",
+        "properties": {
+          "PatientId": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
       },
       "PagingDtoOfAdminDoctorDto": {
         "required": [
@@ -7053,6 +7424,56 @@
           }
         }
       },
+      "PagingDtoOfRefundDto": {
+        "required": [
+          "PageSize",
+          "PageIndex",
+          "Records",
+          "Pages",
+          "Items"
+        ],
+        "type": "object",
+        "properties": {
+          "PageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "PageIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Records": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Pages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/RefundDto"
+            }
+          }
+        }
+      },
       "PagingDtoOfSessionHistoryDto": {
         "required": [
           "PageSize",
@@ -7469,6 +7890,71 @@
             "format": "date-time"
           }
         }
+      },
+      "ProcessRefundRequest": {
+        "type": "object",
+        "properties": {
+          "Notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "RefundDto": {
+        "type": "object",
+        "properties": {
+          "Id": {
+            "format": "int64"
+          },
+          "BookingID": {
+            "format": "int64"
+          },
+          "PatientID": {
+            "format": "int64"
+          },
+          "PatientName": {
+            "type": "string"
+          },
+          "Amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "Status": {
+            "$ref": "#/components/schemas/RefundStatus"
+          },
+          "ProcessedByName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "ProcessedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "Notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "CreatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "RefundStatus": {
+        "type": "integer"
       },
       "RegisterDoctorRequest": {
         "type": "object",
@@ -8267,6 +8753,9 @@
     },
     {
       "name": "Chat"
+    },
+    {
+      "name": "Booking"
     },
     {
       "name": "Blog"

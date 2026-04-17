@@ -4,6 +4,8 @@ import {
   PlayArrow as Play,
   CalendarToday as Calendar,
   Close as Cancel,
+  Biotech as TestTube,
+  Visibility as Eye,
   Timer as Duration,
   Payment as PaymentIcon,
 } from "@mui/icons-material";
@@ -41,8 +43,14 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
   const isCancelling =
     actionLoading?.type === "cancel" &&
     actionLoading?.bookingId === patient.bookingId;
+  const isAddingTest =
+    actionLoading?.type === "addTest" &&
+    actionLoading?.bookingId === patient.bookingId;
+  const isShowingResults =
+    actionLoading?.type === "showResults" &&
+    actionLoading?.bookingId === patient.bookingId;
 
-  const isBusy = isJoining || isCancelling;
+  const isBusy = isJoining || isCancelling || isAddingTest || isShowingResults;
 
   return (
     <motion.div
@@ -144,6 +152,46 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
           isRTL ? "flex-row-reverse" : ""
         }`}
       >
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={isBusy || !patient.patientId}
+          className={`${isRTL ? "flex-row-reverse" : ""}`}
+          onClick={() => onAction("showResults", patient)}
+        >
+          {isShowingResults ? (
+            <span className="inline-flex items-center gap-1">
+              <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              {isRTL ? "جار التحميل" : "Loading"}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1">
+              <Eye className={`w-4 h-4 ${isRTL ? "ml-1" : "mr-1"}`} />
+              {isRTL ? "عرض النتيجة" : "Show Result"}
+            </span>
+          )}
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={isBusy || !patient.patientId}
+          className={`${isRTL ? "flex-row-reverse" : ""}`}
+          onClick={() => onAction("addTest", patient)}
+        >
+          {isAddingTest ? (
+            <span className="inline-flex items-center gap-1">
+              <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              {isRTL ? "جار التحضير" : "Preparing"}
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1">
+              <TestTube className={`w-4 h-4 ${isRTL ? "ml-1" : "mr-1"}`} />
+              {isRTL ? "إضافة تحليل" : "Add Test"}
+            </span>
+          )}
+        </Button>
+
         {patient.canCancel && (
           <Button
             size="sm"
@@ -162,7 +210,7 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
             ) : (
               <span className="inline-flex items-center gap-1">
                 <Cancel className={`w-4 h-4 ${isRTL ? "ml-1" : "mr-1"}`} />
-                {t("common.cancel", "Cancel")}
+                {isRTL ? "إلغاء واسترداد" : "Cancel & Refund"}
               </span>
             )}
           </Button>

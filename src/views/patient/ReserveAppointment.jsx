@@ -51,6 +51,8 @@ import { useSearchParams } from "react-router-dom";
 import { getDoctorSpecialtyTheme } from "../../lib/doctorSpecialtyTheme";
 import { getAppointmentStatusMeta } from "../../lib/appointmentStatus";
 
+const TWO_DAYS_IN_MS = 2 * 24 * 60 * 60 * 1000;
+
 export default function ReserveAppointment() {
   const { user: currentUser } = useAuth();
   const toast = useToast();
@@ -751,6 +753,26 @@ export default function ReserveAppointment() {
   };
 
   const handleCancelReservation = async (bookingId) => {
+    const targetBooking = patientBookings.find(
+      (booking) => String(booking?.Id) === String(bookingId),
+    );
+    const sessionStart = targetBooking?.SessionStartTime
+      ? new Date(targetBooking.SessionStartTime)
+      : null;
+
+    if (
+      sessionStart &&
+      !Number.isNaN(sessionStart.getTime()) &&
+      sessionStart.getTime() - Date.now() < TWO_DAYS_IN_MS
+    ) {
+      toast.error(
+        isRTL
+          ? "يمكن الإلغاء قبل الموعد بـ 48 ساعة على الأقل"
+          : "Cancellation is allowed only at least 48 hours before the appointment",
+      );
+      return;
+    }
+
     setCancellingId(bookingId);
     try {
       const response = await patientAPI.cancelBooking(
@@ -773,6 +795,27 @@ export default function ReserveAppointment() {
   };
 
   const [cancelConfirmId, setCancelConfirmId] = useState(null);
+
+  const cancelConfirmBooking = useMemo(
+    () =>
+      patientBookings.find(
+        (booking) => String(booking?.Id) === String(cancelConfirmId),
+      ) || null,
+    [patientBookings, cancelConfirmId],
+  );
+
+  const cancelConfirmPaymentStatus = cancelConfirmBooking
+    ? getPaymentStatusMeta(
+        cancelConfirmBooking?.PaymentStatus ??
+          cancelConfirmBooking?.paymentStatus ??
+          (cancelConfirmBooking?.PaymentConfirmed ? 2 : 1),
+        { isRTL },
+      )
+    : null;
+
+  const cancelWillRefund =
+    Number(cancelConfirmPaymentStatus?.value) === 2 ||
+    cancelConfirmBooking?.PaymentConfirmed === true;
 
   const confirmCancelReservation = (bookingId) => {
     setCancelConfirmId(bookingId);
@@ -3020,19 +3063,31 @@ export default function ReserveAppointment() {
           ) : (
             <div className="grid gap-4">
               {patientBookings.length > 0 ? (
-                patientBookings.map((booking) => {
+                patientBookings.map((booking, bookingIndex) => {
                   const statusInfo = resolveStatusInfo(booking);
                   const paymentStatusInfo = resolvePaymentStatusInfo(booking);
                   const sessionDate = booking.SessionStartTime
                     ? new Date(booking.SessionStartTime)
                     : null;
-                  const canCancel =
+                  const isBefore48h =
+                    sessionDate &&
+                    !Number.isNaN(sessionDate.getTime()) &&
+                    sessionDate.getTime() - Date.now() >= TWO_DAYS_IN_MS;
+                  const canCancelByStatus =
                     statusInfo.key === "pending" ||
+                    statusInfo.key === "confirmed" ||
+                    statusInfo.key === "pendingPayment" ||
                     statusInfo.key === "approved" ||
                     statusInfo.key === "paid";
+                  const canCancel = canCancelByStatus && Boolean(isBefore48h);
 
                   return (
-                    <Card key={booking.Id} className="p-6">
+                    <Card
+                      key={`${String(booking?.Id ?? "booking")}-${String(
+                        booking?.SessionStartTime ?? bookingIndex,
+                      )}-${bookingIndex}`}
+                      className="p-6"
+                    >
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden">
@@ -3114,7 +3169,12 @@ export default function ReserveAppointment() {
                                   <>
                                     <XCircle className="w-4 h-4" />
                                     <span>
-                                      {t("patient.cancelAppointment")}
+                                      {Number(paymentStatusInfo?.value) === 2 ||
+                                      booking?.PaymentConfirmed === true
+                                        ? isRTL
+                                          ? "إلغاء واسترداد"
+                                          : "Cancel & Refund"
+                                        : t("patient.cancelAppointment")}
                                     </span>
                                   </>
                                 )}
@@ -3237,10 +3297,20 @@ export default function ReserveAppointment() {
                   <XCircle className="w-7 h-7 text-red-500" />
                 </div>
                 <h3 className="text-lg font-bold text-text-heading mb-2">
-                  {isRTL ? "إلغاء الموعد" : "Cancel Appointment"}
+                  {cancelWillRefund
+                    ? isRTL
+                      ? "إلغاء الموعد واسترداد المبلغ"
+                      : "Cancel Appointment & Refund"
+                    : isRTL
+                    ? "إلغاء الموعد"
+                    : "Cancel Appointment"}
                 </h3>
                 <p className="text-sm text-text-muted mb-6">
-                  {isRTL
+                  {cancelWillRefund
+                    ? isRTL
+                      ? "هل أنت متأكد أنك تريد إلغاء هذا الموعد؟ سيتم إرسال طلب استرداد للدعم الفني لأن الدفع تم تأكيده."
+                      : "Are you sure you want to cancel this appointment? A refund request will be sent to technical support because payment is confirmed."
+                    : isRTL
                     ? "هل أنت متأكد أنك تريد إلغاء هذا الموعد؟"
                     : "Are you sure you want to cancel this appointment?"}
                 </p>
@@ -3256,7 +3326,13 @@ export default function ReserveAppointment() {
                     onClick={handleConfirmCancel}
                     isLoading={cancellingId === cancelConfirmId}
                   >
-                    {isRTL ? "نعم، إلغاء الموعد" : "Yes, Cancel"}
+                    {cancelWillRefund
+                      ? isRTL
+                        ? "نعم، إلغاء واسترداد"
+                        : "Yes, Cancel & Refund"
+                      : isRTL
+                      ? "نعم، إلغاء الموعد"
+                      : "Yes, Cancel"}
                   </Button>
                 </div>
               </div>

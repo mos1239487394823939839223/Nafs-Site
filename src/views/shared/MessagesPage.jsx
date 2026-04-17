@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth, Roles } from '../../contexts/AuthContext'
-import { chatAPI, filesAPI, MessageType } from '../../lib/api'
+import { chatAPI, filesAPI, MessageType, userAPI } from '../../lib/api'
 import ChatWindow from '../../components/chat/ChatWindow'
 import {
   Search, ChatBubbleOutline as MessageSquare, Sync as Loader2,
@@ -40,17 +40,18 @@ const normalizeValue = (v) => String(v ?? '').trim().toLowerCase()
 
 const getMessageUniqueKey = (msg) => {
   const id = msg?.Id ?? msg?.id
+  // Use just the backend ID for dedup — composite keys cause mismatches between
+  // SignalR payloads and API responses for the same message.
+  if (id !== undefined && id !== null && String(id).trim() !== '' && !String(id).startsWith('optimistic-')) {
+    const strId = String(id).trim()
+    return strId.startsWith('id:') ? strId : `id:${strId}`
+  }
+
+  // Fallback for messages without a stable backend ID
   const sender = normalizeValue(msg?.SenderId ?? msg?.senderId ?? msg?.From ?? msg?.from ?? msg?.sender)
   const content = normalizeValue(getIncomingContent(msg))
   const createdAt = normalizeValue(msg?.CreatedAt ?? msg?.createdAt ?? msg?.timestamp)
-  const attachmentUrl = normalizeValue(getIncomingAttachmentUrl(msg))
-
-  // Keep a composite key to avoid collisions when backend IDs are int64 values.
-  if (id !== undefined && id !== null && String(id).trim() !== '') {
-    return `id:${String(id)}|${sender}|${createdAt}|${content}|${attachmentUrl}`
-  }
-
-  return `fallback:${sender}|${content}|${createdAt}|${attachmentUrl}`
+  return `fallback:${sender}|${content}|${createdAt}`
 }
 
 const sortMessagesByTime = (msgs) => {
@@ -66,7 +67,13 @@ const sortMessagesByTime = (msgs) => {
 
 const mergeMessages = (currentMessages, fetchedMessages) => {
   const fetchedKeys = new Set(fetchedMessages.map(getMessageUniqueKey))
-  const onlyCurrent = currentMessages.filter((msg) => !fetchedKeys.has(getMessageUniqueKey(msg)))
+  // Drop optimistic messages once real fetched messages arrive
+  const onlyCurrent = currentMessages.filter((msg) => {
+    if (fetchedKeys.has(getMessageUniqueKey(msg))) return false
+    // Remove optimistic messages if we got fresh data that likely includes them
+    if (fetchedMessages.length > 0 && String(msg.id || '').startsWith('optimistic-')) return false
+    return true
+  })
   return sortMessagesByTime([...fetchedMessages, ...onlyCurrent])
 }
 
@@ -188,7 +195,9 @@ export default function MessagesPage() {
   const initialRoomId = searchParams.get('room')
   const initialPatientId = searchParams.get('patientId')
   const initialBookingId = searchParams.get('bookingId')
-  const currentUserId = String(user?.ID ?? user?.Id ?? user?.id ?? '')
+  const supportParam = String(searchParams.get('support') || '').toLowerCase()
+  const shouldAutoOpenSupport = supportParam === '1' || supportParam === 'true' || supportParam === 'yes'
+  const currentUserId = String(userAPI.resolveUserId(user) || '').trim()
 
   const [activeRoom, setActiveRoom] = useState(null)
   const [pendingRoomId] = useState(initialRoomId || null)
@@ -203,10 +212,14 @@ export default function MessagesPage() {
   const connectionRef = useRef(null)
   const activeRoomRef = useRef(null)
   const hydrationTimersRef = useRef({})
+  const optimisticSafetyTimersRef = useRef({})
   const supportRoomIdsRef = useRef(new Set())
   const supportRoomMetaRef = useRef({})
+  const supportAutoOpenHandledRef = useRef(false)
   const messagesFetchInFlightRef = useRef(new Map())
   const lastMessagesFetchAtRef = useRef(new Map())
+  const debouncedFetchRoomsTimerRef = useRef(null)
+  const pollingIntervalRef = useRef(null)
 
   const normalizeRoomId = useCallback((room) => String(room?.Id || room?.id || ''), [])
 
@@ -453,7 +466,7 @@ export default function MessagesPage() {
 
     const now = Date.now()
     const lastFetchAt = lastMessagesFetchAtRef.current.get(roomKey) || 0
-    const minFetchIntervalMs = silent ? 1500 : 900
+    const minFetchIntervalMs = silent ? 3000 : 900
     if (!force && now - lastFetchAt < minFetchIntervalMs) {
       logSupportDebug('fetchMessages:skippedCooldown', {
         roomId: roomKey,
@@ -489,6 +502,14 @@ export default function MessagesPage() {
     }
   }, [fetchLatestMessages])
 
+  const debouncedFetchRooms = useCallback(() => {
+    if (debouncedFetchRoomsTimerRef.current) clearTimeout(debouncedFetchRoomsTimerRef.current)
+    debouncedFetchRoomsTimerRef.current = setTimeout(() => {
+      fetchRooms()
+      debouncedFetchRoomsTimerRef.current = null
+    }, 2000)
+  }, [fetchRooms])
+
   const scheduleSilentHydration = useCallback((roomId) => {
     const key = String(roomId || '')
     if (!key) return
@@ -508,29 +529,83 @@ export default function MessagesPage() {
         const conn = await startChatConnection()
         if (!mounted) return
         connectionRef.current = conn
-        conn.on('ReceiveMessage', (msg) => {
+
+        const handleMessage = (msg) => {
           const currentRoom = activeRoomRef.current
-          const currentRoomId = String(currentRoom?.Id || currentRoom?.id || '')
-          const msgRoomId = getIncomingRoomId(msg)
+          const currentRoomId = String(currentRoom?.Id || currentRoom?.id || '').trim()
+          const msgRoomId = String(getIncomingRoomId(msg) || '').trim()
           const fromCurrentUser = isCurrentUserMessage(msg)
           const hasStableId = msg?.Id !== undefined && msg?.Id !== null ? true : msg?.id !== undefined && msg?.id !== null
+
+          logSupportDebug('SignalR:ReceiveMessage', {
+            msgRoomId,
+            currentRoomId,
+            match: currentRoomId === msgRoomId,
+            fromCurrentUser,
+            hasStableId,
+            content: getIncomingContent(msg)?.substring(0, 30),
+            rawKeys: Object.keys(msg || {}),
+          })
+
           if (currentRoomId && currentRoomId === msgRoomId) {
             if (fromCurrentUser && !hasStableId) { scheduleSilentHydration(msgRoomId); return }
+            const msgContent = getIncomingContent(msg)
             const uiMessage = {
-              id: getMessageUniqueKey(msg),
+              id: msg?.Id ?? msg?.id ?? getMessageUniqueKey(msg),
               sender: fromCurrentUser ? 'current-user' : 'other',
-              content: getIncomingContent(msg),
+              content: msgContent,
               messageType: getIncomingMessageType(msg),
               timestamp: msg.CreatedAt || msg.createdAt || new Date().toISOString(),
               attachments: buildIncomingAttachments(msg),
             }
-            setMessages(prev => [...prev, uiMessage])
+            setMessages(prev => {
+              // If from current user, find and replace the matching optimistic message
+              if (fromCurrentUser) {
+                const optimisticIdx = prev.findIndex(m => {
+                  if (!String(m.id || '').startsWith('optimistic-')) return false
+                  return normalizeValue(m.content) === normalizeValue(msgContent)
+                })
+                if (optimisticIdx !== -1) {
+                  const next = [...prev]
+                  next[optimisticIdx] = uiMessage
+                  return next
+                }
+              }
+              // Avoid duplicate if message already exists (by key)
+              const uiMessageKey = getMessageUniqueKey(uiMessage)
+              if (prev.some(m => getMessageUniqueKey(m) === uiMessageKey)) return prev
+              return [...prev, uiMessage]
+            })
             chatAPI.markAsRead(msgRoomId).catch(() => {})
-            if (!hasStableId) {
-              scheduleSilentHydration(msgRoomId)
+            
+            // Clear safety timer when we get a real echo from current user
+            if (fromCurrentUser && hasStableId) {
+              if (optimisticSafetyTimersRef.current[msgRoomId]) {
+                clearTimeout(optimisticSafetyTimersRef.current[msgRoomId])
+                delete optimisticSafetyTimersRef.current[msgRoomId]
+                logSupportDebug('SignalR:clearedSafetyTimer', { roomId: msgRoomId })
+              }
             }
           }
+          debouncedFetchRooms()
+        }
+
+        conn.off('ReceiveMessage')
+        conn.on('ReceiveMessage', handleMessage)
+
+        // Re-register handler on reconnect
+        conn.onreconnected(() => {
+          logSupportDebug('SignalR:reconnected')
+          conn.off('ReceiveMessage')
+          conn.on('ReceiveMessage', handleMessage)
+          // Refresh messages after reconnect to catch any missed ones
+          const roomId = String(activeRoomRef.current?.Id || activeRoomRef.current?.id || '')
+          if (roomId) fetchMessages(roomId, { silent: true, force: true })
           fetchRooms()
+        })
+
+        conn.onclose(() => {
+          logSupportDebug('SignalR:closed')
         })
       } catch (err) {
         console.error('SignalR Setup Error:', err)
@@ -541,13 +616,34 @@ export default function MessagesPage() {
       mounted = false
       Object.values(hydrationTimersRef.current).forEach((t) => clearTimeout(t))
       hydrationTimersRef.current = {}
-      if (connectionRef.current) connectionRef.current.off('ReceiveMessage')
+      Object.values(optimisticSafetyTimersRef.current).forEach((t) => clearTimeout(t))
+      optimisticSafetyTimersRef.current = {}
+      if (debouncedFetchRoomsTimerRef.current) clearTimeout(debouncedFetchRoomsTimerRef.current)
+      if (connectionRef.current) {
+        connectionRef.current.off('ReceiveMessage')
+        connectionRef.current.off('reconnected')
+        connectionRef.current.off('close')
+      }
     }
-  }, [user, fetchRooms, scheduleSilentHydration, isCurrentUserMessage])
-
-  useEffect(() => { fetchRooms() }, [fetchRooms])
+  }, [user, fetchRooms, fetchMessages, debouncedFetchRooms, scheduleSilentHydration, isCurrentUserMessage])
 
   const activeRoomId = String(activeRoom?.Id || activeRoom?.id || '')
+
+  // ── Polling fallback: catch messages SignalR might miss ─────────────────────
+  useEffect(() => {
+    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current)
+    if (!activeRoomId) return
+
+    pollingIntervalRef.current = setInterval(() => {
+      fetchMessages(activeRoomId, { silent: true })
+    }, 5000)
+
+    return () => {
+      if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current)
+    }
+  }, [activeRoomId, fetchMessages])
+
+  useEffect(() => { fetchRooms() }, [fetchRooms])
 
   useEffect(() => {
     if (!activeRoomId) return
@@ -558,13 +654,42 @@ export default function MessagesPage() {
   const handleSendMessage = async (msgData) => {
     const roomId = activeRoom?.Id || activeRoom?.id
     if (!roomId) return
+
+    // Optimistic message — show immediately in UI
+    const optimisticId = `optimistic-${Date.now()}-${Math.random().toString(36).slice(2)}`
+    const msgContent = msgData.content || ''
+    const optimisticMsg = {
+      id: optimisticId,
+      sender: 'current-user',
+      content: msgContent,
+      timestamp: new Date().toISOString(),
+      attachments: (msgData.attachments || []).map(a => ({
+        name: a.name,
+        url: a.url || '',
+        type: a.type || 'file',
+      })),
+    }
+    setMessages(prev => [...prev, optimisticMsg])
+
+    // Safety net: if SignalR doesn't echo back within 3s, hydrate from server
+    const safetyKey = String(roomId)
+    if (optimisticSafetyTimersRef.current[safetyKey]) clearTimeout(optimisticSafetyTimersRef.current[safetyKey])
+    optimisticSafetyTimersRef.current[safetyKey] = setTimeout(() => {
+      setMessages(prev => {
+        if (prev.some(m => String(m.id || '').startsWith('optimistic-'))) {
+          fetchMessages(safetyKey, { silent: true, force: true })
+        }
+        return prev
+      })
+      delete optimisticSafetyTimersRef.current[safetyKey]
+    }, 3000)
+
     try {
       const outgoingAttachments = msgData.attachments || []
       if (outgoingAttachments.length === 0) {
-        const response = await chatAPI.sendMessage(roomId, msgData.content)
+        const response = await chatAPI.sendMessage(roomId, msgContent)
         if (response?.IsSuccess === false) throw new Error(response?.Message || 'Failed to send message')
-        await fetchMessages(roomId, { force: true })
-        fetchRooms()
+        debouncedFetchRooms()
         return
       }
       for (let i = 0; i < outgoingAttachments.length; i++) {
@@ -572,12 +697,13 @@ export default function MessagesPage() {
         const uploadResponse = await filesAPI.uploadFile(attachment.file)
         const url = uploadResponse?.Data?.PublicUrl
         const name = uploadResponse?.Data?.FileName || attachment.name
-        await chatAPI.sendMessage(roomId, i === 0 ? (msgData.content || '') : '', MessageType.Attachment, url || attachment.url, name)
+        await chatAPI.sendMessage(roomId, i === 0 ? (msgContent || '') : '', MessageType.Attachment, url || attachment.url, name)
       }
-      await fetchMessages(roomId, { force: true })
-      fetchRooms()
+      debouncedFetchRooms()
     } catch (error) {
       console.error('Failed to send message:', error)
+      // Remove optimistic message on failure
+      setMessages(prev => prev.filter(m => m.id !== optimisticId))
       const fallback = isRTL ? 'تعذر إرسال الرسالة' : 'Failed to send message'
       toast.error(String(error?.message || fallback))
     }
@@ -631,26 +757,35 @@ export default function MessagesPage() {
 
   const openSupportChat = useCallback(async () => {
     if (!isPatient) return
+    if (!currentUserId) {
+      toast.error(isRTL ? 'تعذر تحديد معرف المريض' : 'Unable to resolve patient id')
+      return
+    }
 
     setSupportRoomLoading(true)
     try {
       logSupportDebug('openSupportChat:start')
-      const supportResponse = await chatAPI.createOrGetPatientSupportRoom()
+      const supportResponse = await chatAPI.openPatientSupportChat(currentUserId)
       logSupportDebug('openSupportChat:response', supportResponse)
-      if (supportResponse?.IsSuccess === false) {
-        throw new Error(supportResponse?.Message || 'Failed to open support chat')
+      const supportSuccess = supportResponse?.IsSuccess ?? supportResponse?.isSuccess
+      if (supportSuccess === false) {
+        throw new Error(supportResponse?.Message || supportResponse?.message || 'Failed to open support chat')
       }
 
+      const supportData = supportResponse?.Data ?? supportResponse?.data ?? supportResponse
+
       const supportRoomId = String(
-        supportResponse?.Data?.RoomId ||
-        supportResponse?.Data?.roomId ||
-        supportResponse?.Data?.Id ||
-        supportResponse?.Data?.id ||
+        supportData?.RoomId ||
+        supportData?.roomId ||
+        supportData?.Id ||
+        supportData?.id ||
+        supportData?.ChatRoomId ||
+        supportData?.chatRoomId ||
         ''
       )
       const supportAgentName =
-        supportResponse?.Data?.SupportAgentName ||
-        supportResponse?.Data?.supportAgentName ||
+        supportData?.SupportAgentName ||
+        supportData?.supportAgentName ||
         t('chat.technicalTeam', 'Technical Support')
 
       if (supportRoomId) {
@@ -734,11 +869,27 @@ export default function MessagesPage() {
         status: error?.response?.status,
         data: error?.response?.data,
       })
+      toast.error(
+        String(
+          error?.response?.data?.Message ||
+          error?.response?.data?.message ||
+          error?.message ||
+          (isRTL ? 'تعذر فتح محادثة الدعم الفني' : 'Failed to open support chat')
+        )
+      )
       console.error('Failed to open support chat room:', error)
     } finally {
       setSupportRoomLoading(false)
     }
-  }, [enrichRoomsWithSupportMeta, isPatient, t])
+  }, [currentUserId, enrichRoomsWithSupportMeta, isPatient, isRTL, t, toast])
+
+  useEffect(() => {
+    if (!isPatient || !shouldAutoOpenSupport) return
+    if (supportAutoOpenHandledRef.current) return
+
+    supportAutoOpenHandledRef.current = true
+    openSupportChat()
+  }, [isPatient, openSupportChat, shouldAutoOpenSupport])
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
