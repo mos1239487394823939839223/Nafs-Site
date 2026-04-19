@@ -87,6 +87,7 @@ export default {
             fontFamily: {
                 sans: ['Inter', 'Almarai', 'system-ui', 'sans-serif'],
                 arabic: ['Almarai', 'Inter', 'system-ui', 'sans-serif'],
+                display: ['Cairo', 'Almarai', 'Inter', 'system-ui', 'sans-serif'],
             },
             borderRadius: {
                 lg: '0.75rem',

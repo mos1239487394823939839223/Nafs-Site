@@ -40,23 +40,31 @@ import DoctorFinance from "./views/admin/DoctorFinance";
 import PatientBlogs from "./views/patient/Blogs";
 import MessagesPage from "./views/shared/MessagesPage";
 import DocumentViewer from "./views/shared/DocumentViewer";
+import LandingPage from "./views/shared/LandingPage";
 
 function RootRedirect() {
-  const { isAuthenticated, getDashboardRoute } = useAuth();
+  const { isAuthenticated, role, loading } = useAuth();
 
-  if (isAuthenticated) {
-    return <Navigate to={getDashboardRoute()} replace />;
+  // Wait for auth to load from localStorage before redirecting
+  if (loading) {
+    return null;
   }
 
-  return <Navigate to="/auth/login" replace />;
+  if (isAuthenticated && role) {
+    const dashboardRoute = RoleDashboards[role] || "/auth/login";
+    return <Navigate to={dashboardRoute} replace />;
+  }
+
+  return <Navigate to="/landing" replace />;
 }
 
 function AppRoutes() {
-  const { isRTL } = useLanguage();
-
   return (
-    <div dir={isRTL ? "rtl" : "ltr"} className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background">
       <Routes>
+        {/* Landing Page */}
+        <Route path="/landing" element={<LandingPage />} />
+
         {/* Public Routes */}
         <Route path="/auth/login" element={<Login />} />
         <Route path="/auth/role-selection" element={<RoleSelection />} />
@@ -422,7 +430,6 @@ function AppRoutes() {
         />
 
         <Route path="/" element={<RootRedirect />} />
-        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
   );
