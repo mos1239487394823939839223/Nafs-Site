@@ -164,57 +164,141 @@ export default {
     basicInfo: "Basic Info",
     personalDetails: "Personal details",
     verification: "Verification",
-    verifyEmail: "Verify email",
+    welcomeBack: "Welcome back to Nafs",
     basicInformation: "Basic Information",
-    tellUsAboutYourself: "Tell us about yourself",
+    tellUsAboutYourself: "Tell us a bit about yourself to get started",
     firstName: "First Name",
     lastName: "Last Name",
+    email: "Email Address",
+    password: "Password",
     phoneNumber: "Phone Number",
     dateOfBirth: "Date of Birth",
+    placeholders: {
+      firstName: "Ahmed",
+      lastName: "Hassan",
+      email: "you@example.com",
+      phone: "+20 XXX XXX XXXX",
+      otp: "000000"
+    },
     emailVerification: "Email Verification",
     verifyYourEmail: "Verify your email address",
     registrationSuccess: "Registration successful! Please sign in.",
-    registrationSubmitted:
-      "Registration submitted! Your account is pending approval.",
+    registrationSubmitted: "Registration submitted! Your account is pending approval.",
+    intro: {
+      privacy: {
+        title: "Total Privacy",
+        subtitle: "Your data protection is our top priority",
+        description: "We guarantee the highest levels of confidentiality and privacy.",
+        f1: "Full encryption for all conversations",
+        f2: "No data sharing with any third party",
+        f3: "Possibility to use a pseudonym",
+        f4: "Delete records at any time"
+      },
+      security: {
+        title: "Guaranteed Security",
+        subtitle: "A safe environment to express your feelings",
+        description: "A trusted platform where we use the latest protection technologies.",
+        f1: "Certified and licensed therapists",
+        f2: "Global protection protocols",
+        f3: "Periodic service quality checks",
+        f4: "100% secure electronic payment"
+      },
+      followup: {
+        title: "Regular Follow-up",
+        subtitle: "Your recovery journey is our focus",
+        description: "We help you track your psychological progress step by step.",
+        f1: "Monthly progress reports",
+        f2: "Appointment and session reminders",
+        f3: "Tracking evolution of feelings and behavior",
+        f4: "Periodic self-assessment tools"
+      },
+      tests: {
+        title: "Psychological Tests",
+        subtitle: "Understand yourself better",
+        description: "A variety of scientifically approved tests.",
+        f1: "Anxiety, depression, and stress tests",
+        f2: "Instant results and accurate analysis",
+        f3: "Recommendations based on test results",
+        f4: "Customized educational content according to your needs"
+      },
+      emergency: {
+        title: "Emergency Messages",
+        subtitle: "We're not just an app, we're always by your side",
+        description: "Smart alert system for cases needing immediate intervention.",
+        f1: "Emergency button for quick contact",
+        f2: "Alert the therapist in critical cases",
+        f3: "Immediate referral to nearby support centers",
+        f4: "Crisis management guide"
+      },
+      support: {
+        title: "24-Hour Support",
+        subtitle: "Our team is always here to help you",
+        description: "Technical and psychological support available around the clock.",
+        f1: "Quick response to inquiries",
+        f2: "Help with booking appointments",
+        f3: "Solve technical problems immediately",
+        f4: "Direct communication via chat"
+      }
+    }
   },
 
   // Doctor Registration
   doctorReg: {
-    title: "Doctor Registration",
-    subtitle: "Join our network of healthcare professionals",
     professionalDetails: "Professional Details",
-    yourExpertise: "Your expertise",
+    yourExpertise: "Your expertise and focus",
     documentation: "Documentation",
-    verifyCredentials: "Verify credentials",
+    verifyCredentials: "Verify your credentials",
     availability: "Availability",
-    setSchedule: "Set schedule",
+    setSchedule: "Set your working schedule",
+    title: "Join as a Doctor",
+    subtitle: "Complete your profile to start providing care",
+    tellUsExpertise: "Tell us about your professional background",
     medicalSpecialty: "Medical Specialty",
     selectSpecialty: "Select your specialty",
     yearsOfExperience: "Years of Experience",
     consultationFee: "Consultation Fee (EGP)",
     languagesSpoken: "Languages Spoken",
     professionalBio: "Professional Bio",
-    bioPlaceholder:
-      "Tell patients about your experience, approach to healthcare, and what makes you unique...",
-    bioMinChars: "characters minimum",
-    tellUsExpertise: "Tell us about your medical expertise",
+    bioPlaceholder: "Describe your professional background, education, and approach to care...",
+    bioMinChars: "min characters",
+    uploadCredentials: "Upload your medical credentials",
     medicalLicenseNumber: "Medical License Number",
     medicalLicense: "Medical License",
-    uploadLicense: "Click to upload medical license",
-    fileFormats: "PDF, JPG, or PNG (Max 5MB)",
-    additionalCertificates: "Additional Certificates (Optional)",
-    uploadCertificates: "Click to upload certificates",
-    certificateTypes: "Board certifications, training certificates, etc.",
-    documentReviewNote:
-      "All documents will be reviewed by our admin team. You will receive approval within 24-48 hours.",
-    uploadCredentials: "Upload your credentials for verification",
+    uploadLicense: "Upload License",
+    fileFormats: "PDF, JPG, PNG (Max 5MB)",
+    additionalCertificates: "Additional Certificates",
+    uploadCertificates: "Upload certificates",
+    certificateTypes: "Board certifications, fellowships, etc.",
+    documentReviewNote: "Our medical board will review your documents within 24-48 business hours.",
     setYourAvailability: "Set Your Availability",
     chooseWorkingDays: "Choose your working days and hours",
     startTime: "Start Time",
     endTime: "End Time",
-    availabilityTip:
-      "You can always update your availability later from your dashboard.",
+    availabilityTip: "You can adjust your schedule anytime from your doctor dashboard.",
     submitForApproval: "Submit for Approval",
+    placeholders: {
+      experience: "e.g., 10",
+      fee: "e.g., 500",
+      license: "e.g., EG-12345-2020"
+    },
+    specialties: {
+      cardiology: "Cardiology",
+      dermatology: "Dermatology",
+      generalMedicine: "General Medicine",
+      pediatrics: "Pediatrics",
+      orthopedics: "Orthopedics",
+      neurology: "Neurology",
+      psychiatry: "Psychiatry",
+      gynecology: "Gynecology",
+      ophthalmology: "Ophthalmology",
+      ent: "ENT (Ear, Nose, Throat)"
+    },
+    languages: {
+      arabic: "Arabic",
+      english: "English",
+      french: "French",
+      german: "German"
+    },
     minimumFee: "Minimum consultation fee is 100 EGP",
   },
 
@@ -599,6 +683,85 @@ export default {
     english: "English",
     arabic: "العربية",
     change: "Change",
+  },
+  landing: {
+    nav: {
+      features: "Features",
+      therapists: "Therapists",
+      booking: "Booking",
+      articles: "Articles",
+      login: "Login / Account",
+      bookNow: "Book Session Now"
+    },
+    hero: {
+      headline: {
+        part1: "Digital Mental Support combining",
+        tech: "Technology",
+        and: " and ",
+        humanity: "Humanity"
+      },
+      subtitle: "Nafs provides you with psychological therapy sessions via voice, video, or chat, with a smart robot for initial assessment and reliable awareness content.",
+      startFree: "Start Free Assessment",
+      learnMore: "Learn about features",
+      trust: {
+        privacy: "Encrypted Privacy",
+        doctors: "Certified Doctors",
+        flexibility: "Appointment Flexibility"
+      },
+      preview: {
+        title: "App Preview",
+        chat: "Chat",
+        video: "Video",
+        voice: "Voice",
+        commDesc: "Choose the communication method that best suits you. All sessions are conducted with full encryption and confidentiality.",
+        aiTitle: "Smart Assessment for your case",
+        aiDesc: "Short questions for an initial assessment (anxiety / depression / stress). In the end, we suggest the most suitable therapist for you.",
+        articlesTitle: "Mental Health Articles",
+        articles: [
+          "How do I understand anxiety attacks?",
+          "A simple routine for your day's peace",
+          "Relationships and your psychological boundaries"
+        ]
+      }
+    },
+    features: {
+      title: "Everything you need in one place",
+      subtitle: "A complete mental health ecosystem",
+      items: [
+        { title: "Video, Voice & Chat Sessions", desc: "Live communication with your therapist in the way that suits you, from anywhere." },
+        { title: "Flexible Booking", desc: "Multiple slots for each therapist with smart reminders and calendar integration." },
+        { title: "Secure Payment", desc: "Reliable and local payment options — easy and fast." },
+        { title: "Smart Assessment Assistant", desc: "A robot that asks short questions to suggest the most suitable therapist for your case." },
+        { title: "Awareness Content Library", desc: "Reliable articles and tools written by mental health specialists." },
+        { title: "Full Privacy", desc: "End-to-end encryption and strict protection for your data." }
+      ]
+    },
+    howItWorks: {
+      title: "How Nafs works?",
+      subtitle: "Three simple steps separate you from your mental comfort",
+      step1: {
+        title: "Initial Assessment",
+        desc: "Answer a few questions for our smart system to understand your status."
+      },
+      step2: {
+        title: "Choose therapist",
+        desc: "We suggest the most suitable specialists based on your assessment."
+      },
+      step3: {
+        title: "Start journey",
+        desc: "Book your first session and start your psychological recovery journey."
+      }
+    },
+    cta: {
+      title: "Take a deep breath, we are here",
+      subtitle: "Start your journey towards real mental comfort today — the first assessment is completely free.",
+      button: "Start Free Assessment",
+      browse: "Browse Therapists"
+    },
+    footer: {
+      rights: "© 2026 Nafs — All rights reserved",
+      tagline: "Your safe space for mental health"
+    }
   },
 
   // Booking Status

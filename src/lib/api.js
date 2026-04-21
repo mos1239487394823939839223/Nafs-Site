@@ -77,8 +77,11 @@ api.interceptors.response.use(
       const isAuthRequest = requestUrl.includes("/Auth/");
 
       if (!isAuthRequest) {
-        localStorage.removeItem("auth");
-        window.location.href = "/auth/login";
+        const storedAuth = localStorage.getItem("auth");
+        if (storedAuth) {
+          localStorage.removeItem("auth");
+          window.location.href = "/auth/login";
+        }
       }
     }
     return Promise.reject(error);

@@ -63,19 +63,24 @@ export default function DoctorRegistration() {
   }, 3)
 
   const specialties = [
-    'Cardiology',
-    'Dermatology',
-    'General Medicine',
-    'Pediatrics',
-    'Orthopedics',
-    'Neurology',
-    'Psychiatry',
-    'Gynecology',
-    'Ophthalmology',
-    'ENT (Ear, Nose, Throat)',
+    { value: 'Cardiology', label: t('doctorReg.specialties.cardiology') },
+    { value: 'Dermatology', label: t('doctorReg.specialties.dermatology') },
+    { value: 'General Medicine', label: t('doctorReg.specialties.generalMedicine') },
+    { value: 'Pediatrics', label: t('doctorReg.specialties.pediatrics') },
+    { value: 'Orthopedics', label: t('doctorReg.specialties.orthopedics') },
+    { value: 'Neurology', label: t('doctorReg.specialties.neurology') },
+    { value: 'Psychiatry', label: t('doctorReg.specialties.psychiatry') },
+    { value: 'Gynecology', label: t('doctorReg.specialties.gynecology') },
+    { value: 'Ophthalmology', label: t('doctorReg.specialties.ophthalmology') },
+    { value: 'ENT', label: t('doctorReg.specialties.ent') },
   ]
 
-  const languages = ['Arabic', 'English', 'French', 'German']
+  const languagesAvailable = [
+    { value: 'Arabic', label: t('doctorReg.languages.arabic') },
+    { value: 'English', label: t('doctorReg.languages.english') },
+    { value: 'French', label: t('doctorReg.languages.french') },
+    { value: 'German', label: t('doctorReg.languages.german') },
+  ]
 
   // Step 1 Validation
   const validateStep1 = () => {
@@ -322,9 +327,7 @@ export default function DoctorRegistration() {
                   onChange={(val) => handleFieldChange('specialty', val)}
                   error={errors.specialty}
                   placeholder={t('doctorReg.selectSpecialty')}
-                  options={[
-                    ...specialties.map(spec => ({ value: spec, label: spec }))
-                  ]}
+                  options={specialties}
                 />
 
                 <div className="grid md:grid-cols-2 gap-6">
@@ -335,7 +338,7 @@ export default function DoctorRegistration() {
                     value={formData.yearsOfExperience}
                     onChange={(e) => handleFieldChange('yearsOfExperience', e.target.value)}
                     error={errors.yearsOfExperience}
-                    placeholder="e.g., 10"
+                    placeholder={t('doctorReg.placeholders.experience')}
                   />
                   <Input
                     label={t('doctorReg.consultationFee')}
@@ -344,7 +347,7 @@ export default function DoctorRegistration() {
                     value={formData.consultationFee}
                     onChange={(e) => handleFieldChange('consultationFee', e.target.value)}
                     error={errors.consultationFee}
-                    placeholder="e.g., 500"
+                    placeholder={t('doctorReg.placeholders.fee')}
                   />
                 </div>
 
@@ -353,15 +356,15 @@ export default function DoctorRegistration() {
                     {t('doctorReg.languagesSpoken')}
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {languages.map((language) => (
-                      <label key={language} className="flex items-center gap-2 p-3 border border-border rounded-lg cursor-pointer hover:bg-background-subtle transition-colors">
+                    {languagesAvailable.map((language) => (
+                      <label key={language.value} className="flex items-center gap-2 p-3 border border-border rounded-lg cursor-pointer hover:bg-background-subtle transition-colors">
                         <input
                           type="checkbox"
-                          checked={(formData.languages || []).includes(language)}
-                          onChange={() => toggleLanguage(language)}
+                          checked={(formData.languages || []).includes(language.value)}
+                          onChange={() => toggleLanguage(language.value)}
                           className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
                         />
-                        <span className="text-sm text-text-heading">{language}</span>
+                        <span className="text-sm text-text-heading">{language.label}</span>
                       </label>
                     ))}
                   </div>
@@ -408,7 +411,7 @@ export default function DoctorRegistration() {
                   value={formData.licenseNumber}
                   onChange={(e) => handleFieldChange('licenseNumber', e.target.value)}
                   error={errors.licenseNumber}
-                  placeholder="e.g., EG-12345-2020"
+                  placeholder={t('doctorReg.placeholders.license')}
                 />
 
                 {/* Medical License Upload */}
@@ -575,10 +578,16 @@ export default function DoctorRegistration() {
           <div className="flex items-center justify-between mt-8 pt-6 border-t">
             <Button
               variant="outline"
-              onClick={previousStep}
-              disabled={isFirstStep || loading}
+              onClick={() => {
+                if (isFirstStep) {
+                  navigate('/auth/role-selection');
+                } else {
+                  previousStep();
+                }
+              }}
+              disabled={loading}
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
+              <ArrowLeft className="w-4 h-4 me-2 rtl:rotate-180" />
               {t('common.back')}
             </Button>
 
@@ -593,13 +602,13 @@ export default function DoctorRegistration() {
                 </div>
               ) : isLastStep ? (
                 <>
-                  <CheckCircle className="w-4 h-4 mr-2" />
+                  <CheckCircle className="w-4 h-4 me-2 rtl:rotate-180" />
                   {t('doctorReg.submitForApproval')}
                 </>
               ) : (
                 <>
                   {t('common.next')}
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  <ArrowRight className="w-4 h-4 ms-2 rtl:rotate-180" />
                 </>
               )}
             </Button>

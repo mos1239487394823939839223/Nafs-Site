@@ -15,7 +15,20 @@ import {
   formatPhone,
   validateEmail,
 } from "../../../lib/validation";
-import { ArrowBack as ArrowLeft, ArrowForward as ArrowRight, CheckCircle, Person as User, Favorite as Heart, Security as Shield } from '@mui/icons-material';
+import { 
+  ArrowBack as ArrowLeft, 
+  ArrowForward as ArrowRight, 
+  CheckCircle, 
+  Person as User, 
+  Favorite as Heart, 
+  Security as Shield,
+  Lock,
+  VerifiedUser,
+  History,
+  Quiz,
+  NotificationsActive as Emergency,
+  SupportAgent
+} from '@mui/icons-material';
 
 import { api, authAPI } from "../../../lib/api";
 import { useLanguage } from "../../../contexts/LanguageContext";
@@ -26,6 +39,83 @@ export default function PatientRegistration() {
   const toast = useToast();
   const { t } = useLanguage();
   const [loading, setLoading] = useState(false);
+  const [showIntro, setShowIntro] = useState(true);
+  const [introStep, setIntroStep] = useState(0);
+
+  const introCards = [
+    {
+      title: t("auth.intro.privacy.title"),
+      subtitle: t("auth.intro.privacy.subtitle"),
+      description: t("auth.intro.privacy.description"),
+      icon: Lock,
+      features: [
+        t("auth.intro.privacy.f1"),
+        t("auth.intro.privacy.f2"),
+        t("auth.intro.privacy.f3"),
+        t("auth.intro.privacy.f4")
+      ]
+    },
+    {
+      title: t("auth.intro.security.title"),
+      subtitle: t("auth.intro.security.subtitle"),
+      description: t("auth.intro.security.description"),
+      icon: VerifiedUser,
+      features: [
+        t("auth.intro.security.f1"),
+        t("auth.intro.security.f2"),
+        t("auth.intro.security.f3"),
+        t("auth.intro.security.f4")
+      ]
+    },
+    {
+      title: t("auth.intro.followup.title"),
+      subtitle: t("auth.intro.followup.subtitle"),
+      description: t("auth.intro.followup.description"),
+      icon: History,
+      features: [
+        t("auth.intro.followup.f1"),
+        t("auth.intro.followup.f2"),
+        t("auth.intro.followup.f3"),
+        t("auth.intro.followup.f4")
+      ]
+    },
+    {
+      title: t("auth.intro.tests.title"),
+      subtitle: t("auth.intro.tests.subtitle"),
+      description: t("auth.intro.tests.description"),
+      icon: Quiz,
+      features: [
+        t("auth.intro.tests.f1"),
+        t("auth.intro.tests.f2"),
+        t("auth.intro.tests.f3"),
+        t("auth.intro.tests.f4")
+      ]
+    },
+    {
+      title: t("auth.intro.emergency.title"),
+      subtitle: t("auth.intro.emergency.subtitle"),
+      description: t("auth.intro.emergency.description"),
+      icon: Emergency,
+      features: [
+        t("auth.intro.emergency.f1"),
+        t("auth.intro.emergency.f2"),
+        t("auth.intro.emergency.f3"),
+        t("auth.intro.emergency.f4")
+      ]
+    },
+    {
+      title: t("auth.intro.support.title"),
+      subtitle: t("auth.intro.support.subtitle"),
+      description: t("auth.intro.support.description"),
+      icon: SupportAgent,
+      features: [
+        t("auth.intro.support.f1"),
+        t("auth.intro.support.f2"),
+        t("auth.intro.support.f3"),
+        t("auth.intro.support.f4")
+      ]
+    }
+  ];
 
   const steps = [
     { id: 1, title: t('auth.basicInfo'), subtitle: t('auth.personalDetails'), icon: User },
@@ -346,235 +436,325 @@ export default function PatientRegistration() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background-paper to-background py-12 px-4 flex items-center justify-center">
-      <div className="w-full max-w-2xl">
-        {/* Form Card */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="bg-background-paper/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 md:p-10 border border-white/20"
-        >
-          <AnimatePresence mode="wait">
-            {/* Step 1: Basic Info */}
-            {currentStep === 1 && (
-              <motion.div
-                key="step1"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
-              >
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
-                    <User className="w-6 h-6 text-primary" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-text-heading">
-                      {t('auth.basicInformation')}
-                    </h2>
-                    <p className="text-sm text-text-muted">
-                      {t('auth.tellUsAboutYourself')}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6">
-                  <Input
-                    label={t('auth.firstName')}
-                    value={formData.firstName}
-                    onChange={(e) =>
-                      handleFieldChange("firstName", e.target.value)
-                    }
-                    error={errors.firstName}
-                    placeholder="Ahmed"
-                  />
-                  <Input
-                    label={t('auth.lastName')}
-                    value={formData.lastName}
-                    onChange={(e) =>
-                      handleFieldChange("lastName", e.target.value)
-                    }
-                    error={errors.lastName}
-                    placeholder="Hassan"
-                  />
-                </div>
-
-                <div className="grid md:grid-cols-2 gap-6 mb-6">
-                  <Input
-                    label={t('auth.email')}
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => handleFieldChange("email", e.target.value)}
-                    error={errors.email}
-                    placeholder="you@example.com"
-                  />
-                  <Input
-                    label={t('auth.password')}
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) =>
-                      handleFieldChange("password", e.target.value)
-                    }
-                    error={errors.password}
-                    placeholder="••••••••"
-                  />
-                </div>
-
-                <Input
-                  label={t('auth.phoneNumber')}
-                  type="tel"
-                  value={formData.phone}
-                  onChange={(e) => handleFieldChange("phone", e.target.value)}
-                  error={errors.phone}
-                  placeholder="+20 XXX XXX XXXX"
-                />
-
-                <div className="grid md:grid-cols-2 gap-6">
-                  <Input
-                    label={t('auth.dateOfBirth')}
-                    type="date"
-                    value={formData.dateOfBirth}
-                    onChange={(e) =>
-                      handleFieldChange("dateOfBirth", e.target.value)
-                    }
-                    error={errors.dateOfBirth}
-                    max={new Date().toISOString().split("T")[0]}
-                    slotProps={{ inputLabel: { shrink: true } }}
-                  />
-                  <Select
-                    label={t('common.gender')}
-                    value={formData.gender}
-                    onChange={(e) =>
-                      handleFieldChange("gender", e.target.value)
-                    }
-                    error={errors.gender}
-                  >
-                    <option value="">{t('common.selectGender')}</option>
-                    <option value="male">{t('common.male')}</option>
-                    <option value="female">{t('common.female')}</option>
-                    <option value="other">{t('common.other')}</option>
-                  </Select>
-                </div>
-
-                {formData.dateOfBirth && validateDate(formData.dateOfBirth) && (
-                  <div className="bg-primary/10 p-4 rounded-lg">
-                    <p className="text-sm text-primary">
-                      {t('common.age')}: {calculateAge(formData.dateOfBirth)} {t('common.yearsOld')}
-                    </p>
-                  </div>
-                )}
-              </motion.div>
-            )}
-
-            {/* Step 2: OTP Verification */}
-            {currentStep === 2 && (
-              <motion.div
-                key="step3"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                className="space-y-6"
-              >
-                <div className="flex items-center gap-3 mb-6">
-                  <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                    <Shield className="w-6 h-6 text-purple-600" />
-                  </div>
-                  <div>
-                    <h2 className="text-xl font-semibold text-clinical-darkGray">
-                      {t('auth.emailVerification')}
-                    </h2>
-                    <p className="text-sm text-clinical-gray">
-                      {t('auth.verifyYourEmail')}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="bg-primary/10 p-6 rounded-lg text-center">
-                  <p className="text-text-heading mb-2">
-                    {t('auth.verificationSentTo')}
-                  </p>
-                  <p className="text-xl font-semibold text-primary">
-                    {formData.email}
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-text-heading mb-2">
-                      {t('auth.enter6Digit')}
-                    </label>
-                    <input
-                      type="text"
-                      maxLength={6}
-                      value={formData.otp}
-                      onChange={(e) =>
-                        handleFieldChange(
-                          "otp",
-                          e.target.value.replace(/\D/g, ""),
-                        )
-                      }
-                      className={`w-full px-4 py-3 text-center text-2xl font-mono tracking-widest border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-text ${errors.otp ? "border-red-500" : "border-border"
-                        }`}
-                      placeholder="000000"
-                    />
-                    {errors.otp && (
-                      <p className="mt-1 text-sm text-red-500">{errors.otp}</p>
-                    )}
-                  </div>
-
-                  <div className="text-center">
-                    {otpTimer > 0 ? (
-                      <p className="text-sm text-clinical-gray">
-                        {t('auth.resendIn')}{" "}
-                        <span className="font-semibold text-medical-blue">
-                          {otpTimer}s
-                        </span>
-                      </p>
-                    ) : (
-                      <button
-                        onClick={handleSendOTP}
-                        className="text-sm text-primary hover:underline"
-                      >
-                        {t('auth.resendOtp')}
-                      </button>
-                    )}
-                  </div>
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Navigation Buttons */}
-          <div className="flex items-center justify-between mt-8 pt-6 border-t">
-            <Button
-              variant="outline"
-              onClick={previousStep}
-              disabled={isFirstStep || loading}
+      <div className="w-full max-w-4xl">
+        <AnimatePresence mode="wait">
+          {showIntro ? (
+            <motion.div
+              key={`intro-${introStep}`}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex justify-center"
             >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              {t('common.back')}
-            </Button>
+              <div className="bg-background-paper rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-border w-full max-w-md">
+                {/* Header with Gradient */}
+                {(() => {
+                  const card = introCards[introStep];
+                  return (
+                    <>
+                      <div className="bg-gradient-to-r from-primary to-primary-dark p-8 text-white relative overflow-hidden">
+                        <div className="absolute inset-0 bg-black/10"></div>
+                        <div className="flex items-center gap-4 mb-4 relative z-10">
+                          <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
+                            <card.icon className="w-8 h-8 text-white" />
+                          </div>
+                          <div>
+                            <h2 className="text-2xl font-bold text-white">{card.title}</h2>
+                            <p className="text-white/80 text-sm">{card.subtitle}</p>
+                          </div>
+                        </div>
+                        <p className="text-white/95 relative z-10">{card.description}</p>
+                      </div>
 
-            <Button onClick={handleNext} disabled={loading}>
-              {loading ? (
-                <div className="flex items-center gap-2">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>{t('common.processing')}</span>
+                      {/* Features */}
+                      <div className="p-8 flex-1 bg-background-paper">
+                        <h3 className="font-semibold text-text-heading mb-4">{t('auth.whatYouGet')}</h3>
+                        <ul className="space-y-3">
+                          {card.features.map((feature, idx) => (
+                            <li key={idx} className="flex items-center gap-3 text-text-muted">
+                              <div className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                                <div className="w-2 h-2 bg-primary rounded-full" />
+                              </div>
+                              <span className="text-sm">{feature}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      {/* Navigation buttons for intro */}
+                      <div className="p-8 pt-0 flex gap-3">
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            if (introStep === 0) {
+                              navigate('/auth/role-selection');
+                            } else {
+                              setIntroStep(introStep - 1);
+                            }
+                          }}
+                          className="flex-1"
+                        >
+                          <ArrowLeft className="w-4 h-4 me-2 rtl:rotate-180" />
+                          <span>{t('common.back')}</span>
+                        </Button>
+                        <Button 
+                          onClick={() => {
+                            if (introStep < introCards.length - 1) {
+                              setIntroStep(introStep + 1);
+                            } else {
+                              setShowIntro(false);
+                            }
+                          }}
+                          className="flex-1 group"
+                        >
+                          <span>{introStep === introCards.length - 1 ? t('auth.getStarted') : t('common.next')}</span>
+                          <ArrowRight className="w-4 h-4 ms-2 rtl:rotate-180 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform" />
+                        </Button>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="form"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="w-full max-w-2xl mx-auto"
+            >
+              <div className="bg-background-paper/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 md:p-10 border border-white/20">
+                <AnimatePresence mode="wait">
+                  {/* Step 1: Basic Info */}
+                  {currentStep === 1 && (
+                    <motion.div
+                      key="step1"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="space-y-6"
+                    >
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                          <User className="w-6 h-6 text-primary" />
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-semibold text-text-heading">
+                            {t('auth.basicInformation')}
+                          </h2>
+                          <p className="text-sm text-text-muted">
+                            {t('auth.tellUsAboutYourself')}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <Input
+                          label={t('auth.firstName')}
+                          value={formData.firstName}
+                          onChange={(e) =>
+                            handleFieldChange("firstName", e.target.value)
+                          }
+                          error={errors.firstName}
+                          placeholder={t('auth.placeholders.firstName')}
+                        />
+                        <Input
+                          label={t('auth.lastName')}
+                          value={formData.lastName}
+                          onChange={(e) =>
+                            handleFieldChange("lastName", e.target.value)
+                          }
+                          error={errors.lastName}
+                          placeholder={t('auth.placeholders.lastName')}
+                        />
+                      </div>
+
+                      <div className="grid md:grid-cols-2 gap-6 mb-6">
+                        <Input
+                          label={t('auth.email')}
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => handleFieldChange("email", e.target.value)}
+                          error={errors.email}
+                          placeholder={t('auth.placeholders.email')}
+                        />
+                        <Input
+                          label={t('auth.password')}
+                          type="password"
+                          value={formData.password}
+                          onChange={(e) =>
+                            handleFieldChange("password", e.target.value)
+                          }
+                          error={errors.password}
+                          placeholder="••••••••"
+                        />
+                      </div>
+
+                      <Input
+                        label={t('auth.phoneNumber')}
+                        type="tel"
+                        value={formData.phone}
+                        onChange={(e) => handleFieldChange("phone", e.target.value)}
+                        error={errors.phone}
+                        placeholder={t('auth.placeholders.phone')}
+                      />
+
+                      <div className="grid md:grid-cols-2 gap-6">
+                        <Input
+                          label={t('auth.dateOfBirth')}
+                          type="date"
+                          value={formData.dateOfBirth}
+                          onChange={(e) =>
+                            handleFieldChange("dateOfBirth", e.target.value)
+                          }
+                          error={errors.dateOfBirth}
+                          max={new Date().toISOString().split("T")[0]}
+                          slotProps={{ inputLabel: { shrink: true } }}
+                        />
+                        <Select
+                          label={t('common.gender')}
+                          value={formData.gender}
+                          onChange={(e) =>
+                            handleFieldChange("gender", e.target.value)
+                          }
+                          error={errors.gender}
+                        >
+                          <option value="">{t('common.selectGender')}</option>
+                          <option value="male">{t('common.male')}</option>
+                          <option value="female">{t('common.female')}</option>
+                          <option value="other">{t('common.other')}</option>
+                        </Select>
+                      </div>
+
+                      {formData.dateOfBirth && validateDate(formData.dateOfBirth) && (
+                        <div className="bg-primary/10 p-4 rounded-lg">
+                          <p className="text-sm text-primary">
+                            {t('common.age')}: {calculateAge(formData.dateOfBirth)} {t('common.yearsOld')}
+                          </p>
+                        </div>
+                      )}
+                    </motion.div>
+                  )}
+
+                  {/* Step 2: OTP Verification */}
+                  {currentStep === 2 && (
+                    <motion.div
+                      key="step3"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                      className="space-y-6"
+                    >
+                      <div className="flex items-center gap-3 mb-6">
+                        <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
+                          <Shield className="w-6 h-6 text-purple-600" />
+                        </div>
+                        <div>
+                          <h2 className="text-xl font-semibold text-clinical-darkGray">
+                            {t('auth.emailVerification')}
+                          </h2>
+                          <p className="text-sm text-clinical-gray">
+                            {t('auth.verifyYourEmail')}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="bg-primary/10 p-6 rounded-lg text-center">
+                        <p className="text-text-heading mb-2">
+                          {t('auth.verificationSentTo')}
+                        </p>
+                        <p className="text-xl font-semibold text-primary">
+                          {formData.email}
+                        </p>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-text-heading mb-2">
+                            {t('auth.enter6Digit')}
+                          </label>
+                          <input
+                            type="text"
+                            maxLength={6}
+                            value={formData.otp}
+                            onChange={(e) =>
+                              handleFieldChange(
+                                "otp",
+                                e.target.value.replace(/\D/g, ""),
+                              )
+                            }
+                            className={`w-full px-4 py-3 text-center text-2xl font-mono tracking-widest border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-text ${errors.otp ? "border-red-500" : "border-border"
+                              }`}
+                            placeholder={t('auth.placeholders.otp')}
+                          />
+                          {errors.otp && (
+                            <p className="mt-1 text-sm text-red-500">{errors.otp}</p>
+                          )}
+                        </div>
+
+                        <div className="text-center">
+                          {otpTimer > 0 ? (
+                            <p className="text-sm text-clinical-gray">
+                              {t('auth.resendIn')}{" "}
+                              <span className="font-semibold text-medical-blue">
+                                {otpTimer}s
+                              </span>
+                            </p>
+                          ) : (
+                            <button
+                              onClick={handleSendOTP}
+                              className="text-sm text-primary hover:underline"
+                            >
+                              {t('auth.resendOtp')}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {/* Navigation Buttons */}
+                <div className="flex items-center justify-between mt-8 pt-6 border-t">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (isFirstStep) {
+                        setShowIntro(true);
+                      } else {
+                        previousStep();
+                      }
+                    }}
+                    disabled={loading}
+                  >
+                    <ArrowLeft className="w-4 h-4 me-2 rtl:rotate-180" />
+                    {t('common.back')}
+                  </Button>
+
+                  <Button onClick={handleNext} disabled={loading}>
+                    {loading ? (
+                      <div className="flex items-center gap-2">
+                        <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        <span>{t('common.processing')}</span>
+                      </div>
+                    ) : isLastStep ? (
+                      <>
+                        <CheckCircle className="w-4 h-4 me-2 rtl:rotate-180" />
+                        {t('auth.completeRegistration')}
+                      </>
+                    ) : (
+                      <>
+                        {t('common.next')}
+                        <ArrowRight className="w-4 h-4 ms-2 rtl:rotate-180" />
+                      </>
+                    )}
+                  </Button>
                 </div>
-              ) : isLastStep ? (
-                <>
-                  <CheckCircle className="w-4 h-4 mr-2" />
-                  {t('auth.completeRegistration')}
-                </>
-              ) : (
-                <>
-                  {t('common.next')}
-                  <ArrowRight className="w-4 h-4 ml-2" />
-                </>
-              )}
-            </Button>
-          </div>
-        </motion.div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

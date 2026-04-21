@@ -1,6 +1,6 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth, Roles } from "./contexts/AuthContext";
+import { AuthProvider, useAuth, Roles, RoleDashboards } from "./contexts/AuthContext";
 import { ToastProvider } from "./components/ui/Toast";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -55,7 +55,7 @@ function RootRedirect() {
     return <Navigate to={dashboardRoute} replace />;
   }
 
-  return <Navigate to="/landing" replace />;
+  return <LandingPage />;
 }
 
 function AppRoutes() {
@@ -63,7 +63,7 @@ function AppRoutes() {
     <div className="min-h-screen bg-background">
       <Routes>
         {/* Landing Page */}
-        <Route path="/landing" element={<LandingPage />} />
+        <Route path="/" element={<RootRedirect />} />
 
         {/* Public Routes */}
         <Route path="/auth/login" element={<Login />} />
@@ -429,7 +429,6 @@ function AppRoutes() {
           }
         />
 
-        <Route path="/" element={<RootRedirect />} />
       </Routes>
     </div>
   );

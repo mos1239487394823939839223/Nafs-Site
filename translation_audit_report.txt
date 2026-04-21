@@ -1,0 +1,502 @@
+Translation Audit Report
+========================
+
+File: src\components\admin\KPICard.jsx
+  - ) : (
+  - vs last period
+
+File: src\components\auth\ProtectedRoute.jsx
+  - Loading...
+
+File: src\components\chat\ChatWindow.jsx
+  - ) : (
+  - Attach file
+
+File: src\components\chat\ConsultationsList.jsx
+  - ) : (
+  - ))
+        ) : (
+  - 0 ? (
+          filteredConsultations.map((consultation) => (
+
+File: src\components\chat\MessageBubble.jsx
+  - ) : (
+
+File: src\components\doctor\DailyAgenda.jsx
+  - ) : (
+  - new Date(a.SessionStartTime) - new Date(b.SessionStartTime))
+
+  // Generate time slots for the day
+  const timeSlots = []
+  for (let h = 8; h
+
+File: src\components\doctor\queue\QueueItem.jsx
+  - ) : (
+
+File: src\components\doctor\schedule\CalendarGrid.jsx
+  - Add Slot
+  - Available
+  - Booked
+  - Time
+  - ✓ Selected
+
+File: src\components\doctor\schedule\ScheduleSidebar.jsx
+  - Available
+  - Available Slots
+  - Booked Appointment
+  - Booked Hours
+  - Legend
+  - Not Available
+  - Today's Summary
+  - Total Sessions
+
+File: src\components\doctor\settings\DocumentsUpload.jsx
+  - ) : (
+  - ) : previewFile.type === 'application/pdf' ? (
+  - acc + arr.length, 0)
+
+  return (
+
+File: src\components\doctor\settings\NotificationSettings.jsx
+  - Appointment Reminders
+  - Daily Summary
+  - Email Notifications
+  - Marketing & Tips
+  - New Appointments
+  - New Messages
+  - Push Notifications
+  - System Updates
+
+File: src\components\doctor\settings\ProfileSettings.jsx
+  - ) : (
+  - ) : avatar ? (
+
+File: src\components\doctor\settings\SecuritySettings.jsx
+  - Add an extra layer of security. We'll send a code to your phone when you log in.
+  - Confirm New Password
+  - Current Password
+  - Last changed 3 months ago
+  - New Password
+  - Password
+  - Two-Factor Authentication
+  - Update Password
+
+File: src\components\landing\CTA.jsx
+  - ابدأ رحلتك نحو راحة نفسية حقيقية اليوم — التقييم الأول مجاني تماماً.
+  - خذ نَفَساً عميقاً، نحن هنا
+
+File: src\components\landing\Features.jsx
+  - كل ما تحتاجه في مكان واحد
+
+File: src\components\landing\Footer.jsx
+  - © 2026 نَفَس — جميع الحقوق محفوظة
+
+File: src\components\landing\HowItWorks.jsx
+  - ثلاث خطوات بسيطة تفصلك عن راحتك النفسية
+  - كيف يعمل نَفَس؟
+
+File: src\components\landing\Logo.jsx
+  - مساحتك الآمنة للصحة النفسية
+  - نَفَس
+
+File: src\components\layout\Header.jsx
+  - English
+  - العربية
+
+File: src\components\modals\BookingModal.jsx
+  - ) : (
+  - ) : doctors.length === 0 ? (
+  - Pick a date…
+  - Select Date
+  - Total:
+  - s.available)
+                    .map((slot) => (
+
+File: src\components\patient\DoctorDocumentsViewer.jsx
+  - ) : (
+  - ) : canUseOfficeWebViewer ? (
+  - ) : docViewerDocuments.length > 0 ? (
+  - ) : isPdfPreview ? (
+
+File: src\components\patient\HealthJourneyTimeline.jsx
+  - ) : (
+  - ) : getAppointmentStatusKey(event.status, event) ===
+                            "confirmed" ||
+                          getAppointmentStatusKey(event.status, event) ===
+                            "inProgress" ? (
+
+File: src\components\patient\settings\NotificationSettings.jsx
+  - Appointment Confirmations
+  - Appointment Reminders
+  - Clinic News
+  - Doctor Messages
+  - Email Notifications
+  - Lab Results
+  - Prescription Updates
+  - Push Notifications
+
+File: src\components\patient\settings\ProfileSettings.jsx
+  - ) : (
+  - ) : avatar ? (
+
+File: src\components\patient\settings\SecuritySettings.jsx
+  - Confirm New Password
+  - Current Password
+  - Last changed 1 year ago
+  - New Password
+  - Password
+  - Secure your health data. We'll send a code to your phone when you log in.
+  - Two-Factor Authentication
+  - Update Password
+
+File: src\components\shared\LocalDocumentsManager.jsx
+  - ) : (
+  - 0 || documentItem.uploadedAt) && (
+  - = 1024 && index
+
+File: src\components\shared\TestsWorkspace.jsx
+  - ) : (
+
+File: src\components\staff\ActiveTickets.jsx
+  - ) : (
+
+File: src\components\ui\DatePicker.jsx
+  - ) : (
+
+File: src\components\ui\Dialog.jsx
+  - close
+
+File: src\components\ui\Input.jsx
+  - ) : undefined
+
+    return (
+  - to
+
+File: src\components\ui\RichTextEditor.jsx
+  - ) : (
+  - ), return empty string
+      if (html === '
+  - Add Link
+  - Align Center
+  - Align Left
+  - Align Right
+  - Bold
+  - Bullet List
+  - Code Block
+  - H1
+  - H2
+  - H3
+  - Heading 1
+  - Heading 2
+  - Heading 3
+  - Highlight
+  - Horizontal Rule
+  - Italic
+  - Numbered List
+  - OK
+  - Quote
+  - Redo
+  - Remove Link
+  - Strikethrough
+  - Underline
+  - Undo
+  - https://...
+
+File: src\components\ui\SelectDropdown.jsx
+  - elements.
+ *
+ * Props:
+ *  - options    : Array
+
+File: src\components\ui\Tooltip.jsx
+  - // Get the actual trigger element (handle asChild)
+  const triggerElement = triggerChild.props.asChild
+    ? triggerChild.props.children
+    : triggerChild.props.children
+
+  return (
+
+File: src\hooks\useMultiStepForm.js
+  - = 1 && step
+
+File: src\views\admin\Blogs.jsx
+  - ) : (
+  - ) : allTags.length === 0 ? (
+
+File: src\views\admin\Bookings.jsx
+  - ) : (
+  - ) : filteredBookings.length === 0 ? (
+
+File: src\views\admin\Dashboard.jsx
+  - ) : (
+
+File: src\views\admin\DoctorFinance.jsx
+  - ) : (
+  - ))
+                  ) : (
+  - 0 ? (
+                    transactions.map((item, idx) => (
+
+File: src\views\admin\InviteStaff.jsx
+  - ) : (
+  - ) : filtered.length === 0 ? (
+  - +20 1xx xxx xxxx
+  - Ahmed Mohamed
+  - Loading team…
+  - Min. 6 characters
+  - Role
+  - Staff
+  - staff@nafs.com
+
+File: src\views\admin\Messages.jsx
+  - )
+                    ) : (
+  - ) : (
+  - ) : (
+                            filteredRooms.map((room) => (
+  - ) : filteredRooms.length === 0 ? (
+
+File: src\views\admin\PaymentDetails.jsx
+  - ) : (
+  - ) : (
+                  providers.map((provider) => (
+
+File: src\views\admin\Profile.jsx
+  - ) : (
+  - ) : avatar ? (
+  - Admin
+  - n[0]).join('').toUpperCase().slice(0, 2)
+
+    return (
+  - ••••••••
+
+File: src\views\admin\Tests.jsx
+  - ) : (
+  - ) : activeTab === 'tags' ? (
+  - ) : filteredTests.length === 0 ? (
+  - ) : tags.length === 0 ? (
+  - https://example.com/test
+
+File: src\views\admin\UserManagement.jsx
+  - ) : (
+  - ))
+                                                                :
+  - ))
+                                        ) : (
+  - 0
+                                                                ? (doctor.Specialist || doctor.specialist).map((s, i) => (
+  - 0 ? (
+                                            filteredDoctors.map((doctor) => (
+  - 0 ? (
+                                            filteredPatients.map((patient) => (
+  - Account Information
+  - Add certificates and documentation and classify each file type before upload.
+  - Minimum 6 characters
+  - Professional Details
+  - Recommended: JPG or PNG, square ratio.
+  - Upload a clear professional photo for the doctor account.
+  - e.g. Dr. Ahmed Hassan
+  - e.g. Psychiatry
+  - name@example.com
+
+File: src\views\auth\ForgotPassword.jsx
+  - ) : (
+  - you@example.com
+  - ••••••••
+
+File: src\views\auth\Login.jsx
+  - ) : (
+  - you@example.com
+  - ••••••••
+
+File: src\views\auth\PendingApproval.jsx
+  - support@clinc.com
+
+File: src\views\auth\doctor\DoctorRegistration.jsx
+  - ) : (
+  - ) : isLastStep ? (
+  - e.g., 10
+  - e.g., 500
+  - e.g., EG-12345-2020
+
+File: src\views\auth\patient\PatientRegistration.jsx
+  - ) : (
+  - ) : isLastStep ? (
+  - +20 XXX XXX XXXX
+  - Ahmed
+  - Hassan
+  - you@example.com
+  - ••••••••
+
+File: src\views\customer-service\Dashboard.jsx
+  - ) : (
+  - ) : filteredManualPayments.length === 0 ? (
+  - ) : filteredRefunds.length === 0 ? (
+  - : refundProcessMode === 'approve' ?
+
+File: src\views\customer-service\Profile.jsx
+  - ) : (
+  - ) : avatar ? (
+  - n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2)
+
+  return (
+
+File: src\views\doctor\Earnings.jsx
+  - ) : (
+  - ))
+                  ) : (
+  - 0 ? (
+                    transactions.map((item, idx) => (
+
+File: src\views\doctor\MedicalHistory.jsx
+  - ) : (
+  - ) : (
+                                    testTypes.map((type) => (
+  - ) : patientHistory.length > 0 ? (
+                                patientHistory.map((record) => (
+  - ))
+                            ) : (
+  - Describe the session highlights, patient progress, etc...
+  - No test types available
+  - Test Type
+  - e.g. Aspirin, Ibuprofen
+
+File: src\views\doctor\PatientQueue.jsx
+  - ) : (
+  - ) : showResultItems.length === 0 ? (
+  - ) : sortedPatients.length === 0 ? (
+  - = twoDaysMs;
+      const showJoin =
+        (statusKey === "confirmed" || statusKey === "inProgress") &&
+        diffMs >= 0 &&
+        diffMs
+  - ⚠️
+
+File: src\views\doctor\Schedule.jsx
+  - ) : (
+  - ) : (
+        /* ==================== CARDS VIEW ==================== */
+
+File: src\views\doctor\SessionHistory.jsx
+  - ) : (
+
+File: src\views\doctor\Settings.jsx
+  - ) : (
+  - ) : avatar ? (
+  - n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+
+  return (
+
+File: src\views\patient\Articles.jsx
+  - &times;
+  - ) : (
+
+File: src\views\patient\Blogs.jsx
+  - ) : (
+
+File: src\views\patient\Dashboard.jsx
+  - ) : (
+  - ) : upcomingAppointments.length > 0 ? (
+  - ))
+                ) : (
+  - 0 ? (
+                  upcomingAppointments.map((appointment) => (
+  - b.Id === nextAppointment.id)?.SessionStartTime,
+          ) -
+            new Date()) /
+            (1000 * 60 * 60 * 24),
+        ),
+      )
+    : null;
+
+  return (
+
+File: src\views\patient\PatientMessages.jsx
+  - ) : (
+  - ) : (
+                          contactType === 'support'
+                            ?
+  - ) : filteredRooms.length === 0 ? (
+
+File: src\views\patient\Profile.jsx
+  - ) : (
+  - ) : avatar ? (
+  - n[0]).join('').toUpperCase().slice(0, 2)
+
+
+
+    return (
+  - ••••••••
+
+File: src\views\patient\ReserveAppointment.jsx
+  - ) : (
+  - ) : paymentInstruction ? (
+  - ))
+                                      ) : (
+  - ))
+                              ) : (
+  - 0 ? (
+                                        doctor.Specialist.map((spec, idx) => (
+  - 0 ? (
+                                doctors.map((doctor) => (
+  - 0 ||
+                                                        isAvailableSlot) && (
+  - 1 && step
+  - = 1 && newPage
+  - = TWO_DAYS_IN_MS;
+                  const canCancelByStatus =
+                    statusInfo.key === "pending" ||
+                    statusInfo.key === "confirmed" ||
+                    statusInfo.key === "pendingPayment" ||
+                    statusInfo.key === "approved" ||
+                    statusInfo.key === "paid";
+                  const canCancel = canCancelByStatus && Boolean(isBefore48h);
+
+                  return (
+  - = bucket.min &&
+                                                h
+  - Grid View
+  - List View
+  - PNG, JPG, WEBP
+  - String(booking?.Id) === String(bookingId),
+    );
+    const sessionStart = targetBooking?.SessionStartTime
+      ? new Date(targetBooking.SessionStartTime)
+      : null;
+
+    if (
+      sessionStart &&
+      !Number.isNaN(sessionStart.getTime()) &&
+      sessionStart.getTime() - Date.now()
+  - bucket.slots.length > 0,
+                                        );
+
+                                      return (
+
+File: src\views\patient\Settings.jsx
+  - ) : (
+
+File: src\views\shared\DocumentViewer.jsx
+  - ) : (
+  - ) : isInlinePreviewSupported ? (
+  - ) : isPdfPreview ? (
+  - File Not Found
+
+File: src\views\shared\MessagesPage.jsx
+  - )
+        ) : (
+          /* Empty state */
+  - ) : (
+  - ) : filteredRooms.length === 0 ? (
+  - n[0]).join('').toUpperCase().slice(0, 2)
+                const hasUnread = (room.UnreadCount || 0) > 0
+                const lastTime = formatLastSeen(room.LastMessageAt || room.lastMessageAt)
+
+                return (
+

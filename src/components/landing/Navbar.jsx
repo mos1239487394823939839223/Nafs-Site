@@ -5,12 +5,17 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import Logo from "./Logo";
 import LandingButton from "./LandingButton";
 
-const navItems = ["المزايا", "المعالجون", "الحجز", "المقالات"];
-
 const Navbar = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
-  const { language, toggleLanguage } = useLanguage();
+  const { language, toggleLanguage, t } = useLanguage();
+
+  const navItems = [
+    { label: t("landing.nav.features"), key: "features" },
+    { label: t("landing.nav.therapists"), key: "therapists" },
+    { label: t("landing.nav.booking"), key: "booking" },
+    { label: t("landing.nav.articles"), key: "articles" },
+  ];
 
   return (
     <header className="w-full px-6 lg:px-10 py-5 flex items-center justify-between gap-6">
@@ -19,12 +24,12 @@ const Navbar = () => {
       <nav className="hidden md:flex items-center gap-8">
         {navItems.map((item) => (
           <button 
-            key={item} 
+            key={item.key} 
             type="button"
-            onClick={(e) => e.preventDefault()}
+            onClick={() => navigate('/auth/login')}
             className="text-sm font-medium text-text-light hover:text-primary transition-colors cursor-pointer"
           >
-            {item}
+            {item.label}
           </button>
         ))}
       </nav>
@@ -52,15 +57,15 @@ const Navbar = () => {
           className="hidden sm:inline-flex rounded-full"
           onClick={() => navigate('/auth/login')}
         >
-          تسجيل دخول / حساب
+          {t("landing.nav.login")}
         </LandingButton>
         <LandingButton 
           variant="hero" 
           size="sm" 
           className="gap-1"
-          onClick={() => navigate('/auth/role-selection')}
+          onClick={() => navigate('/auth/login')}
         >
-          <ChevronLeft className="w-4 h-4" /> احجز جلسة الآن
+          <ChevronLeft className="w-4 h-4 rtl:rotate-180" /> {t("landing.nav.bookNow")}
         </LandingButton>
       </div>
     </header>

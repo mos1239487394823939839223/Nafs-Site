@@ -54,12 +54,15 @@ export function LanguageProvider({ children }) {
     document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr'
     document.documentElement.lang = lang
 
-    // Sync with backend API
-    try {
-      await userAPI.updateLang(lang)
-    } catch (error) {
-      // API sync is best-effort; don't block UI for this
-      console.warn('Failed to sync language with API:', error)
+    // Sync with backend API if user is logged in
+    const isGuest = !localStorage.getItem('auth')
+    if (!isGuest) {
+      try {
+        await userAPI.updateLang(lang)
+      } catch (error) {
+        // API sync is best-effort; don't block UI for this
+        console.warn('Failed to sync language with API:', error)
+      }
     }
   }, [language])
 
