@@ -404,7 +404,7 @@ export default function PatientProfile() {
                             exit={{ opacity: 0, scale: 0.95, y: 20 }}
                             className="relative w-full max-w-2xl bg-background-paper rounded-2xl shadow-2xl border border-border overflow-hidden z-10 max-h-[80vh] overflow-y-auto"
                         >
-                            <div className="px-6 pt-6 pb-4 bg-gradient-to-r from-primary/10 to-secondary/5 border-b border-border flex items-center justify-between sticky top-0 z-10">
+                            <div className="px-6 pt-6 pb-4 bg-background-paper border-b border-border flex items-center justify-between sticky top-0 z-10">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
                                         <HistoryIcon className="w-5 h-5 text-primary" />
