@@ -104,10 +104,16 @@ medicalAPI.getPatientHistory(patientId, pageIndex, pageSize)
   "Data": {
     "Items": [
       {
-        "DiagnosisName": "Hypertension",
-        "Notes": "Patient shows improvement",
-        "Medications": "Lisinopril 10mg daily",
-        "CreatedAt": "2024-01-15T10:30:00"
+        "TestTypeName": "Blood Test",
+        "TestTypeDescription": "Complete blood count",
+        "DoctorName": "Dr. Ahmed",
+        "DoctorId": "14897348763390227968",
+        "Date": "2026-04-17T00:00:00",
+        "ScanUrl": "https://example.com/scan.pdf",
+        "ExamNotes": "Patient shows improvement",
+        "Result": "Normal",
+        "RecordId": "1494759664728932352",
+        "BookingId": null
       }
     ],
     "Pages": 1,
@@ -115,6 +121,18 @@ medicalAPI.getPatientHistory(patientId, pageIndex, pageSize)
   }
 }
 ```
+
+**Fields Displayed in Modal:**
+- **Test Type Name** - The name of the medical test
+- **Test Type Description** - Description of what the test is for
+- **Doctor Name** - Name of the doctor who ordered the test
+- **Date** - When the test was performed
+- **Scan URL** - Clickable link to view/download the scan file
+- **Exam Notes** - Clinical observations from the exam
+- **Result** - The result of the test
+- **Record ID** - Unique identifier for this medical record
+- **Booking ID** - Associated booking ID if applicable
+- **Doctor ID** - Doctor's system ID
 
 ## User Interface
 
@@ -142,21 +160,22 @@ medicalAPI.getPatientHistory(patientId, pageIndex, pageSize)
 │ Medical History                          ✕ │
 ├─────────────────────────────────────────────┤
 │                                             │
-│ Patient: Ahmed Hassan                       │
-│ Date: Jan 15, 2024                          │
+│ Patient: Hazem Patient                      │
+│ Date: May 11, 2026                          │
 │                                             │
 ├─────────────────────────────────────────────┤
 │                                             │
 │ ┌─────────────────────────────────────────┐ │
-│ │ Hypertension               01/15/2024    │ │
-│ │ Patient shows improvement                │ │
-│ │ Medications: Lisinopril 10mg daily       │ │
-│ └─────────────────────────────────────────┘ │
-│                                             │
-│ ┌─────────────────────────────────────────┐ │
-│ │ Diabetes Type 2            01/10/2024    │ │
-│ │ HbA1c levels stable at 6.8%              │ │
-│ │ Medications: Metformin 500mg twice daily │ │
+│ │ Test Type: Hazem Essam                  │ │
+│ │ Description: sis..                      │ │
+│ │ Doctor: doctor one                      │ │
+│ │ Date: 04/17/2026                        │ │
+│ │ Scan URL: [Open File]                   │ │
+│ │ Exam Notes: (if available)              │ │
+│ │ Result: (if available)                  │ │
+│ │ Record ID: 1494759664728...             │ │
+│ │ Booking ID: (if available)              │ │
+│ │ Doctor ID: 14897348763...               │ │
 │ └─────────────────────────────────────────┘ │
 │                                             │
 │ [Close]                                     │
@@ -168,14 +187,23 @@ medicalAPI.getPatientHistory(patientId, pageIndex, pageSize)
 ### ✅ Implemented
 - View button in actions column
 - Load patient medical history from API
-- Display medical records with diagnosis, notes, medications
-- Show creation date for each record
+- Display complete API response with all fields:
+  - Test Type Name & Description
+  - Doctor information
+  - Date (formatted)
+  - Scan URL (as clickable link)
+  - Exam Notes
+  - Result
+  - Record ID, Booking ID, Doctor ID
 - Loading state while fetching
 - Error handling with toast notifications
 - Empty state when no history found
 - Modal size: Large (lg) for better readability
+- Scrollable content area (max-height: 600px)
 - RTL support (Arabic direction)
-- Internationalization ready
+- Internationalization ready (all labels translated)
+- Date formatting for better readability
+- Clickable file links
 
 ### 🔄 Workflow
 1. Click View button → Opens modal + starts loading
