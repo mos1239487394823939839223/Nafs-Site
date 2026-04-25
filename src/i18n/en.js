@@ -79,6 +79,12 @@ export default {
     fullName: "Full Name",
     total: "Total",
     min: "min",
+    totalHours: "Total Hours",
+    patient: "Patient",
+    unknown: "Unknown",
+    address: "Address",
+    dateOfBirth: "Date of Birth",
+    saveChanges: "Save Changes",
   },
 
   // Auth
@@ -181,6 +187,7 @@ export default {
       otp: "000000"
     },
     emailVerification: "Email Verification",
+    verifyEmail: "Verify Email",
     verifyYourEmail: "Verify your email address",
     registrationSuccess: "Registration successful! Please sign in.",
     registrationSubmitted: "Registration submitted! Your account is pending approval.",
@@ -302,11 +309,6 @@ export default {
     minimumFee: "Minimum consultation fee is 100 EGP",
   },
 
-  doctor: {
-    earningsTitle: "Earnings",
-    earningsSubtitle: "Review your earnings summary and payment transactions",
-  },
-
   // Navigation
   nav: {
     dashboard: "Dashboard",
@@ -417,6 +419,8 @@ export default {
 
   // Doctor
   doctor: {
+    earningsTitle: "Earnings",
+    earningsSubtitle: "Review your earnings summary and payment transactions",
     dashboard: "Doctor Dashboard",
     todayAppointments: "Today's Appointments",
     weeklyOverview: "Weekly Overview",
@@ -546,8 +550,10 @@ export default {
     doctors: "Doctors",
     patients: "Patients",
     users: "Users",
+    totalPatients: "Total Patients",
     totalSessions: "Total Sessions",
     activeDoctors: "Active Doctors",
+    dateAndTime: "Date and Time",
     patientRetention: "Patient Retention",
     totalRevenue: "Total Revenue",
     topDoctors: "Top Performing Doctors",
@@ -595,6 +601,8 @@ export default {
     manager: "Manager",
     managerDesc: "Full access including team management and reporting",
     bookingsManagement: "Bookings Management",
+    manageBookingsDesc: "Manage and monitor all platform bookings",
+    searchPatientsDocs: "Search by patient or doctor name...",
     allBookings: "All Bookings",
     activeBookings: "Active Bookings",
     totalUsers: "Total Users",
@@ -727,14 +735,14 @@ export default {
     features: {
       title: "Everything you need in one place",
       subtitle: "A complete mental health ecosystem",
-      items: [
-        { title: "Video, Voice & Chat Sessions", desc: "Live communication with your therapist in the way that suits you, from anywhere." },
-        { title: "Flexible Booking", desc: "Multiple slots for each therapist with smart reminders and calendar integration." },
-        { title: "Secure Payment", desc: "Reliable and local payment options — easy and fast." },
-        { title: "Smart Assessment Assistant", desc: "A robot that asks short questions to suggest the most suitable therapist for your case." },
-        { title: "Awareness Content Library", desc: "Reliable articles and tools written by mental health specialists." },
-        { title: "Full Privacy", desc: "End-to-end encryption and strict protection for your data." }
-      ]
+      items: {
+        0: { title: "Secure Payment", desc: "Reliable and local payment options — easy and fast." },
+        1: { title: "Flexible Booking", desc: "Multiple slots for each therapist with smart reminders and calendar integration." },
+        2: { title: "Video, Voice & Chat Sessions", desc: "Live communication with your therapist in the way that suits you, from anywhere." },
+        3: { title: "Full Privacy", desc: "End-to-end encryption and strict protection for your data." },
+        4: { title: "Awareness Content Library", desc: "Reliable articles and tools written by mental health specialists." },
+        5: { title: "Smart Assessment Assistant", desc: "A robot that asks short questions to suggest the most suitable therapist for your case." }
+      }
     },
     howItWorks: {
       title: "How Nafs works?",

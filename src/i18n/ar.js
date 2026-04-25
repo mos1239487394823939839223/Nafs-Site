@@ -180,6 +180,14 @@ export default {
     verifyYourEmail: "تحقق من عنوان بريدك الإلكتروني",
     registrationSuccess: "تم التسجيل بنجاح! يرجى تسجيل الدخول.",
     registrationSubmitted: "تم تقديم التسجيل! حسابك في انتظار الموافقة.",
+    welcomeBack: "مرحباً بعودتك إلى نَفَس",
+    placeholders: {
+      firstName: "أحمد",
+      lastName: "حسن",
+      email: "you@example.com",
+      phone: "+20 XXX XXX XXXX",
+      otp: "000000"
+    },
     intro: {
       privacy: {
         title: "الخصوصية التامة",
@@ -275,6 +283,29 @@ export default {
     availabilityTip: "يمكنك دائماً تحديث أوقات توافرك لاحقاً من لوحة التحكم.",
     submitForApproval: "تقديم للموافقة",
     minimumFee: "الحد الأدنى لرسوم الاستشارة هو 100 جنيه مصري",
+    placeholders: {
+      experience: "مثال: 10",
+      fee: "مثال: 500",
+      license: "مثال: EG-12345-2020"
+    },
+    specialties: {
+      cardiology: "طب القلب",
+      dermatology: "الأمراض الجلدية",
+      generalMedicine: "الطب العام",
+      pediatrics: "طب الأطفال",
+      orthopedics: "جراحة العظام",
+      neurology: "الأمراض العصبية",
+      psychiatry: "الطب النفسي",
+      gynecology: "أمراض النساء",
+      ophthalmology: "طب العيون",
+      ent: "أنف وأذن وحنجرة"
+    },
+    languages: {
+      arabic: "العربية",
+      english: "الإنجليزية",
+      french: "الفرنسية",
+      german: "الألمانية"
+    }
   },
 
   // Settings
@@ -301,7 +332,7 @@ export default {
     passwordMismatch: "كلمات المرور غير متطابقة",
     language: "اللغة",
     changeLanguage: "تغيير اللغة",
-    english: "English",
+    english: "الإنجليزية",
     arabic: "العربية",
     change: "تغيير",
   },
@@ -348,6 +379,14 @@ export default {
     features: {
       title: "كل ما تحتاجه في مكان واحد",
       subtitle: "نظام بيئي متكامل للصحة النفسية",
+      items: {
+        0: { title: "الدفع الآمن", desc: "خيارات دفع موثوقة وفعالة محلياً — سهلة وسريعة." },
+        1: { title: "الحجز المرن", desc: "فترات زمنية متعددة لكل معالج مع تذكيرات ذكية وتكامل التقويم." },
+        2: { title: "جلسات فيديو وصوت وشات", desc: "تواصل مباشر مع معالجك بالطريقة المناسبة لك من أي مكان." },
+        3: { title: "الخصوصية الكاملة", desc: "تشفير من طرف إلى طرف وحماية صارمة لبياناتك." },
+        4: { title: "مكتبة محتوى التوعية", desc: "مقالات وأدوات موثوقة كتبها متخصصون في الصحة النفسية." },
+        5: { title: "مساعد التقييم الذكي", desc: "روبوت يطرح أسئلة قصيرة لاقتراح أنسب معالج لحالتك." }
+      }
     },
     howItWorks: {
       title: "كيف يعمل نَفَس؟",
@@ -368,7 +407,8 @@ export default {
     cta: {
       title: "خذ نَفَساً عميقاً، نحن هنا",
       subtitle: "ابدأ رحلتك نحو راحة نفسية حقيقية اليوم — التقييم الأول مجاني تماماً.",
-      button: "ابدأ التقييم المجاني"
+      button: "ابدأ التقييم المجاني",
+      browse: "استعرض المعالجين"
     },
     footer: {
       rights: "© 2026 نَفَس — جميع الحقوق محفوظة",
@@ -438,11 +478,6 @@ export default {
     bookingSummary: "ملخص الحجز",
     selectedTime: "الوقت المحدد",
     confirmAppointment: "تأكيد الموعد",
-
-  doctor: {
-    earningsTitle: "الأرباح",
-    earningsSubtitle: "راجع ملخص أرباحك وحركة المدفوعات",
-  },
     bookingConfirmed: "تم تأكيد الحجز!",
     bookingConfirmedTitle: "تم تأكيد الحجز!",
     bookingConfirmedDesc:
@@ -491,6 +526,8 @@ export default {
 
   // Doctor
   doctor: {
+    earningsTitle: "الأرباح",
+    earningsSubtitle: "راجع ملخص أرباحك وحركة المدفوعات",
     dashboard: "لوحة تحكم الطبيب",
     todayAppointments: "مواعيد اليوم",
     weeklyOverview: "نظرة أسبوعية",
