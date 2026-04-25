@@ -393,31 +393,118 @@ export default function SessionHistory() {
               <Loader2 className="w-6 h-6 text-primary animate-spin" />
             </div>
           ) : patientHistory?.Items && patientHistory.Items.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-3 max-h-[600px] overflow-y-auto">
               {patientHistory.Items.map((record, idx) => (
                 <div
                   key={idx}
-                  className="p-4 border border-border rounded-lg bg-background hover:bg-background-subtle transition-colors"
+                  className="p-4 border border-border rounded-lg bg-background hover:bg-background-subtle transition-colors space-y-3"
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <h4 className="font-semibold text-text-heading">
-                      {record.DiagnosisName || "Medical Record"}
-                    </h4>
-                    <span className="text-xs text-text-muted">
-                      {new Date(record.CreatedAt).toLocaleDateString()}
-                    </span>
-                  </div>
-                  {record.Notes && (
-                    <p className="text-sm text-text-light leading-relaxed">
-                      {record.Notes}
-                    </p>
-                  )}
-                  {record.Medications && (
-                    <div className="mt-2 pt-2 border-t border-border">
+                  {/* Test Type Name */}
+                  {record.TestTypeName && (
+                    <div>
                       <p className="text-xs font-medium text-text-muted mb-1">
-                        {isRTL ? "الأدوية:" : "Medications:"}
+                        {isRTL ? "نوع الاختبار:" : "Test Type:"}
                       </p>
-                      <p className="text-sm text-text-light">{record.Medications}</p>
+                      <p className="text-sm font-semibold text-text-heading">
+                        {record.TestTypeName}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Test Type Description */}
+                  {record.TestTypeDescription && (
+                    <div>
+                      <p className="text-xs font-medium text-text-muted mb-1">
+                        {isRTL ? "الوصف:" : "Description:"}
+                      </p>
+                      <p className="text-sm text-text-light">{record.TestTypeDescription}</p>
+                    </div>
+                  )}
+
+                  {/* Doctor Name */}
+                  {record.DoctorName && (
+                    <div>
+                      <p className="text-xs font-medium text-text-muted mb-1">
+                        {isRTL ? "الطبيب:" : "Doctor:"}
+                      </p>
+                      <p className="text-sm text-text-light">{record.DoctorName}</p>
+                    </div>
+                  )}
+
+                  {/* Date */}
+                  <div>
+                    <p className="text-xs font-medium text-text-muted mb-1">
+                      {isRTL ? "التاريخ:" : "Date:"}
+                    </p>
+                    <p className="text-sm text-text-light">
+                      {record.Date ? new Date(record.Date).toLocaleDateString() : "Invalid Date"}
+                    </p>
+                  </div>
+
+                  {/* Scan URL */}
+                  {record.ScanUrl && (
+                    <div>
+                      <p className="text-xs font-medium text-text-muted mb-1">
+                        {isRTL ? "الملف:" : "File:"}
+                      </p>
+                      <a
+                        href={record.ScanUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline break-all"
+                      >
+                        {isRTL ? "فتح الملف" : "Open File"}
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Exam Notes */}
+                  {record.ExamNotes && (
+                    <div>
+                      <p className="text-xs font-medium text-text-muted mb-1">
+                        {isRTL ? "ملاحظات الفحص:" : "Exam Notes:"}
+                      </p>
+                      <p className="text-sm text-text-light">{record.ExamNotes}</p>
+                    </div>
+                  )}
+
+                  {/* Result */}
+                  {record.Result && (
+                    <div>
+                      <p className="text-xs font-medium text-text-muted mb-1">
+                        {isRTL ? "النتيجة:" : "Result:"}
+                      </p>
+                      <p className="text-sm text-text-light">{record.Result}</p>
+                    </div>
+                  )}
+
+                  {/* Record ID */}
+                  {record.RecordId && (
+                    <div>
+                      <p className="text-xs font-medium text-text-muted mb-1">
+                        {isRTL ? "معرف السجل:" : "Record ID:"}
+                      </p>
+                      <p className="text-xs text-text-muted font-mono">{record.RecordId}</p>
+                    </div>
+                  )}
+
+                  {/* Booking ID */}
+                  {record.BookingId && (
+                    <div>
+                      <p className="text-xs font-medium text-text-muted mb-1">
+                        {isRTL ? "معرف الحجز:" : "Booking ID:"}
+                      </p>
+                      <p className="text-xs text-text-muted font-mono">{record.BookingId}</p>
+                    </div>
+                  )}
+
+                  {/* Doctor ID */}
+                  {record.DoctorId && (
+                    <div>
+                      <p className="text-xs font-medium text-text-muted mb-1">
+                        {isRTL ? "معرف الطبيب:" : "Doctor ID:"}
+                      </p>
+                      <p className="text-xs text-text-muted font-mono">{record.DoctorId}</p>
                     </div>
                   )}
                 </div>
