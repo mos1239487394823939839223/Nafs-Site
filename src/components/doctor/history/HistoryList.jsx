@@ -4,12 +4,13 @@ import {
   AccessTime as Clock,
   CheckCircle,
   ErrorOutline as AlertCircle,
+  Visibility as ViewIcon,
 } from "@mui/icons-material";
 import Badge from "../../ui/Badge";
 import Button from "../../ui/Button";
 import { useLanguage } from "../../../contexts/LanguageContext";
 
-export default function HistoryList({ sessions, onNoteClick }) {
+export default function HistoryList({ sessions, onNoteClick, onViewNoteClick }) {
   const { t, isRTL } = useLanguage();
   const getStatusBadge = (session) => {
     if (session.statusKey === "completed") {
@@ -138,17 +139,26 @@ export default function HistoryList({ sessions, onNoteClick }) {
                 <td
                   className={`px-6 py-4 ${isRTL ? "text-left" : "text-right"}`}
                 >
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-primary hover:bg-primary/5"
-                    onClick={() => onNoteClick?.(session)}
-                  >
-                    <FileText
-                      className={`w-4 h-4 ${isRTL ? "ml-1" : "mr-1"}`}
-                    />
-                    {t("common.notes", "Notes")}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-primary hover:bg-primary/5"
+                      onClick={() => onViewNoteClick?.(session)}
+                      title={t("common.view", "View")}
+                    >
+                      <ViewIcon className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="text-primary hover:bg-primary/5"
+                      onClick={() => onNoteClick?.(session)}
+                      title={t("common.edit", "Edit")}
+                    >
+                      <FileText className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </td>
               </motion.tr>
             ))}

@@ -8,12 +8,12 @@ import {
   ChevronLeft,
   ChevronRight,
   Description as FileText,
-} from "@mui/icons-material";
+} from "@mui/icons-material"; // Loader2 is used in both the page and modal
 import Button from "../../components/ui/Button";
 import SelectDropdown from "../../components/ui/SelectDropdown";
 import HistoryStats from "../../components/doctor/history/HistoryStats";
 import HistoryList from "../../components/doctor/history/HistoryList";
-import { doctorAPI } from "../../lib/api";
+import { doctorAPI, medicalAPI } from "../../lib/api";
 import { useLanguage } from "../../contexts/LanguageContext";
 import Modal from "../../components/ui/Modal";
 import { useToast } from "../../components/ui/Toast";
@@ -30,10 +30,13 @@ export default function SessionHistory() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
   const [isNoteModalOpen, setIsNoteModalOpen] = useState(false);
+  const [isViewNoteModalOpen, setIsViewNoteModalOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState(null);
   const [noteText, setNoteText] = useState("");
   const [sessionNotes, setSessionNotes] = useState({});
   const [isSavingNote, setIsSavingNote] = useState(false);
+  const [patientHistory, setPatientHistory] = useState(null);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const pageSize = 20;
 
   // Fetch bookings from API
@@ -153,6 +156,32 @@ export default function SessionHistory() {
     }
   };
 
+  const handleViewPatientHistory = async (session) => {
+    if (!session?.id) return;
+
+    try {
+      setIsLoadingHistory(true);
+      setSelectedSession(session);
+      setIsViewNoteModalOpen(true);
+
+      // Extract patientId from patientId field (format: "ID-123" or just the ID)
+      const patientIdValue = session.patientId?.replace(/^ID-/, '') || session.id;
+
+      const response = await medicalAPI.getPatientHistory(patientIdValue, 1, 100);
+
+      if (response.IsSuccess && response.Data) {
+        setPatientHistory(response.Data);
+      } else {
+        toast.error(response.Message || t("errors.somethingWentWrong", "Something went wrong"));
+      }
+    } catch (error) {
+      console.error("Failed to fetch patient history:", error);
+      toast.error(t("errors.somethingWentWrong", "Something went wrong"));
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
   return (
     <div className="p-6 max-w-7xl mx-auto" dir={isRTL ? "rtl" : "ltr"}>
       {/* Page Header */}
@@ -224,7 +253,7 @@ export default function SessionHistory() {
         </div>
       ) : (
         <>
-          <HistoryList sessions={sessions} onNoteClick={handleOpenNoteModal} />
+          <HistoryList sessions={sessions} onNoteClick={handleOpenNoteModal} onViewNoteClick={handleViewPatientHistory} />
 
           {/* Pagination */}
           {totalPages > 1 && (
@@ -325,6 +354,91 @@ export default function SessionHistory() {
             >
               <FileText className="w-4 h-4" />
               {isSavingNote ? t("common.saving", "Saving...") : t("common.save", "Save")}
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* View Patient History Modal */}
+      <Modal
+        isOpen={isViewNoteModalOpen}
+        onClose={() => {
+          setIsViewNoteModalOpen(false);
+          setSelectedSession(null);
+          setPatientHistory(null);
+        }}
+        title={t("doctor.medicalHistory", "Medical History")}
+        size="lg"
+      >
+        <div className="space-y-4" dir={isRTL ? "rtl" : "ltr"}>
+          {selectedSession && (
+            <div className="rounded-xl border border-border bg-background-subtle p-3 text-sm text-text-muted">
+              <p>
+                {isRTL ? "المريض:" : "Patient:"}{" "}
+                <span className="font-semibold text-text-heading">
+                  {selectedSession.patientName}
+                </span>
+              </p>
+              <p>
+                {isRTL ? "التاريخ:" : "Date:"}{" "}
+                <span className="font-medium text-text-heading">
+                  {selectedSession.date}
+                </span>
+              </p>
+            </div>
+          )}
+
+          {isLoadingHistory ? (
+            <div className="flex items-center justify-center py-8">
+              <Loader2 className="w-6 h-6 text-primary animate-spin" />
+            </div>
+          ) : patientHistory?.Items && patientHistory.Items.length > 0 ? (
+            <div className="space-y-3">
+              {patientHistory.Items.map((record, idx) => (
+                <div
+                  key={idx}
+                  className="p-4 border border-border rounded-lg bg-background hover:bg-background-subtle transition-colors"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <h4 className="font-semibold text-text-heading">
+                      {record.DiagnosisName || "Medical Record"}
+                    </h4>
+                    <span className="text-xs text-text-muted">
+                      {new Date(record.CreatedAt).toLocaleDateString()}
+                    </span>
+                  </div>
+                  {record.Notes && (
+                    <p className="text-sm text-text-light leading-relaxed">
+                      {record.Notes}
+                    </p>
+                  )}
+                  {record.Medications && (
+                    <div className="mt-2 pt-2 border-t border-border">
+                      <p className="text-xs font-medium text-text-muted mb-1">
+                        {isRTL ? "الأدوية:" : "Medications:"}
+                      </p>
+                      <p className="text-sm text-text-light">{record.Medications}</p>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center text-text-muted">
+              {isRTL ? "لا توجد سجلات طبية" : "No medical history found"}
+            </div>
+          )}
+
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsViewNoteModalOpen(false);
+                setSelectedSession(null);
+                setPatientHistory(null);
+              }}
+            >
+              {t("common.close", "Close")}
             </Button>
           </div>
         </div>
