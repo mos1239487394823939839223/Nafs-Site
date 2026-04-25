@@ -52,44 +52,44 @@ export default function HistoryList({ sessions, onNoteClick, onViewNoteClick }) 
 
   return (
     <div
-      className={`bg-background-paper rounded-xl border border-border shadow-sm overflow-hidden ${
+      className={`bg-background-paper rounded-2xl border border-border/50 shadow-sm overflow-hidden ${
         isRTL ? "text-right" : "text-left"
       }`}
     >
       <div className="overflow-x-auto">
         <table className="w-full">
-          <thead className="bg-background-subtle border-b border-border">
+          <thead className="bg-background-subtle/40 border-b border-border/50">
             <tr>
               <th
-                className={`px-6 py-4 text-sm font-semibold text-text-muted ${
+                className={`px-6 py-5 text-xs font-semibold text-text-muted uppercase tracking-wider ${
                   isRTL ? "text-right" : "text-left"
                 }`}
               >
-                {t("admin.dateAndTime", "Date & Time")}
+                {t("admin.dateAndTime", "Date and Time")}
               </th>
               <th
-                className={`px-6 py-4 text-sm font-semibold text-text-muted ${
+                className={`px-6 py-5 text-xs font-semibold text-text-muted uppercase tracking-wider ${
                   isRTL ? "text-right" : "text-left"
                 }`}
               >
                 {t("common.patient", "Patient")}
               </th>
               <th
-                className={`px-6 py-4 text-sm font-semibold text-text-muted ${
+                className={`px-6 py-5 text-xs font-semibold text-text-muted uppercase tracking-wider ${
                   isRTL ? "text-right" : "text-left"
                 }`}
               >
                 {t("doctor.duration", "Duration")}
               </th>
               <th
-                className={`px-6 py-4 text-sm font-semibold text-text-muted ${
+                className={`px-6 py-5 text-xs font-semibold text-text-muted uppercase tracking-wider ${
                   isRTL ? "text-right" : "text-left"
                 }`}
               >
-                {t("common.status", "Outcome")}
+                {t("common.status", "Status")}
               </th>
               <th
-                className={`px-6 py-4 text-sm font-semibold text-text-muted ${
+                className={`px-6 py-5 text-xs font-semibold text-text-muted uppercase tracking-wider ${
                   isRTL ? "text-left" : "text-right"
                 }`}
               >
@@ -97,18 +97,18 @@ export default function HistoryList({ sessions, onNoteClick, onViewNoteClick }) 
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-border/30">
             {sessions.map((session, index) => (
               <motion.tr
                 key={session.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.05 }}
-                className="hover:bg-background-subtle transition-colors"
+                className="hover:bg-background-subtle/30 transition-colors duration-200"
               >
-                <td className="px-6 py-4">
-                  <div className="flex flex-col">
-                    <span className="font-medium text-text-heading">
+                <td className="px-6 py-5">
+                  <div className="flex flex-col gap-0.5">
+                    <span className="font-semibold text-text-heading text-sm">
                       {session.date}
                     </span>
                     <span className="text-xs text-text-muted">
@@ -116,47 +116,47 @@ export default function HistoryList({ sessions, onNoteClick, onViewNoteClick }) 
                     </span>
                   </div>
                 </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-xs font-bold text-primary">
-                      {session.patientName.charAt(0)}
+                <td className="px-6 py-5">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <span className="text-xs font-bold text-primary">
+                        {session.patientName.charAt(0).toUpperCase()}
+                      </span>
                     </div>
-                    <div>
-                      <p className="text-sm font-medium text-text-heading">
-                        {session.patientName}
-                      </p>
-                    </div>
+                    <p className="text-sm font-medium text-text-heading">
+                      {session.patientName}
+                    </p>
                   </div>
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-5">
                   <div className="flex items-center gap-1.5 text-sm text-text-muted">
-                    <Clock className="w-3.5 h-3.5" />
-                    {session.duration}
-                    {t("common.min", "m")}
+                    <Clock className="w-4 h-4 flex-shrink-0" />
+                    <span className="font-medium">{session.duration}</span>
+                    <span className="text-xs">{t("common.min", "min")}</span>
                   </div>
                 </td>
-                <td className="px-6 py-4">{getStatusBadge(session)}</td>
+                <td className="px-6 py-5">{getStatusBadge(session)}</td>
                 <td
-                  className={`px-6 py-4 ${isRTL ? "text-left" : "text-right"}`}
+                  className={`px-6 py-5 ${isRTL ? "text-left" : "text-right"}`}
                 >
-                  <div className="flex gap-2">
+                  <div className={`flex gap-1 ${isRTL ? "flex-row-reverse" : "flex-row"} justify-end`}>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-primary hover:bg-primary/5"
+                      className="text-primary hover:bg-primary/10 p-1.5"
                       onClick={() => onViewNoteClick?.(session)}
                       title={t("common.view", "View")}
                     >
-                      <ViewIcon className="w-4 h-4" />
+                      <ViewIcon className="w-5 h-5" />
                     </Button>
                     <Button
                       variant="ghost"
                       size="sm"
-                      className="text-primary hover:bg-primary/5"
+                      className="text-primary hover:bg-primary/10 p-1.5"
                       onClick={() => onNoteClick?.(session)}
                       title={t("common.edit", "Edit")}
                     >
-                      <FileText className="w-4 h-4" />
+                      <FileText className="w-5 h-5" />
                     </Button>
                   </div>
                 </td>
