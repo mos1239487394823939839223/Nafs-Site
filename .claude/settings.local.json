@@ -8,7 +8,8 @@
       "Bash(pkill -f \"node.*vite\")",
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(cd d:\\\\\\\\Work\\\\\\\\Nafs\\\\\\\\Nafs-Site)"
     ]
   }
 }
