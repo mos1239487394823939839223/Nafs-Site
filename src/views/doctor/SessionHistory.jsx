@@ -397,17 +397,40 @@ export default function SessionHistory() {
               {patientHistory.Items.map((record, idx) => (
                 <div
                   key={idx}
-                  className="p-4 border border-border rounded-lg bg-background hover:bg-background-subtle transition-colors space-y-3"
+                  className="p-4 border border-border rounded-lg bg-background hover:bg-background-subtle transition-colors space-y-2"
                 >
+                  {/* Type Badge */}
+                  <div className="flex items-center justify-between mb-3">
+                    <div>
+                      <span className={`text-xs font-semibold px-2 py-1 rounded ${
+                        record.Type === 1
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-green-100 text-green-700'
+                      }`}>
+                        {record.Type === 1 ? (isRTL ? "اختبار طبي" : "Medical Test") : (isRTL ? "ملاحظة الطبيب" : "Doctor Note")}
+                      </span>
+                    </div>
+                    <span className="text-xs text-text-muted">
+                      {record.Date ? new Date(record.Date).toLocaleDateString() : "Invalid Date"}
+                    </span>
+                  </div>
+
+                  {/* Doctor Name */}
+                  {record.DoctorName && (
+                    <div>
+                      <p className="text-sm font-semibold text-text-heading">
+                        {isRTL ? "الطبيب:" : "Doctor:"} {record.DoctorName}
+                      </p>
+                    </div>
+                  )}
+
                   {/* Test Type Name */}
                   {record.TestTypeName && (
                     <div>
                       <p className="text-xs font-medium text-text-muted mb-1">
                         {isRTL ? "نوع الاختبار:" : "Test Type:"}
                       </p>
-                      <p className="text-sm font-semibold text-text-heading">
-                        {record.TestTypeName}
-                      </p>
+                      <p className="text-sm text-text-light">{record.TestTypeName}</p>
                     </div>
                   )}
 
@@ -421,40 +444,13 @@ export default function SessionHistory() {
                     </div>
                   )}
 
-                  {/* Doctor Name */}
-                  {record.DoctorName && (
-                    <div>
-                      <p className="text-xs font-medium text-text-muted mb-1">
-                        {isRTL ? "الطبيب:" : "Doctor:"}
+                  {/* Doctor Note (Type 2) */}
+                  {record.DoctorNote && (
+                    <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 p-3 rounded">
+                      <p className="text-xs font-medium text-yellow-800 dark:text-yellow-300 mb-1">
+                        {isRTL ? "ملاحظة الطبيب:" : "Doctor Note:"}
                       </p>
-                      <p className="text-sm text-text-light">{record.DoctorName}</p>
-                    </div>
-                  )}
-
-                  {/* Date */}
-                  <div>
-                    <p className="text-xs font-medium text-text-muted mb-1">
-                      {isRTL ? "التاريخ:" : "Date:"}
-                    </p>
-                    <p className="text-sm text-text-light">
-                      {record.Date ? new Date(record.Date).toLocaleDateString() : "Invalid Date"}
-                    </p>
-                  </div>
-
-                  {/* Scan URL */}
-                  {record.ScanUrl && (
-                    <div>
-                      <p className="text-xs font-medium text-text-muted mb-1">
-                        {isRTL ? "الملف:" : "File:"}
-                      </p>
-                      <a
-                        href={record.ScanUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline break-all"
-                      >
-                        {isRTL ? "فتح الملف" : "Open File"}
-                      </a>
+                      <p className="text-sm text-yellow-900 dark:text-yellow-200">{record.DoctorNote}</p>
                     </div>
                   )}
 
@@ -470,43 +466,48 @@ export default function SessionHistory() {
 
                   {/* Result */}
                   {record.Result && (
-                    <div>
-                      <p className="text-xs font-medium text-text-muted mb-1">
+                    <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 p-3 rounded">
+                      <p className="text-xs font-medium text-green-800 dark:text-green-300 mb-1">
                         {isRTL ? "النتيجة:" : "Result:"}
                       </p>
-                      <p className="text-sm text-text-light">{record.Result}</p>
+                      <p className="text-sm text-green-900 dark:text-green-200 font-medium">{record.Result}</p>
                     </div>
                   )}
 
-                  {/* Record ID */}
-                  {record.RecordId && (
+                  {/* Scan URL */}
+                  {record.ScanUrl && (
                     <div>
                       <p className="text-xs font-medium text-text-muted mb-1">
-                        {isRTL ? "معرف السجل:" : "Record ID:"}
+                        {isRTL ? "الملف:" : "File:"}
                       </p>
-                      <p className="text-xs text-text-muted font-mono">{record.RecordId}</p>
+                      <a
+                        href={record.ScanUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline break-all"
+                      >
+                        {record.ScanUrl.length > 50
+                          ? `${record.ScanUrl.substring(0, 50)}...`
+                          : record.ScanUrl}
+                      </a>
                     </div>
                   )}
 
-                  {/* Booking ID */}
-                  {record.BookingId && (
-                    <div>
-                      <p className="text-xs font-medium text-text-muted mb-1">
-                        {isRTL ? "معرف الحجز:" : "Booking ID:"}
-                      </p>
-                      <p className="text-xs text-text-muted font-mono">{record.BookingId}</p>
-                    </div>
-                  )}
-
-                  {/* Doctor ID */}
-                  {record.DoctorId && (
-                    <div>
-                      <p className="text-xs font-medium text-text-muted mb-1">
-                        {isRTL ? "معرف الطبيب:" : "Doctor ID:"}
-                      </p>
-                      <p className="text-xs text-text-muted font-mono">{record.DoctorId}</p>
-                    </div>
-                  )}
+                  {/* IDs Section */}
+                  <div className="pt-2 border-t border-border flex gap-4 text-xs text-text-muted">
+                    {record.RecordID && (
+                      <div>
+                        <span className="font-medium">{isRTL ? "معرف السجل:" : "Record ID:"}</span>
+                        <p className="font-mono text-text-light">{record.RecordID}</p>
+                      </div>
+                    )}
+                    {record.BookingID && (
+                      <div>
+                        <span className="font-medium">{isRTL ? "معرف الحجز:" : "Booking ID:"}</span>
+                        <p className="font-mono text-text-light">{record.BookingID}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>
