@@ -184,9 +184,9 @@ export default {
     placeholders: {
       firstName: "أحمد",
       lastName: "حسن",
-      email: "you@example.com",
-      phone: "+20 XXX XXX XXXX",
-      otp: "000000"
+      email: "أنت@مثال.com",
+      phone: "+966 XXX XXX XXXX",
+      otp: "٠٠٠٠٠٠"
     },
     intro: {
       privacy: {

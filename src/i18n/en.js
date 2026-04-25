@@ -702,7 +702,7 @@ export default {
     language: "Language",
     changeLanguage: "Change Language",
     english: "English",
-    arabic: "العربية",
+    arabic: "Arabic",
     change: "Change",
   },
   landing: {
