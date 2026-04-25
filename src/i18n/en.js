@@ -656,6 +656,8 @@ export default {
     payoutAmount: "Amount",
     payoutHistory: "Payout History",
     noPayoutsYet: "No payouts yet",
+    editDetails: "Edit Details",
+    updateYourInfo: "Update your personal information",
   },
 
   // Chat

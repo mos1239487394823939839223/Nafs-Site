@@ -761,6 +761,8 @@ export default {
     payoutAmount: "المبلغ",
     payoutHistory: "سجل الدفعات",
     noPayoutsYet: "لا توجد دفعات بعد",
+    editDetails: "تعديل البيانات",
+    updateYourInfo: "تحديث معلوماتك الشخصية",
   },
 
   // Chat
