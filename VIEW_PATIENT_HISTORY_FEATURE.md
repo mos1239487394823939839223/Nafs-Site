@@ -102,37 +102,57 @@ medicalAPI.getPatientHistory(patientId, pageIndex, pageSize)
 {
   "IsSuccess": true,
   "Data": {
+    "PageSize": 20,
+    "PageIndex": 1,
+    "Records": 3,
+    "Pages": 1,
     "Items": [
       {
-        "TestTypeName": "Blood Test",
-        "TestTypeDescription": "Complete blood count",
-        "DoctorName": "Dr. Ahmed",
-        "DoctorId": "14897348763390227968",
-        "Date": "2026-04-17T00:00:00",
-        "ScanUrl": "https://example.com/scan.pdf",
-        "ExamNotes": "Patient shows improvement",
-        "Result": "Normal",
-        "RecordId": "1494759664728932352",
-        "BookingId": null
+        "Type": 2,
+        "Date": "2026-05-11T00:00:00",
+        "DoctorID": "1484854688028295168",
+        "DoctorName": "hazem doctor.",
+        "RecordID": null,
+        "TestTypeName": null,
+        "TestTypeDescription": null,
+        "ScanUrl": null,
+        "ExamNotes": null,
+        "Result": null,
+        "BookingID": "1490434844864282624",
+        "DoctorNote": "الحاله سيئه"
+      },
+      {
+        "Type": 1,
+        "Date": "2026-04-17T20:00:00",
+        "DoctorID": "1489734876390227968",
+        "DoctorName": "doctor One",
+        "RecordID": "1494759664728932352",
+        "TestTypeName": "Hazem Essam",
+        "TestTypeDescription": "sss",
+        "ScanUrl": "https://emstore-sa.com/",
+        "ExamNotes": null,
+        "Result": "يييي",
+        "BookingID": null,
+        "DoctorNote": null
       }
-    ],
-    "Pages": 1,
-    "Records": 5
+    ]
   }
 }
 ```
 
 **Fields Displayed in Modal:**
-- **Test Type Name** - The name of the medical test
-- **Test Type Description** - Description of what the test is for
-- **Doctor Name** - Name of the doctor who ordered the test
-- **Date** - When the test was performed
-- **Scan URL** - Clickable link to view/download the scan file
-- **Exam Notes** - Clinical observations from the exam
-- **Result** - The result of the test
-- **Record ID** - Unique identifier for this medical record
-- **Booking ID** - Associated booking ID if applicable
+- **Type** - Record type (1=Medical Test, 2=Doctor Note)
+- **Date** - When the record was created (formatted to locale date)
+- **Doctor Name** - Name of the doctor
 - **Doctor ID** - Doctor's system ID
+- **Test Type Name** - Name of the medical test (if Type=1)
+- **Test Type Description** - Description of the test (if Type=1)
+- **Doctor Note** - Clinical notes from doctor (if Type=2) - highlighted in yellow
+- **Exam Notes** - Observations from exam
+- **Result** - Test result (if available) - highlighted in green
+- **Scan URL** - Clickable link to scan/file
+- **Record ID** - Unique identifier for medical record
+- **Booking ID** - Associated booking ID
 
 ## User Interface
 
@@ -155,27 +175,45 @@ medicalAPI.getPatientHistory(patientId, pageIndex, pageSize)
 ```
 
 ### Medical History Modal
+
+**Example with Doctor Note (Type 2):**
 ```
 ┌─────────────────────────────────────────────┐
 │ Medical History                          ✕ │
 ├─────────────────────────────────────────────┤
-│                                             │
 │ Patient: Hazem Patient                      │
 │ Date: May 11, 2026                          │
 │                                             │
 ├─────────────────────────────────────────────┤
 │                                             │
 │ ┌─────────────────────────────────────────┐ │
+│ │ [Doctor Note]        05/11/2026         │ │
+│ │ Doctor: hazem doctor.                   │ │
+│ │                                         │ │
+│ │ ┌─────────────────────────────────────┐ │ │
+│ │ │ Doctor Note:                        │ │ │
+│ │ │ الحاله سيئه                          │ │ │
+│ │ └─────────────────────────────────────┘ │ │
+│ │                                         │ │
+│ │ Record ID: -     Booking ID: 149043... │ │
+│ └─────────────────────────────────────────┘ │
+│                                             │
+├─────────────────────────────────────────────┤
+│                                             │
+│ ┌─────────────────────────────────────────┐ │
+│ │ [Medical Test]       04/17/2026         │ │
+│ │ Doctor: doctor One                      │ │
 │ │ Test Type: Hazem Essam                  │ │
-│ │ Description: sis..                      │ │
-│ │ Doctor: doctor one                      │ │
-│ │ Date: 04/17/2026                        │ │
-│ │ Scan URL: [Open File]                   │ │
-│ │ Exam Notes: (if available)              │ │
-│ │ Result: (if available)                  │ │
+│ │ Description: sss                        │ │
+│ │                                         │ │
+│ │ ┌─────────────────────────────────────┐ │ │
+│ │ │ Result:                             │ │ │
+│ │ │ يييي                                 │ │ │
+│ │ └─────────────────────────────────────┘ │ │
+│ │                                         │ │
+│ │ Scan URL: https://emstore-sa.com/      │ │
 │ │ Record ID: 1494759664728...             │ │
-│ │ Booking ID: (if available)              │ │
-│ │ Doctor ID: 14897348763...               │ │
+│ │ Booking ID: -                           │ │
 │ └─────────────────────────────────────────┘ │
 │                                             │
 │ [Close]                                     │
@@ -188,13 +226,18 @@ medicalAPI.getPatientHistory(patientId, pageIndex, pageSize)
 - View button in actions column
 - Load patient medical history from API
 - Display complete API response with all fields:
-  - Test Type Name & Description
-  - Doctor information
-  - Date (formatted)
-  - Scan URL (as clickable link)
-  - Exam Notes
-  - Result
-  - Record ID, Booking ID, Doctor ID
+  - **Type badge** - Visual distinction (Blue=Medical Test, Green=Doctor Note)
+  - **Doctor information** - Name and ID
+  - **Date** - Formatted to readable locale date
+  - **Test information** (Type 1):
+    - Test Type Name
+    - Test Type Description
+    - Scan URL (clickable link, truncated if long)
+    - Exam Notes
+  - **Doctor Notes** (Type 2):
+    - DoctorNote field with yellow highlight
+  - **Result** - Highlighted in green box
+  - **Record ID & Booking ID** - In footer section
 - Loading state while fetching
 - Error handling with toast notifications
 - Empty state when no history found
@@ -202,8 +245,9 @@ medicalAPI.getPatientHistory(patientId, pageIndex, pageSize)
 - Scrollable content area (max-height: 600px)
 - RTL support (Arabic direction)
 - Internationalization ready (all labels translated)
-- Date formatting for better readability
-- Clickable file links
+- Smart field display (only shows non-null fields)
+- Visual highlighting for important data (Notes, Results)
+- URL truncation for better display
 
 ### 🔄 Workflow
 1. Click View button → Opens modal + starts loading
