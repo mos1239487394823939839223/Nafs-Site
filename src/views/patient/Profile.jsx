@@ -17,10 +17,12 @@ import {
     LocationOn as MapPin,
     Favorite as Heart,
     FavoriteBorder as HeartOutline,
+    History as HistoryIcon,
 } from '@mui/icons-material'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { medicalAPI } from '../../lib/api'
 
 export default function PatientProfile() {
     const { user, updateProfile } = useAuth()
@@ -44,6 +46,9 @@ export default function PatientProfile() {
     const [passwordLoading, setPasswordLoading] = useState(false)
     const [bookings, setBookings] = useState([])
     const [bookingsLoading, setBookingsLoading] = useState(true)
+    const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
+    const [myHistory, setMyHistory] = useState(null)
+    const [isLoadingMyHistory, setIsLoadingMyHistory] = useState(false)
 
     useEffect(() => {
         const img = user?.image || user?.Image || null
@@ -153,6 +158,25 @@ export default function PatientProfile() {
         }
     }
 
+    const handleViewMyHistory = async () => {
+        setIsHistoryModalOpen(true)
+        setIsLoadingMyHistory(true)
+        try {
+            const response = await medicalAPI.getMyHistory(1, 100)
+            if (response?.IsSuccess === true && response?.Data) {
+                setMyHistory(response.Data)
+            } else {
+                toast.error(response?.Message || t('errors.somethingWentWrong'))
+                setIsHistoryModalOpen(false)
+            }
+        } catch (error) {
+            toast.error(extractErrorMessage(error, t('errors.somethingWentWrong')))
+            setIsHistoryModalOpen(false)
+        } finally {
+            setIsLoadingMyHistory(false)
+        }
+    }
+
     const displayName = formData.name || user?.name || user?.Name || t('patient.patient', 'Patient')
     const initials = displayName.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
 
@@ -218,6 +242,15 @@ export default function PatientProfile() {
                     </div>
 
                     <div className="flex items-center gap-3">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleViewMyHistory}
+                            className="flex items-center gap-2"
+                        >
+                            <HistoryIcon className="w-4 h-4" />
+                            {t('patient.myHistory', 'My History')}
+                        </Button>
                         <Button
                             variant="outline"
                             size="sm"
@@ -347,6 +380,161 @@ export default function PatientProfile() {
                                 <Button onClick={handleSave} isLoading={saving} className="px-6">
                                     {!saving && <CheckCircle2 className="w-4 h-4" />}
                                     {saving ? t('common.saving', 'Saving...') : t('common.saveChanges', 'Save Changes')}
+                                </Button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* ─── Medical History Modal ─── */}
+            <AnimatePresence>
+                {isHistoryModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+                            onClick={() => setIsHistoryModalOpen(false)}
+                        />
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                            className="relative w-full max-w-2xl bg-background-paper rounded-2xl shadow-2xl border border-border overflow-hidden z-10 max-h-[80vh] overflow-y-auto"
+                        >
+                            <div className="px-6 pt-6 pb-4 bg-gradient-to-r from-primary/10 to-secondary/5 border-b border-border flex items-center justify-between sticky top-0 z-10">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                                        <HistoryIcon className="w-5 h-5 text-primary" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg font-bold text-text-heading">{t('patient.myHistory', 'My History')}</h2>
+                                        <p className="text-xs text-text-muted">{t('patient.yourMedicalRecords', 'Your medical records and history')}</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => setIsHistoryModalOpen(false)}
+                                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-background-subtle transition-colors"
+                                >
+                                    <X className="w-5 h-5 text-text-muted" />
+                                </button>
+                            </div>
+
+                            <div className="p-6 space-y-4">
+                                {isLoadingMyHistory ? (
+                                    <div className="flex flex-col items-center justify-center py-12 gap-3">
+                                        <Loader2 className="w-8 h-8 text-primary animate-spin" />
+                                        <p className="text-sm text-text-muted">{t('common.loading', 'Loading...')}</p>
+                                    </div>
+                                ) : !myHistory?.Items || myHistory.Items.length === 0 ? (
+                                    <div className="text-center py-8">
+                                        <HistoryIcon className="w-12 h-12 text-text-muted/30 mx-auto mb-2" />
+                                        <p className="text-sm text-text-muted">{t('patient.noHistoryFound', 'No medical history found')}</p>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-4">
+                                        {myHistory.Items.map((item, index) => (
+                                            <motion.div
+                                                key={index}
+                                                initial={{ opacity: 0, y: 10 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ delay: index * 0.05 }}
+                                                className="border border-border/50 rounded-xl p-4 bg-background-subtle/20 hover:bg-background-subtle/40 transition-colors"
+                                            >
+                                                <div className="flex items-start justify-between gap-4 mb-3">
+                                                    <div>
+                                                        <div className="flex items-center gap-2 mb-1">
+                                                            <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold ${
+                                                                item.Type === 1
+                                                                    ? 'bg-blue-100 text-blue-700'
+                                                                    : 'bg-emerald-100 text-emerald-700'
+                                                            }`}>
+                                                                {item.Type === 1 ? t('patient.medicalTest', 'Medical Test') : t('patient.doctorNote', 'Doctor Note')}
+                                                            </span>
+                                                        </div>
+                                                        <p className="text-sm font-medium text-text-heading">
+                                                            {t('patient.doctor', 'Doctor')}: {item.DoctorName}
+                                                        </p>
+                                                    </div>
+                                                    <span className="text-xs text-text-muted whitespace-nowrap">
+                                                        {new Date(item.Date).toLocaleDateString()}
+                                                    </span>
+                                                </div>
+
+                                                {item.Type === 1 && (
+                                                    <div className="space-y-2 mb-3 border-t border-border/30 pt-3">
+                                                        {item.TestTypeName && (
+                                                            <div>
+                                                                <p className="text-xs text-text-muted">{t('patient.testType', 'Test Type')}</p>
+                                                                <p className="text-sm font-medium text-text-heading">{item.TestTypeName}</p>
+                                                            </div>
+                                                        )}
+                                                        {item.TestTypeDescription && (
+                                                            <div>
+                                                                <p className="text-xs text-text-muted">{t('patient.description', 'Description')}</p>
+                                                                <p className="text-sm text-text-heading">{item.TestTypeDescription}</p>
+                                                            </div>
+                                                        )}
+                                                        {item.ExamNotes && (
+                                                            <div>
+                                                                <p className="text-xs text-text-muted">{t('patient.examNotes', 'Exam Notes')}</p>
+                                                                <p className="text-sm text-text-heading">{item.ExamNotes}</p>
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+
+                                                {item.Type === 2 && item.DoctorNote && (
+                                                    <div className="mb-3 border-t border-border/30 pt-3">
+                                                        <p className="text-xs text-text-muted mb-1.5">{t('patient.doctorNotes', 'Doctor Notes')}</p>
+                                                        <div className="bg-yellow-50 dark:bg-yellow-900/20 text-yellow-900 dark:text-yellow-200 rounded-lg p-3 text-sm border border-yellow-200 dark:border-yellow-800">
+                                                            {item.DoctorNote}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {item.Result && (
+                                                    <div className="mb-3 border-t border-border/30 pt-3">
+                                                        <p className="text-xs text-text-muted mb-1.5">{t('patient.result', 'Result')}</p>
+                                                        <div className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-900 dark:text-emerald-200 rounded-lg p-3 text-sm border border-emerald-200 dark:border-emerald-800">
+                                                            {item.Result}
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {item.ScanUrl && (
+                                                    <div className="mb-3 border-t border-border/30 pt-3">
+                                                        <p className="text-xs text-text-muted mb-1">{t('patient.scanUrl', 'Scan URL')}</p>
+                                                        <a
+                                                            href={item.ScanUrl}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-sm text-primary hover:underline break-all"
+                                                        >
+                                                            {item.ScanUrl.length > 50 ? item.ScanUrl.substring(0, 50) + '...' : item.ScanUrl}
+                                                        </a>
+                                                    </div>
+                                                )}
+
+                                                <div className="flex gap-4 text-xs text-text-muted border-t border-border/30 pt-3">
+                                                    {item.RecordID && (
+                                                        <span>{t('patient.recordId', 'Record ID')}: {item.RecordID}</span>
+                                                    )}
+                                                    {item.BookingID && (
+                                                        <span>{t('patient.bookingId', 'Booking ID')}: {item.BookingID}</span>
+                                                    )}
+                                                </div>
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="px-6 pb-6 border-t border-border flex gap-3 justify-end sticky bottom-0 bg-background-paper">
+                                <Button variant="ghost" onClick={() => setIsHistoryModalOpen(false)} className="mt-4">
+                                    {t('common.close', 'Close')}
                                 </Button>
                             </div>
                         </motion.div>
