@@ -491,6 +491,14 @@ export const doctorAPI = {
     const response = await api.post("/Doctor/Availability/Slot", payload);
     return response.data;
   },
+
+  // Add or update booking note
+  addBookingNote: async (bookingId, note) => {
+    const response = await api.post(`/Doctor/Booking/${bookingId}/Note`, {
+      Note: note,
+    });
+    return response.data;
+  },
 };
 
 // ─── Admin API Functions ─────────────────────────────────────────────────────

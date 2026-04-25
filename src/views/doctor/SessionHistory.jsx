@@ -33,6 +33,7 @@ export default function SessionHistory() {
   const [selectedSession, setSelectedSession] = useState(null);
   const [noteText, setNoteText] = useState("");
   const [sessionNotes, setSessionNotes] = useState({});
+  const [isSavingNote, setIsSavingNote] = useState(false);
   const pageSize = 20;
 
   // Fetch bookings from API
@@ -124,18 +125,32 @@ export default function SessionHistory() {
     setIsNoteModalOpen(true);
   };
 
-  const handleSaveNote = () => {
+  const handleSaveNote = async () => {
     if (!selectedSession?.id) return;
 
-    setSessionNotes((prev) => ({
-      ...prev,
-      [selectedSession.id]: noteText.trim(),
-    }));
+    try {
+      setIsSavingNote(true);
+      const response = await doctorAPI.addBookingNote(selectedSession.id, noteText.trim());
 
-    setIsNoteModalOpen(false);
-    setSelectedSession(null);
-    setNoteText("");
-    toast.success(t("success.saved", "Saved successfully"));
+      if (response.IsSuccess) {
+        setSessionNotes((prev) => ({
+          ...prev,
+          [selectedSession.id]: noteText.trim(),
+        }));
+
+        setIsNoteModalOpen(false);
+        setSelectedSession(null);
+        setNoteText("");
+        toast.success(t("success.saved", "Saved successfully"));
+      } else {
+        toast.error(response.Message || t("errors.somethingWentWrong", "Something went wrong"));
+      }
+    } catch (error) {
+      console.error("Failed to save note:", error);
+      toast.error(t("errors.somethingWentWrong", "Something went wrong"));
+    } finally {
+      setIsSavingNote(false);
+    }
   };
 
   return (
@@ -305,10 +320,11 @@ export default function SessionHistory() {
             <Button
               onClick={handleSaveNote}
               className="gap-2"
-              disabled={!noteText.trim()}
+              disabled={!noteText.trim() || isSavingNote}
+              loading={isSavingNote}
             >
               <FileText className="w-4 h-4" />
-              {t("common.save", "Save")}
+              {isSavingNote ? t("common.saving", "Saving...") : t("common.save", "Save")}
             </Button>
           </div>
         </div>
