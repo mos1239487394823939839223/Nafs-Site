@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Search } from '@mui/icons-material'
+import { Search } from 'lucide-react'
 import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function ConsultationsList({ consultations, activeId, onSelect }) {

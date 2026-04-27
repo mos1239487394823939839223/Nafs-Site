@@ -9,7 +9,11 @@
       "Bash(git add *)",
       "Bash(git commit -m ' *)",
       "Bash(git commit *)",
-      "Bash(cd d:\\\\\\\\Work\\\\\\\\Nafs\\\\\\\\Nafs-Site)"
+      "Bash(cd d:\\\\\\\\Work\\\\\\\\Nafs\\\\\\\\Nafs-Site)",
+      "Bash(grep -E \"^d:\\\\\\\\Work\\\\\\\\Nafs\\\\\\\\Nafs-Site/\\(postcss|src\\)\")",
+      "Bash(npx tsc *)",
+      "Bash(npx vite *)",
+      "Bash(sed 's/:from.*//')"
     ]
   }
 }

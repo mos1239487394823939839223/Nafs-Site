@@ -1,4 +1,4 @@
-import { TrendingUp, TrendingDown } from '@mui/icons-material'
+import { TrendingUp, TrendingDown } from 'lucide-react'
 import { LineChart, Line, ResponsiveContainer } from 'recharts'
 
 export default function KPICard({ title, value, change, trend, sparklineData, icon: Icon, color = 'primary' }) {

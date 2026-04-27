@@ -4,11 +4,8 @@ import { motion } from 'framer-motion'
 import { useAuth, Roles } from '../../contexts/AuthContext'
 import { chatAPI, filesAPI, MessageType, userAPI } from '../../lib/api'
 import ChatWindow from '../../components/chat/ChatWindow'
-import {
-  Search, ChatBubbleOutline as MessageSquare, Sync as Loader2,
-  Refresh as RefreshCw, MedicalServices as Stethoscope, Person as User,
-  Headphones, Support as SupportAgent, EditNote as EditNoteIcon,
-} from '@mui/icons-material'
+import { Search, MessageSquare, Loader2, RefreshCw, Stethoscope, User, Headphones, FileEdit as EditNoteIcon } from 'lucide-react'
+const SupportAgent = Headphones
 import { useToast } from '../../components/ui/Toast'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { startChatConnection } from '../../lib/signalr'

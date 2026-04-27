@@ -8,6 +8,7 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { LanguageProvider, useLanguage } from "./contexts/LanguageContext";
 import Layout from "./components/layout/Layout";
 
+import { PatientHomePage } from "./Pages/patient-home-page";
 import PatientSettings from "./views/patient/Settings";
 import PatientProfile from "./views/patient/Profile";
 import ReserveAppointment from "./views/patient/ReserveAppointment";
@@ -81,7 +82,17 @@ function AppRoutes() {
           path="/dashboard/patient"
           element={
             <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
-              <Navigate to="/dashboard/patient/reserve" replace />
+              <Navigate to="/dashboard/patient/home" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/patient/home"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
+              <Layout>
+                <PatientHomePage />
+              </Layout>
             </ProtectedRoute>
           }
         />

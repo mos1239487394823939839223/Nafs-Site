@@ -83,11 +83,30 @@ export default {
                     light: 'var(--color-primary-light)',
                     dark: 'var(--color-primary-dark)',
                 },
+                // Patient home page tokens
+                'primary-soft': 'hsl(var(--primary-soft))',
+                mood: {
+                    1: 'var(--mood-1)',
+                    2: 'var(--mood-2)',
+                    3: 'var(--mood-3)',
+                    4: 'var(--mood-4)',
+                    5: 'var(--mood-5)',
+                },
+                // shadcn foreground / background aliases used by patient components
+                foreground: 'var(--color-text)',
+                'muted-foreground': 'var(--color-text-light)',
             },
             fontFamily: {
                 sans: ['Inter', 'Almarai', 'system-ui', 'sans-serif'],
                 arabic: ['Almarai', 'Inter', 'system-ui', 'sans-serif'],
                 display: ['Cairo', 'Almarai', 'Inter', 'system-ui', 'sans-serif'],
+            },
+            backgroundImage: {
+                'gradient-hero': 'var(--gradient-hero)',
+            },
+            boxShadow: {
+                card: 'var(--shadow-card)',
+                cta:  'var(--shadow-cta)',
             },
             borderRadius: {
                 lg: '0.75rem',

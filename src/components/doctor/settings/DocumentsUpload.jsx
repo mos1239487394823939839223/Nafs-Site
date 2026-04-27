@@ -1,19 +1,6 @@
 import { useState, useRef } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  UploadFile as UploadIcon,
-  Delete as Trash2,
-  Description as FileText,
-  PictureAsPdf as FilePdf,
-  Image as FileImage,
-  Visibility as Eye,
-  CheckCircle as CheckCircle2,
-  School as GraduationCap,
-  MedicalServices as Stethoscope,
-  Badge as BadgeIcon,
-  FolderOpen,
-  Close as X,
-} from '@mui/icons-material'
+import { Upload as UploadIcon, Trash2, FileText, FileText as FilePdf, Image as FileImage, Eye, CheckCircle as CheckCircle2, GraduationCap, Stethoscope, BadgeInfo as BadgeIcon, FolderOpen, X } from 'lucide-react'
 import { useLanguage } from '../../../contexts/LanguageContext'
 import { useToast } from '../../ui/Toast'
 

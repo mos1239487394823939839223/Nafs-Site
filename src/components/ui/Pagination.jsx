@@ -1,4 +1,5 @@
-import MuiPagination from '@mui/material/Pagination'
+import { Pagination as MuiPagination, PaginationItem } from '@mui/material'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 
 export default function Pagination({ page, total, onChange, className, sx }) {
   if (total <= 1) return null
@@ -11,6 +12,12 @@ export default function Pagination({ page, total, onChange, className, sx }) {
       color="primary"
       shape="rounded"
       className={className}
+      renderItem={(item) => (
+        <PaginationItem
+          slots={{ previous: ChevronLeft, next: ChevronRight }}
+          {...item}
+        />
+      )}
       sx={{
         '& .MuiPaginationItem-root': {
           fontWeight: 500,

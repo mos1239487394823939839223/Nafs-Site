@@ -10,21 +10,7 @@ import {
   extractErrorMessage,
 } from "../../lib/api";
 import Input from "../../components/ui/Input";
-import {
-  PhotoCamera as Camera,
-  Person as User,
-  Mail,
-  Phone,
-  Lock,
-  Sync as Loader2,
-  Edit,
-  Close as X,
-  Visibility as Eye,
-  VisibilityOff as EyeOff,
-  MedicalServices as Stethoscope,
-  CheckCircle as CheckCircle2,
-  Description as FileText,
-} from "@mui/icons-material";
+import { Camera, User, Mail, Phone, Lock, Loader2, Pencil as Edit, X, Eye, EyeOff, Stethoscope, CheckCircle as CheckCircle2, FileText } from "lucide-react";
 import Button from "../../components/ui/Button";
 
 export default function Settings() {

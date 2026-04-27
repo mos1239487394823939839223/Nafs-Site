@@ -8,7 +8,7 @@ import Button from '../../../components/ui/Button'
 import Input, { Textarea } from '../../../components/ui/Input'
 import SelectDropdown from '../../../components/ui/SelectDropdown'
 import { validateRequired, validateFileSize, validateFileType } from '../../../lib/validation'
-import { ArrowBack as ArrowLeft, ArrowForward as ArrowRight, MedicalServices as Stethoscope, Upload, CalendarToday as Calendar, Description as FileText, Close as X, CheckCircle, AccessTime as Clock } from '@mui/icons-material'
+import { ArrowLeft, ArrowRight, Stethoscope, Upload, Calendar, FileText, X, CheckCircle, Clock } from 'lucide-react'
 
 import { useAuth } from '../../../contexts/AuthContext'
 import { api, authAPI, extractErrorMessage } from '../../../lib/api'

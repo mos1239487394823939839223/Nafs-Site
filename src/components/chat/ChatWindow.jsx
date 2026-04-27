@@ -1,8 +1,5 @@
 import { useState, useRef, useEffect } from 'react'
-import {
-  Send, AttachFile as Paperclip, SentimentSatisfied as Smile,
-  ArrowBack as ArrowLeft, Close as X, Download, InsertDriveFile as FileIcon
-} from '@mui/icons-material'
+import { Send, Paperclip, Smile, ArrowLeft, X, Download, File as FileIcon } from 'lucide-react'
 import EmojiPicker from 'emoji-picker-react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useLanguage } from '../../contexts/LanguageContext'

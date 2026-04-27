@@ -441,6 +441,74 @@ export default {
     doctorWorkspace: "مساحة عمل الطبيب",
     adminDashboard: "لوحة تحكم المسؤول",
     customerService: "خدمة العملاء",
+    home: "الرئيسية",
+  },
+
+  // Sidebar Cards
+  sidebar: {
+    emergency: {
+      title: "تحتاج مساعدة فورية؟",
+      desc: "تواصل الآن مع فريق الدعم المختص",
+      cta: "اتصال طارئ",
+    },
+    blackmail: {
+      title: "تتعرض لابتزاز أو تهديد؟",
+      desc: "نحن هنا لحمايتك. يمكنك طلب المساعدة بسرية تامة.",
+      cta: "طلب حماية",
+    },
+  },
+
+  // Patient Home Page
+  patientHome: {
+    hero: {
+      title: "رحلتك نحو حياة نفسية أفضل",
+      subtitle: "أنا هنا لدعمك في كل خطوة على الطريق",
+      bookSession: "احجز جلسة الآن",
+    },
+    quickActions: {
+      title: "الإجراءات السريعة",
+      sessions:   { title: "جلساتي",        desc: "عرض وإدارة جميع جلساتك",                   cta: "عرض الجلسات"  },
+      content:    { title: "مكتبة المحتوى", desc: "مقالات وفيديوهات متنوعة",                   cta: "استكشف"       },
+      programs:   { title: "برامج علاجية",  desc: "برامج علاجية مصممة لمساعدتك",               cta: "عرض البرامج"  },
+      assessment: { title: "تقييم نفسي",    desc: "اختبار سريع يساعدك على فهم حالتك",          cta: "ابدأ التقييم" },
+    },
+    upcomingSession: {
+      title: "جلساتك القادمة",
+      viewAll: "عرض جميع الجلسات",
+      sessionType: "جلسة فردية",
+      enterSession: "الدخول للجلسة",
+      sessionDetails: "تفاصيل الجلسة",
+      noUpcoming: "لا توجد جلسات قادمة",
+      loading: "جاري التحميل...",
+    },
+    suggestedDoctors: {
+      title: "دكاترة مقترحون لك",
+      viewAll: "عرض جميع الدكاترة",
+      perSession: "جنيه للجلسة",
+      bookNow: "احجز الآن",
+    },
+    moodGauge: {
+      title: "حالتك النفسية اليوم",
+      improvement: "تحسن ملحوظ",
+      encouragement: "استمر في رحلتك، أنت على الطريق الصحيح",
+      history: "تاريخ التقييمات",
+    },
+    treatmentProgram: {
+      label: "البرنامج العلاجي",
+      title: "برنامج إدارة القلق",
+      session: "جلسة",
+      of: "من",
+      continue: "متابعة البرنامج",
+    },
+    moodCheckIn: {
+      title: "كيف تشعر اليوم؟",
+      subtitle: "شاركنا مشاعرك لمساعدتك بشكل أفضل",
+      great: "رائع",
+      good: "جيد",
+      okay: "متوسط",
+      bad: "سيئ",
+      terrible: "سيئ جداً",
+    },
   },
 
   // Patient

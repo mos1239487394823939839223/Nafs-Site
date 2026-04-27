@@ -5,7 +5,7 @@ import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { useToast } from '../../components/ui/Toast'
 import { validateEmail } from '../../lib/validation'
-import { Mail, ArrowBack as ArrowLeft, Security as Shield, Lock, CheckCircle, Visibility as Eye, VisibilityOff as EyeOff } from '@mui/icons-material'
+import { Mail, ArrowLeft, Shield, Lock, CheckCircle, Eye, EyeOff } from 'lucide-react'
 import { authAPI, extractErrorMessage } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 

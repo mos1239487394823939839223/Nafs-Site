@@ -1,5 +1,5 @@
 import { cn } from '../../lib/utils'
-import { Check } from '@mui/icons-material'
+import { Check } from 'lucide-react'
 
 export default function ProgressStepper({ steps, currentStep }) {
   return (

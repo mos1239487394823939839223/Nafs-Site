@@ -6,18 +6,7 @@ import Card, {
 } from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
-import {
-  ShowChart as Activity,
-  Favorite as Heart,
-  Thermometer,
-  TrendingUp,
-  CalendarToday as Calendar,
-  AccessTime as Clock,
-  Video,
-  ChatBubbleOutline as MessageSquare,
-  SmartToy as Bot,
-  Sync as Loader2,
-} from "@mui/icons-material";
+import { Activity, Heart, Thermometer, TrendingUp, Calendar, Clock, Video, MessageSquare, Bot, Loader2 } from "lucide-react";
 import {
   LineChart,
   Line,

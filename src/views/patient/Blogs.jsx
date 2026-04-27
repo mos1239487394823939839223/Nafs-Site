@@ -1,12 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Article as ArticleIcon,
-  Search,
-  CalendarToday as Calendar,
-  LocalOffer as TagIcon,
-  Close as X,
-} from '@mui/icons-material'
+import { FileText as ArticleIcon, Search, Calendar, Tag as TagIcon, X, TrendingUp } from 'lucide-react'
 import Select from 'react-select'
 import { useLanguage } from '../../contexts/LanguageContext'
 import Badge from '../../components/ui/Badge'

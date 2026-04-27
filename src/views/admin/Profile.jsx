@@ -3,19 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import { userAPI, filesAPI, extractErrorMessage } from '../../lib/api'
-import {
-    PhotoCamera as Camera,
-    Person as User,
-    Mail,
-    Phone,
-    Lock,
-    Sync as Loader2,
-    Edit,
-    Close as X,
-    AdminPanelSettings as ShieldCheck,
-    CheckCircle as CheckCircle2,
-    CalendarToday as Calendar,
-} from '@mui/icons-material'
+import { Camera, User, Mail, Phone, Lock, Loader2, Pencil as Edit, X, ShieldCheck, CheckCircle as CheckCircle2, Calendar } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { useLanguage } from '../../contexts/LanguageContext'

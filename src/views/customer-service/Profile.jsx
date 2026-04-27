@@ -6,19 +6,7 @@ import { useLanguage } from '../../contexts/LanguageContext'
 import { userAPI, filesAPI, extractErrorMessage } from '../../lib/api'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
-import {
-  PhotoCamera as Camera,
-  Person as User,
-  Mail,
-  Phone,
-  Lock,
-  Sync as Loader2,
-  Edit,
-  Close as X,
-  SupportAgent,
-  CheckCircle as CheckCircle2,
-  VerifiedUser,
-} from '@mui/icons-material'
+import { Camera, User, Mail, Phone, Lock, Loader2, Pencil as Edit, X, Headphones as SupportAgent, CheckCircle as CheckCircle2, ShieldCheck as VerifiedUser } from 'lucide-react'
 
 export default function StaffProfile() {
   const { user, updateProfile } = useAuth()

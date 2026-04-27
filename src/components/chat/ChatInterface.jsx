@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import ConsultationsList from './ConsultationsList'
 import ChatWindow from './ChatWindow'
-import { Menu, Close as X } from '@mui/icons-material'
+import { Menu, X } from 'lucide-react'
 import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function ChatInterface({ consultations, currentUserId, onSendMessage }) {

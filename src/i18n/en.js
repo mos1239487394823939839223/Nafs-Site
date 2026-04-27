@@ -334,6 +334,74 @@ export default {
     doctorWorkspace: "Doctor Workspace",
     adminDashboard: "Admin Dashboard",
     customerService: "Customer Service",
+    home: "Home",
+  },
+
+  // Sidebar Cards
+  sidebar: {
+    emergency: {
+      title: "Need immediate help?",
+      desc: "Connect now with our specialized support team",
+      cta: "Emergency Call",
+    },
+    blackmail: {
+      title: "Are you being blackmailed or threatened?",
+      desc: "We're here to protect you. You can request help in complete confidentiality.",
+      cta: "Request Protection",
+    },
+  },
+
+  // Patient Home Page
+  patientHome: {
+    hero: {
+      title: "Your Journey Towards a Better Mental Life",
+      subtitle: "I'm here to support you every step of the way",
+      bookSession: "Book a Session Now",
+    },
+    quickActions: {
+      title: "Quick Actions",
+      sessions: { title: "My Sessions", desc: "View and manage all your sessions", cta: "View Sessions" },
+      content:  { title: "Content Library", desc: "Articles and diverse videos", cta: "Explore" },
+      programs: { title: "Treatment Programs", desc: "Programs designed to help you", cta: "View Programs" },
+      assessment: { title: "Psychological Assessment", desc: "A quick test to help you understand your condition", cta: "Start Assessment" },
+    },
+    upcomingSession: {
+      title: "Your Upcoming Sessions",
+      viewAll: "View All Sessions",
+      sessionType: "Individual Session",
+      enterSession: "Enter Session",
+      sessionDetails: "Session Details",
+      noUpcoming: "No upcoming sessions",
+      loading: "Loading...",
+    },
+    suggestedDoctors: {
+      title: "Suggested Doctors for You",
+      viewAll: "View All Doctors",
+      perSession: "per session",
+      bookNow: "Book Now",
+    },
+    moodGauge: {
+      title: "Your Psychological State Today",
+      improvement: "Notable Improvement",
+      encouragement: "Keep going, you're on the right track",
+      history: "Assessment History",
+    },
+    treatmentProgram: {
+      label: "Treatment Program",
+      title: "Anxiety Management Program",
+      session: "Session",
+      of: "of",
+      continue: "Continue Program",
+    },
+    moodCheckIn: {
+      title: "How Do You Feel Today?",
+      subtitle: "Share your feelings to help us support you better",
+      great: "Great",
+      good: "Good",
+      okay: "Okay",
+      bad: "Bad",
+      terrible: "Terrible",
+    },
   },
 
   // Patient

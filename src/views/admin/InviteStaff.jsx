@@ -3,25 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import Badge from '../../components/ui/Badge'
 import { useToast } from '../../components/ui/Toast'
 import { validateEmail } from '../../lib/validation'
-import {
-  Mail,
-  CheckCircle,
-  Cancel as XCircle,
-  Sync as Loader2,
-  PersonAdd as UserPlus,
-  PersonOutline,
-  LockOutlined,
-  PhoneOutlined,
-  SupervisorAccount,
-  Groups,
-  WorkspacePremium,
-  SupportAgent,
-  Close,
-  Search,
-  Refresh,
-  Shield,
-  AdminPanelSettings,
-} from '@mui/icons-material'
+import { Mail, CheckCircle, XCircle, Loader2, UserPlus, User, Lock, Phone, UserCog, Users, Award, Headphones, X, Search, RefreshCw, Shield, ShieldCheck } from 'lucide-react'
 import { authAPI, userAPI, extractErrorMessage } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 
@@ -45,7 +27,7 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
       value: 'support-agent',
       label: t('admin.supportAgent'),
       description: t('admin.supportAgentDesc'),
-      icon: SupportAgent,
+      icon: Headphones,
       color: 'from-blue-500 to-cyan-500',
       bg: 'bg-blue-500/10 border-blue-500/30',
       textColor: 'text-blue-400',
@@ -54,7 +36,7 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
       value: 'manager',
       label: t('admin.manager'),
       description: t('admin.managerDesc'),
-      icon: AdminPanelSettings,
+      icon: ShieldCheck,
       color: 'from-violet-500 to-purple-500',
       bg: 'bg-violet-500/10 border-violet-500/30',
       textColor: 'text-violet-400',
@@ -157,7 +139,7 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
                 onClick={handleClose}
                 className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition-colors hover:bg-white/5 hover:text-white"
               >
-                <Close className="h-4 w-4" />
+                <X className="h-4 w-4" />
               </button>
             </div>
 
@@ -191,7 +173,7 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
                       {t('settings.fullName')} <span className="text-primary">*</span>
                     </label>
                     <div className="relative">
-                      <PersonOutline className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+                      <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
                       <input
                         name="name"
                         value={formData.name}
@@ -232,7 +214,7 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
                       {t('common.password')} <span className="text-primary">*</span>
                     </label>
                     <div className="relative">
-                      <LockOutlined className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
                       <input
                         name="password"
                         type={showPassword ? 'text' : 'password'}
@@ -260,7 +242,7 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
                       {t('admin.phoneOptional')}
                     </label>
                     <div className="relative">
-                      <PhoneOutlined className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+                      <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
                       <input
                         name="phoneNumber"
                         type="tel"
@@ -426,7 +408,7 @@ export default function InviteStaff() {
         <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
-              <SupervisorAccount className="h-3.5 w-3.5" />
+              <UserCog className="h-3.5 w-3.5" />
               {t('admin.addStaff')}
             </div>
             <h1 className="text-3xl font-bold tracking-tight text-white">
@@ -441,7 +423,7 @@ export default function InviteStaff() {
           <div className="flex flex-wrap gap-3">
             <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 backdrop-blur-sm">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary">
-                <Groups className="h-4 w-4 text-white" />
+                <Users className="h-4 w-4 text-white" />
               </div>
               <div>
                 <p className="text-xl font-bold text-white">{staffList.length}</p>
@@ -492,7 +474,7 @@ export default function InviteStaff() {
             disabled={fetchLoading}
             className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/50 transition-all hover:bg-white/10 hover:text-white"
           >
-            <Refresh className={`h-4 w-4 ${fetchLoading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${fetchLoading ? 'animate-spin' : ''}`} />
           </button>
 
           <button
@@ -522,7 +504,7 @@ export default function InviteStaff() {
             className="flex flex-col items-center justify-center py-24 text-center"
           >
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
-              <Groups className="h-8 w-8 text-white/20" />
+              <Users className="h-8 w-8 text-white/20" />
             </div>
             <p className="text-lg font-semibold text-white/40">
               {searchQuery ? 'No results found' : t('admin.noStaffMembers')}
@@ -584,7 +566,7 @@ export default function InviteStaff() {
                       </td>
                       <td className="px-6 py-4 border-r border-white/5 last:border-0 whitespace-nowrap">
                         <div className="flex items-center gap-2 text-xs text-white/60">
-                          <PhoneOutlined className="h-3.5 w-3.5 text-white/20" />
+                          <Phone className="h-3.5 w-3.5 text-white/20" />
                           {member.PhoneNumber || '—'}
                         </div>
                       </td>

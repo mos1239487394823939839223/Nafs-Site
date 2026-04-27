@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useId } from 'react'
-import { KeyboardArrowDown, Check } from '@mui/icons-material'
+import { ChevronDown, Check } from 'lucide-react'
 import { createPortal } from 'react-dom'
 
 /**
@@ -131,7 +131,7 @@ export default function SelectDropdown({
         <span className={`flex-1 text-left truncate ${selected ? 'text-text-heading font-medium' : 'text-text-muted'}`}>
           {selected ? selected.label : placeholder}
         </span>
-        <KeyboardArrowDown
+        <ChevronDown
           className={`w-4 h-4 text-text-muted flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180 text-primary' : ''}`}
           style={{ width: 18, height: 18 }}
         />

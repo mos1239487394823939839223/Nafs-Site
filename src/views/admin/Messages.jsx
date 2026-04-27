@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Search, ChatBubbleOutline as MessageSquare, Headphones, MedicalServices as Stethoscope, Sync as Loader2, Refresh as RefreshCw } from '@mui/icons-material'
+import { Search, MessageSquare, Headphones, Stethoscope, Loader2, RefreshCw } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import ChatWindow from '../../components/chat/ChatWindow'
 import { chatAPI, filesAPI, MessageType } from '../../lib/api'

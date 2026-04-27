@@ -1,17 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Article as ArticleIcon,
-  Search,
-  BookmarkBorder as Bookmark,
-  Bookmark as BookmarkFilled,
-  AccessTime as Clock,
-  Person as User,
-  FiberManualRecord as Circle,
-  Tag,
-  TrendingUp,
-  LocalOffer as TagIcon,
-} from "@mui/icons-material";
+import { FileText as ArticleIcon, Search, Bookmark, BookmarkCheck as BookmarkFilled, Clock, User, Circle, TrendingUp, Tag as TagIcon } from "lucide-react";
 import { useLanguage } from "../../contexts/LanguageContext";
 import Badge from "../../components/ui/Badge";
 

@@ -7,25 +7,25 @@ import Placeholder from '@tiptap/extension-placeholder'
 import Highlight from '@tiptap/extension-highlight'
 import { useEffect, useState, useCallback } from 'react'
 import {
-  FormatBold,
-  FormatItalic,
-  FormatUnderlined,
-  FormatStrikethrough,
-  FormatListBulleted,
-  FormatListNumbered,
-  FormatQuote,
-  FormatAlignLeft,
-  FormatAlignCenter,
-  FormatAlignRight,
+  Bold as FormatBold,
+  Italic as FormatItalic,
+  Underline as FormatUnderlined,
+  Strikethrough as FormatStrikethrough,
+  List as FormatListBulleted,
+  ListOrdered as FormatListNumbered,
+  Quote as FormatQuote,
+  AlignLeft as FormatAlignLeft,
+  AlignCenter as FormatAlignCenter,
+  AlignRight as FormatAlignRight,
   Code,
   Link as LinkIcon,
-  LinkOff,
+  Unlink as LinkOff,
   Undo,
   Redo,
-  Highlight as HighlightIcon,
-  HorizontalRule,
-  Title as TitleIcon,
-} from '@mui/icons-material'
+  Highlighter as HighlightIcon,
+  Minus as HorizontalRule,
+  Heading as TitleIcon,
+} from 'lucide-react'
 
 // ─── Toolbar Button ──────────────────────────────────────────────────────────
 

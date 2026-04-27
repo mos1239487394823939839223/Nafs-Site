@@ -1,29 +1,31 @@
 import { NavLink } from "react-router-dom";
 import { useAuth, Roles } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { EmergencyCallCard } from "../sidebar-cards/EmergencyCallCard";
+import { BlackmailProtectionCard } from "../sidebar-cards/BlackmailProtectionCard";
 import RoleBadge from "../ui/RoleBadge";
 import { UserAvatar } from "../ui/Avatar";
 import {
   Home,
-  CalendarToday as Calendar,
-  ChatBubbleOutline as MessageSquare,
+  Calendar,
+  MessageSquare,
   Settings,
-  Logout as LogOut,
-  People as Users,
-  ShowChart as Activity,
-  AttachMoney as DollarSign,
-  BarChart as BarChart3,
-  PersonAdd as UserPlus,
-  Medication as Pill,
-  Science as TestTube,
+  LogOut,
+  Users,
+  Activity,
+  DollarSign,
+  BarChart3,
+  UserPlus,
+  Pill,
+  TestTube,
   FolderOpen,
-  AccessTime as Clock,
+  Clock,
   TrendingUp,
   Headphones,
   Phone,
-  ConfirmationNumber as TicketIcon,
-  Article as ArticleIcon,
-} from "@mui/icons-material";
+  Ticket,
+  FileText,
+} from "lucide-react";
 
 export default function DynamicSidebar({ isOpen, onClose }) {
   const { role, user, logout } = useAuth();
@@ -32,6 +34,11 @@ export default function DynamicSidebar({ isOpen, onClose }) {
   // Navigation items for each role
   const navigationConfig = {
     [Roles.PATIENT]: [
+      {
+        name: t("nav.home"),
+        path: "/dashboard/patient/home",
+        icon: Home,
+      },
       {
         name: t("nav.reserve"),
         path: "/dashboard/patient/reserve",
@@ -45,7 +52,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       {
         name: t("nav.blogs"),
         path: "/dashboard/patient/blogs",
-        icon: ArticleIcon,
+        icon: FileText,
       },
       {
         name: t("nav.messages"),
@@ -68,7 +75,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       {
         name: t("nav.blogs"),
         path: "/dashboard/doctor/blogs",
-        icon: ArticleIcon,
+        icon: FileText,
       },
       {
         name: t("nav.history"),
@@ -97,7 +104,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
         path: "/admin/payment-details",
         icon: DollarSign,
       },
-      { name: t("nav.blogs"), path: "/admin/blogs", icon: ArticleIcon },
+      { name: t("nav.blogs"), path: "/admin/blogs", icon: FileText },
       {
         name: isRTL ? "الاختبارات" : "Tests",
         path: "/admin/tests",
@@ -116,7 +123,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       {
         name: t("nav.blogs"),
         path: "/dashboard/staff/blogs",
-        icon: ArticleIcon,
+        icon: FileText,
       },
       {
         name: t("nav.messages"),
@@ -226,6 +233,14 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                 );
               })}
             </ul>
+
+            {/* Emergency Sidebar Cards — patient only, inside scroll area */}
+            {role === Roles.PATIENT && (
+              <div className="flex flex-col gap-3 mt-4">
+                <EmergencyCallCard />
+                <BlackmailProtectionCard />
+              </div>
+            )}
           </nav>
 
           {/* Logout Button */}

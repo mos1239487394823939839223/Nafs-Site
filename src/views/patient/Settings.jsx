@@ -4,11 +4,7 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../../components/ui/Toast";
 import ProfileSettings from "../../components/patient/settings/ProfileSettings";
 import { userAPI, filesAPI, extractErrorMessage } from "../../lib/api";
-import {
-  Visibility as Eye,
-  VisibilityOff as EyeOff,
-  Lock,
-} from "@mui/icons-material";
+import { Eye, EyeOff, Lock } from "lucide-react";
 import Button from "../../components/ui/Button";
 import { useLanguage } from "../../contexts/LanguageContext";
 

@@ -14,15 +14,7 @@ import Table, {
 import Badge from "../../components/ui/Badge";
 import Button from "../../components/ui/Button";
 import SelectDropdown from "../../components/ui/SelectDropdown";
-import {
-  CalendarToday as Calendar,
-  FilterList as Filter,
-  Sync as Loader2,
-  ChevronLeft,
-  ChevronRight,
-  People as Users,
-  Search,
-} from "@mui/icons-material";
+import { Calendar, Filter, Loader2, ChevronLeft, ChevronRight, Users, Search } from "lucide-react";
 import { adminAPI, extractErrorMessage } from "../../lib/api";
 import { getAppointmentStatusMeta } from "../../lib/appointmentStatus";
 import {

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Description as FileText, Person as User, Add as Plus, CalendarToday as Calendar, AccessTime as Clock, ChevronRight, ArrowBack as ArrowLeft, Save, Medication as Pill, ChatBubbleOutline as MessageSquare, Sync as Loader2 } from '@mui/icons-material'
+import { Search, FileText, User, Plus, Calendar, Clock, ChevronRight, ArrowLeft, Save, Pill, MessageSquare, Loader2 } from 'lucide-react'
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'

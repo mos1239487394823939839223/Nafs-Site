@@ -4,14 +4,7 @@ import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Badge from "../ui/Badge";
 import DatePicker from "../ui/DatePicker";
-import {
-  Search,
-  CalendarToday as Calendar,
-  AccessTime as Clock,
-  Star,
-  Sync as Loader2,
-  MedicalServices as Stethoscope,
-} from "@mui/icons-material";
+import { Search, Calendar, Clock, Star, Loader2, Stethoscope } from "lucide-react";
 import { patientAPI, extractErrorMessage } from "../../lib/api";
 import { useToast } from "../ui/Toast";
 import { useLanguage } from "../../contexts/LanguageContext";

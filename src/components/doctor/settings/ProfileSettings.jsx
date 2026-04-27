@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { PhotoCamera as Camera, Person as User, Mail, Phone, LocationOn as MapPin, Work as Briefcase, Sync as Loader2 } from '@mui/icons-material'
+import { Camera, User, Mail, Phone, MapPin, Briefcase, Loader2 } from 'lucide-react'
 import Button from '../../ui/Button'
 import Input, { Textarea } from '../../ui/Input'
 import { useLanguage } from '../../../contexts/LanguageContext'

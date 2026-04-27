@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import DynamicSidebar from './DynamicSidebar'
 import Header from './Header'
-import { Menu, Close as X } from '@mui/icons-material'
+import { Menu, X } from 'lucide-react'
 import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function Layout({ children }) {

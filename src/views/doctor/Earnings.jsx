@@ -1,8 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  AttachMoney as MoneyIcon,
-  Refresh as RefreshIcon,
-} from "@mui/icons-material";
+import { DollarSign as MoneyIcon, RefreshCw as RefreshIcon } from "lucide-react";
 import Card, {
   CardHeader,
   CardTitle,

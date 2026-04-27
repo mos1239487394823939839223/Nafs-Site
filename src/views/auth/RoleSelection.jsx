@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Person as User, ArrowForward as ArrowRight } from '@mui/icons-material'
+import { User, ArrowRight } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import { useLanguage } from '../../contexts/LanguageContext'
 

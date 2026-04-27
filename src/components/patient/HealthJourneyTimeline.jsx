@@ -1,13 +1,5 @@
 import { useState, useEffect } from "react";
-import {
-  CalendarToday as Calendar,
-  Science as TestTube,
-  Medication as Pill,
-  Description as FileText,
-  CheckCircle,
-  AccessTime as Clock,
-  Sync as Loader2,
-} from "@mui/icons-material";
+import { Calendar, FlaskConical as TestTube, Pill, FileText, CheckCircle, Clock, Loader2 } from "lucide-react";
 import { useAuth } from "../../contexts/AuthContext";
 import { patientAPI } from "../../lib/api";
 import { useLanguage } from "../../contexts/LanguageContext";

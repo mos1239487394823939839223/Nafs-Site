@@ -9,15 +9,7 @@ import Modal from '../../components/ui/Modal'
 import SelectDropdown from '../../components/ui/SelectDropdown'
 import { useToast } from '../../components/ui/Toast'
 import { useLanguage } from '../../contexts/LanguageContext'
-import {
-  Science,
-  AddCircleOutline,
-  OpenInNew,
-  LocalOffer,
-  AssignmentTurnedIn,
-  Search,
-  Sync as Loader2,
-} from '@mui/icons-material'
+import { FlaskConical, PlusCircle, ExternalLink, Tag, ClipboardCheck, Search, Loader2 } from 'lucide-react'
 import {
   getAllTestResults,
 } from '../../lib/testsStorage'
@@ -241,19 +233,19 @@ export default function AdminTests() {
     {
       key: 'tests',
       label: isRTL ? 'الاختبارات' : 'Tests',
-      icon: <Science style={{ width: 18, height: 18 }} />,
+      icon: <FlaskConical style={{ width: 18, height: 18 }} />,
       count: tests.length,
     },
     {
       key: 'tags',
       label: isRTL ? 'وسوم الاختبارات' : 'Test Tags',
-      icon: <LocalOffer style={{ width: 18, height: 18 }} />,
+      icon: <Tag style={{ width: 18, height: 18 }} />,
       count: tags.length,
     },
     {
       key: 'results',
       label: isRTL ? 'النتائج' : 'Results',
-      icon: <AssignmentTurnedIn style={{ width: 18, height: 18 }} />,
+      icon: <ClipboardCheck style={{ width: 18, height: 18 }} />,
       count: results.length,
     },
   ]
@@ -408,7 +400,7 @@ export default function AdminTests() {
         <div>
           <h1 className="text-2xl font-bold text-text-heading flex items-center gap-3">
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
-              <Science className="text-primary" style={{ width: 22, height: 22 }} />
+              <FlaskConical className="text-primary" style={{ width: 22, height: 22 }} />
             </div>
             {isRTL ? 'إدارة الاختبارات' : 'Manage Tests'}
           </h1>
@@ -425,12 +417,12 @@ export default function AdminTests() {
             className="gap-2 shadow-lg shadow-primary/20"
             disabled={tags.length === 0}
           >
-            <AddCircleOutline style={{ width: 18, height: 18 }} />
+            <PlusCircle style={{ width: 18, height: 18 }} />
             {isRTL ? 'إنشاء اختبار' : 'Create Test'}
           </Button>
         ) : activeTab === 'tags' ? (
           <Button onClick={() => setIsCreateTagModalOpen(true)} className="gap-2 shadow-lg shadow-primary/20">
-            <AddCircleOutline style={{ width: 18, height: 18 }} />
+            <PlusCircle style={{ width: 18, height: 18 }} />
             {isRTL ? 'إنشاء وسم' : 'Create Tag'}
           </Button>
         ) : null}
@@ -520,7 +512,7 @@ export default function AdminTests() {
                 </div>
               ) : filteredTests.length === 0 ? (
                 <div className="text-center py-12 text-text-muted">
-                  <Science className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <FlaskConical className="w-12 h-12 mx-auto mb-3 opacity-30" />
                   <p>
                     {search
                       ? (isRTL ? 'لا توجد نتائج مطابقة' : 'No matching tests')
@@ -547,7 +539,7 @@ export default function AdminTests() {
                             rel="noreferrer"
                             className="inline-flex items-center gap-1 text-primary text-sm hover:underline"
                           >
-                            <OpenInNew className="w-4 h-4" />
+                            <ExternalLink className="w-4 h-4" />
                             {isRTL ? 'فتح الرابط' : 'Open URL'}
                           </a>
                         )}
@@ -575,12 +567,12 @@ export default function AdminTests() {
             <CardContent>
               {tagsLoading ? (
                 <div className="text-center py-12 text-text-muted">
-                  <LocalOffer className="w-12 h-12 mx-auto mb-3 opacity-30 animate-pulse" />
+                  <Tag className="w-12 h-12 mx-auto mb-3 opacity-30 animate-pulse" />
                   <p>{isRTL ? 'جاري تحميل الوسوم...' : 'Loading tags...'}</p>
                 </div>
               ) : tags.length === 0 ? (
                 <div className="text-center py-12 text-text-muted">
-                  <LocalOffer className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <Tag className="w-12 h-12 mx-auto mb-3 opacity-30" />
                   <p>{isRTL ? 'لا توجد وسوم بعد' : 'No tags yet'}</p>
                 </div>
               ) : (
@@ -624,7 +616,7 @@ export default function AdminTests() {
             <CardContent>
               {filteredResults.length === 0 ? (
                 <div className="text-center py-12 text-text-muted">
-                  <AssignmentTurnedIn className="w-12 h-12 mx-auto mb-3 opacity-30" />
+                  <ClipboardCheck className="w-12 h-12 mx-auto mb-3 opacity-30" />
                   <p>
                     {resultsSearch
                       ? (isRTL ? 'لا توجد نتائج مطابقة' : 'No matching results')
@@ -713,7 +705,7 @@ export default function AdminTests() {
               {isRTL ? 'إلغاء' : 'Cancel'}
             </Button>
             <Button type="submit" disabled={isCreatingTest}>
-              {!isCreatingTest && <AddCircleOutline className="w-4 h-4 mr-2" />}
+              {!isCreatingTest && <PlusCircle className="w-4 h-4 mr-2" />}
               {isCreatingTest
                 ? (isRTL ? 'جار الإنشاء...' : 'Creating...')
                 : (isRTL ? 'إنشاء الاختبار' : 'Create Test')}
@@ -759,7 +751,7 @@ export default function AdminTests() {
               {isRTL ? 'إلغاء' : 'Cancel'}
             </Button>
             <Button type="submit" disabled={isCreatingTag}>
-              <AddCircleOutline className="w-4 h-4 mr-2" />
+              <PlusCircle className="w-4 h-4 mr-2" />
               {isCreatingTag
                 ? (isRTL ? 'جار الإنشاء...' : 'Creating...')
                 : (isRTL ? 'إنشاء الوسم' : 'Create Tag')}

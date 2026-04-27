@@ -1,4 +1,4 @@
-import { People as Users, AccessTime as Clock, CheckCircle } from '@mui/icons-material'
+import { Users, Clock, CheckCircle } from 'lucide-react'
 import { useLanguage } from '../../../contexts/LanguageContext'
 
 export default function QueueStats({ stats }) {

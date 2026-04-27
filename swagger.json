@@ -699,6 +699,13 @@
               "format": "int32",
               "default": 20
             }
+          },
+          {
+            "name": "HasSlotsOnly",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -973,6 +980,256 @@
         ]
       }
     },
+    "/Patient/AIChat/End": {
+      "put": {
+        "tags": [
+          "Patient"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfboolean"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/Patient/AIChat/History": {
+      "get": {
+        "tags": [
+          "Patient"
+        ],
+        "parameters": [
+          {
+            "name": "Page",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "PageSize",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfPagingDtoOfAIChatHistoryDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/Patient/AIChat/Message": {
+      "post": {
+        "tags": [
+          "Patient"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendAIChatMessageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfAIChatResponseDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/Notification/DeviceToken": {
+      "post": {
+        "tags": [
+          "Notification"
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDeviceTokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfboolean"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/Notification/{id}/Read": {
+      "put": {
+        "tags": [
+          "Notification"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfboolean"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/Notification": {
+      "get": {
+        "tags": [
+          "Notification"
+        ],
+        "parameters": [
+          {
+            "name": "pageIndex",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": [
+                "integer",
+                "string"
+              ],
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfPagingDtoOfNotificationDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
     "/Medical/TestTypes/{testTypeId}/Diseases": {
       "put": {
         "tags": [
@@ -1124,55 +1381,6 @@
         ]
       }
     },
-    "/medical/patient-tests/{recordId}/result": {
-      "put": {
-        "tags": [
-          "Medical"
-        ],
-        "parameters": [
-          {
-            "name": "recordId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "pattern": "^-?(?:0|[1-9]\\d*)$",
-              "type": "integer",
-              "format": "int64"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UpdateTestResultRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/EndPointResponseOfboolean"
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "Bearer": [ ]
-          },
-          {
-            "Bearer": [ ]
-          }
-        ]
-      }
-    },
     "/medical/my-history": {
       "get": {
         "tags": [
@@ -1204,6 +1412,13 @@
               "format": "int32",
               "default": 20
             }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/PatientHistoryItemType"
+            }
           }
         ],
         "responses": {
@@ -1212,7 +1427,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EndPointResponseOfPagingDtoOfPatientTestRecordDto"
+                  "$ref": "#/components/schemas/EndPointResponseOfPagingDtoOfPatientHistoryItemDto"
                 }
               }
             }
@@ -1269,6 +1484,13 @@
               "format": "int32",
               "default": 20
             }
+          },
+          {
+            "name": "type",
+            "in": "query",
+            "schema": {
+              "$ref": "#/components/schemas/PatientHistoryItemType"
+            }
           }
         ],
         "responses": {
@@ -1277,7 +1499,56 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/EndPointResponseOfPagingDtoOfPatientTestRecordDto"
+                  "$ref": "#/components/schemas/EndPointResponseOfPagingDtoOfPatientHistoryItemDto"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/medical/patient-tests/{recordId}/result": {
+      "put": {
+        "tags": [
+          "Medical"
+        ],
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddTestResultRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfboolean"
                 }
               }
             }
@@ -1905,6 +2176,55 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/DoctorCancelBookingRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EndPointResponseOfboolean"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Bearer": [ ]
+          },
+          {
+            "Bearer": [ ]
+          }
+        ]
+      }
+    },
+    "/Doctor/Booking/{id}/Note": {
+      "post": {
+        "tags": [
+          "Doctor"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^-?(?:0|[1-9]\\d*)$",
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddDoctorBookingNoteRequest"
               }
             }
           },
@@ -3969,6 +4289,14 @@
           }
         }
       },
+      "AddDoctorBookingNoteRequest": {
+        "type": "object",
+        "properties": {
+          "Note": {
+            "type": "string"
+          }
+        }
+      },
       "AddPatientTestRequest": {
         "type": "object",
         "properties": {
@@ -4030,6 +4358,20 @@
           },
           "Comment": {
             "type": "string"
+          }
+        }
+      },
+      "AddTestResultRequest": {
+        "type": "object",
+        "properties": {
+          "Result": {
+            "type": "string"
+          },
+          "Notes": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -4169,6 +4511,44 @@
             "format": "int32"
           }
         }
+      },
+      "AIChatHistoryDto": {
+        "type": "object",
+        "properties": {
+          "Role": {
+            "$ref": "#/components/schemas/AIChatRole"
+          },
+          "Content": {
+            "type": "string"
+          },
+          "CreatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AIChatResponseDto": {
+        "type": "object",
+        "properties": {
+          "SessionId": {
+            "format": "int64"
+          },
+          "AIMessage": {
+            "type": "string"
+          },
+          "SuggestedDoctors": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "$ref": "#/components/schemas/SuggestedDoctorDto"
+            }
+          }
+        }
+      },
+      "AIChatRole": {
+        "type": "integer"
       },
       "ApplicationRole": {
         "type": "integer"
@@ -4399,6 +4779,12 @@
             "type": "boolean"
           },
           "PatientNotes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "DoctorNotes": {
             "type": [
               "null",
               "string"
@@ -5093,6 +5479,40 @@
           }
         }
       },
+      "EndPointResponseOfAIChatResponseDto": {
+        "required": [
+          "Data",
+          "IsSuccess",
+          "Message",
+          "ErrorCode",
+          "IsAuthorized"
+        ],
+        "type": "object",
+        "properties": {
+          "Data": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/AIChatResponseDto"
+              }
+            ]
+          },
+          "IsSuccess": {
+            "type": "boolean"
+          },
+          "Message": {
+            "type": "string"
+          },
+          "ErrorCode": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "IsAuthorized": {
+            "type": "boolean"
+          }
+        }
+      },
       "EndPointResponseOfBlogDetailDto": {
         "required": [
           "Data",
@@ -5691,6 +6111,40 @@
           }
         }
       },
+      "EndPointResponseOfPagingDtoOfAIChatHistoryDto": {
+        "required": [
+          "Data",
+          "IsSuccess",
+          "Message",
+          "ErrorCode",
+          "IsAuthorized"
+        ],
+        "type": "object",
+        "properties": {
+          "Data": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PagingDtoOfAIChatHistoryDto"
+              }
+            ]
+          },
+          "IsSuccess": {
+            "type": "boolean"
+          },
+          "Message": {
+            "type": "string"
+          },
+          "ErrorCode": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "IsAuthorized": {
+            "type": "boolean"
+          }
+        }
+      },
       "EndPointResponseOfPagingDtoOfBlogSummaryDto": {
         "required": [
           "Data",
@@ -5963,7 +6417,7 @@
           }
         }
       },
-      "EndPointResponseOfPagingDtoOfPatientTestRecordDto": {
+      "EndPointResponseOfPagingDtoOfNotificationDto": {
         "required": [
           "Data",
           "IsSuccess",
@@ -5979,7 +6433,41 @@
                 "type": "null"
               },
               {
-                "$ref": "#/components/schemas/PagingDtoOfPatientTestRecordDto"
+                "$ref": "#/components/schemas/PagingDtoOfNotificationDto"
+              }
+            ]
+          },
+          "IsSuccess": {
+            "type": "boolean"
+          },
+          "Message": {
+            "type": "string"
+          },
+          "ErrorCode": {
+            "$ref": "#/components/schemas/ErrorCode"
+          },
+          "IsAuthorized": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EndPointResponseOfPagingDtoOfPatientHistoryItemDto": {
+        "required": [
+          "Data",
+          "IsSuccess",
+          "Message",
+          "ErrorCode",
+          "IsAuthorized"
+        ],
+        "type": "object",
+        "properties": {
+          "Data": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/PagingDtoOfPatientHistoryItemDto"
               }
             ]
           },
@@ -6654,6 +7142,13 @@
               "string"
             ],
             "format": "double"
+          },
+          "NextAvailableSlot": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
@@ -6811,6 +7306,49 @@
       "MessageType": {
         "type": "integer"
       },
+      "NotificationDto": {
+        "type": "object",
+        "properties": {
+          "Id": {
+            "format": "int64"
+          },
+          "Type": {
+            "$ref": "#/components/schemas/NotificationType"
+          },
+          "Title": {
+            "type": "string"
+          },
+          "Body": {
+            "type": "string"
+          },
+          "Language": {
+            "$ref": "#/components/schemas/Language"
+          },
+          "IsRead": {
+            "type": "boolean"
+          },
+          "ReadAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "PayloadJson": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "CreatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "NotificationType": {
+        "type": "integer"
+      },
       "OpenCustomerSupportChatRequest": {
         "type": "object",
         "properties": {
@@ -6870,6 +7408,56 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AdminDoctorDto"
+            }
+          }
+        }
+      },
+      "PagingDtoOfAIChatHistoryDto": {
+        "required": [
+          "PageSize",
+          "PageIndex",
+          "Records",
+          "Pages",
+          "Items"
+        ],
+        "type": "object",
+        "properties": {
+          "PageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "PageIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Records": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Pages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AIChatHistoryDto"
             }
           }
         }
@@ -7324,7 +7912,7 @@
           }
         }
       },
-      "PagingDtoOfPatientTestRecordDto": {
+      "PagingDtoOfNotificationDto": {
         "required": [
           "PageSize",
           "PageIndex",
@@ -7369,7 +7957,57 @@
           "Items": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/PatientTestRecordDto"
+              "$ref": "#/components/schemas/NotificationDto"
+            }
+          }
+        }
+      },
+      "PagingDtoOfPatientHistoryItemDto": {
+        "required": [
+          "PageSize",
+          "PageIndex",
+          "Records",
+          "Pages",
+          "Items"
+        ],
+        "type": "object",
+        "properties": {
+          "PageSize": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "PageIndex": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Records": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Pages": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "Items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PatientHistoryItemDto"
             }
           }
         }
@@ -7724,14 +8362,30 @@
           }
         }
       },
-      "PatientTestRecordDto": {
+      "PatientHistoryItemDto": {
         "type": "object",
         "properties": {
+          "Type": {
+            "$ref": "#/components/schemas/PatientHistoryItemType"
+          },
+          "Date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "DoctorID": {
+            "format": "int64"
+          },
+          "DoctorName": {
+            "type": "string"
+          },
           "RecordID": {
             "format": "int64"
           },
           "TestTypeName": {
-            "type": "string"
+            "type": [
+              "null",
+              "string"
+            ]
           },
           "TestTypeDescription": {
             "type": [
@@ -7751,23 +8405,25 @@
               "string"
             ]
           },
-          "Result": {
+          "Results": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TestResultEntry"
+            }
+          },
+          "BookingID": {
+            "format": "int64"
+          },
+          "DoctorNote": {
             "type": [
               "null",
               "string"
             ]
-          },
-          "TestDate": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "DoctorID": {
-            "format": "int64"
-          },
-          "DoctorName": {
-            "type": "string"
           }
         }
+      },
+      "PatientHistoryItemType": {
+        "type": "integer"
       },
       "PaymentDto": {
         "type": "object",
@@ -7956,6 +8612,20 @@
       "RefundStatus": {
         "type": "integer"
       },
+      "RegisterDeviceTokenRequest": {
+        "type": "object",
+        "properties": {
+          "Token": {
+            "type": "string"
+          },
+          "Platform": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
       "RegisterDoctorRequest": {
         "type": "object",
         "properties": {
@@ -8122,6 +8792,17 @@
           },
           "Selected": {
             "type": "boolean"
+          }
+        }
+      },
+      "SendAIChatMessageRequest": {
+        "required": [
+          "Message"
+        ],
+        "type": "object",
+        "properties": {
+          "Message": {
+            "type": "string"
           }
         }
       },
@@ -8327,6 +9008,26 @@
           }
         }
       },
+      "SuggestedDoctorDto": {
+        "type": "object",
+        "properties": {
+          "DoctorId": {
+            "format": "int64"
+          },
+          "Name": {
+            "type": "string"
+          },
+          "Specializations": {
+            "type": [
+              "null",
+              "array"
+            ],
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "SupportChatRoomDto": {
         "type": "object",
         "properties": {
@@ -8356,6 +9057,27 @@
           },
           "Name": {
             "type": "string"
+          }
+        }
+      },
+      "TestResultEntry": {
+        "type": "object",
+        "properties": {
+          "result": {
+            "type": "string"
+          },
+          "notes": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "recordedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "recordedById": {
+            "format": "int64"
           }
         }
       },
@@ -8501,14 +9223,6 @@
               "null",
               "string"
             ]
-          }
-        }
-      },
-      "UpdateTestResultRequest": {
-        "type": "object",
-        "properties": {
-          "Result": {
-            "type": "string"
           }
         }
       },
@@ -8735,6 +9449,9 @@
     },
     {
       "name": "Payment Webhook"
+    },
+    {
+      "name": "Notification"
     },
     {
       "name": "Medical"

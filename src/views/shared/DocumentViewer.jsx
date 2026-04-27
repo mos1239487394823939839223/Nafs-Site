@@ -1,6 +1,6 @@
 import { useMemo } from 'react'
 import { useSearchParams } from 'react-router-dom'
-import { Download, ArrowBack } from '@mui/icons-material'
+import { Download, ArrowLeft as ArrowBack } from 'lucide-react'
 import DocViewer, { DocViewerRenderers } from '@cyntler/react-doc-viewer'
 import '@cyntler/react-doc-viewer/dist/index.css'
 import Button from '../../components/ui/Button'

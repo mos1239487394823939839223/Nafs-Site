@@ -3,22 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useAuth } from '../../contexts/AuthContext'
 import { useToast } from '../../components/ui/Toast'
 import { userAPI, filesAPI, patientAPI, extractErrorMessage } from '../../lib/api'
-import {
-    PhotoCamera as Camera,
-    Person as User,
-    Mail,
-    Phone,
-    Lock,
-    Sync as Loader2,
-    Edit,
-    Close as X,
-    CheckCircle as CheckCircle2,
-    CalendarToday as Calendar,
-    LocationOn as MapPin,
-    Favorite as Heart,
-    FavoriteBorder as HeartOutline,
-    History as HistoryIcon,
-} from '@mui/icons-material'
+import { Camera, User, Mail, Phone, Lock, Loader2, Pencil as Edit, X, CheckCircle as CheckCircle2, Calendar, MapPin, Heart, Heart as HeartOutline, History as HistoryIcon } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import Input from '../../components/ui/Input'
 import { useLanguage } from '../../contexts/LanguageContext'

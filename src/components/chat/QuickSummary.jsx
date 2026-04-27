@@ -1,4 +1,4 @@
-import { ShowChart as Activity, Medication as Pill, ErrorOutline as AlertCircle, Description as FileText } from '@mui/icons-material'
+import { Activity, Pill, AlertCircle, FileText } from 'lucide-react'
 import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function QuickSummary({ patientData, isOpen, onToggle }) {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { PhotoCamera as Camera, Person as User, Mail, Phone, LocationOn as MapPin, CalendarToday as Calendar, Favorite as Heart, Sync as Loader2 } from '@mui/icons-material'
+import { Camera, User, Mail, Phone, MapPin, Calendar, Heart, Loader2 } from 'lucide-react'
 import Button from '../../ui/Button'
 import Input from '../../ui/Input'
 import DatePicker from '../../ui/DatePicker'

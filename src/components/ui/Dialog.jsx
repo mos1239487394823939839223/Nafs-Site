@@ -5,7 +5,7 @@ import MuiDialogContent from '@mui/material/DialogContent'
 import MuiDialogActions from '@mui/material/DialogActions'
 import DialogContentText from '@mui/material/DialogContentText'
 import IconButton from '@mui/material/IconButton'
-import CloseIcon from '@mui/icons-material/Close'
+import { X as CloseIcon } from 'lucide-react'
 import Zoom from '@mui/material/Zoom'
 
 const Transition = React.forwardRef(function Transition(props, ref) {
@@ -70,7 +70,7 @@ const DialogContent = React.forwardRef(({ className, children, _dialogOpen, _dia
           },
         }}
       >
-        <CloseIcon fontSize="small" />
+        <CloseIcon size={18} />
       </IconButton>
     )}
     {React.Children.map(children, (child) => {

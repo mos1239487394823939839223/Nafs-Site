@@ -1,16 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  People as Users,
-  FilterList as Filter,
-  Sync as Loader2,
-  ChevronLeft,
-  ChevronRight,
-  Close as XCircle,
-  Biotech as TestTube,
-  AssignmentTurnedIn as ResultsIcon,
-} from "@mui/icons-material";
+import { Users, Filter, Loader2, ChevronLeft, ChevronRight, XCircle, TestTube, ClipboardCheck as ResultsIcon } from "lucide-react";
 import { useToast } from "../../components/ui/Toast";
 
 import QueueItem from "../../components/doctor/queue/QueueItem";

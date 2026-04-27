@@ -1,19 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  Search,
-  MedicalServices as Stethoscope,
-  ChevronRight,
-  Person as User,
-  Headphones,
-  AccessTime as Clock,
-  Sync as Loader2,
-  ChatBubbleOutline as MessageSquare,
-  Refresh as RefreshCw,
-  Support as SupportAgent,
-  LocalHospital as HospitalIcon,
-} from '@mui/icons-material';
+import { Search, Stethoscope, ChevronRight, User, Headphones, Clock, Loader2, MessageSquare, RefreshCw, Hospital as HospitalIcon } from 'lucide-react';
+const SupportAgent = Headphones;
 import Button from "../../components/ui/Button";
 import ChatWindow from "../../components/chat/ChatWindow";
 import { useAuth } from "../../contexts/AuthContext";

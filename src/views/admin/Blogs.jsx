@@ -1,20 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  Article as ArticleIcon,
-  Add as Plus,
-  Edit as Pencil,
-  Delete as Trash2,
-  LocalOffer as TagIcon,
-  CalendarToday as Calendar,
-  Close as X,
-  Save,
-  Search,
-  FilterList as Filter,
-  Image as ImageIcon,
-  CloudUpload,
-} from '@mui/icons-material'
+import { FileText as ArticleIcon, Plus, Pencil, Trash2, Tag as TagIcon, Calendar, X, Save, Search, Filter, Image as ImageIcon, CloudUpload } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import Modal from '../../components/ui/Modal'
 import Badge from '../../components/ui/Badge'

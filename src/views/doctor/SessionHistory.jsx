@@ -1,14 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import {
-  Download,
-  FilterList as Filter,
-  CalendarToday as Calendar,
-  Sync as Loader2,
-  ChevronLeft,
-  ChevronRight,
-  Description as FileText,
-} from "@mui/icons-material"; // Loader2 is used in both the page and modal
+import { Download, Filter, Calendar, Loader2, ChevronLeft, ChevronRight, FileText } from "lucide-react";
 import Button from "../../components/ui/Button";
 import SelectDropdown from "../../components/ui/SelectDropdown";
 import HistoryStats from "../../components/doctor/history/HistoryStats";

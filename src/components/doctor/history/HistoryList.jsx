@@ -1,11 +1,5 @@
 import { motion } from "framer-motion";
-import {
-  Description as FileText,
-  AccessTime as Clock,
-  CheckCircle,
-  ErrorOutline as AlertCircle,
-  Visibility as ViewIcon,
-} from "@mui/icons-material";
+import { FileText, Clock, CheckCircle, AlertCircle, Eye as ViewIcon } from "lucide-react";
 import Badge from "../../ui/Badge";
 import Button from "../../ui/Button";
 import { useLanguage } from "../../../contexts/LanguageContext";

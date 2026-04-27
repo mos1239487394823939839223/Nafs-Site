@@ -1,4 +1,4 @@
-import { People as Users, AccessTime as Clock, AttachMoney as DollarSign } from '@mui/icons-material'
+import { Users, Clock, DollarSign } from 'lucide-react'
 import { useLanguage } from '../../../contexts/LanguageContext'
 
 export default function HistoryStats({ stats }) {

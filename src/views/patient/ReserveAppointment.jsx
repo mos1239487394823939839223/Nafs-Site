@@ -14,30 +14,7 @@ import Table, {
   TableHeader,
   TableRow,
 } from "../../components/ui/Table";
-import {
-  Search,
-  MedicalServices as Stethoscope,
-  CalendarToday as Calendar,
-  AccessTime as Clock,
-  ChevronRight,
-  Person as User,
-  ArrowBack as ArrowLeft,
-  CheckCircle,
-  Cancel as XCircle,
-  ChevronLeft,
-  Sync as Loader2,
-  Visibility as Eye,
-  ViewList,
-  GridView,
-  Star,
-  Send,
-  ThumbUp,
-  Badge as BadgeIcon,
-  FlashOn,
-  AccountBalanceWallet,
-  UploadFile as UploadIcon,
-  ReceiptLong,
-} from "@mui/icons-material";
+import { Search, Stethoscope, Calendar, Clock, ChevronRight, User, ArrowLeft, CheckCircle, XCircle, ChevronLeft, Loader2, Eye, List as ViewList, LayoutGrid as GridView, Star, Send, ThumbsUp as ThumbUp, Badge as BadgeIcon, Zap as FlashOn, Wallet as AccountBalanceWallet, Upload as UploadIcon, Receipt as ReceiptLong } from "lucide-react";
 
 import { useAuth } from "../../contexts/AuthContext";
 import { patientAPI, paymentAPI, filesAPI } from "../../lib/api";

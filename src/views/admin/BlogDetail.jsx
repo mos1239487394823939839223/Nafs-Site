@@ -1,15 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import {
-  Article as ArticleIcon,
-  ArrowBack,
-  ArrowForward,
-  LocalOffer as TagIcon,
-  CalendarToday as Calendar,
-  Person as PersonIcon,
-  Image as ImageIcon,
-} from '@mui/icons-material'
+import { FileText as ArticleIcon, ArrowLeft as ArrowBack, ArrowRight as ArrowForward, Tag as TagIcon, Calendar, User as PersonIcon, Image as ImageIcon } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { blogAPI } from '../../lib/api'
@@ -19,7 +11,8 @@ function pickData(payload) {
 }
 
 export default function BlogDetail() {
-  const { blogId } = useParams()
+  const { blogId, id } = useParams()
+  const activeId = blogId || id
   const navigate = useNavigate()
   const { t, isRTL } = useLanguage()
 
@@ -32,7 +25,7 @@ export default function BlogDetail() {
       setLoading(true)
       setError('')
       try {
-        const response = await blogAPI.getBlogById(blogId)
+        const response = await blogAPI.getBlogById(activeId)
         const data = pickData(response) || response
         setBlog(data)
       } catch {
@@ -41,8 +34,8 @@ export default function BlogDetail() {
         setLoading(false)
       }
     }
-    if (blogId) fetchBlog()
-  }, [blogId, isRTL])
+    if (activeId) fetchBlog()
+  }, [activeId, isRTL])
 
   const formatDate = (iso) => {
     if (!iso) return ''

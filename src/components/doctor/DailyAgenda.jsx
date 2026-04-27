@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AccessTime as Clock, CalendarToday as Calendar, ErrorOutline as AlertCircle, Sync as Loader2 } from '@mui/icons-material'
+import { Clock, Calendar, AlertCircle, Loader2 } from 'lucide-react'
 import Button from '../ui/Button'
 import Badge from '../ui/Badge'
 import { doctorAPI } from '../../lib/api'

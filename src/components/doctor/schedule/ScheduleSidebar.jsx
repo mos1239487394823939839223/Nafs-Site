@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion'
-import { CalendarToday as Calendar, AccessTime as Clock, CheckCircle, People as Users } from '@mui/icons-material'
+import { Calendar, Clock, CheckCircle, Users } from 'lucide-react'
 
 export default function ScheduleSidebar({ stats }) {
   return (

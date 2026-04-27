@@ -1,14 +1,5 @@
 import { motion } from "framer-motion";
-import {
-  AccessTime as Clock,
-  PlayArrow as Play,
-  CalendarToday as Calendar,
-  Close as Cancel,
-  Biotech as TestTube,
-  Visibility as Eye,
-  Timer as Duration,
-  Payment as PaymentIcon,
-} from "@mui/icons-material";
+import { Clock, Play, Calendar, X as Cancel, TestTube, Eye, Timer as Duration, CreditCard as PaymentIcon } from "lucide-react";
 import Button from "../../ui/Button";
 import Badge from "../../ui/Badge";
 import { useLanguage } from "../../../contexts/LanguageContext";

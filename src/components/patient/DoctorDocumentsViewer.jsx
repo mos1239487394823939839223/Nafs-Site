@@ -2,17 +2,7 @@ import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import DocViewer, { DocViewerRenderers } from '@cyntler/react-doc-viewer'
 import '@cyntler/react-doc-viewer/dist/index.css'
-import {
-  Description as FileText,
-  PictureAsPdf as FilePdf,
-  Image as FileImage,
-  Visibility as Eye,
-  School as GraduationCap,
-  MedicalServices as Stethoscope,
-  Badge as BadgeIcon,
-  FolderOpen,
-  Close as X,
-} from '@mui/icons-material'
+import { FileText, FileText as FilePdf, Image as FileImage, Eye, GraduationCap, Stethoscope, BadgeInfo as BadgeIcon, FolderOpen, X } from 'lucide-react'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { documentsAPI } from '../../lib/api'
 

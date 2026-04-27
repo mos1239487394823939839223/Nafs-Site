@@ -3,7 +3,7 @@ import MuiDialog from '@mui/material/Dialog'
 import MuiDialogTitle from '@mui/material/DialogTitle'
 import MuiDialogContent from '@mui/material/DialogContent'
 import IconButton from '@mui/material/IconButton'
-import CloseIcon from '@mui/icons-material/Close'
+import { X as CloseIcon } from 'lucide-react'
 import Slide from '@mui/material/Slide'
 
 const sizeMap = {
@@ -59,7 +59,7 @@ export default function Modal({ isOpen, onClose, title, children, className, siz
             },
           }}
         >
-          <CloseIcon fontSize="small" />
+          <CloseIcon size={18} />
         </IconButton>
       </MuiDialogTitle>
 

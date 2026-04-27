@@ -138,6 +138,28 @@ body {
   /* Sage Green */
 }
 
+/* ─── Patient Home Page Design Tokens ───────────────────────────────────── */
+:root {
+  --gradient-hero: linear-gradient(135deg, hsl(150 40% 96%) 0%, hsl(150 35% 92%) 100%);
+  --shadow-card:   0 2px 12px -4px hsl(152 35% 45% / 0.08);
+  --shadow-cta:    0 4px 20px -6px hsl(152 35% 45% / 0.28);
+  --primary-soft:  150 40% 92%;
+
+  /* mood palette */
+  --mood-1: #fca5a5; /* terrible – red   */
+  --mood-2: #fdba74; /* bad     – orange */
+  --mood-3: #fcd34d; /* neutral – yellow */
+  --mood-4: #86efac; /* good    – green  */
+  --mood-5: #67e8f9; /* great   – cyan   */
+}
+
+.dark {
+  --gradient-hero: linear-gradient(135deg, hsl(160 25% 12%) 0%, hsl(152 30% 16%) 100%);
+  --shadow-card:   0 2px 12px -4px hsl(0 0% 0% / 0.25);
+  --shadow-cta:    0 4px 20px -6px hsl(152 35% 45% / 0.35);
+  --primary-soft:  152 30% 18%;
+}
+
 /* ─── SelectDropdown Portal Menu Animation ───────────────────────────────── */
 .nafs-select-menu {
   animation: nafsFadeDown 0.15s cubic-bezier(0.16, 1, 0.3, 1);

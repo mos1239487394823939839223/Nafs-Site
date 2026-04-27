@@ -1,6 +1,6 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { AccessTime as Clock, CheckCircle, Mail, Home } from '@mui/icons-material'
+import { Clock, CheckCircle, Mail, Home } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import { useLanguage } from '../../contexts/LanguageContext'
 

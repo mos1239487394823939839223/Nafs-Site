@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { UploadFile, Description as FileText, Visibility, DeleteOutline, FolderOpen } from '@mui/icons-material'
+import { Upload, FileText, Eye, Trash2, FolderOpen } from 'lucide-react'
 import Button from '../ui/Button'
 import { useToast } from '../ui/Toast'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '../ui/Dialog'

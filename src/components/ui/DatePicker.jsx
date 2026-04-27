@@ -1,6 +1,6 @@
 import ReactDatePicker from 'react-datepicker'
 import 'react-datepicker/dist/react-datepicker.css'
-import { CalendarToday as CalendarIcon } from '@mui/icons-material'
+import { Calendar as CalendarIcon } from 'lucide-react'
 import { forwardRef } from 'react'
 
 /**

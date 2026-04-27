@@ -5,19 +5,7 @@ import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import Modal from '../../components/ui/Modal'
 import { useToast } from '../../components/ui/Toast'
-import {
-  Search,
-  FilterList as Filter,
-  Sync as Loader2,
-  CheckCircle,
-  Close as X,
-  OpenInNew,
-  ReceiptLong,
-  PendingActions,
-  Verified,
-  AccountBalanceWallet,
-  Person,
-} from '@mui/icons-material'
+import { Search, Filter, Loader2, CheckCircle, X, ExternalLink as OpenInNew, Receipt as ReceiptLong, Clock as PendingActions, BadgeCheck as Verified, Wallet as AccountBalanceWallet, User as Person } from 'lucide-react'
 import { customerSupportAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { getPaymentStatusFilterOptions, getPaymentStatusMeta, normalizePaymentStatus } from '../../lib/paymentStatus'

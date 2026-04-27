@@ -7,7 +7,7 @@ import { useToast } from '../ui/Toast'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { extractErrorMessage, medicalAPI, userAPI } from '../../lib/api'
-import { Science, OpenInNew, AssignmentTurnedIn, Sync as Loader2 } from '@mui/icons-material'
+import { Beaker as Science, ExternalLink as OpenInNew, ClipboardCheck as AssignmentTurnedIn, Loader2 } from 'lucide-react'
 
 function UserResultCard({
   test,
@@ -45,7 +45,7 @@ function UserResultCard({
         {hasResult ? (
           <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
             <div className="flex items-center gap-2 text-primary font-semibold text-sm">
-              <AssignmentTurnedIn style={{ width: 16, height: 16 }} />
+              <AssignmentTurnedIn className="w-4 h-4" />
               {isRTL ? 'تم إرسال النتيجة' : 'Result submitted'}
             </div>
             <p className="text-sm text-text-heading whitespace-pre-wrap">{result.resultText}</p>
@@ -67,7 +67,7 @@ function UserResultCard({
               disabled={isSubmitting || !String(pendingValue || '').trim()}
               className="gap-2"
             >
-              <AssignmentTurnedIn style={{ width: 18, height: 18 }} />
+              <AssignmentTurnedIn className="w-4.5 h-4.5" />
               {isRTL ? 'إرسال النتيجة' : 'Submit Result'}
             </Button>
           </div>

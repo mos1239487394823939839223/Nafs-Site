@@ -12,16 +12,7 @@ import Table, {
   TableCell,
 } from "../../components/ui/Table";
 import Badge from "../../components/ui/Badge";
-import {
-  TrendingUp,
-  People as Users,
-  ShowChart as Activity,
-  Star,
-  CalendarToday as Calendar,
-  Sync as Loader2,
-  MedicalServices as Stethoscope,
-  Assignment as ClipboardList,
-} from "@mui/icons-material";
+import { TrendingUp, Users, Activity, Star, Calendar, Loader2, Stethoscope, ClipboardList } from "lucide-react";
 import KPICard from "../../components/admin/KPICard";
 import { adminAPI, userAPI } from "../../lib/api";
 import { useLanguage } from "../../contexts/LanguageContext";
