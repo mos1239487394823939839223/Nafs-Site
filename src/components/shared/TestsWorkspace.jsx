@@ -7,7 +7,8 @@ import { useToast } from '../ui/Toast'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { extractErrorMessage, medicalAPI, userAPI } from '../../lib/api'
-import { Beaker as Science, ExternalLink as OpenInNew, ClipboardCheck as AssignmentTurnedIn, Loader2 } from 'lucide-react'
+import { Beaker as Science, ExternalLink as OpenInNew, ClipboardCheck as AssignmentTurnedIn, Loader2, Eye } from 'lucide-react'
+import TestDetailModal from './TestDetailModal'
 
 function UserResultCard({
   test,
@@ -17,15 +18,25 @@ function UserResultCard({
   onSubmit,
   isSubmitting,
   isRTL,
+  onViewDetails,
 }) {
   const hasResult = Boolean(String(result?.resultText || '').trim())
 
   return (
-    <Card className="h-full">
+    <Card className="h-full hover:border-primary/40 transition-colors cursor-pointer" onClick={onViewDetails}>
       <CardContent className="h-full flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-lg font-semibold text-text-heading">{test.name}</h2>
-          <Badge variant="secondary">{test.tagName || (isRTL ? 'بدون وسم' : 'No tag')}</Badge>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Badge variant="secondary">{test.tagName || (isRTL ? 'بدون وسم' : 'No tag')}</Badge>
+            <button
+              onClick={(e) => { e.stopPropagation(); onViewDetails(); }}
+              className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-primary/10 transition-colors"
+              title={isRTL ? 'عرض التفاصيل' : 'View details'}
+            >
+              <Eye className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         <p className="text-sm text-text-muted leading-relaxed">{test.description}</p>
@@ -35,6 +46,7 @@ function UserResultCard({
             href={test.url}
             target="_blank"
             rel="noreferrer"
+            onClick={(e) => e.stopPropagation()}
             className="inline-flex items-center gap-1 text-primary text-sm font-medium hover:underline"
           >
             <OpenInNew className="w-4 h-4" />
@@ -54,7 +66,7 @@ function UserResultCard({
             </p>
           </div>
         ) : (
-          <div className="space-y-2 pt-1">
+          <div className="space-y-2 pt-1" onClick={(e) => e.stopPropagation()}>
             <Input
               label={isRTL ? 'اكتب نتيجتك بعد إنهاء الاختبار' : 'Enter your result after completing the test'}
               value={pendingValue}
@@ -63,7 +75,7 @@ function UserResultCard({
             />
 
             <Button
-              onClick={() => onSubmit(test.id)}
+              onClick={(e) => { e.stopPropagation(); onSubmit(test.id); }}
               disabled={isSubmitting || !String(pendingValue || '').trim()}
               className="gap-2"
             >
@@ -91,6 +103,8 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
   const [search, setSearch] = useState('')
   const [selectedTag, setSelectedTag] = useState('all')
   const [resultDrafts, setResultDrafts] = useState({})
+  const [selectedTest, setSelectedTest] = useState(null)
+  const [isModalOpen, setIsModalOpen] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [testsLoading, setTestsLoading] = useState(true)
   const [tests, setTests] = useState([])
@@ -510,10 +524,19 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
               onSubmit={submitResultForTest}
               isSubmitting={isSubmitting}
               isRTL={isRTL}
+              onViewDetails={() => { setSelectedTest(test); setIsModalOpen(true); }}
             />
           ))}
         </div>
       )}
+
+      <TestDetailModal
+        open={isModalOpen}
+        onOpenChange={setIsModalOpen}
+        test={selectedTest}
+        result={selectedTest ? submittedResultsByTest[String(selectedTest.id)] : null}
+        isRTL={isRTL}
+      />
     </div>
   )
 }

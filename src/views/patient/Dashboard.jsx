@@ -6,7 +6,7 @@ import Card, {
 } from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
-import { Activity, Heart, Thermometer, TrendingUp, Calendar, Clock, Video, MessageSquare, Bot, Loader2 } from "lucide-react";
+import { Activity, Heart, Thermometer, TrendingUp, Calendar, Clock, Video, MessageSquare, Bot, Loader2, AlertTriangle } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -28,10 +28,12 @@ import {
   getAppointmentStatusKey,
   getAppointmentStatusMeta,
 } from "../../lib/appointmentStatus";
+import { useNavigate } from "react-router-dom";
 
 export default function PatientDashboard() {
   const { user } = useAuth();
   const { t, isRTL } = useLanguage();
+  const navigate = useNavigate();
 
   const [showAI, setShowAI] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
@@ -395,7 +397,7 @@ export default function PatientDashboard() {
       </Card>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
         <Card
           hover
           className="cursor-pointer"
@@ -441,6 +443,22 @@ export default function PatientDashboard() {
             </p>
           </div>
         </Card>
+
+        {/* Emergency Button */}
+        <div
+          className="bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-xl cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all p-5 flex flex-col items-center justify-center gap-3 text-center"
+          onClick={() => navigate('/dashboard/patient/messages?type=support&caseType=emergency')}
+        >
+          <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+            <AlertTriangle className="w-8 h-8 text-white" />
+          </div>
+          <h3 className="font-semibold text-white text-base">
+            {t("patient.emergency", "Emergency")}
+          </h3>
+          <p className="text-white/80 text-sm">
+            {t("patient.emergencyDesc", "Get immediate support")}
+          </p>
+        </div>
       </div>
 
       {/* AI Assistant Sidebar */}

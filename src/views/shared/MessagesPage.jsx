@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { useAuth, Roles } from '../../contexts/AuthContext'
 import { chatAPI, filesAPI, MessageType, userAPI } from '../../lib/api'
 import ChatWindow from '../../components/chat/ChatWindow'
-import { Search, MessageSquare, Loader2, RefreshCw, Stethoscope, User, Headphones, FileEdit as EditNoteIcon } from 'lucide-react'
+import { Search, MessageSquare, Loader2, RefreshCw, Stethoscope, Headphones, FileEdit as EditNoteIcon } from 'lucide-react'
 const SupportAgent = Headphones
 import { useToast } from '../../components/ui/Toast'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -118,6 +118,38 @@ const logSupportDebug = (...args) => {
   console.log('[SupportChat]', ...args)
 }
 
+const ROOM_CASE_KEY = 'nafs_room_case_types'
+const SUPPORT_CASE_TYPES = [
+  {
+    key: 'technical',
+    labelEn: 'Technical Issue',
+    labelAr: 'مشكلة تقنية',
+    descEn: 'Platform issues, login problems, and bugs.',
+    descAr: 'مشاكل المنصة، تسجيل الدخول، والأخطاء.',
+  },
+  {
+    key: 'medical',
+    labelEn: 'Medical Inquiry',
+    labelAr: 'استفسار طبي',
+    descEn: 'Questions about symptoms, sessions, or treatment guidance.',
+    descAr: 'أسئلة عن الأعراض أو الجلسات أو الإرشاد العلاجي.',
+  },
+  {
+    key: 'billing',
+    labelEn: 'Billing',
+    labelAr: 'الفواتير والمدفوعات',
+    descEn: 'Payment, invoices, refunds, and billing details.',
+    descAr: 'المدفوعات والفواتير والاسترداد والتفاصيل المالية.',
+  },
+  {
+    key: 'emergency',
+    labelEn: 'Emergency',
+    labelAr: 'طارئ',
+    descEn: 'Urgent request that needs immediate support attention.',
+    descAr: 'طلب عاجل يحتاج تدخل سريع من فريق الدعم.',
+  },
+]
+
 /**
  * ChatRoomDto from API:
  * Id, DoctorId, DoctorName, DoctorImage, PatientId, PatientName, PatientImage,
@@ -194,6 +226,8 @@ export default function MessagesPage() {
   const initialBookingId = searchParams.get('bookingId')
   const supportParam = String(searchParams.get('support') || '').toLowerCase()
   const shouldAutoOpenSupport = supportParam === '1' || supportParam === 'true' || supportParam === 'yes'
+  const initialType = String(searchParams.get('type') || '').toLowerCase()
+  const initialCaseType = String(searchParams.get('caseType') || '').toLowerCase()
   const currentUserId = String(userAPI.resolveUserId(user) || '').trim()
 
   const [activeRoom, setActiveRoom] = useState(null)
@@ -206,6 +240,21 @@ export default function MessagesPage() {
   const [supportRoomLoading, setSupportRoomLoading] = useState(false)
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [contactType, setContactType] = useState(() => {
+    if (shouldAutoOpenSupport || initialType === 'support') return 'support'
+    return 'doctors'
+  })
+  const [supportCaseType, setSupportCaseType] = useState(() => {
+    return SUPPORT_CASE_TYPES.some((option) => option.key === initialCaseType) ? initialCaseType : ''
+  })
+  const [localRoomCaseTypes, setLocalRoomCaseTypes] = useState(() => {
+    try {
+      const parsed = JSON.parse(localStorage.getItem(ROOM_CASE_KEY) || '{}')
+      return parsed && typeof parsed === 'object' ? parsed : {}
+    } catch {
+      return {}
+    }
+  })
   const connectionRef = useRef(null)
   const activeRoomRef = useRef(null)
   const hydrationTimersRef = useRef({})
@@ -217,6 +266,19 @@ export default function MessagesPage() {
   const lastMessagesFetchAtRef = useRef(new Map())
   const debouncedFetchRoomsTimerRef = useRef(null)
   const pollingIntervalRef = useRef(null)
+
+  const saveRoomCaseType = useCallback((roomId, caseType) => {
+    if (!roomId) return
+    setLocalRoomCaseTypes((prev) => {
+      const next = { ...prev, [String(roomId)]: caseType }
+      try {
+        localStorage.setItem(ROOM_CASE_KEY, JSON.stringify(next))
+      } catch {
+        // Ignore storage quota errors and keep in-memory value.
+      }
+      return next
+    })
+  }, [])
 
   const normalizeRoomId = useCallback((room) => String(room?.Id || room?.id || ''), [])
 
@@ -265,14 +327,46 @@ export default function MessagesPage() {
   // ── Sync ref ────────────────────────────────────────────────────────────────
   useEffect(() => { activeRoomRef.current = activeRoom }, [activeRoom])
 
+  const isPatient = role === Roles.PATIENT
+
+  const isSupportRoom = useCallback((room) => {
+    const roomId = String(room?.Id || room?.id || '')
+    if (roomId && supportRoomIdsRef.current.has(roomId)) return true
+
+    const participant = resolveParticipant(room || {}, currentUserId)
+    const participantRole = String(participant.role || room?.OtherParticipantRole || room?.otherParticipantRole || '').toLowerCase()
+    const participantName = String(participant.name || '').toLowerCase()
+
+    if (participantRole === 'support' || participantRole === 'staff' || participantRole === 'admin' || participantRole === '2' || participantRole === '3') {
+      return true
+    }
+
+    return participantName.includes('support') || participantName.includes('الدعم')
+  }, [currentUserId])
+
   // ── Sync URL ────────────────────────────────────────────────────────────────
   useEffect(() => {
-    if (!activeRoom) return
-    const roomId = String(activeRoom.Id || activeRoom.id || '')
-    if (!roomId) return
-    if (searchParams.get('room') === roomId && !searchParams.get('patientId') && !searchParams.get('bookingId')) return
-    setSearchParams({ room: roomId }, { replace: true })
-  }, [activeRoom, searchParams, setSearchParams])
+    const nextParams = {}
+    const roomId = String(activeRoom?.Id || activeRoom?.id || '')
+
+    if (roomId) {
+      nextParams.room = roomId
+    }
+
+    if (isPatient) {
+      nextParams.type = contactType === 'support' ? 'support' : 'doctors'
+      if (contactType === 'support' && supportCaseType) {
+        nextParams.caseType = supportCaseType
+      }
+    }
+
+    const roomMatches = (searchParams.get('room') || '') === (nextParams.room || '')
+    const typeMatches = !isPatient || (searchParams.get('type') || 'doctors') === nextParams.type
+    const caseMatches = !isPatient || (searchParams.get('caseType') || '') === (nextParams.caseType || '')
+    if (roomMatches && typeMatches && caseMatches) return
+
+    setSearchParams(nextParams, { replace: true })
+  }, [activeRoom, contactType, isPatient, searchParams, setSearchParams, supportCaseType])
 
   // ── Restore from URL ────────────────────────────────────────────────────────
   useEffect(() => {
@@ -744,13 +838,21 @@ export default function MessagesPage() {
     }
     : currentConversation
 
-  const filteredRooms = rooms.filter(r => {
-    const participant = resolveParticipant(r, currentUserId)
+  const filteredByContactType = isPatient
+    ? rooms.filter((room) => {
+      if (contactType === 'support') return isSupportRoom(room)
+      return !isSupportRoom(room)
+    })
+    : rooms
+
+  const filteredRooms = filteredByContactType.filter((room) => {
+    const participant = resolveParticipant(room, currentUserId)
     return participant.name.toLowerCase().includes(searchQuery.toLowerCase())
   })
 
+  const selectedSupportCaseType = SUPPORT_CASE_TYPES.find((option) => option.key === supportCaseType) || null
+
   const unreadTotal = rooms.reduce((acc, r) => acc + (r.UnreadCount || 0), 0)
-  const isPatient = role === Roles.PATIENT
 
   const openSupportChat = useCallback(async () => {
     if (!isPatient) return
@@ -758,6 +860,8 @@ export default function MessagesPage() {
       toast.error(isRTL ? 'تعذر تحديد معرف المريض' : 'Unable to resolve patient id')
       return
     }
+
+    setContactType('support')
 
     setSupportRoomLoading(true)
     try {
@@ -836,6 +940,9 @@ export default function MessagesPage() {
           participantRole: matchedRoom?.OtherParticipantRole || null,
         })
         setActiveRoom(matchedRoom)
+        if (supportCaseType) {
+          saveRoomCaseType(matchedRoom?.Id || matchedRoom?.id, supportCaseType)
+        }
         return
       }
 
@@ -859,6 +966,9 @@ export default function MessagesPage() {
           syntheticName: syntheticSupportRoom.OtherParticipantName,
         })
         setActiveRoom(syntheticSupportRoom)
+        if (supportCaseType) {
+          saveRoomCaseType(supportRoomId, supportCaseType)
+        }
       }
     } catch (error) {
       logSupportDebug('openSupportChat:error', {
@@ -878,7 +988,19 @@ export default function MessagesPage() {
     } finally {
       setSupportRoomLoading(false)
     }
-  }, [currentUserId, enrichRoomsWithSupportMeta, isPatient, isRTL, t, toast])
+  }, [currentUserId, enrichRoomsWithSupportMeta, isPatient, isRTL, saveRoomCaseType, supportCaseType, t, toast])
+
+  useEffect(() => {
+    if (!isPatient || contactType !== 'support') return
+    if (supportRoomLoading || loading) return
+    if (rooms.some((room) => isSupportRoom(room))) return
+    openSupportChat()
+  }, [contactType, isPatient, isSupportRoom, loading, openSupportChat, rooms, supportRoomLoading])
+
+  useEffect(() => {
+    if (!supportCaseType || !activeRoom || !isSupportRoom(activeRoom)) return
+    saveRoomCaseType(activeRoom?.Id || activeRoom?.id, supportCaseType)
+  }, [activeRoom, isSupportRoom, saveRoomCaseType, supportCaseType])
 
   useEffect(() => {
     if (!isPatient || !shouldAutoOpenSupport) return
@@ -891,14 +1013,14 @@ export default function MessagesPage() {
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
     <div
-      className="flex h-[calc(100vh-4rem)] overflow-hidden rounded-2xl border border-border/60 shadow-sm bg-background-paper"
+      className="flex min-h-[calc(100vh-6rem)] h-[calc(100vh-4.25rem)] overflow-hidden rounded-2xl border border-border/60 shadow-sm bg-background-paper"
       dir={isRTL ? 'rtl' : 'ltr'}
     >
 
       {/* ════════════════════ SIDEBAR ════════════════════ */}
       <div className={`
         flex flex-col bg-background-paper border-r border-border/60
-        w-full lg:w-[320px] xl:w-[360px] flex-shrink-0 overflow-hidden
+        w-full lg:w-[340px] xl:w-[380px] 2xl:w-[420px] flex-shrink-0 overflow-hidden
         ${activeRoom ? 'hidden lg:flex' : 'flex'}
       `}>
 
@@ -918,21 +1040,6 @@ export default function MessagesPage() {
             </div>
 
             <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
-              {isPatient && (
-                <button
-                  onClick={openSupportChat}
-                  disabled={supportRoomLoading}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-secondary/10 hover:bg-secondary/20 text-secondary text-xs font-semibold transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                >
-                  {supportRoomLoading ? (
-                    <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                  ) : (
-                    <SupportAgent className="w-3.5 h-3.5" />
-                  )}
-                  <span>{t('nav.talkToSupport', 'Talk to Support')}</span>
-                </button>
-              )}
-
               <button
                 onClick={fetchRooms}
                 disabled={loading}
@@ -942,6 +1049,77 @@ export default function MessagesPage() {
               </button>
             </div>
           </div>
+
+          {isPatient && (
+            <div className="mb-3 space-y-3">
+              <div className="inline-flex p-1 rounded-2xl border border-border bg-background-subtle gap-1">
+                <button
+                  onClick={() => setContactType('doctors')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                    contactType === 'doctors'
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-text-muted hover:text-text-heading hover:bg-background-paper'
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    <Stethoscope className="w-3.5 h-3.5" />
+                    {t('chat.talkToDoctors', 'Talk to Doctors')}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => setContactType('support')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                    contactType === 'support'
+                      ? 'bg-primary text-white shadow-sm'
+                      : 'text-text-muted hover:text-text-heading hover:bg-background-paper'
+                  }`}
+                >
+                  <span className="inline-flex items-center gap-1.5">
+                    {supportRoomLoading ? (
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                      <SupportAgent className="w-3.5 h-3.5" />
+                    )}
+                    {t('chat.talkToSupport', 'Talk to Support')}
+                  </span>
+                </button>
+              </div>
+
+              {contactType === 'support' && (
+                <div className="space-y-1">
+                  <label className="text-xs font-medium text-text-muted">
+                    {t('chat.selectCaseType', 'Select Case Type')}
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={supportCaseType}
+                      onChange={(e) => setSupportCaseType(e.target.value)}
+                      className="w-full h-10 px-3 rounded-lg border border-border/70 bg-background-subtle text-sm text-text-heading outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 appearance-none"
+                    >
+                      <option value="">
+                        {isRTL ? 'اختر نوع الحالة' : 'Select Case Type'}
+                      </option>
+                      {SUPPORT_CASE_TYPES.map((option) => (
+                        <option key={option.key} value={option.key}>
+                          {isRTL ? option.labelAr : option.labelEn}
+                        </option>
+                      ))}
+                    </select>
+                    <span className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-text-muted ${isRTL ? 'left-3' : 'right-3'}`}>
+                      v
+                    </span>
+                  </div>
+
+                  {selectedSupportCaseType && (
+                    <p className="text-[11px] text-text-muted leading-4">
+                      {isRTL ? selectedSupportCaseType.descAr : selectedSupportCaseType.descEn}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Search */}
           <div className="relative">
@@ -1018,6 +1196,14 @@ export default function MessagesPage() {
                             {name}
                           </h4>
                           <div className={`flex items-center gap-1.5 flex-shrink-0 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                            {isPatient && isSupportRoom(room) && localRoomCaseTypes[String(room.Id || room.id)] && (
+                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-secondary/10 text-secondary border border-secondary/20 whitespace-nowrap">
+                                {(() => {
+                                  const type = SUPPORT_CASE_TYPES.find((option) => option.key === localRoomCaseTypes[String(room.Id || room.id)])
+                                  return type ? (isRTL ? type.labelAr : type.labelEn) : ''
+                                })()}
+                              </span>
+                            )}
                             {lastTime && (
                               <span className="text-[10px] text-text-muted whitespace-nowrap">{lastTime}</span>
                             )}

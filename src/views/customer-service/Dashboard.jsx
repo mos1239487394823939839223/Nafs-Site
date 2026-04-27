@@ -1,12 +1,12 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, useCallback } from 'react'
 import { motion } from 'framer-motion'
 import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Badge from '../../components/ui/Badge'
 import Modal from '../../components/ui/Modal'
 import { useToast } from '../../components/ui/Toast'
-import { Search, Filter, Loader2, CheckCircle, X, ExternalLink as OpenInNew, Receipt as ReceiptLong, Clock as PendingActions, BadgeCheck as Verified, Wallet as AccountBalanceWallet, User as Person } from 'lucide-react'
-import { customerSupportAPI } from '../../lib/api'
+import { Search, Filter, Loader2, CheckCircle, X, ExternalLink as OpenInNew, Receipt as ReceiptLong, Clock as PendingActions, BadgeCheck as Verified, Wallet as AccountBalanceWallet, User as Person, MessageSquare } from 'lucide-react'
+import { customerSupportAPI, chatAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { getPaymentStatusFilterOptions, getPaymentStatusMeta, normalizePaymentStatus } from '../../lib/paymentStatus'
 
@@ -34,6 +34,10 @@ export default function CustomerServiceDashboard() {
   const [refundProcessMode, setRefundProcessMode] = useState(null)
   const [processingRefundItem, setProcessingRefundItem] = useState(null)
   const [refundProcessNotes, setRefundProcessNotes] = useState('')
+
+  // Chat rooms state
+  const [chatRooms, setChatRooms] = useState([])
+  const [chatRoomsLoading, setChatRoomsLoading] = useState(false)
 
   const tx = (key, fallback) => {
     const value = t(key)
@@ -137,6 +141,30 @@ export default function CustomerServiceDashboard() {
     fetchRefunds(1, refundsStatusFilter)
   }, [refundsStatusFilter])
 
+  const fetchChatRooms = useCallback(async () => {
+    setChatRoomsLoading(true)
+    try {
+      const response = await chatAPI.getRooms()
+      const data = response?.Data ?? response?.data ?? response
+      const items = Array.isArray(data?.Items)
+        ? data.Items
+        : Array.isArray(data?.items)
+        ? data.items
+        : Array.isArray(data)
+        ? data
+        : []
+      setChatRooms(items)
+    } catch (error) {
+      console.error('Failed to fetch chat rooms:', error)
+    } finally {
+      setChatRoomsLoading(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (activeModule === 'chat-rooms') fetchChatRooms()
+  }, [activeModule, fetchChatRooms])
+
   const getProviderLabel = (providerValue) => {
     const value = Number(providerValue)
     if (value === 2) return 'InstaPay'
@@ -185,6 +213,17 @@ export default function CustomerServiceDashboard() {
     }
   }, [refunds])
 
+  const getCaseTypeMeta = (room) => {
+    const type = Number(room?.RoomType ?? room?.ChatRoomType ?? room?.Type ?? 2)
+    const map = {
+      1: { label: isRTL ? 'حجز' : 'Booking', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
+      2: { label: isRTL ? 'دعم عام' : 'General Support', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
+      3: { label: isRTL ? 'طارئ' : 'Emergency', cls: 'bg-red-50 text-red-700 border-red-200' },
+      4: { label: isRTL ? 'تنمر' : 'Bullying', cls: 'bg-orange-50 text-orange-700 border-orange-200' },
+    }
+    return map[type] || map[2]
+  }
+
   const moduleTabs = [
     {
       id: 'manual-payments',
@@ -199,6 +238,13 @@ export default function CustomerServiceDashboard() {
       title: isRTL ? 'طلبات الاسترداد' : 'Refund Requests',
       subtitle: isRTL ? 'اعتماد أو رفض الاسترداد' : 'Approve or reject refunds',
       count: refundsSummary.pending,
+    },
+    {
+      id: 'chat-rooms',
+      icon: MessageSquare,
+      title: isRTL ? 'غرف المحادثة' : 'Chat Rooms',
+      subtitle: isRTL ? 'محادثات المرضى' : 'Patient conversations',
+      count: chatRooms.filter((r) => Number(r.UnreadCount) > 0).length,
     },
   ]
 
@@ -682,6 +728,61 @@ export default function CustomerServiceDashboard() {
                   {tx('common.next', 'Next')}
                 </Button>
               </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      )}
+
+      {activeModule === 'chat-rooms' && (
+      <Card className="border border-border/80 shadow-sm">
+        <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-border pb-4">
+          <CardTitle className="text-xl">{isRTL ? 'غرف المحادثة' : 'Chat Rooms'}</CardTitle>
+          <Button variant="outline" size="sm" onClick={fetchChatRooms} disabled={chatRoomsLoading} className="gap-2">
+            <Loader2 className={`w-4 h-4 ${chatRoomsLoading ? 'animate-spin' : 'hidden'}`} />
+            {isRTL ? 'تحديث' : 'Refresh'}
+          </Button>
+        </CardHeader>
+        <CardContent className="pt-4">
+          {chatRoomsLoading ? (
+            <div className="flex justify-center py-12">
+              <Loader2 className="w-8 h-8 text-primary animate-spin" />
+            </div>
+          ) : chatRooms.length === 0 ? (
+            <div className="text-center py-12 text-text-muted">
+              <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30" />
+              <p>{isRTL ? 'لا توجد غرف محادثة بعد' : 'No chat rooms yet'}</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {chatRooms.map((room) => {
+                const meta = getCaseTypeMeta(room)
+                return (
+                  <div key={room.Id || room.id} className="p-4 bg-background-subtle border border-border rounded-xl flex items-center gap-4">
+                    <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                      <Person className="w-5 h-5 text-primary" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-semibold text-text-heading truncate">
+                          {room.OtherParticipantName || room.Name || (isRTL ? 'مجهول' : 'Unknown')}
+                        </h4>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${meta.cls}`}>
+                          {meta.label}
+                        </span>
+                        {Number(room.UnreadCount) > 0 && (
+                          <span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full">
+                            {room.UnreadCount}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-text-muted truncate mt-0.5">
+                        {room.LastMessage || (isRTL ? 'لا توجد رسائل بعد' : 'No messages yet')}
+                      </p>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
         </CardContent>

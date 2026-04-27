@@ -260,7 +260,7 @@ export default function LocalDocumentsManager({
 
       <div className="flex items-center gap-2">
         <Button size="sm" onClick={() => setIsModalOpen(true)}>
-          <UploadFile className="w-4 h-4" />
+          <Upload className="w-4 h-4" />
           {buttonLabel}
         </Button>
         <span className="text-xs text-text-muted">{documents.length} {t('documents.filesCountSuffix')}</span>
@@ -295,12 +295,12 @@ export default function LocalDocumentsManager({
 
             <div className="flex items-center gap-2">
               <Button size="sm" onClick={handleOpenFilePicker} disabled={isUploading}>
-                <UploadFile className="w-4 h-4" />
+                <Upload className="w-4 h-4" />
                 {isUploading ? t('documents.uploading') : buttonLabel}
               </Button>
               {documents.length > 0 && (
                 <Button variant="ghost" size="sm" onClick={handleClearAll}>
-                  <DeleteOutline className="w-4 h-4" />
+                  <Trash2 className="w-4 h-4" />
                   {t('documents.clearAll')}
                 </Button>
               )}
@@ -330,11 +330,11 @@ export default function LocalDocumentsManager({
                     </div>
                     <div className="flex items-center gap-2">
                       <Button variant="outline" size="sm" onClick={() => handleViewDocument(documentItem)}>
-                        <Visibility className="w-4 h-4" />
+                        <Eye className="w-4 h-4" />
                         {t('common.view')}
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => handleRemoveDocument(documentItem.id)}>
-                        <DeleteOutline className="w-4 h-4" />
+                        <Trash2 className="w-4 h-4" />
                         {t('common.remove')}
                       </Button>
                     </div>

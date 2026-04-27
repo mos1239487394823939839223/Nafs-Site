@@ -155,7 +155,7 @@ export default function StaffProfile() {
           <div className="absolute bottom-0 right-1/3 w-64 h-64 bg-secondary/30 rounded-full blur-3xl" />
         </div>
 
-        <div className="absolute left-1/2 md:left-16 -translate-x-1/2 md:translate-x-0 -bottom-16 z-10">
+        <div className="absolute left-6 md:left-16 -bottom-16 z-10">
           <div className="relative group">
             <div className="w-32 h-32 md:w-36 md:h-36 rounded-full border-4 border-background-paper shadow-2xl flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/20">
               {uploadingImage ? (
@@ -187,6 +187,10 @@ export default function StaffProfile() {
               <span className="inline-flex items-center gap-1.5 text-sm text-emerald-600 font-medium bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">
                 <VerifiedUser className="w-3.5 h-3.5" />
                 {tx('common.active', 'Active')}
+              </span>
+              <span className="inline-flex items-center gap-1.5 text-sm text-emerald-600 font-medium bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">
+                <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
+                {tx('common.online', 'Online')}
               </span>
             </div>
             <p className="text-sm text-text-muted mt-1.5 flex items-center justify-center md:justify-start gap-1.5">

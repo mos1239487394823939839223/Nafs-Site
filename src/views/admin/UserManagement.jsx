@@ -19,7 +19,7 @@ import { UserAvatar } from '../../components/ui/Avatar'
 import Spinner from '../../components/ui/Spinner'
 import Pagination from '../../components/ui/Pagination'
 import { useToast } from '../../components/ui/Toast'
-import { Users, UserPlus, Search, Mail, Stethoscope, User, RefreshCw, Phone, Lock, FileText, ToggleLeft, ToggleRight, ShieldCheck, Activity, X, Camera, Eye } from 'lucide-react'
+import { Users, UserPlus, Search, Mail, Stethoscope, User, RefreshCw, Phone, Lock, FileText, ToggleLeft, ToggleRight, ShieldCheck, Activity, X, Camera, Eye, Headphones } from 'lucide-react'
 import { adminAPI, userAPI, documentsAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 import LocalDocumentsManager from '../../components/shared/LocalDocumentsManager'
@@ -101,6 +101,11 @@ export default function UserManagement() {
     const [patientsPage, setPatientsPage] = useState(1)
     const [patientsTotalPages, setPatientsTotalPages] = useState(1)
 
+    // Support staff data
+    const [supportStaff, setSupportStaff] = useState([])
+    const [supportPage, setSupportPage] = useState(1)
+    const [supportTotalPages, setSupportTotalPages] = useState(1)
+
     // Add Doctor Form
     const [formData, setFormData] = useState({
         name: '',
@@ -153,13 +158,35 @@ export default function UserManagement() {
         }
     }, [patientsPage])
 
+    const fetchSupportStaff = useCallback(async () => {
+        setLoading(true)
+        try {
+            const response = await userAPI.getUsers({ pageIndex: supportPage, pageSize: 20, role: 3 })
+            if (response?.Data) {
+                setSupportStaff(response.Data.Items || response.Data || [])
+                if (response.Data.TotalPages) {
+                    setSupportTotalPages(response.Data.TotalPages)
+                }
+            } else if (Array.isArray(response)) {
+                setSupportStaff(response)
+            }
+        } catch (error) {
+            console.error('Failed to fetch support staff:', error)
+            toast.error(t('errors.somethingWentWrong'))
+        } finally {
+            setLoading(false)
+        }
+    }, [supportPage])
+
     useEffect(() => {
         if (activeTab === 'doctors') {
             fetchDoctors()
         } else if (activeTab === 'patients') {
             fetchPatients()
+        } else if (activeTab === 'support') {
+            fetchSupportStaff()
         }
-    }, [activeTab, fetchDoctors, fetchPatients])
+    }, [activeTab, fetchDoctors, fetchPatients, fetchSupportStaff])
 
     const handleInputChange = (e) => {
         const { name, value } = e.target
@@ -320,6 +347,14 @@ export default function UserManagement() {
         }), [patients, searchTerm]
     )
 
+    const filteredSupportStaff = useMemo(() =>
+        supportStaff.filter(s => {
+            const name = (s.Name || s.name || '').toLowerCase()
+            const email = (s.Email || s.email || '').toLowerCase()
+            return name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase())
+        }), [supportStaff, searchTerm]
+    )
+
     const doctorsStats = useMemo(() => {
         const active = doctors.filter((doctor) => doctor.IsActive !== false).length
         const inactive = Math.max(0, doctors.length - active)
@@ -348,7 +383,7 @@ export default function UserManagement() {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={activeTab === 'doctors' ? fetchDoctors : fetchPatients}
+                                onClick={activeTab === 'doctors' ? fetchDoctors : activeTab === 'support' ? fetchSupportStaff : fetchPatients}
                                 disabled={loading}
                                 className="gap-2"
                             >
@@ -405,6 +440,13 @@ export default function UserManagement() {
                             {t('admin.users')}
                             <span className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
                                 {patients.length}
+                            </span>
+                        </TabsTrigger>
+                        <TabsTrigger value="support">
+                            <Headphones className="w-4 h-4" />
+                            {t('admin.customerSupport', 'Customer Support')}
+                            <span className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                                {supportStaff.length}
                             </span>
                         </TabsTrigger>
                             </TabsList>
@@ -638,6 +680,94 @@ export default function UserManagement() {
                                         {filteredPatients.length} {t('admin.users')}
                                     </span>
                                     <Pagination page={patientsPage} total={patientsTotalPages} onChange={setPatientsPage} />
+                                </div>
+                            </>
+                        )}
+                    </TabsContent>
+
+                    {/* Customer Support Tab */}
+                    <TabsContent value="support">
+                        {loading ? (
+                            <div className="flex justify-center py-16">
+                                <Spinner label={t('common.loading')} />
+                            </div>
+                        ) : (
+                            <>
+                                <Table>
+                                    <TableHeader>
+                                        <TableRow hover={false}>
+                                            <TableHead>{t('common.name')}</TableHead>
+                                            <TableHead>{t('common.email')}</TableHead>
+                                            <TableHead>{t('common.phone')}</TableHead>
+                                            <TableHead>{t('common.role')}</TableHead>
+                                            <TableHead>{t('common.status')}</TableHead>
+                                            <TableHead className="text-center">{t('common.actions')}</TableHead>
+                                        </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                        {filteredSupportStaff.length > 0 ? (
+                                            filteredSupportStaff.map((staff) => (
+                                                <TableRow key={staff.Id || staff.id || staff.Email}>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-3">
+                                                            <UserAvatar
+                                                                name={staff.Name || staff.name}
+                                                                src={staff.Image || staff.image}
+                                                                size="sm"
+                                                            />
+                                                            <span className="font-semibold text-text-heading">{staff.Name || staff.name}</span>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="text-text-muted">{staff.Email || staff.email}</TableCell>
+                                                    <TableCell className="text-text-muted">{staff.PhoneNumber || staff.phoneNumber || '—'}</TableCell>
+                                                    <TableCell>
+                                                        <Badge variant="secondary">
+                                                            <Headphones className="w-3 h-3" />
+                                                            {t('admin.customerSupport', 'Customer Support')}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge variant={staff.IsActive !== false ? 'success' : 'default'}>
+                                                            {staff.IsActive !== false ? t('common.active') : t('common.inactive')}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell className="text-center">
+                                                        <Tooltip>
+                                                            <TooltipTrigger asChild>
+                                                                <button
+                                                                    onClick={() => openResetPasswordModal(staff)}
+                                                                    className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors"
+                                                                >
+                                                                    <Lock className="w-4 h-4 text-primary" />
+                                                                </button>
+                                                            </TooltipTrigger>
+                                                            <TooltipContent>
+                                                                {t('auth.resetPassword')}
+                                                            </TooltipContent>
+                                                        </Tooltip>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : (
+                                            <TableRow hover={false}>
+                                                <TableCell colSpan={6} className="text-center py-12">
+                                                    <div className="flex flex-col items-center gap-3">
+                                                        <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
+                                                            <Headphones className="w-7 h-7 text-text-muted" />
+                                                        </div>
+                                                        <p className="text-text-muted font-medium">{t('admin.noSupportStaffFound', 'No support staff found')}</p>
+                                                    </div>
+                                                </TableCell>
+                                            </TableRow>
+                                        )}
+                                    </TableBody>
+                                </Table>
+
+                                <div className="flex items-center justify-between mt-4">
+                                    <span className="text-sm text-text-muted">
+                                        {filteredSupportStaff.length} {t('admin.customerSupport', 'Customer Support')}
+                                    </span>
+                                    <Pagination page={supportPage} total={supportTotalPages} onChange={setSupportPage} />
                                 </div>
                             </>
                         )}

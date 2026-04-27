@@ -334,11 +334,12 @@ export const userAPI = {
 // ─── Patient API Functions ───────────────────────────────────────────────────
 export const patientAPI = {
   // Get all doctors with pagination
-  getAllDoctors: async (pageIndex = 1, pageSize = 10) => {
+  getAllDoctors: async (pageIndex = 1, pageSize = 10, hasSlotsOnly = false) => {
     const response = await api.get("/Patient/GetAllDoctors", {
       params: {
         PageIndex: pageIndex,
         PageSize: pageSize,
+        ...(hasSlotsOnly && { HasSlotsOnly: true }),
       },
     });
     return response.data;
@@ -827,6 +828,11 @@ export const medicalAPI = {
         Result: result,
       },
     );
+    return response.data;
+  },
+
+  getTestTypeDiseases: async (testTypeId) => {
+    const response = await api.get(`/Medical/TestTypes/${testTypeId}/Diseases`);
     return response.data;
   },
 };

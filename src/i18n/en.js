@@ -85,6 +85,11 @@ export default {
     address: "Address",
     dateOfBirth: "Date of Birth",
     saveChanges: "Save Changes",
+    online: "Online",
+    offline: "Offline",
+    customerService: "Customer Service",
+    noResults: "No results found",
+    doctor: "Doctor",
   },
 
   // Auth
@@ -496,6 +501,23 @@ export default {
     recordId: "Record ID",
     bookingId: "Booking ID",
     noHistoryFound: "No medical history found",
+    allDoctors: "All Doctors",
+    emergency: "Emergency",
+    emergencyDesc: "Get immediate support",
+    filterDoctors: "Filter Doctors",
+    sortBy: "Sort By",
+    sortDefault: "Default",
+    sortRating: "Highest Rating",
+    sortPrice: "Lowest Price",
+    sortAvailability: "Nearest Available",
+    filterSpecialty: "Specialty",
+    filterGender: "Gender",
+    filterPriceRange: "Price Range",
+    filterAvailability: "Availability",
+    availabilityToday: "Today",
+    availabilityThisWeek: "This Week",
+    clearFilters: "Clear Filters",
+    nextAvailableSlot: "Next Available",
   },
 
   // Doctor
@@ -726,6 +748,11 @@ export default {
     noPayoutsYet: "No payouts yet",
     editDetails: "Edit Details",
     updateYourInfo: "Update your personal information",
+    customerSupport: "Customer Support",
+    supportStaff: "Support Staff",
+    noSupportStaffFound: "No support staff found",
+    basicInfoStep: "Basic information",
+    permissionsStep: "Set permissions",
   },
 
   // Chat
@@ -745,6 +772,15 @@ export default {
     communications: "Communications",
     unread: "unread",
     searchConversations: "Search conversations...",
+    talkToDoctors: "Talk to Doctors",
+    talkToSupport: "Talk to Support",
+    selectCaseType: "Select Case Type",
+    caseTypeTechnical: "Technical Issue",
+    caseTypeMedical: "Medical Inquiry",
+    caseTypeBilling: "Billing",
+    caseTypeEmergency: "Emergency",
+    emergencyWarning: "This will flag your request as urgent",
+    noRooms: "No chat rooms found",
   },
 
   // Settings / Profile
@@ -925,6 +961,8 @@ export default {
     resolveTicket: "Resolve Ticket",
     staffProfile: "Staff Profile",
     manageSupport: "Manage your support account information.",
+    chatRooms: "Chat Rooms",
+    patientConversations: "Patient Conversations",
   },
 
   // Documents

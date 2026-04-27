@@ -85,6 +85,11 @@ export default {
     phoneNumber: "رقم الهاتف",
     total: "الإجمالي",
     min: "دقيقة",
+    online: "متصل",
+    offline: "غير متصل",
+    customerService: "خدمة العملاء",
+    noResults: "لا توجد نتائج",
+    doctor: "طبيب",
   },
 
   // Auth
@@ -603,6 +608,23 @@ export default {
     recordId: "معرف السجل",
     bookingId: "معرف الحجز",
     noHistoryFound: "لم يتم العثور على سجل طبي",
+    allDoctors: "جميع الأطباء",
+    emergency: "طارئ",
+    emergencyDesc: "احصل على دعم فوري",
+    filterDoctors: "تصفية الأطباء",
+    sortBy: "ترتيب حسب",
+    sortDefault: "افتراضي",
+    sortRating: "أعلى تقييم",
+    sortPrice: "أقل سعر",
+    sortAvailability: "أقرب موعد",
+    filterSpecialty: "التخصص",
+    filterGender: "الجنس",
+    filterPriceRange: "نطاق السعر",
+    filterAvailability: "التوافر",
+    availabilityToday: "اليوم",
+    availabilityThisWeek: "هذا الأسبوع",
+    clearFilters: "مسح الفلاتر",
+    nextAvailableSlot: "أقرب موعد",
   },
 
   // Doctor
@@ -831,6 +853,11 @@ export default {
     noPayoutsYet: "لا توجد دفعات بعد",
     editDetails: "تعديل البيانات",
     updateYourInfo: "تحديث معلوماتك الشخصية",
+    customerSupport: "خدمة العملاء",
+    supportStaff: "موظفو الدعم",
+    noSupportStaffFound: "لم يتم العثور على موظفي دعم",
+    basicInfoStep: "المعلومات الأساسية",
+    permissionsStep: "تعيين الصلاحيات",
   },
 
   // Chat
@@ -850,6 +877,15 @@ export default {
     communications: "الاتصالات",
     unread: "غير مقروء",
     searchConversations: "ابحث في المحادثات...",
+    talkToDoctors: "تحدث مع الأطباء",
+    talkToSupport: "تحدث مع الدعم",
+    selectCaseType: "اختر نوع الحالة",
+    caseTypeTechnical: "مشكلة تقنية",
+    caseTypeMedical: "استفسار طبي",
+    caseTypeBilling: "الفواتير",
+    caseTypeEmergency: "طارئ",
+    emergencyWarning: "سيتم تصنيف طلبك على أنه عاجل",
+    noRooms: "لا توجد غرف دردشة",
   },
 
   // Booking Status
@@ -922,6 +958,8 @@ export default {
     resolveTicket: "حل التذكرة",
     staffProfile: "ملف الموظف",
     manageSupport: "إدارة معلومات حسابك كموظف دعم.",
+    chatRooms: "غرف الدردشة",
+    patientConversations: "محادثات المرضى",
   },
 
   // Documents

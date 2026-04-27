@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import Badge from '../../components/ui/Badge'
+import Input from '../../components/ui/Input'
+import Button from '../../components/ui/Button'
 import { useToast } from '../../components/ui/Toast'
 import { validateEmail } from '../../lib/validation'
-import { Mail, CheckCircle, XCircle, Loader2, UserPlus, User, Lock, Phone, UserCog, Users, Award, Headphones, X, Search, RefreshCw, Shield, ShieldCheck } from 'lucide-react'
+import { Mail, CheckCircle, XCircle, Loader2, UserPlus, User, Lock, Phone, UserCog, Users, Award, Headphones, X, Search, RefreshCw, Shield, ShieldCheck, Eye, EyeOff } from 'lucide-react'
 import { authAPI, userAPI, extractErrorMessage } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 
@@ -11,7 +13,7 @@ import { useLanguage } from '../../contexts/LanguageContext'
 function AddStaffModal({ open, onClose, onSuccess, t }) {
   const toast = useToast()
   const [loading, setLoading] = useState(false)
-  const [step, setStep] = useState(1) // 1 = basic info, 2 = permissions
+  const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -28,18 +30,16 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
       label: t('admin.supportAgent'),
       description: t('admin.supportAgentDesc'),
       icon: Headphones,
-      color: 'from-blue-500 to-cyan-500',
-      bg: 'bg-blue-500/10 border-blue-500/30',
-      textColor: 'text-blue-400',
+      iconColor: 'text-blue-600',
+      iconBg: 'bg-blue-50',
     },
     {
       value: 'manager',
       label: t('admin.manager'),
       description: t('admin.managerDesc'),
       icon: ShieldCheck,
-      color: 'from-violet-500 to-purple-500',
-      bg: 'bg-violet-500/10 border-violet-500/30',
-      textColor: 'text-violet-400',
+      iconColor: 'text-violet-600',
+      iconBg: 'bg-violet-50',
     },
   ]
 
@@ -106,7 +106,7 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         className="fixed inset-0 z-50 flex items-center justify-center p-4"
-        style={{ backdropFilter: 'blur(8px)', backgroundColor: 'rgba(0,0,0,0.6)' }}
+        style={{ backdropFilter: 'blur(8px)', backgroundColor: 'rgba(0,0,0,0.4)' }}
         onClick={(e) => e.target === e.currentTarget && handleClose()}
       >
         <motion.div
@@ -114,30 +114,26 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.9, y: 20 }}
           transition={{ type: 'spring', duration: 0.4 }}
-          className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-white/10 bg-[#0f1a14] shadow-2xl"
+          className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-background-paper shadow-2xl"
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Glow accents */}
-          <div className="pointer-events-none absolute -top-20 -right-20 h-56 w-56 rounded-full bg-primary/20 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-16 -left-16 h-40 w-40 rounded-full bg-secondary/15 blur-3xl" />
-
           {/* Header */}
-          <div className="relative p-6 pb-4">
+          <div className="p-6 pb-4 border-b border-border bg-gradient-to-r from-primary/5 via-secondary/5 to-transparent">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/30">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/20">
                   <UserPlus className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-white">{t('admin.addStaff')}</h2>
-                  <p className="text-xs text-white/40">
+                  <h2 className="text-lg font-bold text-text-heading">{t('admin.addStaff')}</h2>
+                  <p className="text-xs text-text-muted">
                     {step === 1 ? t('admin.basicInfoStep') || 'Basic information' : t('admin.permissionsStep') || 'Set permissions'}
                   </p>
                 </div>
               </div>
               <button
                 onClick={handleClose}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-white/40 transition-colors hover:bg-white/5 hover:text-white"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-background-subtle hover:text-text-heading"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -149,7 +145,7 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
                 <div
                   key={s}
                   className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                    s <= step ? 'bg-gradient-to-r from-primary to-secondary' : 'bg-white/10'
+                    s <= step ? 'bg-gradient-to-r from-primary to-secondary' : 'bg-border'
                   }`}
                 />
               ))}
@@ -157,7 +153,7 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
           </div>
 
           {/* Body */}
-          <div className="relative px-6 pb-6">
+          <div className="px-6 py-6">
             <AnimatePresence mode="wait">
               {step === 1 ? (
                 <motion.div
@@ -167,99 +163,68 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-4"
                 >
-                  {/* Name */}
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-white/70">
-                      {t('settings.fullName')} <span className="text-primary">*</span>
-                    </label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-                      <input
-                        name="name"
-                        value={formData.name}
-                        onChange={handleChange}
-                        placeholder="Ahmed Mohamed"
-                        className={`w-full rounded-xl border bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder-white/25 outline-none transition-all focus:ring-2 focus:ring-primary/50 ${
-                          errors.name ? 'border-red-500/60' : 'border-white/10 focus:border-primary/50'
-                        }`}
-                      />
-                    </div>
-                    {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name}</p>}
-                  </div>
+                  <Input
+                    label={<>{t('settings.fullName')} <span className="text-red-500">*</span></>}
+                    name="name"
+                    value={formData.name}
+                    onChange={handleChange}
+                    placeholder="Ahmed Mohamed"
+                    icon={User}
+                    error={errors.name}
+                  />
 
-                  {/* Email */}
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-white/70">
-                      {t('settings.emailAddress')} <span className="text-primary">*</span>
-                    </label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-                      <input
-                        name="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={handleChange}
-                        placeholder="staff@nafs.com"
-                        className={`w-full rounded-xl border bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder-white/25 outline-none transition-all focus:ring-2 focus:ring-primary/50 ${
-                          errors.email ? 'border-red-500/60' : 'border-white/10 focus:border-primary/50'
-                        }`}
-                      />
-                    </div>
-                    {errors.email && <p className="mt-1 text-xs text-red-400">{errors.email}</p>}
-                  </div>
+                  <Input
+                    label={<>{t('settings.emailAddress')} <span className="text-red-500">*</span></>}
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="staff@nafs.com"
+                    icon={Mail}
+                    error={errors.email}
+                  />
 
-                  {/* Password */}
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-white/70">
-                      {t('common.password')} <span className="text-primary">*</span>
-                    </label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-                      <input
-                        name="password"
-                        type={showPassword ? 'text' : 'password'}
-                        value={formData.password}
-                        onChange={handleChange}
-                        placeholder="Min. 6 characters"
-                        className={`w-full rounded-xl border bg-white/5 py-2.5 pl-10 pr-10 text-sm text-white placeholder-white/25 outline-none transition-all focus:ring-2 focus:ring-primary/50 ${
-                          errors.password ? 'border-red-500/60' : 'border-white/10 focus:border-primary/50'
-                        }`}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60"
-                      >
-                        {showPassword ? '🙈' : '👁'}
-                      </button>
-                    </div>
-                    {errors.password && <p className="mt-1 text-xs text-red-400">{errors.password}</p>}
-                  </div>
+                  <Input
+                    label={<>{t('common.password')} <span className="text-red-500">*</span></>}
+                    name="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={formData.password}
+                    onChange={handleChange}
+                    placeholder="Min. 6 characters"
+                    icon={Lock}
+                    error={errors.password}
+                    slotProps={{
+                      input: {
+                        endAdornment: (
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', opacity: 0.5 }}
+                            tabIndex={-1}
+                          >
+                            {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                          </button>
+                        ),
+                      },
+                    }}
+                  />
 
-                  {/* Phone */}
-                  <div>
-                    <label className="mb-1.5 block text-sm font-medium text-white/70">
-                      {t('admin.phoneOptional')}
-                    </label>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
-                      <input
-                        name="phoneNumber"
-                        type="tel"
-                        value={formData.phoneNumber}
-                        onChange={handleChange}
-                        placeholder="+20 1xx xxx xxxx"
-                        className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder-white/25 outline-none transition-all focus:border-primary/50 focus:ring-2 focus:ring-primary/50"
-                      />
-                    </div>
-                  </div>
+                  <Input
+                    label={t('admin.phoneOptional')}
+                    name="phoneNumber"
+                    type="tel"
+                    value={formData.phoneNumber}
+                    onChange={handleChange}
+                    placeholder="+20 1xx xxx xxxx"
+                    icon={Phone}
+                  />
 
-                  <button
+                  <Button
                     onClick={handleNext}
-                    className="mt-2 w-full rounded-xl bg-gradient-to-r from-primary to-secondary py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition-all hover:opacity-90 hover:shadow-primary/30 active:scale-[0.98]"
+                    className="mt-2 w-full"
                   >
                     {t('common.next')} →
-                  </button>
+                  </Button>
                 </motion.div>
               ) : (
                 <motion.div
@@ -269,7 +234,7 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
                   exit={{ opacity: 0, x: -20 }}
                   className="space-y-4"
                 >
-                  <p className="text-sm text-white/50">{t('admin.permissionLevel')}</p>
+                  <p className="text-sm text-text-muted">{t('admin.permissionLevel')}</p>
 
                   {permissionLevels.map((level) => {
                     const Icon = level.icon
@@ -279,26 +244,26 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
                         key={level.value}
                         type="button"
                         onClick={() => setFormData(prev => ({ ...prev, permissions: level.value }))}
-                        className={`w-full rounded-xl border p-4 text-left transition-all ${
+                        className={`w-full rounded-xl border-2 p-4 text-left transition-all ${
                           selected
-                            ? `border-primary/60 bg-primary/10`
-                            : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/8'
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border bg-background-subtle hover:border-primary/40 hover:bg-primary/3'
                         }`}
                       >
                         <div className="flex items-start gap-3">
-                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-gradient-to-br ${level.color} shadow-md`}>
-                            <Icon className="h-5 w-5 text-white" />
+                          <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${level.iconBg}`}>
+                            <Icon className={`h-5 w-5 ${level.iconColor}`} />
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center justify-between">
-                              <span className="text-sm font-semibold text-white">{level.label}</span>
+                              <span className="text-sm font-semibold text-text-heading">{level.label}</span>
                               {selected && (
                                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary">
                                   <CheckCircle className="h-3.5 w-3.5 text-white" />
                                 </span>
                               )}
                             </div>
-                            <p className="mt-0.5 text-xs leading-relaxed text-white/45">{level.description}</p>
+                            <p className="mt-0.5 text-xs leading-relaxed text-text-muted">{level.description}</p>
                           </div>
                         </div>
                       </button>
@@ -306,38 +271,34 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
                   })}
 
                   {/* Summary */}
-                  <div className="rounded-xl border border-white/8 bg-white/3 p-3 text-xs text-white/40">
+                  <div className="rounded-xl border border-border bg-background-subtle p-3 text-xs text-text-muted">
                     <p className="flex items-center gap-1.5">
-                      <Shield className="h-3.5 w-3.5 text-primary/70" />
+                      <Shield className="h-3.5 w-3.5 text-primary" />
                       <span>
-                        <span className="font-semibold text-white/60">{formData.name || '—'}</span>
-                        {' '}·{' '}
+                        <span className="font-semibold text-text-heading">{formData.name || '—'}</span>
+                        {' · '}
                         {formData.email || '—'}
                       </span>
                     </p>
                   </div>
 
                   <div className="flex gap-3">
-                    <button
+                    <Button
+                      variant="outline"
                       onClick={() => setStep(1)}
-                      className="flex-1 rounded-xl border border-white/10 py-2.5 text-sm font-medium text-white/60 transition-all hover:bg-white/5 hover:text-white"
+                      className="flex-1"
                     >
                       ← {t('common.back')}
-                    </button>
-                    <button
+                    </Button>
+                    <Button
                       onClick={handleSubmit}
                       disabled={loading}
-                      className="flex-1 rounded-xl bg-gradient-to-r from-primary to-secondary py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/20 transition-all hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                      isLoading={loading}
+                      className="flex-1"
                     >
-                      {loading ? (
-                        <span className="flex items-center justify-center gap-2">
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                          {t('admin.registering')}
-                        </span>
-                      ) : (
-                        t('admin.registerStaffMember')
-                      )}
-                    </button>
+                      {!loading && t('admin.registerStaffMember')}
+                      {loading && t('admin.registering')}
+                    </Button>
                   </div>
                 </motion.div>
               )}
@@ -383,70 +344,52 @@ export default function InviteStaff() {
       (m.Email || '').toLowerCase().includes(q)
   })
 
-  // Avatar color based on initials
-  const avatarColors = [
-    'from-violet-500 to-purple-600',
-    'from-emerald-500 to-teal-600',
-    'from-orange-500 to-amber-600',
-    'from-blue-500 to-cyan-600',
-    'from-rose-500 to-pink-600',
-  ]
-  const getAvatarColor = (name = '') => {
-    const index = name.charCodeAt(0) % avatarColors.length
-    return avatarColors[index] || avatarColors[0]
-  }
-
   return (
-    <div className="min-h-screen space-y-8 p-2 md:p-0">
+    <div className="min-h-screen space-y-6 p-2 md:p-0">
       {/* ── Hero Header ── */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-[#0c1f16] via-[#0f2018] to-[#091510] border border-white/8 px-8 py-10">
-        {/* Background blobs */}
-        <div className="pointer-events-none absolute -top-24 -right-24 h-64 w-64 rounded-full bg-primary/25 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-16 left-1/3 h-48 w-48 rounded-full bg-secondary/15 blur-3xl" />
-        <div className="pointer-events-none absolute top-1/2 -left-12 h-32 w-32 -translate-y-1/2 rounded-full bg-teal-500/10 blur-2xl" />
-
-        <div className="relative z-10 flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+      <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-secondary/10 to-background-paper p-6">
+        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
           <div>
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary/25 bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
               <UserCog className="h-3.5 w-3.5" />
               {t('admin.addStaff')}
             </div>
-            <h1 className="text-3xl font-bold tracking-tight text-white">
+            <h1 className="text-2xl md:text-3xl font-bold text-text-heading">
               {t('admin.currentStaffMembers')}
             </h1>
-            <p className="mt-2 max-w-md text-sm text-white/45">
+            <p className="mt-2 max-w-md text-sm text-text-muted">
               {t('admin.registerTeamMembers')}
             </p>
           </div>
 
           {/* Stats pills */}
           <div className="flex flex-wrap gap-3">
-            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-5 py-3 backdrop-blur-sm">
+            <div className="flex items-center gap-3 rounded-2xl border border-border bg-background-paper px-5 py-3 shadow-sm">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary to-secondary">
                 <Users className="h-4 w-4 text-white" />
               </div>
               <div>
-                <p className="text-xl font-bold text-white">{staffList.length}</p>
-                <p className="text-[11px] text-white/40">{t('common.total') || 'Total'}</p>
+                <p className="text-xl font-bold text-text-heading">{staffList.length}</p>
+                <p className="text-[11px] text-text-muted">{t('common.total') || 'Total'}</p>
               </div>
             </div>
-            <div className="flex items-center gap-3 rounded-2xl border border-emerald-500/20 bg-emerald-500/8 px-5 py-3">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500/20">
-                <CheckCircle className="h-4 w-4 text-emerald-400" />
+            <div className="flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/20 px-5 py-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-800">
+                <CheckCircle className="h-4 w-4 text-emerald-600" />
               </div>
               <div>
-                <p className="text-xl font-bold text-emerald-400">{activeCount}</p>
-                <p className="text-[11px] text-emerald-400/60">{t('common.active')}</p>
+                <p className="text-xl font-bold text-emerald-600">{activeCount}</p>
+                <p className="text-[11px] text-emerald-600/70">{t('common.active')}</p>
               </div>
             </div>
             {inactiveCount > 0 && (
-              <div className="flex items-center gap-3 rounded-2xl border border-red-500/20 bg-red-500/8 px-5 py-3">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-500/20">
-                  <XCircle className="h-4 w-4 text-red-400" />
+              <div className="flex items-center gap-3 rounded-2xl border border-red-200 bg-red-50 dark:border-red-800 dark:bg-red-900/20 px-5 py-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-red-100 dark:bg-red-800">
+                  <XCircle className="h-4 w-4 text-red-600" />
                 </div>
                 <div>
-                  <p className="text-xl font-bold text-red-400">{inactiveCount}</p>
-                  <p className="text-[11px] text-red-400/60">{t('common.inactive')}</p>
+                  <p className="text-xl font-bold text-red-600">{inactiveCount}</p>
+                  <p className="text-[11px] text-red-600/70">{t('common.inactive')}</p>
                 </div>
               </div>
             )}
@@ -458,43 +401,46 @@ export default function InviteStaff() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {/* Search */}
         <div className="relative max-w-xs w-full">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/30" />
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
           <input
             type="text"
             placeholder={t('common.search') || 'Search staff…'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-white/10 bg-white/5 py-2.5 pl-10 pr-4 text-sm text-white placeholder-white/25 outline-none transition-all focus:border-primary/40 focus:ring-2 focus:ring-primary/20"
+            className="w-full rounded-xl border border-border bg-background-subtle py-2.5 pl-10 pr-4 text-sm text-text-heading placeholder-text-muted outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
         </div>
 
         <div className="flex items-center gap-2">
-          <button
+          <Button
+            variant="outline"
+            size="sm"
             onClick={fetchStaff}
             disabled={fetchLoading}
-            className="flex h-10 w-10 items-center justify-center rounded-xl border border-white/10 bg-white/5 text-white/50 transition-all hover:bg-white/10 hover:text-white"
+            className="w-10 h-10 p-0"
           >
             <RefreshCw className={`h-4 w-4 ${fetchLoading ? 'animate-spin' : ''}`} />
-          </button>
+          </Button>
 
-          <button
+          <Button
             id="add-staff-btn"
+            size="sm"
             onClick={() => setShowModal(true)}
-            className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-primary to-secondary px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-primary/25 transition-all hover:opacity-90 hover:shadow-primary/40 active:scale-[0.98]"
+            className="gap-2"
           >
             <UserPlus className="h-4 w-4" />
             {t('admin.addStaff')}
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* ── Staff Table ── */}
-      <div className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#0f1a14] shadow-2xl backdrop-blur-sm">
+      <div className="rounded-2xl border border-border bg-background-paper shadow-sm overflow-hidden">
         {fetchLoading ? (
           <div className="flex items-center justify-center py-24">
             <div className="flex flex-col items-center gap-3">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />
-              <p className="text-sm text-white/30">Loading team…</p>
+              <p className="text-sm text-text-muted">{t('common.loading')}</p>
             </div>
           </div>
         ) : filtered.length === 0 ? (
@@ -503,41 +449,39 @@ export default function InviteStaff() {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center justify-center py-24 text-center"
           >
-            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/10 bg-white/5">
-              <Users className="h-8 w-8 text-white/20" />
+            <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl border border-border bg-background-subtle">
+              <Users className="h-8 w-8 text-text-muted" />
             </div>
-            <p className="text-lg font-semibold text-white/40">
-              {searchQuery ? 'No results found' : t('admin.noStaffMembers')}
+            <p className="text-lg font-semibold text-text-muted">
+              {searchQuery ? t('common.noResults', 'No results found') : t('admin.noStaffMembers')}
             </p>
           </motion.div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-white/5 bg-white/2">
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-white/40 border-r border-white/5 last:border-0">
+                <tr className="border-b border-border bg-background-subtle">
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-muted">
                     {t('common.name')}
                   </th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-white/40 border-r border-white/5 last:border-0">
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-muted">
                     {t('common.email')}
                   </th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-white/40 border-r border-white/5 last:border-0">
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-muted">
                     {t('common.phone')}
                   </th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-white/40 border-r border-white/5 last:border-0 text-center">
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-muted text-center">
                     {t('common.status')}
                   </th>
-                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-white/40 text-center">
-                    Role
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-muted text-center">
+                    {t('common.role')}
                   </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-white/5">
+              <tbody className="divide-y divide-border">
                 {filtered.map((member, idx) => {
                   const name = member.Name || member.UserName || 'Staff'
-                  const initial = name.charAt(0).toUpperCase()
                   const isActive = member.IsActive !== false
-                  const colorClass = getAvatarColor(name)
 
                   return (
                     <motion.tr
@@ -545,44 +489,41 @@ export default function InviteStaff() {
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: idx * 0.03 }}
-                      className="group transition-colors hover:bg-white/3"
+                      className="group transition-colors hover:bg-background-subtle"
                     >
-                      <td className="px-6 py-4 border-r border-white/5 last:border-0 whitespace-nowrap">
+                      <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          <div className={`relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${colorClass} shadow-lg transition-transform group-hover:scale-110`}>
-                            <span className="text-sm font-bold text-white tracking-widest">{initial}</span>
-                            <span className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-[#0f1a14] ${isActive ? 'bg-emerald-400' : 'bg-white/20'}`} />
+                          <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 border border-primary/20">
+                            <span className="text-sm font-bold text-primary">{name.charAt(0).toUpperCase()}</span>
+                            <span className={`absolute -right-0.5 -top-0.5 h-2.5 w-2.5 rounded-full border-2 border-background-paper ${isActive ? 'bg-emerald-400' : 'bg-border'}`} />
                           </div>
-                          <span className="font-semibold text-white group-hover:text-primary transition-colors text-sm">
+                          <span className="font-semibold text-text-heading text-sm">
                             {name}
                           </span>
                         </div>
                       </td>
-                      <td className="px-6 py-4 border-r border-white/5 last:border-0 whitespace-nowrap">
-                        <div className="flex items-center gap-2 text-xs text-white/60">
-                          <Mail className="h-3.5 w-3.5 text-white/20" />
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2 text-xs text-text-muted">
+                          <Mail className="h-3.5 w-3.5 text-text-muted/50" />
                           {member.Email || 'N/A'}
                         </div>
                       </td>
-                      <td className="px-6 py-4 border-r border-white/5 last:border-0 whitespace-nowrap">
-                        <div className="flex items-center gap-2 text-xs text-white/60">
-                          <Phone className="h-3.5 w-3.5 text-white/20" />
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="flex items-center gap-2 text-xs text-text-muted">
+                          <Phone className="h-3.5 w-3.5 text-text-muted/50" />
                           {member.PhoneNumber || '—'}
                         </div>
                       </td>
-                      <td className="px-6 py-4 border-r border-white/5 last:border-0 text-center whitespace-nowrap">
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[10px] font-bold ${
-                          isActive
-                            ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'
-                            : 'bg-white/5 text-white/30 border border-white/5'
-                        }`}>
+                      <td className="px-6 py-4 text-center whitespace-nowrap">
+                        <Badge variant={isActive ? 'success' : 'default'}>
                           {isActive ? t('common.active') : t('common.inactive')}
-                        </span>
+                        </Badge>
                       </td>
                       <td className="px-6 py-4 text-center whitespace-nowrap">
-                        <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20 group-hover:text-white/40 transition-colors">
-                          Staff
-                        </span>
+                        <Badge variant="secondary">
+                          <Headphones className="h-3 w-3" />
+                          {t('admin.supportAgent')}
+                        </Badge>
                       </td>
                     </motion.tr>
                   )
