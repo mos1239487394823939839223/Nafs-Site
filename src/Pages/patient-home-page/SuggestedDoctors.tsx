@@ -10,6 +10,7 @@ interface DoctorDto {
   Specialist: string[] | null;
   Image: string | null;
   Rate: number;
+  SessionPrice?: number | null;
 }
 
 export const SuggestedDoctors = () => {
@@ -24,7 +25,25 @@ export const SuggestedDoctors = () => {
       try {
         const response = await patientAPI.getAllDoctors(1, 4);
         if (response?.IsSuccess && response?.Data) {
-          setDoctors(response.Data.Items || response.Data || []);
+          const baseDoctors: DoctorDto[] = response.Data.Items || response.Data || [];
+
+          // Fetch session price for each doctor in parallel
+          const priceResults = await Promise.allSettled(
+            baseDoctors.map((d) => patientAPI.getDoctorById(String(d.Id)))
+          );
+
+          const enriched = baseDoctors.map((d, i) => {
+            const result = priceResults[i];
+            if (result.status === "fulfilled" && result.value?.IsSuccess) {
+              const data = result.value.Data;
+              const detail =
+                data?.Items && data.Items.length > 0 ? data.Items[0] : data;
+              return { ...d, SessionPrice: detail?.SessionPrice ?? null };
+            }
+            return d;
+          });
+
+          setDoctors(enriched);
         }
       } catch {
         // leave doctors empty — skeleton stays visible
@@ -49,7 +68,7 @@ export const SuggestedDoctors = () => {
         <h2 className="text-lg font-bold">{t("patientHome.suggestedDoctors.title")}</h2>
       </div>
 
-      <div className="relative">
+      <div className="relative px-10">
         <button
           onClick={() => setScroll(Math.max(0, scroll - 1))}
           disabled={scroll === 0}
@@ -79,51 +98,64 @@ export const SuggestedDoctors = () => {
               ? skeletonCards.map((_, i) => (
                   <div
                     key={i}
-                    className="rounded-2xl border border-border p-4 flex flex-col items-center gap-3 animate-pulse"
+                    className="rounded-2xl border border-border flex flex-col overflow-hidden animate-pulse"
                   >
-                    <div className="w-20 h-20 rounded-full bg-muted" />
-                    <div className="h-3 w-24 bg-muted rounded" />
-                    <div className="h-2 w-16 bg-muted rounded" />
-                    <div className="h-8 w-full bg-muted rounded-lg" />
+                    <div className="w-full aspect-[4/3] bg-muted" />
+                    <div className="p-4 flex flex-col gap-3 items-center w-full">
+                      <div className="h-3 w-24 bg-muted rounded" />
+                      <div className="h-2 w-16 bg-muted rounded" />
+                      <div className="h-2 w-12 bg-muted rounded" />
+                      <div className="h-3 w-20 bg-muted rounded" />
+                      <div className="h-8 w-full bg-muted rounded-lg" />
+                    </div>
                   </div>
                 ))
               : doctors.map((d) => (
                   <article
                     key={d.Id}
-                    className="rounded-2xl border border-border p-4 text-center hover:shadow-card transition-shadow"
+                    className="rounded-2xl border border-border text-center hover:shadow-card transition-shadow flex flex-col overflow-hidden"
                   >
-                    {d.Image ? (
-                      <img
-                        src={d.Image}
-                        alt={d.Name}
-                        width={80}
-                        height={80}
-                        loading="lazy"
-                        className="w-20 h-20 rounded-full mx-auto object-cover mb-3"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 rounded-full mx-auto bg-primary-soft flex items-center justify-center mb-3 text-primary text-2xl font-bold">
-                        {d.Name.charAt(0)}
-                      </div>
-                    )}
-                    <h4 className="font-bold text-sm">{d.Name}</h4>
-                    {d.Specialist && d.Specialist.length > 0 && (
-                      <p className="text-xs text-muted-foreground mb-2">
-                        {d.Specialist[0]}
-                      </p>
-                    )}
-                    <div className="flex items-center justify-center gap-1 text-xs mb-3">
-                      <span className="font-semibold">{d.Rate.toFixed(1)}</span>
-                      <Star className="w-3.5 h-3.5 fill-mood-3 text-mood-3" />
+                    {/* Portrait photo — fills card top */}
+                    <div className="w-full aspect-[4/3] overflow-hidden bg-muted">
+                      {d.Image ? (
+                        <img
+                          src={d.Image}
+                          alt={d.Name}
+                          loading="lazy"
+                          className="w-full h-full object-cover object-top"
+                        />
+                      ) : (
+                        <div className="w-full h-full bg-primary-soft flex items-center justify-center text-primary text-4xl font-bold">
+                          {d.Name.charAt(0)}
+                        </div>
+                      )}
                     </div>
-                    <button
-                      onClick={() =>
-                        navigate(`/dashboard/patient/reserve?doctorId=${d.Id}`)
-                      }
-                      className="w-full border border-border hover:bg-primary-soft hover:border-primary hover:text-primary text-sm font-semibold py-2 rounded-lg transition-colors"
-                    >
-                      {t("patientHome.suggestedDoctors.bookNow")}
-                    </button>
+
+                    <div className="p-4 flex flex-col items-center flex-1">
+                      <h4 className="font-bold text-sm mb-0.5">{d.Name}</h4>
+                      {d.Specialist && d.Specialist.length > 0 && (
+                        <p className="text-xs text-muted-foreground mb-2">
+                          {d.Specialist[0]}
+                        </p>
+                      )}
+                      <div className="flex items-center justify-center gap-1 text-xs mb-2">
+                        <span className="font-semibold">{d.Rate.toFixed(1)}</span>
+                        <Star className="w-4 h-4 fill-mood-3 text-mood-3" />
+                      </div>
+                      {d.SessionPrice != null && d.SessionPrice > 0 && (
+                        <p className="text-sm font-semibold text-primary mb-3">
+                          {d.SessionPrice} {t("patientHome.suggestedDoctors.perSession")}
+                        </p>
+                      )}
+                      <button
+                        onClick={() =>
+                          navigate(`/dashboard/patient/reserve?doctorId=${d.Id}`)
+                        }
+                        className="w-full mt-auto border border-primary text-primary hover:bg-primary-soft text-sm font-semibold py-2 rounded-lg transition-colors"
+                      >
+                        {t("patientHome.suggestedDoctors.bookNow")}
+                      </button>
+                    </div>
                   </article>
                 ))}
           </div>

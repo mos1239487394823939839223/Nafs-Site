@@ -5,7 +5,7 @@ import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
 import { useToast } from '../../components/ui/Toast'
 import { validateEmail } from '../../lib/validation'
-import { Mail, CheckCircle, XCircle, Loader2, UserPlus, User, Lock, Phone, UserCog, Users, Award, Headphones, X, Search, RefreshCw, Shield, ShieldCheck, Eye, EyeOff } from 'lucide-react'
+import { Mail, CheckCircle, XCircle, Loader2, UserPlus, User, Lock, Phone, UserCog, Users, Award, Headphones, X, Search, RefreshCw, Shield, ShieldCheck, ShieldAlert, Eye, EyeOff } from 'lucide-react'
 import { authAPI, userAPI, extractErrorMessage } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 
@@ -20,6 +20,7 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
     password: '',
     phoneNumber: '',
     permissions: 'support-agent',
+    isBullyingSpecialist: false,
   })
   const [errors, setErrors] = useState({})
   const [showPassword, setShowPassword] = useState(false)
@@ -44,7 +45,7 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
   ]
 
   const handleClose = () => {
-    setFormData({ name: '', email: '', password: '', phoneNumber: '', permissions: 'support-agent' })
+    setFormData({ name: '', email: '', password: '', phoneNumber: '', permissions: 'support-agent', isBullyingSpecialist: false })
     setErrors({})
     setStep(1)
     setShowPassword(false)
@@ -81,6 +82,7 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
         Gender: 0,
         Birthday: '2000-01-01',
         Role: 3,
+        IsBullyingSpecialist: formData.isBullyingSpecialist,
       }
       const response = await authAPI.register(registerData)
       if (response?.IsSuccess === true) {
@@ -269,6 +271,46 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
                       </button>
                     )
                   })}
+
+                  {/* Bullying Specialist Toggle — only for support agents */}
+                  {formData.permissions === 'support-agent' && (
+                  <button
+                    type="button"
+                    onClick={() => setFormData(prev => ({ ...prev, isBullyingSpecialist: !prev.isBullyingSpecialist }))}
+                    className={`w-full rounded-xl border-2 p-4 text-start transition-all ${
+                      formData.isBullyingSpecialist
+                        ? 'border-orange-400 bg-orange-50'
+                        : 'border-border bg-background-subtle hover:border-orange-300 hover:bg-orange-50/40'
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${
+                        formData.isBullyingSpecialist ? 'bg-orange-100' : 'bg-background-paper'
+                      }`}>
+                        <ShieldAlert className={`h-5 w-5 ${
+                          formData.isBullyingSpecialist ? 'text-orange-600' : 'text-text-muted'
+                        }`} />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold text-text-heading">
+                            {t('admin.bullyingSpecialist')}
+                          </span>
+                          <div className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${
+                            formData.isBullyingSpecialist ? 'bg-orange-500' : 'bg-border'
+                          }`}>
+                            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${
+                              formData.isBullyingSpecialist ? 'translate-x-[18px]' : 'translate-x-0.5'
+                            }`} />
+                          </div>
+                        </div>
+                        <p className="mt-0.5 text-xs leading-relaxed text-text-muted">
+                          {t('admin.bullyingSpecialistDesc')}
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                  )}
 
                   {/* Summary */}
                   <div className="rounded-xl border border-border bg-background-subtle p-3 text-xs text-text-muted">

@@ -42,6 +42,7 @@ import PatientBlogs from "./views/patient/Blogs";
 import MessagesPage from "./views/shared/MessagesPage";
 import DocumentViewer from "./views/shared/DocumentViewer";
 import LandingPage from "./views/shared/LandingPage";
+import MainDoctorDashboard from "./Pages/land-new-page/main-doctor-dashboard";
 
 function RootRedirect() {
   const { isAuthenticated, role, loading } = useAuth();
@@ -162,7 +163,9 @@ function AppRoutes() {
           path="/dashboard/doctor"
           element={
             <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
-              <Navigate to="/dashboard/doctor/queue" replace />
+              <Layout>
+                <MainDoctorDashboard />
+              </Layout>
             </ProtectedRoute>
           }
         />

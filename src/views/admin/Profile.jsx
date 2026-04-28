@@ -130,27 +130,27 @@ export default function AdminProfile() {
 
     return (
         <div className="min-h-screen bg-background">
-            {/* ─── Cover + Avatar Hero ─── */}
-            <div className="relative">
-                {/* Cover Photo */}
-                <div className="h-56 md:h-72 w-full overflow-hidden relative">
-                    <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-secondary" />
-                    {/* Geometric pattern overlay */}
-                    <svg className="absolute inset-0 w-full h-full opacity-10" xmlns="http://www.w3.org/2000/svg">
-                        <defs>
-                            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-                                <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1" />
-                            </pattern>
-                        </defs>
-                        <rect width="100%" height="100%" fill="url(#grid)" />
-                    </svg>
-                    {/* Blur circles */}
-                    <div className="absolute top-8 left-1/4 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
-                    <div className="absolute bottom-0 right-1/3 w-64 h-64 bg-secondary/30 rounded-full blur-3xl" />
-                </div>
+            {/* ─── Cover Hero ─── */}
+            <div className="h-56 md:h-72 w-full overflow-hidden relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-secondary" />
+                {/* Geometric pattern overlay */}
+                <svg className="absolute inset-0 w-full h-full opacity-10" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1" />
+                        </pattern>
+                    </defs>
+                    <rect width="100%" height="100%" fill="url(#grid)" />
+                </svg>
+                {/* Blur circles */}
+                <div className="absolute top-8 left-1/4 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
+                <div className="absolute bottom-0 right-1/3 w-64 h-64 bg-secondary/30 rounded-full blur-3xl" />
+            </div>
 
+            {/* ─── Profile Info Bar ─── */}
+            <div className="max-w-4xl mx-auto px-4 md:px-6 relative">
                 {/* Avatar anchored to cover bottom */}
-                <div className="absolute left-1/2 md:left-16 -translate-x-1/2 md:translate-x-0 -bottom-16 z-10">
+                <div className="absolute start-4 md:start-6 -top-16 z-10">
                     <div className="relative group">
                         <div className="w-32 h-32 md:w-36 md:h-36 rounded-full border-4 border-background-paper shadow-2xl flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/20">
                             {uploadingImage ? (
@@ -170,15 +170,10 @@ export default function AdminProfile() {
                         <div className="absolute bottom-2 right-2 w-4 h-4 bg-emerald-400 rounded-full border-2 border-background-paper shadow" />
                     </div>
                 </div>
-            </div>
-
-            {/* ─── Profile Info Bar ─── */}
-            <div className="max-w-4xl mx-auto px-4 md:px-6">
-                {/* Spacer for avatar */}
-                <div className="pt-20 md:pt-6 md:pl-48 flex flex-col md:flex-row items-center md:items-end justify-between gap-4 pb-6 border-b border-border">
-                    <div className="text-center md:text-left">
+                <div className="pt-20 flex flex-row items-end justify-between pb-6 border-b border-border gap-4">
+                    <div className="text-start">
                         <h1 className="text-2xl md:text-3xl font-bold text-text-heading">{displayName}</h1>
-                        <div className="flex items-center justify-center md:justify-start gap-2 mt-1.5 flex-wrap">
+                        <div className="flex items-center justify-start gap-2 mt-1.5 flex-wrap">
                             <span className="inline-flex items-center gap-1.5 text-sm text-primary font-medium bg-primary/10 px-3 py-1 rounded-full">
                                 <ShieldCheck className="w-3.5 h-3.5" />
                                 Admin
@@ -188,14 +183,14 @@ export default function AdminProfile() {
                                 {t('common.active', 'Active')}
                             </span>
                         </div>
-                        <p className="text-sm text-text-muted mt-1.5 flex items-center justify-center md:justify-start gap-1.5">
+                        <p className="text-sm text-text-muted mt-1.5 flex items-center justify-start gap-1.5">
                             <Mail className="w-3.5 h-3.5" />
                             {formData.email}
                         </p>
                     </div>
 
                     {/* Action Buttons */}
-                    <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-3 flex-shrink-0">
                         <Button
                             variant="outline"
                             size="sm"

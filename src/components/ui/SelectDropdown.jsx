@@ -128,7 +128,7 @@ export default function SelectDropdown({
           }
         `}
       >
-        <span className={`flex-1 text-left truncate ${selected ? 'text-text-heading font-medium' : 'text-text-muted'}`}>
+        <span className={`flex-1 text-start truncate ${selected ? 'text-text-heading font-medium' : 'text-text-muted'}`}>
           {selected ? selected.label : placeholder}
         </span>
         <ChevronDown
@@ -160,7 +160,7 @@ export default function SelectDropdown({
                   aria-selected={isSelected}
                   onClick={() => handleSelect(opt)}
                   className={`
-                    w-full flex items-center gap-3 px-4 py-2.5 text-sm text-left
+                    w-full flex items-center gap-3 px-4 py-2.5 text-sm text-start
                     transition-colors duration-150
                     ${isSelected
                       ? 'bg-primary/10 text-primary font-semibold'

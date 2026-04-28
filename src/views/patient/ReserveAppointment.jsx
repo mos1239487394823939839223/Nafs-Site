@@ -93,6 +93,8 @@ export default function ReserveAppointment() {
   const [newReview, setNewReview] = useState({ rating: 0, comment: "" });
   const [submittingReview, setSubmittingReview] = useState(false);
   const [selectedWeekStart, setSelectedWeekStart] = useState(new Date());
+  const [slotPeriodFilter, setSlotPeriodFilter] = useState('all');
+  const [slotShowAvailableOnly, setSlotShowAvailableOnly] = useState(false);
 
   // Documents modal state
   const [isDocsModalOpen, setIsDocsModalOpen] = useState(false);
@@ -570,21 +572,13 @@ export default function ReserveAppointment() {
     };
   };
 
-  // Get the week date range for a given base date
-  // Ensures StartDate is never in the past (backend rejects past dates)
+  // Get date range: always today → today+30 days
   const getWeekRange = (baseDate) => {
-    const weekStart = new Date(baseDate);
-    weekStart.setDate(weekStart.getDate() - weekStart.getDay()); // Sunday
-    weekStart.setHours(0, 0, 0, 0);
-
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-
-    // Use today if the week start is in the past
-    const start = weekStart < today ? today : weekStart;
-
-    const end = new Date(weekStart);
-    end.setDate(end.getDate() + 6); // Saturday
+    const start = today;
+    const end = new Date(today);
+    end.setDate(end.getDate() + 30);
     end.setHours(23, 59, 59, 999);
     return { start, end };
   };
@@ -1967,121 +1961,91 @@ export default function ReserveAppointment() {
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center justify-between gap-3 bg-background-subtle border border-border rounded-xl px-3 py-2.5">
+                        {/* Period filter chips + Available-only toggle */}
+                        <div className="flex flex-wrap items-center gap-2">
+                          {[
+                            { id: "all", labelEn: "All 🗓", labelAr: "الكل 🗓" },
+                            { id: "morning", labelEn: "Morning 🌅", labelAr: "الصباح 🌅" },
+                            { id: "afternoon", labelEn: "Afternoon ☀️", labelAr: "الظهيرة ☀️" },
+                            { id: "evening", labelEn: "Evening 🌙", labelAr: "المساء 🌙" },
+                          ].map((chip) => (
+                            <button
+                              key={chip.id}
+                              onClick={() => setSlotPeriodFilter(chip.id)}
+                              className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
+                                slotPeriodFilter === chip.id
+                                  ? "bg-primary text-white border-primary shadow-sm"
+                                  : "bg-background-paper text-text-muted border-border hover:border-primary/50 hover:text-primary"
+                              }`}
+                            >
+                              {isRTL ? chip.labelAr : chip.labelEn}
+                            </button>
+                          ))}
                           <button
-                            onClick={() => {
-                              const d = new Date(selectedDate);
-                              d.setDate(d.getDate() - 7);
-                              setSelectedDate(d);
-                            }}
-                            className="p-2 rounded-lg hover:bg-background-paper transition-colors border border-transparent hover:border-border"
+                            onClick={() => setSlotShowAvailableOnly((v) => !v)}
+                            className={`ms-auto text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
+                              slotShowAvailableOnly
+                                ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
+                                : "bg-background-paper text-text-muted border-border hover:border-emerald-500/50 hover:text-emerald-600"
+                            }`}
                           >
-                            {isRTL ? (
-                              <ChevronRight className="w-5 h-5" />
-                            ) : (
-                              <ChevronLeft className="w-5 h-5" />
-                            )}
-                          </button>
-
-                          <span className="font-semibold text-text-heading text-sm md:text-base bg-background-paper border border-border px-3 py-1 rounded-lg">
-                            {selectedDate.toLocaleDateString(
-                              isRTL ? "ar-EG" : "en-US",
-                              { month: "long", year: "numeric" },
-                            )}
-                          </span>
-
-                          <button
-                            onClick={() => {
-                              const d = new Date(selectedDate);
-                              d.setDate(d.getDate() + 7);
-                              setSelectedDate(d);
-                            }}
-                            className="p-2 rounded-lg hover:bg-background-paper transition-colors border border-transparent hover:border-border"
-                          >
-                            {isRTL ? (
-                              <ChevronLeft className="w-5 h-5" />
-                            ) : (
-                              <ChevronRight className="w-5 h-5" />
-                            )}
-                          </button>
-
-                          <button
-                            onClick={() => setSelectedDate(new Date())}
-                            className="text-xs px-3 py-1 rounded-lg border border-border bg-background-paper text-text-muted hover:text-primary"
-                          >
-                            {t("doctor.today", "Today")}
+                            {isRTL ? "المتاحة فقط" : "Available only"}
                           </button>
                         </div>
 
-                        <div
-                          className={`flex items-center gap-4 text-xs text-text-muted ${
-                            isRTL ? "flex-row-reverse" : ""
-                          }`}
-                        >
-                          <div
-                            className={`flex items-center gap-2 ${
-                              isRTL ? "flex-row-reverse" : ""
-                            }`}
-                          >
+                        {/* Legend */}
+                        <div className="flex flex-wrap items-center gap-4 text-xs text-text-muted">
+                          <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full bg-primary block" />
                             <span>{isRTL ? "محدد" : "Selected"}</span>
                           </div>
-                          <div
-                            className={`flex items-center gap-2 ${
-                              isRTL ? "flex-row-reverse" : ""
-                            }`}
-                          >
+                          <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 block" />
                             <span>{isRTL ? "متاح" : "Available"}</span>
                           </div>
-                          <div
-                            className={`flex items-center gap-2 ${
-                              isRTL ? "flex-row-reverse" : ""
-                            }`}
-                          >
+                          <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full bg-amber-500 block" />
                             <span>{isRTL ? "طلبي" : "My request"}</span>
                           </div>
-                          <div
-                            className={`flex items-center gap-2 ${
-                              isRTL ? "flex-row-reverse" : ""
-                            }`}
-                          >
-                            <span className="w-2.5 h-2.5 rounded-full bg-slate-400 block" />
-                            <span>{isRTL ? "محجوز" : "Booked"}</span>
-                          </div>
+                          {!slotShowAvailableOnly && (
+                            <div className="flex items-center gap-2">
+                              <span className="w-2.5 h-2.5 rounded-full bg-slate-400 block" />
+                              <span>{isRTL ? "محجوز" : "Booked"}</span>
+                            </div>
+                          )}
                         </div>
 
                         {(() => {
-                          const weekDates = getWeekDates(selectedDate);
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
                           const dayNames = isRTL
-                            ? [
-                                "أحد",
-                                "إثنين",
-                                "ثلاثاء",
-                                "أربعاء",
-                                "خميس",
-                                "جمعة",
-                                "سبت",
-                              ]
+                            ? ["أحد", "إثنين", "ثلاثاء", "أربعاء", "خميس", "جمعة", "سبت"]
                             : ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
+                          // Period filter hour ranges
+                          const periodHours = {
+                            morning: { min: 5, max: 12 },
+                            afternoon: { min: 12, max: 17 },
+                            evening: { min: 17, max: 24 },
+                          };
+
+                          // Derive unique sorted date keys from slots + myBookings (today onwards only)
+                          const todayKey = new Date().toISOString().slice(0, 10);
+                          const allDateKeys = Array.from(
+                            new Set([
+                              ...Object.keys(slots).map((k) => k.slice(0, 10)),
+                              ...Object.keys(mySlotBookingsByKey).map((k) => k.slice(0, 10)),
+                            ])
+                          )
+                            .filter((dk) => dk >= todayKey)
+                            .sort();
+
                           return (
-                            <div className="space-y-3">
-                              {weekDates.map((date, di) => {
-                                const isPast = date < today;
-                                const yyyy = date.getFullYear();
-                                const mm = String(date.getMonth() + 1).padStart(
-                                  2,
-                                  "0",
-                                );
-                                const dd = String(date.getDate()).padStart(
-                                  2,
-                                  "0",
-                                );
-                                const dateKey = `${yyyy}-${mm}-${dd}`;
+                            <div className="max-h-[60vh] overflow-y-auto pe-1 space-y-3">
+                              {allDateKeys.map((dateKey, di) => {
+                                const [yyyy, mm, dd] = dateKey.split("-").map(Number);
+                                const date = new Date(yyyy, mm - 1, dd);
+
                                 const dayAvailableSlots = Object.entries(slots)
                                   .filter(
                                     ([k]) =>
@@ -2104,17 +2068,29 @@ export default function ReserveAppointment() {
                                       !mySlotBookingsByKey[k],
                                   )
                                   .map(([k]) => k.replace(`${dateKey}-`, ""));
+                                const matchesPeriod = (timeKey) => {
+                                  if (slotPeriodFilter === "all") return true;
+                                  const h = parseInt(timeKey.split(":")[0], 10);
+                                  if (slotPeriodFilter === "morning") return h >= 5 && h < 12;
+                                  if (slotPeriodFilter === "afternoon") return h >= 12 && h < 17;
+                                  if (slotPeriodFilter === "evening") return h >= 17;
+                                  return true;
+                                };
+                                const filteredAvailable = dayAvailableSlots.filter(matchesPeriod);
+                                const filteredMyBooked = dayMyBookedSlots.filter(matchesPeriod);
+                                const filteredBookedByOthers = slotShowAvailableOnly
+                                  ? []
+                                  : dayBookedSlotsByOthers.filter(matchesPeriod);
                                 const daySlots = Array.from(
                                   new Set([
-                                    ...dayAvailableSlots,
-                                    ...dayMyBookedSlots,
-                                    ...dayBookedSlotsByOthers,
+                                    ...filteredAvailable,
+                                    ...filteredMyBooked,
+                                    ...filteredBookedByOthers,
                                   ]),
                                 );
-                                const availableCount = dayAvailableSlots.length;
-                                const myRequestsCount = dayMyBookedSlots.length;
-                                const bookedCount =
-                                  dayBookedSlotsByOthers.length;
+                                const availableCount = filteredAvailable.length;
+                                const myRequestsCount = filteredMyBooked.length;
+                                const bookedCount = filteredBookedByOthers.length;
                                 const totalCount = daySlots.length;
 
                                 if (daySlots.length === 0) {
@@ -2123,7 +2099,7 @@ export default function ReserveAppointment() {
 
                                 return (
                                   <div
-                                    key={di}
+                                    key={dateKey}
                                     className="bg-background-subtle/50 border border-border rounded-xl p-4"
                                   >
                                     <div

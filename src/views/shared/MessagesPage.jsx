@@ -4,7 +4,8 @@ import { motion } from 'framer-motion'
 import { useAuth, Roles } from '../../contexts/AuthContext'
 import { chatAPI, filesAPI, MessageType, userAPI } from '../../lib/api'
 import ChatWindow from '../../components/chat/ChatWindow'
-import { Search, MessageSquare, Loader2, RefreshCw, Stethoscope, Headphones, FileEdit as EditNoteIcon } from 'lucide-react'
+import SelectDropdown from '../../components/ui/SelectDropdown'
+import { Search, MessageSquare, Loader2, RefreshCw, Stethoscope, Headphones, FileEdit as EditNoteIcon, Wrench, HeartPulse, ShieldAlert, AlertTriangle } from 'lucide-react'
 const SupportAgent = Headphones
 import { useToast } from '../../components/ui/Toast'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -119,6 +120,16 @@ const logSupportDebug = (...args) => {
 }
 
 const ROOM_CASE_KEY = 'nafs_room_case_types'
+
+// Maps string case type key → backend ChatType integer
+// Backend enum: 2=General Support, 3=Emergency, 4=Bullying
+const CASE_TYPE_CHAT_TYPE_MAP = {
+  technical: 2,
+  medical: 2,
+  billing: 4,
+  emergency: 3,
+}
+
 const SUPPORT_CASE_TYPES = [
   {
     key: 'technical',
@@ -126,6 +137,10 @@ const SUPPORT_CASE_TYPES = [
     labelAr: 'مشكلة تقنية',
     descEn: 'Platform issues, login problems, and bugs.',
     descAr: 'مشاكل المنصة، تسجيل الدخول، والأخطاء.',
+    icon: Wrench,
+    color: 'bg-blue-50 text-blue-700 border-blue-200',
+    activeColor: 'bg-blue-600 text-white border-blue-600',
+    badgeColor: 'bg-blue-100 text-blue-700 border-blue-200',
   },
   {
     key: 'medical',
@@ -133,13 +148,21 @@ const SUPPORT_CASE_TYPES = [
     labelAr: 'استفسار طبي',
     descEn: 'Questions about symptoms, sessions, or treatment guidance.',
     descAr: 'أسئلة عن الأعراض أو الجلسات أو الإرشاد العلاجي.',
+    icon: HeartPulse,
+    color: 'bg-green-50 text-green-700 border-green-200',
+    activeColor: 'bg-green-600 text-white border-green-600',
+    badgeColor: 'bg-green-100 text-green-700 border-green-200',
   },
   {
     key: 'billing',
-    labelEn: 'Billing',
-    labelAr: 'الفواتير والمدفوعات',
-    descEn: 'Payment, invoices, refunds, and billing details.',
-    descAr: 'المدفوعات والفواتير والاسترداد والتفاصيل المالية.',
+    labelEn: 'Bullying',
+    labelAr: 'التنمر',
+    descEn: 'Reporting bullying or harassment incidents.',
+    descAr: 'الإبلاغ عن حوادث التنمر أو التحرش.',
+    icon: ShieldAlert,
+    color: 'bg-orange-50 text-orange-700 border-orange-200',
+    activeColor: 'bg-orange-600 text-white border-orange-600',
+    badgeColor: 'bg-orange-100 text-orange-700 border-orange-200',
   },
   {
     key: 'emergency',
@@ -147,6 +170,10 @@ const SUPPORT_CASE_TYPES = [
     labelAr: 'طارئ',
     descEn: 'Urgent request that needs immediate support attention.',
     descAr: 'طلب عاجل يحتاج تدخل سريع من فريق الدعم.',
+    icon: AlertTriangle,
+    color: 'bg-red-50 text-red-700 border-red-200',
+    activeColor: 'bg-red-600 text-white border-red-600',
+    badgeColor: 'bg-red-100 text-red-700 border-red-200',
   },
 ]
 
@@ -866,7 +893,8 @@ export default function MessagesPage() {
     setSupportRoomLoading(true)
     try {
       logSupportDebug('openSupportChat:start')
-      const supportResponse = await chatAPI.openPatientSupportChat(currentUserId)
+      const chatType = CASE_TYPE_CHAT_TYPE_MAP[supportCaseType] ?? 2
+      const supportResponse = await chatAPI.openPatientSupportChat(currentUserId, chatType)
       logSupportDebug('openSupportChat:response', supportResponse)
       const supportSuccess = supportResponse?.IsSuccess ?? supportResponse?.isSuccess
       if (supportSuccess === false) {
@@ -1019,15 +1047,15 @@ export default function MessagesPage() {
 
       {/* ════════════════════ SIDEBAR ════════════════════ */}
       <div className={`
-        flex flex-col bg-background-paper border-r border-border/60
+        flex flex-col bg-background-paper border-e border-border/60
         w-full lg:w-[340px] xl:w-[380px] 2xl:w-[420px] flex-shrink-0 overflow-hidden
         ${activeRoom ? 'hidden lg:flex' : 'flex'}
       `}>
 
         {/* Sidebar Header */}
         <div className="px-5 pt-5 pb-4 border-b border-border/50">
-          <div className={`flex items-center justify-between mb-4 ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <div className={`flex items-center gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
                 <MessageSquare className="w-4 h-4 text-primary" />
               </div>
@@ -1039,7 +1067,7 @@ export default function MessagesPage() {
               )}
             </div>
 
-            <div className={`flex items-center gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <div className="flex items-center gap-1">
               <button
                 onClick={fetchRooms}
                 disabled={loading}
@@ -1091,25 +1119,20 @@ export default function MessagesPage() {
                   <label className="text-xs font-medium text-text-muted">
                     {t('chat.selectCaseType', 'Select Case Type')}
                   </label>
-                  <div className="relative">
-                    <select
-                      value={supportCaseType}
-                      onChange={(e) => setSupportCaseType(e.target.value)}
-                      className="w-full h-10 px-3 rounded-lg border border-border/70 bg-background-subtle text-sm text-text-heading outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 appearance-none"
-                    >
-                      <option value="">
-                        {isRTL ? 'اختر نوع الحالة' : 'Select Case Type'}
-                      </option>
-                      {SUPPORT_CASE_TYPES.map((option) => (
-                        <option key={option.key} value={option.key}>
-                          {isRTL ? option.labelAr : option.labelEn}
-                        </option>
-                      ))}
-                    </select>
-                    <span className={`pointer-events-none absolute top-1/2 -translate-y-1/2 text-text-muted ${isRTL ? 'left-3' : 'right-3'}`}>
-                      v
-                    </span>
-                  </div>
+                  <SelectDropdown
+                    size="sm"
+                    value={supportCaseType}
+                    onChange={(val) => setSupportCaseType(val)}
+                    options={SUPPORT_CASE_TYPES.map((option) => ({
+                      value: option.key,
+                      label: isRTL ? option.labelAr : option.labelEn,
+                      icon: (
+                        <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${option.badgeColor}`}>
+                          <option.icon className="w-3.5 h-3.5" />
+                        </span>
+                      ),
+                    }))}
+                  />
 
                   {selectedSupportCaseType && (
                     <p className="text-[11px] text-text-muted leading-4">
@@ -1168,14 +1191,14 @@ export default function MessagesPage() {
                     key={room.Id || room.id}
                     onClick={() => setActiveRoom(room)}
                     className={`
-                      w-full px-4 py-3.5 transition-all text-left relative
+                      w-full px-4 py-3.5 transition-all text-start relative
                       ${isActive
-                        ? `bg-primary/8 ${isRTL ? 'border-l-2 border-l-primary' : 'border-r-2 border-r-primary'}`
-                        : `hover:bg-background-subtle/80 ${isRTL ? 'border-l-2 border-l-transparent' : 'border-r-2 border-r-transparent'}`
+                        ? 'bg-primary/8 border-s-2 border-s-primary'
+                        : 'hover:bg-background-subtle/80 border-s-2 border-s-transparent'
                       }
                     `}
                   >
-                    <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                    <div className="flex items-center gap-3">
 
                       {/* Avatar */}
                       <div className="relative flex-shrink-0">
@@ -1190,14 +1213,19 @@ export default function MessagesPage() {
                       </div>
 
                       {/* Content */}
-                      <div className={`flex-1 min-w-0 ${isRTL ? 'text-right' : ''}`}>
-                        <div className={`flex items-center justify-between gap-1 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1">
                           <h4 className={`text-sm font-semibold truncate ${isActive ? 'text-primary' : 'text-text-heading'}`}>
                             {name}
                           </h4>
-                          <div className={`flex items-center gap-1.5 flex-shrink-0 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                          <div className="flex items-center gap-1.5 flex-shrink-0">
                             {isPatient && isSupportRoom(room) && localRoomCaseTypes[String(room.Id || room.id)] && (
-                              <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-secondary/10 text-secondary border border-secondary/20 whitespace-nowrap">
+                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${
+                                (() => {
+                                  const type = SUPPORT_CASE_TYPES.find((option) => option.key === localRoomCaseTypes[String(room.Id || room.id)])
+                                  return type?.badgeColor ?? 'bg-secondary/10 text-secondary border-secondary/20'
+                                })()
+                              }`}>
                                 {(() => {
                                   const type = SUPPORT_CASE_TYPES.find((option) => option.key === localRoomCaseTypes[String(room.Id || room.id)])
                                   return type ? (isRTL ? type.labelAr : type.labelEn) : ''

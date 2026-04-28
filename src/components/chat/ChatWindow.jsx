@@ -14,16 +14,47 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
   const [attachments, setAttachments] = useState([])
   const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const messagesEndRef = useRef(null)
+  const scrollContainerRef = useRef(null)
+  const prevMsgCountRef = useRef(0)
+  const prevConversationIdRef = useRef(null)
   const fileInputRef = useRef(null)
   const emojiPickerRef = useRef(null)
 
-  const scrollToBottom = () => {
+  const isNearBottom = () => {
+    const el = scrollContainerRef.current
+    if (!el) return true
+    return el.scrollHeight - el.scrollTop - el.clientHeight < 150
+  }
+
+  const scrollToBottom = (force = false) => {
+    if (!force && !isNearBottom()) return
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
   useEffect(() => {
-    scrollToBottom()
-  }, [conversation?.messages])
+    const msgs = conversation?.messages
+    const conversationId = conversation?.id ?? conversation?.Id ?? null
+    const msgCount = msgs?.length ?? 0
+
+    // New conversation opened → always scroll to bottom instantly
+    if (conversationId !== prevConversationIdRef.current) {
+      prevConversationIdRef.current = conversationId
+      prevMsgCountRef.current = msgCount
+      messagesEndRef.current?.scrollIntoView({ behavior: 'auto' })
+      return
+    }
+
+    // No new messages (polling returned same data) → do nothing
+    if (msgCount <= prevMsgCountRef.current) return
+
+    const lastMsg = msgs[msgCount - 1]
+    const isMine = lastMsg?.sender === 'current-user'
+    prevMsgCountRef.current = msgCount
+
+    // Scroll only if it's my own message OR user is already near bottom
+    scrollToBottom(isMine)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversation?.messages?.length, conversation?.id, conversation?.Id])
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -145,6 +176,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
 
       {/* ── Messages Area ── */}
       <div
+        ref={scrollContainerRef}
         className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-1"
         style={{
           backgroundImage: 'radial-gradient(circle at 20% 50%, var(--color-primary, #7DAE9F)08 0%, transparent 50%), radial-gradient(circle at 80% 20%, var(--color-secondary, #93B5C6)06 0%, transparent 40%)',

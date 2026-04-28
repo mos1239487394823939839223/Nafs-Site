@@ -643,6 +643,105 @@ export default {
     clinicalNotes: "Clinical Notes",
     noClinicalRecords: "No clinical records yet",
     addSessionNote: "Add a session note to start building clinical records",
+    dashboardHome: {
+      hero: {
+        greeting: "Welcome back",
+        titleLine1: "Support more people",
+        titleLine2: "and transform lives for the better",
+        subtitle:
+          "Your workspace to run your practice and follow up with patients easily and securely",
+        addSession: "Add New Session",
+        imageAlt: "Doctor working on a laptop",
+      },
+      tiles: {
+        schedule: {
+          title: "Daily Schedule",
+          desc: "You have 6 sessions today\n2 remaining",
+          cta: "View Schedule",
+        },
+        articles: {
+          title: "Articles",
+          desc: "Share your expertise\nand publish new articles",
+          cta: "Manage Articles",
+        },
+        reviews: {
+          title: "Patient Reviews",
+          desc: "Your average rating\n4.8 out of 5",
+          cta: "View Reviews",
+        },
+        performance: {
+          title: "Performance Insights",
+          desc: "Track your sessions\nand patient satisfaction",
+          cta: "View Reports",
+        },
+      },
+      schedule: {
+        title: "Today's Schedule",
+        viewFull: "View Full Schedule",
+        enterNow: "Enter Now",
+        join: "Join",
+        sessionTypes: {
+          individual: "Individual Session",
+          individualAnxiety: "Individual Session - Anxiety and Stress",
+          individualDepression: "Individual Session - Depression",
+          couple: "Couples Session",
+        },
+        noSessions: "No sessions scheduled for today",
+      },
+      performance: {
+        title: "Performance Summary",
+        cards: {
+          rating: {
+            label: "Average Rating",
+            delta: "+0.3 from last month",
+          },
+          sessions: {
+            label: "Sessions",
+            delta: "+8 from last month",
+          },
+          hours: {
+            label: "Working Hours",
+            delta: "+5 hours",
+          },
+          activePatients: {
+            label: "Active Patients",
+            delta: "+6 new patients",
+          },
+        },
+      },
+      quickTools: {
+        title: "Quick Tools",
+        items: {
+          assessmentForms: {
+            title: "Assessment Forms",
+            desc: "Manage your assessment forms",
+          },
+          sessionNotes: {
+            title: "Session Notes",
+            desc: "Document your notes with ease",
+          },
+          sessionManagement: {
+            title: "Session Management",
+            desc: "View and manage your sessions",
+          },
+          addPatient: {
+            title: "Add New Patient",
+            desc: "Add a patient for follow-up",
+          },
+        },
+      },
+      recentPatients: {
+        title: "Recent Patients",
+        viewAll: "View All Patients",
+        viewFile: "View Record",
+        lastSession: "Last session",
+        noPatients: "No patients yet",
+        status: {
+          active: "Active",
+          followUp: "Follow-up",
+        },
+      },
+    },
   },
 
   // Admin
@@ -703,6 +802,8 @@ export default {
     supportAgentDesc: "Can respond to tickets and manage patient queries",
     manager: "Manager",
     managerDesc: "Full access including team management and reporting",
+    bullyingSpecialist: "Anti-Bullying Specialist",
+    bullyingSpecialistDesc: "Specializes in handling bullying and harassment cases reported by patients",
     bookingsManagement: "Bookings Management",
     manageBookingsDesc: "Manage and monitor all platform bookings",
     searchPatientsDocs: "Search by patient or doctor name...",

@@ -749,6 +749,105 @@ export default {
     clinicalNotes: "الملاحظات السريرية",
     noClinicalRecords: "لا توجد سجلات طبية بعد",
     addSessionNote: "أضف ملاحظة جلسة لبدء بناء السجلات الطبية",
+    dashboardHome: {
+      hero: {
+        greeting: "أهلاً",
+        titleLine1: "ساعد المزيد من الأشخاص",
+        titleLine2: "وغير حياتهم للأفضل",
+        subtitle:
+          "منصتك لممارسة عملك المهني ومتابعة مرضاك بسهولة وأمان",
+        addSession: "أضف جلسة جديدة",
+        imageAlt: "طبيب يعمل على حاسوبه",
+      },
+      tiles: {
+        schedule: {
+          title: "الجدول اليومي",
+          desc: "لديك 6 جلسات اليوم\n2 متبقية",
+          cta: "عرض الجدول",
+        },
+        articles: {
+          title: "المقالات",
+          desc: "شارك المعرفة\nوأضف مقالات جديدة",
+          cta: "إدارة المقالات",
+        },
+        reviews: {
+          title: "تقييمات المرضى",
+          desc: "متوسط تقييمك\n4.8 من 5",
+          cta: "عرض التقييمات",
+        },
+        performance: {
+          title: "إحصائيات الأداء",
+          desc: "تابع أداء الجلسات\nوتقييم المرضى",
+          cta: "عرض التقارير",
+        },
+      },
+      schedule: {
+        title: "جدول اليوم",
+        viewFull: "عرض الجدول الكامل",
+        enterNow: "الدخول الآن",
+        join: "انضمام",
+        sessionTypes: {
+          individual: "جلسة فردية",
+          individualAnxiety: "جلسة فردية - قلق وتوتر",
+          individualDepression: "جلسة فردية - اكتئاب",
+          couple: "جلسة زوجية",
+        },
+        noSessions: "لا توجد جلسات مجدولة اليوم",
+      },
+      performance: {
+        title: "ملخص الأداء",
+        cards: {
+          rating: {
+            label: "متوسط التقييم",
+            delta: "+0.3 من الشهر الماضي",
+          },
+          sessions: {
+            label: "عدد الجلسات",
+            delta: "+8 من الشهر الماضي",
+          },
+          hours: {
+            label: "ساعات العمل",
+            delta: "+5 ساعات",
+          },
+          activePatients: {
+            label: "مرضى نشطين",
+            delta: "+6 مرضى جدد",
+          },
+        },
+      },
+      quickTools: {
+        title: "أدوات سريعة",
+        items: {
+          assessmentForms: {
+            title: "نماذج التقييم",
+            desc: "إدارة نماذج التقييم",
+          },
+          sessionNotes: {
+            title: "ملاحظات الجلسات",
+            desc: "سجل ملاحظاتك بسهولة",
+          },
+          sessionManagement: {
+            title: "إدارة الجلسات",
+            desc: "عرض وإدارة جلساتك",
+          },
+          addPatient: {
+            title: "إضافة مريض جديد",
+            desc: "أضف مريض لمتابعته",
+          },
+        },
+      },
+      recentPatients: {
+        title: "آخر المرضى",
+        viewAll: "عرض جميع المرضى",
+        viewFile: "عرض الملف",
+        lastSession: "آخر جلسة",
+        noPatients: "لا يوجد مرضى بعد",
+        status: {
+          active: "نشط",
+          followUp: "متابعة",
+        },
+      },
+    },
   },
 
   // Admin
@@ -809,6 +908,8 @@ export default {
     supportAgentDesc: "يمكنه الرد على التذاكر وإدارة استفسارات المرضى",
     manager: "مدير",
     managerDesc: "وصول كامل بما في ذلك إدارة الفريق والتقارير",
+    bullyingSpecialist: "أخصائي مكافحة التنمر",
+    bullyingSpecialistDesc: "متخصص في التعامل مع حالات التنمر والتحرش التي يُبلّغ عنها المرضى",
     bookingsManagement: "إدارة الحجوزات",
     allBookings: "جميع الحجوزات",
     activeBookings: "الحجوزات النشطة",
