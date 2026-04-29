@@ -1,7 +1,7 @@
 import { Phone } from "lucide-react";
 import { useLanguage } from "../../contexts/LanguageContext";
 
-export const EmergencyCallCard = () => {
+export const EmergencyCallCard = ({ onClick }: { onClick?: () => void }) => {
   const { t } = useLanguage();
 
   return (
@@ -13,7 +13,10 @@ export const EmergencyCallCard = () => {
       <p className="text-xs text-text-light leading-relaxed mb-3">
         {t("sidebar.emergency.desc")}
       </p>
-      <button className="w-full bg-primary hover:opacity-90 text-primary-foreground text-sm font-semibold py-2 rounded-lg transition-opacity">
+      <button
+        onClick={onClick}
+        className="w-full bg-primary hover:opacity-90 text-primary-foreground text-sm font-semibold py-2 rounded-lg transition-opacity"
+      >
         {t("sidebar.emergency.cta")}
       </button>
     </div>

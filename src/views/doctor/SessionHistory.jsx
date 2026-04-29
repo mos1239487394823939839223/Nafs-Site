@@ -485,21 +485,6 @@ export default function SessionHistory() {
                     </div>
                   )}
 
-                  {/* IDs Section */}
-                  <div className="pt-2 border-t border-border flex gap-4 text-xs text-text-muted">
-                    {record.RecordID && (
-                      <div>
-                        <span className="font-medium">{isRTL ? "معرف السجل:" : "Record ID:"}</span>
-                        <p className="font-mono text-text-light">{record.RecordID}</p>
-                      </div>
-                    )}
-                    {record.BookingID && (
-                      <div>
-                        <span className="font-medium">{isRTL ? "معرف الحجز:" : "Booking ID:"}</span>
-                        <p className="font-mono text-text-light">{record.BookingID}</p>
-                      </div>
-                    )}
-                  </div>
                 </div>
               ))}
             </div>

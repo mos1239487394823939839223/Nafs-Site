@@ -19,12 +19,316 @@ import { UserAvatar } from '../../components/ui/Avatar'
 import Spinner from '../../components/ui/Spinner'
 import Pagination from '../../components/ui/Pagination'
 import { useToast } from '../../components/ui/Toast'
-import { Users, UserPlus, Search, Mail, Stethoscope, User, RefreshCw, Phone, Lock, FileText, ToggleLeft, ToggleRight, ShieldCheck, Activity, X, Camera, Eye, Headphones } from 'lucide-react'
-import { adminAPI, userAPI, documentsAPI } from '../../lib/api'
+import { Users, UserPlus, Search, Mail, Stethoscope, User, RefreshCw, Phone, Lock, FileText, ToggleLeft, ToggleRight, ShieldCheck, ShieldAlert, Shield, Activity, X, Camera, Eye, EyeOff, Headphones, CheckCircle } from 'lucide-react'
+import { adminAPI, userAPI, documentsAPI, authAPI, extractErrorMessage } from '../../lib/api'
+import { motion, AnimatePresence } from 'framer-motion'
+import { validateEmail } from '../../lib/validation'
 import { useLanguage } from '../../contexts/LanguageContext'
 import LocalDocumentsManager from '../../components/shared/LocalDocumentsManager'
 
 const ADD_DOCTOR_DOCS_STORAGE_KEY = 'nafs:admin:add-doctor-documents'
+
+// ── Add Staff Modal ──────────────────────────────────────────────────────────
+function AddStaffModal({ open, onClose, onSuccess, t }) {
+    const toast = useToast()
+    const [loading, setLoading] = useState(false)
+    const [step, setStep] = useState(1)
+    const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        password: '',
+        phoneNumber: '',
+        permissions: 'support-agent',
+        isBullyingSpecialist: false,
+    })
+    const [errors, setErrors] = useState({})
+    const [showPassword, setShowPassword] = useState(false)
+
+    const permissionLevels = [
+        {
+            value: 'support-agent',
+            label: t('admin.supportAgent'),
+            description: t('admin.supportAgentDesc'),
+            icon: Headphones,
+            iconColor: 'text-blue-600',
+            iconBg: 'bg-blue-50',
+        },
+        {
+            value: 'manager',
+            label: t('admin.manager'),
+            description: t('admin.managerDesc'),
+            icon: ShieldCheck,
+            iconColor: 'text-violet-600',
+            iconBg: 'bg-violet-50',
+        },
+    ]
+
+    const handleClose = () => {
+        setFormData({ name: '', email: '', password: '', phoneNumber: '', permissions: 'support-agent', isBullyingSpecialist: false })
+        setErrors({})
+        setStep(1)
+        setShowPassword(false)
+        onClose()
+    }
+
+    const handleChange = (e) => {
+        const { name, value } = e.target
+        setFormData(prev => ({ ...prev, [name]: value }))
+        if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }))
+    }
+
+    const validateStep1 = () => {
+        const newErrors = {}
+        if (!formData.name.trim()) newErrors.name = t('errors.required')
+        if (!validateEmail(formData.email)) newErrors.email = t('errors.invalidEmail')
+        if (!formData.password || formData.password.length < 6) newErrors.password = t('errors.passwordTooShort')
+        setErrors(newErrors)
+        return Object.keys(newErrors).length === 0
+    }
+
+    const handleNext = () => {
+        if (validateStep1()) setStep(2)
+    }
+
+    const handleSubmit = async () => {
+        setLoading(true)
+        try {
+            const response = await adminAPI.addUser({
+                name: formData.name,
+                email: formData.email,
+                password: formData.password,
+                phoneNumber: formData.phoneNumber || null,
+                role: 4,
+                isBullyingSpecialist: formData.isBullyingSpecialist,
+            })
+            if (response?.IsSuccess === true) {
+                toast.success(t('success.staffAdded'))
+                handleClose()
+                onSuccess()
+            } else {
+                toast.error(response?.Message || t('errors.somethingWentWrong'))
+            }
+        } catch (error) {
+            toast.error(extractErrorMessage(error, t('errors.somethingWentWrong')))
+        } finally {
+            setLoading(false)
+        }
+    }
+
+    if (!open) return null
+
+    return (
+        <AnimatePresence>
+            <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                style={{ backdropFilter: 'blur(8px)', backgroundColor: 'rgba(0,0,0,0.4)' }}
+                onClick={(e) => e.target === e.currentTarget && handleClose()}
+            >
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                    transition={{ type: 'spring', duration: 0.4 }}
+                    className="relative w-full max-w-lg overflow-hidden rounded-2xl border border-border bg-background-paper shadow-2xl"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {/* Header */}
+                    <div className="p-6 pb-4 border-b border-border bg-gradient-to-r from-primary/5 via-secondary/5 to-transparent">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-secondary shadow-lg shadow-primary/20">
+                                    <UserPlus className="h-5 w-5 text-white" />
+                                </div>
+                                <div>
+                                    <h2 className="text-lg font-bold text-text-heading">{t('admin.addStaff')}</h2>
+                                    <p className="text-xs text-text-muted">
+                                        {step === 1 ? t('admin.basicInfoStep') || 'Basic information' : t('admin.permissionsStep') || 'Set permissions'}
+                                    </p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={handleClose}
+                                className="flex h-8 w-8 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-background-subtle hover:text-text-heading"
+                            >
+                                <X className="h-4 w-4" />
+                            </button>
+                        </div>
+                        {/* Step indicator */}
+                        <div className="mt-5 flex gap-2">
+                            {[1, 2].map((s) => (
+                                <div
+                                    key={s}
+                                    className={`h-1 flex-1 rounded-full transition-all duration-300 ${s <= step ? 'bg-gradient-to-r from-primary to-secondary' : 'bg-border'}`}
+                                />
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Body */}
+                    <div className="px-6 py-6">
+                        <AnimatePresence mode="wait">
+                            {step === 1 ? (
+                                <motion.div
+                                    key="step1"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    className="space-y-4"
+                                >
+                                    <Input
+                                        label={<>{t('settings.fullName')} <span className="text-red-500">*</span></>}
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={handleChange}
+                                        placeholder="Ahmed Mohamed"
+                                        icon={User}
+                                        error={errors.name}
+                                    />
+                                    <Input
+                                        label={<>{t('settings.emailAddress')} <span className="text-red-500">*</span></>}
+                                        name="email"
+                                        type="email"
+                                        value={formData.email}
+                                        onChange={handleChange}
+                                        placeholder="staff@nafs.com"
+                                        icon={Mail}
+                                        error={errors.email}
+                                    />
+                                    <Input
+                                        label={<>{t('common.password')} <span className="text-red-500">*</span></>}
+                                        name="password"
+                                        type={showPassword ? 'text' : 'password'}
+                                        value={formData.password}
+                                        onChange={handleChange}
+                                        placeholder="Min. 6 characters"
+                                        icon={Lock}
+                                        error={errors.password}
+                                        slotProps={{
+                                            input: {
+                                                endAdornment: (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowPassword(!showPassword)}
+                                                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', display: 'flex', alignItems: 'center', opacity: 0.5 }}
+                                                        tabIndex={-1}
+                                                    >
+                                                        {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                                                    </button>
+                                                ),
+                                            },
+                                        }}
+                                    />
+                                    <Input
+                                        label={t('admin.phoneOptional')}
+                                        name="phoneNumber"
+                                        type="tel"
+                                        value={formData.phoneNumber}
+                                        onChange={handleChange}
+                                        placeholder="+20 1xx xxx xxxx"
+                                        icon={Phone}
+                                    />
+                                    <Button onClick={handleNext} className="mt-2 w-full">
+                                        {t('common.next')} →
+                                    </Button>
+                                </motion.div>
+                            ) : (
+                                <motion.div
+                                    key="step2"
+                                    initial={{ opacity: 0, x: 20 }}
+                                    animate={{ opacity: 1, x: 0 }}
+                                    exit={{ opacity: 0, x: -20 }}
+                                    className="space-y-4"
+                                >
+                                    <p className="text-sm text-text-muted">{t('admin.permissionLevel')}</p>
+                                    {permissionLevels.map((level) => {
+                                        const Icon = level.icon
+                                        const selected = formData.permissions === level.value
+                                        return (
+                                            <button
+                                                key={level.value}
+                                                type="button"
+                                                onClick={() => setFormData(prev => ({ ...prev, permissions: level.value }))}
+                                                className={`w-full rounded-xl border-2 p-4 text-left transition-all ${selected ? 'border-primary bg-primary/5' : 'border-border bg-background-subtle hover:border-primary/40 hover:bg-primary/3'}`}
+                                            >
+                                                <div className="flex items-start gap-3">
+                                                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${level.iconBg}`}>
+                                                        <Icon className={`h-5 w-5 ${level.iconColor}`} />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <div className="flex items-center justify-between">
+                                                            <span className="text-sm font-semibold text-text-heading">{level.label}</span>
+                                                            {selected && (
+                                                                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary">
+                                                                    <CheckCircle className="h-3.5 w-3.5 text-white" />
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                        <p className="mt-0.5 text-xs leading-relaxed text-text-muted">{level.description}</p>
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        )
+                                    })}
+
+                                    {/* Bullying Specialist Toggle */}
+                                    {formData.permissions === 'support-agent' && (
+                                        <button
+                                            type="button"
+                                            onClick={() => setFormData(prev => ({ ...prev, isBullyingSpecialist: !prev.isBullyingSpecialist }))}
+                                            className={`w-full rounded-xl border-2 p-4 text-start transition-all ${formData.isBullyingSpecialist ? 'border-orange-400 bg-orange-50' : 'border-border bg-background-subtle hover:border-orange-300 hover:bg-orange-50/40'}`}
+                                        >
+                                            <div className="flex items-start gap-3">
+                                                <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${formData.isBullyingSpecialist ? 'bg-orange-100' : 'bg-background-paper'}`}>
+                                                    <ShieldAlert className={`h-5 w-5 ${formData.isBullyingSpecialist ? 'text-orange-600' : 'text-text-muted'}`} />
+                                                </div>
+                                                <div className="flex-1">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-sm font-semibold text-text-heading">{t('admin.bullyingSpecialist')}</span>
+                                                        <div className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors ${formData.isBullyingSpecialist ? 'bg-orange-500' : 'bg-border'}`}>
+                                                            <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${formData.isBullyingSpecialist ? 'translate-x-[18px]' : 'translate-x-0.5'}`} />
+                                                        </div>
+                                                    </div>
+                                                    <p className="mt-0.5 text-xs leading-relaxed text-text-muted">{t('admin.bullyingSpecialistDesc')}</p>
+                                                </div>
+                                            </div>
+                                        </button>
+                                    )}
+
+                                    {/* Summary */}
+                                    <div className="rounded-xl border border-border bg-background-subtle p-3 text-xs text-text-muted">
+                                        <p className="flex items-center gap-1.5">
+                                            <Shield className="h-3.5 w-3.5 text-primary" />
+                                            <span>
+                                                <span className="font-semibold text-text-heading">{formData.name || '—'}</span>
+                                                {' · '}
+                                                {formData.email || '—'}
+                                            </span>
+                                        </p>
+                                    </div>
+
+                                    <div className="flex gap-3">
+                                        <Button variant="outline" onClick={() => setStep(1)} className="flex-1">
+                                            ← {t('common.back')}
+                                        </Button>
+                                        <Button onClick={handleSubmit} disabled={loading} isLoading={loading} className="flex-1">
+                                            {!loading && t('admin.registerStaffMember')}
+                                            {loading && t('admin.registering')}
+                                        </Button>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                    </div>
+                </motion.div>
+            </motion.div>
+        </AnimatePresence>
+    )
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 
 const readStagedDocuments = () => {
     try {
@@ -83,7 +387,8 @@ export default function UserManagement() {
     const toast = useToast()
     const { t, isRTL } = useLanguage()
     const [modalOpen, setModalOpen] = useState(false)
-    const [activeTab, setActiveTab] = useState('doctors')
+    const [staffModalOpen, setStaffModalOpen] = useState(false)
+    const [activeTab, setActiveTab] = useState('support')
     const [searchTerm, setSearchTerm] = useState('')
     const [loading, setLoading] = useState(false)
     const [submitting, setSubmitting] = useState(false)
@@ -141,7 +446,7 @@ export default function UserManagement() {
     const fetchPatients = useCallback(async () => {
         setLoading(true)
         try {
-            const response = await userAPI.getUsers({ pageIndex: patientsPage, pageSize: 20 })
+            const response = await userAPI.getUsers({ pageIndex: patientsPage, pageSize: 20, role: 3 })
             if (response?.Data) {
                 setPatients(response.Data.Items || response.Data || [])
                 if (response.Data.TotalPages) {
@@ -161,15 +466,15 @@ export default function UserManagement() {
     const fetchSupportStaff = useCallback(async () => {
         setLoading(true)
         try {
-            const response = await userAPI.getUsers({ pageIndex: supportPage, pageSize: 20, role: 3 })
-            if (response?.Data) {
-                setSupportStaff(response.Data.Items || response.Data || [])
-                if (response.Data.TotalPages) {
-                    setSupportTotalPages(response.Data.TotalPages)
-                }
-            } else if (Array.isArray(response)) {
-                setSupportStaff(response)
-            }
+            // Fetch both staff (role 4) and admins (role 1) in parallel
+            const [staffRes, adminRes] = await Promise.all([
+                userAPI.getUsers({ pageIndex: 1, pageSize: 100, role: 4 }),
+                userAPI.getUsers({ pageIndex: 1, pageSize: 100, role: 1 }),
+            ])
+            const staffItems = staffRes?.Data?.Items || (Array.isArray(staffRes) ? staffRes : [])
+            const adminItems = adminRes?.Data?.Items || (Array.isArray(adminRes) ? adminRes : [])
+            setSupportStaff([...staffItems, ...adminItems])
+            setSupportTotalPages(1)
         } catch (error) {
             console.error('Failed to fetch support staff:', error)
             toast.error(t('errors.somethingWentWrong'))
@@ -383,19 +688,21 @@ export default function UserManagement() {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={activeTab === 'doctors' ? fetchDoctors : activeTab === 'support' ? fetchSupportStaff : fetchPatients}
+                                onClick={activeTab === 'doctors' ? fetchDoctors : activeTab === 'patients' ? fetchPatients : fetchSupportStaff}
                                 disabled={loading}
                                 className="gap-2"
                             >
                                 <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
                                 {t('common.refresh')}
                             </Button>
-                            {activeTab === 'doctors' && (
-                                <Button size="sm" onClick={() => setModalOpen(true)} className="gap-2 shadow-lg shadow-primary/20">
-                                    <UserPlus className="w-4 h-4" />
-                                    {t('admin.addDoctor')}
-                                </Button>
-                            )}
+                            <Button size="sm" onClick={() => setModalOpen(true)} className="gap-2 shadow-lg shadow-primary/20">
+                                <UserPlus className="w-4 h-4" />
+                                {t('admin.addDoctor')}
+                            </Button>
+                            <Button size="sm" variant="secondary" onClick={() => setStaffModalOpen(true)} className="gap-2">
+                                <Headphones className="w-4 h-4" />
+                                {t('admin.addStaff')}
+                            </Button>
                         </div>
                     </div>
                 </div>
@@ -428,6 +735,13 @@ export default function UserManagement() {
                     <CardContent className="space-y-5">
                         <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSearchTerm('') }}>
                             <TabsList className="w-full sm:w-auto bg-background-subtle rounded-xl p-1">
+                        <TabsTrigger value="support">
+                            <Headphones className="w-4 h-4" />
+                            {t('admin.staff', 'Staff')}
+                            <span className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                                {supportStaff.length}
+                            </span>
+                        </TabsTrigger>
                         <TabsTrigger value="doctors">
                             <Stethoscope className="w-4 h-4" />
                             {t('admin.doctors')}
@@ -437,16 +751,9 @@ export default function UserManagement() {
                         </TabsTrigger>
                         <TabsTrigger value="patients">
                             <Users className="w-4 h-4" />
-                            {t('admin.users')}
+                            {t('admin.patients', 'Patients')}
                             <span className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
                                 {patients.length}
-                            </span>
-                        </TabsTrigger>
-                        <TabsTrigger value="support">
-                            <Headphones className="w-4 h-4" />
-                            {t('admin.customerSupport', 'Customer Support')}
-                            <span className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
-                                {supportStaff.length}
                             </span>
                         </TabsTrigger>
                             </TabsList>
@@ -721,10 +1028,17 @@ export default function UserManagement() {
                                                     <TableCell className="text-text-muted">{staff.Email || staff.email}</TableCell>
                                                     <TableCell className="text-text-muted">{staff.PhoneNumber || staff.phoneNumber || '—'}</TableCell>
                                                     <TableCell>
-                                                        <Badge variant="secondary">
-                                                            <Headphones className="w-3 h-3" />
-                                                            {t('admin.customerSupport', 'Customer Support')}
-                                                        </Badge>
+                                                        {(staff.RoleID === 1 || staff.RoleName?.toUpperCase() === 'ADMIN') ? (
+                                                            <Badge variant="primary">
+                                                                <ShieldCheck className="w-3 h-3" />
+                                                                {t('admin.adminRole', 'Admin')}
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant="secondary">
+                                                                <Headphones className="w-3 h-3" />
+                                                                {t('admin.customerSupport', 'Customer Support')}
+                                                            </Badge>
+                                                        )}
                                                     </TableCell>
                                                     <TableCell>
                                                         <Badge variant={staff.IsActive !== false ? 'success' : 'default'}>
@@ -765,7 +1079,9 @@ export default function UserManagement() {
 
                                 <div className="flex items-center justify-between mt-4">
                                     <span className="text-sm text-text-muted">
-                                        {filteredSupportStaff.length} {t('admin.customerSupport', 'Customer Support')}
+                                        {filteredSupportStaff.filter(s => s.RoleID !== 1 && s.RoleName?.toUpperCase() !== 'ADMIN').length} {t('admin.customerSupport', 'Customer Support')}
+                                        {' · '}
+                                        {filteredSupportStaff.filter(s => s.RoleID === 1 || s.RoleName?.toUpperCase() === 'ADMIN').length} {t('admin.adminRole', 'Admin')}
                                     </span>
                                     <Pagination page={supportPage} total={supportTotalPages} onChange={setSupportPage} />
                                 </div>
@@ -966,6 +1282,13 @@ export default function UserManagement() {
                 </Dialog>
 
             </div>
+
+            <AddStaffModal
+                open={staffModalOpen}
+                onClose={() => setStaffModalOpen(false)}
+                onSuccess={fetchSupportStaff}
+                t={t}
+            />
         </TooltipProvider>
     )
 }

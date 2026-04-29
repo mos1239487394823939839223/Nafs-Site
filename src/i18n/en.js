@@ -918,8 +918,13 @@ export default {
       therapists: "Therapists",
       booking: "Booking",
       articles: "Articles",
-      login: "Login / Account",
-      bookNow: "Book Session Now"
+      login: "Login",
+      bookNow: "Book Session Now",
+      home: "Home",
+      services: "Services",
+      doctors: "Doctors",
+      about: "About Nafas",
+      pricing: "Pricing",
     },
     hero: {
       headline: {
@@ -928,13 +933,22 @@ export default {
         and: " and ",
         humanity: "Humanity"
       },
-      subtitle: "Nafs provides you with psychological therapy sessions via voice, video, or chat, with a smart robot for initial assessment and reliable awareness content.",
+      heading: "Take a Breath, We're With You.",
+      subtitle: "A confidential and safe mental health platform that helps you understand yourself and talk to certified specialists whenever you need.",
+      bookNow: "Book a Session Now",
+      freeAssessment: "Free Self-Assessment",
       startFree: "Start Free Assessment",
       learnMore: "Learn about features",
       trust: {
         privacy: "Encrypted Privacy",
         doctors: "Certified Doctors",
         flexibility: "Appointment Flexibility"
+      },
+      badges: {
+        rating: { title: "High Rating", sub: "4.9 out of 5 stars" },
+        available: { title: "Available 24/7", sub: "We're here whenever you need" },
+        certified: { title: "Certified Doctors", sub: "+100 specialist doctors" },
+        privacy: { title: "Full Privacy", sub: "Your privacy is our priority" },
       },
       preview: {
         title: "App Preview",
@@ -988,8 +1002,74 @@ export default {
     },
     footer: {
       rights: "© 2026 Nafs — All rights reserved",
-      tagline: "Your safe space for mental health"
-    }
+      tagline: "Your safe space for mental health",
+      contact: "Contact Us",
+      supportHelp: "Support & Help",
+      quickLinks: "Quick Links",
+      phone: "010 1234 5678",
+      email: "info@nafas.com",
+      location: "Cairo, Egypt",
+      faq: "FAQ",
+      privacy: "Privacy Policy",
+      terms: "Terms & Conditions",
+      contactUs: "Contact Us",
+      home: "Home",
+      services: "Services",
+      doctors: "Doctors",
+      articles: "Articles",
+    },
+    journey: {
+      title: "How to Start Your Journey?",
+      step1: { title: "Assess Your Mental State", desc: "Answer a few simple questions to better understand your situation." },
+      step2: { title: "Choose Your Doctor", desc: "We recommend the best specialists based on your condition and needs." },
+      step3: { title: "Book Your Session & Begin", desc: "Pick a time that suits you and start your journey toward a better life." },
+    },
+    emergency: {
+      title: "Need Help Right Now? We're Here for You",
+      blackmail: { title: "Experiencing Blackmail?", desc: "Contact us in full confidentiality — we will provide support and protection.", cta: "Request Protection" },
+      call: { title: "Emergency Call", desc: "Talk to a specialist immediately, privately and securely.", cta: "Emergency Call" },
+      danger: { title: "Feeling in Danger?", desc: "Don't hesitate. Ask for help now — your safety comes first.", cta: "Request Help" },
+    },
+    services: {
+      title: "Our Services",
+      viewAll: "View All Services",
+      individual: { title: "Individual Sessions", desc: "Personal psychological support with specialists." },
+      relationships: { title: "Relationship Support", desc: "Improve your relationships and understand yourself and others." },
+      children: { title: "Child Support", desc: "Sessions for children and adolescents." },
+      family: { title: "Family Counseling", desc: "Solve family problems and improve communication." },
+      programs: { title: "Therapy Programs", desc: "Specialized programs for treating anxiety and depression." },
+    },
+    doctors: {
+      title: "Choose Your Suitable Doctor",
+      viewAll: "View All Doctors",
+      bookNow: "Book Now",
+      perSession: "per session",
+    },
+    assessment: {
+      title: "Know Your Mental State in Minutes",
+      desc: "A simple scientific test that helps you understand your mental state and recommends the right doctor for you.",
+      cta: "Start Assessment Now",
+    },
+    stats: {
+      users: { value: "+10K", label: "Users We've Helped" },
+      doctors: { value: "+100", label: "Specialist Doctors" },
+      satisfaction: { value: "98%", label: "User Satisfaction" },
+      available: { value: "24/7", label: "Always Available" },
+    },
+    testimonials: {
+      title: "What Our Clients Say",
+      items: [
+        { name: "Fatima Ali", role: "Client", quote: "Support was fast and the specialists were very understanding." },
+        { name: "Ahmed Mahmoud", role: "Client", quote: "They helped me get through a difficult time with professionalism and full privacy." },
+        { name: "Mona Khaled", role: "Client", quote: "Wonderful platform, I felt truly understood. The doctor was amazing." },
+      ],
+    },
+    finalCta: {
+      title: "Ready to Start Your Journey Toward a Better Life?",
+      desc: "Book your first session now and let us be with you every step of the way.",
+      button: "Book Your Session Now",
+    },
+    chat: { start: "Start Chat" },
   },
 
   // Booking Status

@@ -1,7 +1,7 @@
 import { ShieldAlert } from "lucide-react";
 import { useLanguage } from "../../contexts/LanguageContext";
 
-export const BlackmailProtectionCard = () => {
+export const BlackmailProtectionCard = ({ onClick }: { onClick?: () => void }) => {
   const { t } = useLanguage();
 
   return (
@@ -13,7 +13,10 @@ export const BlackmailProtectionCard = () => {
       <p className="text-xs text-text-light leading-relaxed mb-3">
         {t("sidebar.blackmail.desc")}
       </p>
-      <button className="w-full bg-primary hover:opacity-90 text-primary-foreground text-sm font-semibold py-2 rounded-lg transition-opacity">
+      <button
+        onClick={onClick}
+        className="w-full bg-primary hover:opacity-90 text-primary-foreground text-sm font-semibold py-2 rounded-lg transition-opacity"
+      >
         {t("sidebar.blackmail.cta")}
       </button>
     </div>

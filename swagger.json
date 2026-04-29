@@ -477,6 +477,22 @@
         "tags": [
           "Patient"
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/components/schemas/OpenSupportChatRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -4442,6 +4458,9 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "IsBullyingSpecialist": {
+            "type": "boolean"
           }
         }
       },
@@ -4939,6 +4958,9 @@
           "BookingId": {
             "format": "int64"
           },
+          "Type": {
+            "$ref": "#/components/schemas/ChatRoomType"
+          },
           "LastMessageAt": {
             "type": [
               "null",
@@ -4964,6 +4986,9 @@
             "type": "boolean"
           }
         }
+      },
+      "ChatRoomType": {
+        "type": "integer"
       },
       "ConfirmOtpForChangePasswordRequest": {
         "type": "object",
@@ -7362,6 +7387,21 @@
           }
         }
       },
+      "OpenSupportChatRequest": {
+        "type": "object",
+        "properties": {
+          "Type": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/ChatRoomType"
+              }
+            ]
+          }
+        }
+      },
       "PagingDtoOfAdminDoctorDto": {
         "required": [
           "PageSize",
@@ -9046,6 +9086,9 @@
           "CreatedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "Type": {
+            "$ref": "#/components/schemas/ChatRoomType"
           }
         }
       },

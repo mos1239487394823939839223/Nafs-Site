@@ -30,7 +30,6 @@ import DoctorRegistration from "./views/auth/doctor/DoctorRegistration";
 import PendingApproval from "./views/auth/PendingApproval";
 import ForgotPassword from "./views/auth/ForgotPassword";
 
-import InviteStaff from "./views/admin/InviteStaff";
 import AdminBookings from "./views/admin/Bookings";
 import AdminDashboard from "./views/admin/Dashboard";
 import AdminBlogs from "./views/admin/Blogs";
@@ -41,7 +40,7 @@ import DoctorFinance from "./views/admin/DoctorFinance";
 import PatientBlogs from "./views/patient/Blogs";
 import MessagesPage from "./views/shared/MessagesPage";
 import DocumentViewer from "./views/shared/DocumentViewer";
-import LandingPage from "./views/shared/LandingPage";
+import LandingPage from "./Pages/landing-home-final/LandingPage";
 import MainDoctorDashboard from "./Pages/land-new-page/main-doctor-dashboard";
 
 function RootRedirect() {
@@ -325,16 +324,6 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
               <Layout>
                 <AdminBookings />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/admin/invite-staff"
-          element={
-            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
-              <Layout>
-                <InviteStaff />
               </Layout>
             </ProtectedRoute>
           }

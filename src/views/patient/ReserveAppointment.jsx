@@ -1505,9 +1505,11 @@ export default function ReserveAppointment() {
                                                 {doctor.Name}
                                               </p>
                                               {doctor.NextAvailableSlot && (
-                                                <span className="text-xs text-emerald-600 flex items-center gap-1 mt-0.5">
-                                                  <Clock className="w-3 h-3" />
+                                                <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-[11px] font-medium border border-emerald-200 dark:border-emerald-700">
+                                                  <Clock className="w-3 h-3 flex-shrink-0" />
                                                   {new Date(doctor.NextAvailableSlot).toLocaleDateString(isRTL ? "ar-EG" : "en-US", { month: "short", day: "numeric" })}
+                                                  {" · "}
+                                                  {new Date(doctor.NextAvailableSlot).toLocaleTimeString(isRTL ? "ar-EG" : "en-US", { hour: "numeric", minute: "2-digit" })}
                                                 </span>
                                               )}
                                               <p className="text-xs text-text-muted">
@@ -1643,10 +1645,15 @@ export default function ReserveAppointment() {
 
                                         {/* Next available slot */}
                                         {doctor.NextAvailableSlot && (
-                                          <span className="text-xs text-emerald-600 flex items-center gap-1 mt-0.5">
-                                            <Clock className="w-3 h-3 flex-shrink-0" />
-                                            {new Date(doctor.NextAvailableSlot).toLocaleDateString(isRTL ? "ar-EG" : "en-US", { weekday: "short", month: "short", day: "numeric" })}
-                                          </span>
+                                          <div className="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs font-medium border border-emerald-200 dark:border-emerald-700">
+                                            <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                                            <span>
+                                              {isRTL ? "أقرب موعد:" : "Next:"}{" "}
+                                              {new Date(doctor.NextAvailableSlot).toLocaleDateString(isRTL ? "ar-EG" : "en-US", { weekday: "short", month: "short", day: "numeric" })}
+                                              {" · "}
+                                              {new Date(doctor.NextAvailableSlot).toLocaleTimeString(isRTL ? "ar-EG" : "en-US", { hour: "numeric", minute: "2-digit" })}
+                                            </span>
+                                          </div>
                                         )}
                                       </div>
                                     </div>

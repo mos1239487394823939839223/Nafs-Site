@@ -611,6 +611,20 @@ export const adminAPI = {
     const response = await api.delete(`/Admin/PaymentInstructions/${id}`);
     return response.data;
   },
+
+  // Add any user (staff, admin, etc.) — Role: 1=Admin, 2=Doctor, 3=Patient, 4=Staff
+  addUser: async (userData) => {
+    const response = await api.post("/Admin/AddUser", {
+      Name: userData.name,
+      Email: userData.email,
+      Password: userData.password,
+      PhoneNumber: userData.phoneNumber || null,
+      Role: userData.role,
+      Description: userData.description || null,
+      IsBullyingSpecialist: userData.isBullyingSpecialist ?? false,
+    });
+    return response.data;
+  },
 };
 
 // ─── Chat API Constants ──────────────────────────────────────────────────────

@@ -482,7 +482,27 @@ export default function PatientProfile() {
                                                     </div>
                                                 )}
 
-                                                {item.Result && (
+                                                {/* All Results from API Results[] array */}
+                                                {Array.isArray(item.Results) && item.Results.length > 0 && (
+                                                    <div className="mb-3 border-t border-border/30 pt-3 space-y-2">
+                                                        <p className="text-xs text-text-muted mb-1.5">{t('patient.results', 'Results')}</p>
+                                                        {item.Results.map((r, ri) => (
+                                                            <div key={ri} className="bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-3 border border-emerald-200 dark:border-emerald-800">
+                                                                <p className="text-sm text-emerald-900 dark:text-emerald-200 whitespace-pre-wrap">{r.result ?? r.Result}</p>
+                                                                {(r.notes ?? r.Notes) && (
+                                                                    <p className="text-xs text-emerald-700 dark:text-emerald-300 mt-1 italic">{r.notes ?? r.Notes}</p>
+                                                                )}
+                                                                {(r.recordedAt ?? r.RecordedAt) && (
+                                                                    <p className="text-[11px] text-text-muted mt-1.5">
+                                                                        {new Date(r.recordedAt ?? r.RecordedAt).toLocaleString(isRTL ? 'ar-EG' : 'en-US')}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                )}
+                                                {/* Fallback: single Result string (legacy) */}
+                                                {(!Array.isArray(item.Results) || item.Results.length === 0) && item.Result && (
                                                     <div className="mb-3 border-t border-border/30 pt-3">
                                                         <p className="text-xs text-text-muted mb-1.5">{t('patient.result', 'Result')}</p>
                                                         <div className="bg-emerald-50 dark:bg-emerald-900/20 text-emerald-900 dark:text-emerald-200 rounded-lg p-3 text-sm border border-emerald-200 dark:border-emerald-800">
@@ -505,14 +525,6 @@ export default function PatientProfile() {
                                                     </div>
                                                 )}
 
-                                                <div className="flex gap-4 text-xs text-text-muted border-t border-border/30 pt-3">
-                                                    {item.RecordID && (
-                                                        <span>{t('patient.recordId', 'Record ID')}: {item.RecordID}</span>
-                                                    )}
-                                                    {item.BookingID && (
-                                                        <span>{t('patient.bookingId', 'Booking ID')}: {item.BookingID}</span>
-                                                    )}
-                                                </div>
                                             </motion.div>
                                         ))}
                                     </div>

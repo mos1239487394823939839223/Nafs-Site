@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* nafas — calm wellness design system. All colors in HSL. */
+
+@layer base {
+  :root {
+    /* Cream / sage palette */
+    --background: 40 33% 97%;            /* #FAF8F2 cream */
+    --foreground: 160 15% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 160 15% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 160 15% 15%;
+
+    /* Brand green */
+    --brand: 152 38% 30%;                /* deep sage */
+    --brand-foreground: 40 33% 97%;
+    --brand-soft: 150 30% 92%;
+    --brand-muted: 150 20% 45%;
+
+    --primary: 152 38% 30%;
+    --primary-foreground: 40 33% 97%;
+
+    --secondary: 40 25% 94%;
+    --secondary-foreground: 160 15% 15%;
+
+    --muted: 40 20% 93%;
+    --muted-foreground: 160 8% 40%;
+
+    --accent: 150 30% 92%;
+    --accent-foreground: 152 38% 25%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 40 15% 88%;
+    --input: 40 15% 88%;
+    --ring: 152 38% 30%;
+
+    --cream: 40 33% 97%;
+    --cream-deep: 42 35% 93%;
+
+    --radius: 0.85rem;
+
+    --shadow-soft: 0 4px 24px -8px hsl(152 38% 30% / 0.12);
+    --shadow-card: 0 2px 12px -4px hsl(160 15% 15% / 0.06);
+  }
+
+  .dark {
+    --background: 160 15% 8%;
+    --foreground: 40 33% 97%;
+    --card: 160 15% 10%;
+    --card-foreground: 40 33% 97%;
+    --popover: 160 15% 10%;
+    --popover-foreground: 40 33% 97%;
+    --brand: 150 35% 55%;
+    --brand-foreground: 160 15% 8%;
+    --brand-soft: 152 25% 18%;
+    --primary: 150 35% 55%;
+    --primary-foreground: 160 15% 8%;
+    --secondary: 160 12% 16%;
+    --secondary-foreground: 40 33% 97%;
+    --muted: 160 12% 16%;
+    --muted-foreground: 40 15% 70%;
+    --accent: 152 25% 18%;
+    --accent-foreground: 150 35% 75%;
+    --destructive: 0 62.8% 45%;
+    --destructive-foreground: 40 33% 97%;
+    --border: 160 12% 18%;
+    --input: 160 12% 18%;
+    --ring: 150 35% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Tajawal', system-ui, -apple-system, sans-serif;
+  }
+}

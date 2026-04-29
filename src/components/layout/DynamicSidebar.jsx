@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth, Roles } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { EmergencyCallCard } from "../sidebar-cards/EmergencyCallCard";
@@ -30,6 +30,17 @@ import {
 export default function DynamicSidebar({ isOpen, onClose }) {
   const { role, user, logout } = useAuth();
   const { t, isRTL } = useLanguage();
+  const navigate = useNavigate();
+
+  const handleEmergencyClick = () => {
+    if (onClose && window.innerWidth < 1024) onClose();
+    navigate("/dashboard/patient/messages?type=support&caseType=emergency&support=1");
+  };
+
+  const handleProtectionClick = () => {
+    if (onClose && window.innerWidth < 1024) onClose();
+    navigate("/dashboard/patient/messages?type=support&caseType=billing&support=1");
+  };
 
   // Navigation items for each role
   const navigationConfig = {
@@ -114,11 +125,6 @@ export default function DynamicSidebar({ isOpen, onClose }) {
         name: isRTL ? "الاختبارات" : "Tests",
         path: "/admin/tests",
         icon: TestTube,
-      },
-      {
-        name: t("nav.inviteStaff"),
-        path: "/admin/invite-staff",
-        icon: UserPlus,
       },
       { name: t("nav.messages"), path: "/admin/messages", icon: MessageSquare },
       { name: t("nav.profile"), path: "/admin/profile", icon: Settings },
@@ -242,8 +248,8 @@ export default function DynamicSidebar({ isOpen, onClose }) {
             {/* Emergency Sidebar Cards — patient only, inside scroll area */}
             {role === Roles.PATIENT && (
               <div className="flex flex-col gap-3 mt-4">
-                <EmergencyCallCard />
-                <BlackmailProtectionCard />
+                <EmergencyCallCard onClick={handleEmergencyClick} />
+                <BlackmailProtectionCard onClick={handleProtectionClick} />
               </div>
             )}
           </nav>

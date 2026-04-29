@@ -23,7 +23,7 @@ export default {
                 },
                 // Background Colors
                 background: {
-                    DEFAULT: 'var(--color-background)',
+                    DEFAULT: 'hsl(var(--background) / <alpha-value>)',
                     white: 'var(--color-background-paper)',
                     gray: 'var(--color-background-subtle)',
                     paper: 'var(--color-background-paper)',
@@ -31,7 +31,7 @@ export default {
                 },
                 // Border & Stroke
                 border: {
-                    DEFAULT: 'var(--color-border)',
+                    DEFAULT: 'hsl(var(--border) / <alpha-value>)',
                     light: 'var(--color-border-light)',
                     dark: 'var(--color-border-dark)',
                 },
@@ -93,8 +93,19 @@ export default {
                     5: 'var(--mood-5)',
                 },
                 // shadcn foreground / background aliases used by patient components
-                foreground: 'var(--color-text)',
+                foreground: 'hsl(var(--foreground) / <alpha-value>)',
                 'muted-foreground': 'var(--color-text-light)',
+                // Nafas landing design tokens
+                brand: {
+                    DEFAULT: 'hsl(var(--brand) / <alpha-value>)',
+                    foreground: 'hsl(var(--brand-foreground) / <alpha-value>)',
+                    soft: 'hsl(var(--brand-soft) / <alpha-value>)',
+                    muted: 'hsl(var(--brand-muted) / <alpha-value>)',
+                },
+                cream: {
+                    DEFAULT: 'hsl(var(--cream) / <alpha-value>)',
+                    deep: 'hsl(var(--cream-deep) / <alpha-value>)',
+                },
             },
             fontFamily: {
                 sans: ['Inter', 'Almarai', 'system-ui', 'sans-serif'],
