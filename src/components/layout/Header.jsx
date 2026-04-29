@@ -5,6 +5,7 @@ import { useLanguage } from '../../contexts/LanguageContext'
 import { Bell, Search, User, Menu, Moon, Sun, Monitor, Globe, Check } from 'lucide-react'
 import Badge from '../ui/Badge'
 import RoleBadge from '../ui/RoleBadge'
+import { useFirebaseMessaging } from '../../hooks/useFirebaseMessaging'
 
 function DropdownMenu({ open, onClose, children }) {
   const ref = useRef(null)
@@ -16,7 +17,7 @@ function DropdownMenu({ open, onClose, children }) {
   }, [open, onClose])
   if (!open) return null
   return (
-    <div ref={ref} className="absolute top-full mt-2 right-0 z-50 min-w-[150px] bg-background-paper border border-border rounded-xl shadow-lg py-1 animate-fade-in">
+    <div ref={ref} className="absolute top-full mt-2 ltr:right-0 rtl:left-0 z-50 min-w-[150px] bg-background-paper border border-border rounded-xl shadow-lg py-1 animate-fade-in">
       {children}
     </div>
   )
@@ -43,7 +44,17 @@ export default function Header({ onMenuClick }) {
   const [showLang, setShowLang] = useState(false)
   const [showTheme, setShowTheme] = useState(false)
 
-  const notifications = []
+  const [notifications, setNotifications] = useState([])
+  
+  useFirebaseMessaging(!!user, (payload) => {
+    setNotifications(prev => [{
+      id: Date.now(),
+      title: payload.notification?.title || 'New Notification',
+      body: payload.notification?.body,
+      isRead: false,
+      date: new Date()
+    }, ...prev])
+  })
 
   const roleLabels = {
     patient: t('nav.patientPortal'),
@@ -77,6 +88,37 @@ export default function Header({ onMenuClick }) {
 
         {/* Actions */}
         <div className="flex items-center gap-2 md:gap-4">
+          {/* Notifications Dropdown */}
+          <div className="relative">
+            <button
+              onClick={() => { setShowNotifications(v => !v); setShowLang(false); setShowTheme(false) }}
+              className="p-2 hover:bg-background-subtle rounded-xl transition-colors text-text relative"
+            >
+              <Bell className="w-5 h-5 md:w-6 md:h-6" />
+              {notifications.filter(n => !n.isRead).length > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background-paper" />
+              )}
+            </button>
+            <DropdownMenu open={showNotifications} onClose={() => setShowNotifications(false)}>
+              <div className="w-64 sm:w-80 p-2 max-h-80 overflow-y-auto">
+                <div className="flex justify-between items-center mb-2 px-2 pb-2 border-b border-border">
+                  <span className="font-bold text-sm">Notifications</span>
+                  <button onClick={() => setNotifications(prev => prev.map(n => ({...n, isRead: true})))} className="text-xs text-primary hover:underline">Mark all read</button>
+                </div>
+                {notifications.length === 0 ? (
+                  <p className="text-center text-sm text-text-muted py-4">No new notifications</p>
+                ) : (
+                  notifications.map(n => (
+                    <div key={n.id} className={`p-2 mb-1 rounded-lg ${n.isRead ? 'bg-background-paper' : 'bg-background-subtle'}`}>
+                      <p className="text-sm font-semibold text-text-heading">{n.title}</p>
+                      <p className="text-xs text-text-muted">{n.body}</p>
+                    </div>
+                  ))
+                )}
+              </div>
+            </DropdownMenu>
+          </div>
+
           {/* Language Dropdown */}
           <div className="relative">
             <button

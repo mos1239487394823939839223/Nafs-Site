@@ -1023,4 +1023,21 @@ export const miscAPI = {
   },
 };
 
+// ─── Notification API Functions ──────────────────────────────────────────────
+export const notificationAPI = {
+  // Save device token to backend
+  saveDeviceToken: async (token) => {
+    // TODO: Update this endpoint when backend is ready
+    const response = await api.post("/Notifications/DeviceToken", { Token: token });
+    return response.data;
+  },
+
+  // Delete device token from backend (e.g. on logout)
+  deleteDeviceToken: async (token) => {
+    // TODO: Update this endpoint when backend is ready
+    const response = await api.delete(`/Notifications/DeviceToken/${token}`);
+    return response.data;
+  },
+};
+
 export default api;
