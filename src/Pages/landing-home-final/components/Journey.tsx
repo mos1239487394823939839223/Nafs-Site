@@ -1,32 +1,21 @@
 import { ClipboardCheck, UserPlus, CalendarCheck } from "lucide-react";
-
-const steps = [
-  {
-    number: 1,
-    icon: ClipboardCheck,
-    title: "تقييم حالتك النفسية",
-    desc: "أجب على بعض الأسئلة البسيطة لفهم حالتك بشكل أفضل",
-  },
-  {
-    number: 2,
-    icon: UserPlus,
-    title: "اختر دكتورك المناسب",
-    desc: "نرشح لك أفضل الدكاترة المتخصصين حسب حالتك واحتياجك",
-  },
-  {
-    number: 3,
-    icon: CalendarCheck,
-    title: "احجز جلستك وابدأ",
-    desc: "اختر الوقت المناسب لك وابدأ رحلتك نحو حياة أفضل",
-  },
-];
+import { useLanguage } from "../../../contexts/LanguageContext";
 
 export const Journey = () => {
+  const { t, language } = useLanguage();
+  const isAr = language === "ar";
+
+  const steps = [
+    { number: 1, icon: ClipboardCheck, titleKey: "landing.journey.step1.title", descKey: "landing.journey.step1.desc" },
+    { number: 2, icon: UserPlus, titleKey: "landing.journey.step2.title", descKey: "landing.journey.step2.desc" },
+    { number: 3, icon: CalendarCheck, titleKey: "landing.journey.step3.title", descKey: "landing.journey.step3.desc" },
+  ];
+
   return (
-    <section dir="rtl" className="py-16 md:py-20 bg-background">
+    <section id="about" dir={isAr ? "rtl" : "ltr"} className="py-16 md:py-20 bg-background">
       <div className="container mx-auto px-4">
         <h2 className="text-center text-2xl md:text-3xl font-bold text-foreground mb-12">
-          كيف تبدأ رحلتك؟
+          {t("landing.journey.title")}
         </h2>
 
         <div className="relative max-w-5xl mx-auto">
@@ -46,7 +35,7 @@ export const Journey = () => {
           />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-            {steps.map(({ number, icon: Icon, title, desc }) => (
+            {steps.map(({ number, icon: Icon, titleKey, descKey }) => (
               <div
                 key={number}
                 className="relative bg-card border border-border rounded-2xl p-6 pt-8 shadow-[var(--shadow-card)] text-right"
@@ -55,8 +44,8 @@ export const Journey = () => {
                   {number}
                 </span>
                 <Icon className="w-10 h-10 text-brand mb-4" strokeWidth={1.75} />
-                <h3 className="text-lg font-bold text-foreground mb-2">{title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{desc}</p>
+                <h3 className="text-lg font-bold text-foreground mb-2">{t(titleKey)}</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">{t(descKey)}</p>
               </div>
             ))}
           </div>

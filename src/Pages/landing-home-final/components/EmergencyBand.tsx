@@ -1,43 +1,29 @@
 import { Button } from "@/components/ui/button";
 import { ShieldAlert, Phone, Lock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-const items = [
-  {
-    icon: ShieldAlert,
-    title: "تعرضت للابتزاز؟",
-    desc: "تواصل معنا بسرية تامة، سنوفر لك الدعم والحماية.",
-    cta: "طلب حماية",
-    highlight: false,
-  },
-  {
-    icon: Phone,
-    title: "اتصل للطوارئ",
-    desc: "تحدث مع مختص فوراً بشكل سري وآمن.",
-    cta: "اتصال طوارئ",
-    highlight: true,
-  },
-  {
-    icon: Lock,
-    title: "شعرت بخطر؟",
-    desc: "لا تتردد. اطلب المساعدة الآن، سلامتك أولاً.",
-    cta: "طلب مساعدة",
-    highlight: false,
-  },
-];
+import { useLanguage } from "../../../contexts/LanguageContext";
 
 export const EmergencyBand = () => {
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
+  const isAr = language === "ar";
+
+  const items = [
+    { icon: ShieldAlert, titleKey: "landing.emergency.blackmail.title", descKey: "landing.emergency.blackmail.desc", ctaKey: "landing.emergency.blackmail.cta", highlight: false },
+    { icon: Phone, titleKey: "landing.emergency.call.title", descKey: "landing.emergency.call.desc", ctaKey: "landing.emergency.call.cta", highlight: true },
+    { icon: Lock, titleKey: "landing.emergency.danger.title", descKey: "landing.emergency.danger.desc", ctaKey: "landing.emergency.danger.cta", highlight: false },
+  ];
+
   return (
-  <section className="container mx-auto px-4 py-10">
+  <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-10">
     <div className="rounded-[2rem] bg-cream-deep p-6 md:p-10">
       <h2 className="text-center text-2xl font-bold text-foreground md:text-3xl">
-        محتاجة مساعدة الآن؟ نحن هنا من أجلك
+        {t("landing.emergency.title")}
       </h2>
       <div className="mt-8 grid gap-4 md:grid-cols-3">
-        {items.map(({ icon: Icon, title, desc, cta, highlight }) => (
+        {items.map(({ icon: Icon, titleKey, descKey, ctaKey, highlight }) => (
           <div
-            key={title}
+            key={titleKey}
             className={`flex flex-col items-center rounded-2xl p-6 text-center transition ${
               highlight
                 ? "bg-brand-soft ring-2 ring-brand/30"
@@ -51,8 +37,8 @@ export const EmergencyBand = () => {
             >
               <Icon className="h-6 w-6" />
             </span>
-            <h3 className="text-lg font-bold text-foreground">{title}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{desc}</p>
+            <h3 className="text-lg font-bold text-foreground">{t(titleKey)}</h3>
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t(descKey)}</p>
             <Button
               onClick={() => navigate("/auth/login")}
               className={`mt-5 rounded-full px-6 ${
@@ -61,7 +47,7 @@ export const EmergencyBand = () => {
                   : "bg-card border border-border text-foreground hover:bg-secondary"
               }`}
             >
-              {cta}
+              {t(ctaKey)}
             </Button>
           </div>
         ))}

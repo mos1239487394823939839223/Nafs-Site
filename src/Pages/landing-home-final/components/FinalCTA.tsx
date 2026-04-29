@@ -1,10 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { useLanguage } from "../../../contexts/LanguageContext";
 
 export const FinalCTA = () => {
   const navigate = useNavigate();
+  const { t, language } = useLanguage();
+  const isAr = language === "ar";
+
   return (
-  <section dir="rtl" className="container mx-auto px-4 py-10">
+  <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-10">
     <div className="relative overflow-hidden rounded-[2rem] bg-brand px-6 py-12 md:px-10 md:py-14 text-center">
       {/* Decorative leaves */}
       <div aria-hidden className="pointer-events-none absolute inset-y-0 right-0 w-1/3 opacity-20">
@@ -26,16 +30,16 @@ export const FinalCTA = () => {
 
       <div className="relative z-10">
         <h2 className="text-2xl md:text-3xl font-bold text-brand-foreground">
-          جاهز تبدأ رحلتك نحو حياة أفضل؟
+          {t("landing.finalCta.title")}
         </h2>
         <p className="mt-3 text-brand-foreground/85 text-sm md:text-base">
-          احجز جلستك الأولى الآن ودعنا نكون معك خطوة بخطوة
+          {t("landing.finalCta.desc")}
         </p>
         <Button
           onClick={() => navigate("/auth/login")}
           className="mt-6 rounded-full bg-brand-foreground text-brand hover:bg-brand-foreground/90 px-8 h-11 font-bold"
         >
-          احجز جلستك الآن
+          {t("landing.finalCta.button")}
         </Button>
       </div>
     </div>
