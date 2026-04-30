@@ -6,12 +6,12 @@ importScripts('https://www.gstatic.com/firebasejs/10.8.1/firebase-messaging-comp
 // or use URL params. Since Vite doesn't process public/SW natively without plugins,
 // you MUST paste your config here manually for background notifications to work.
 const firebaseConfig = {
-  apiKey: "AIzaSyC8rUikOe48krd8uNJXVj2f2Rr9xwm-bnQ",
-  authDomain: "nafas-01.firebaseapp.com",
-  projectId: "nafas-01",
-  storageBucket: "nafas-01.firebasestorage.app",
-  messagingSenderId: "845644719725",
-  appId: "1:845644719725:web:d334488f6cd05cad294164"
+  apiKey: "AIzaSyAWjOE3rAVbxWk-nfKClvL0U4Lri4Gmlq4",
+  authDomain: "nafas-73152.firebaseapp.com",
+  projectId: "nafas-73152",
+  storageBucket: "nafas-73152.firebasestorage.app",
+  messagingSenderId: "309781858748",
+  appId: "1:309781858748:web:7a09882ec98d38b55e03b9"
 };
 
 try {

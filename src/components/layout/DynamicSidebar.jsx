@@ -25,6 +25,7 @@ import {
   Phone,
   Ticket,
   FileText,
+  Link2,
 } from "lucide-react";
 
 export default function DynamicSidebar({ isOpen, onClose }) {
@@ -128,6 +129,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       },
       { name: t("nav.messages"), path: "/admin/messages", icon: MessageSquare },
       { name: t("nav.profile"), path: "/admin/profile", icon: Settings },
+      { name: isRTL ? "إدارة الروابط" : "Manage Links", path: "/admin/links", icon: Link2 },
     ],
     [Roles.STAFF]: [
       { name: t("nav.dashboard"), path: "/dashboard/staff", icon: Home },

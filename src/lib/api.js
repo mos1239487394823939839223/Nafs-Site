@@ -1027,17 +1027,67 @@ export const miscAPI = {
 export const notificationAPI = {
   // Save device token to backend
   saveDeviceToken: async (token) => {
-    // TODO: Update this endpoint when backend is ready
-    const response = await api.post("/Notifications/DeviceToken", { Token: token });
+    const response = await api.post("/Notification/DeviceToken", { 
+      Token: token,
+      Platform: "web"
+    });
     return response.data;
   },
 
   // Delete device token from backend (e.g. on logout)
   deleteDeviceToken: async (token) => {
-    // TODO: Update this endpoint when backend is ready
-    const response = await api.delete(`/Notifications/DeviceToken/${token}`);
+    const response = await api.delete(`/Notification/DeviceToken/${token}`);
     return response.data;
   },
+
+  // Mark notification as read
+  markAsRead: async (id) => {
+    const response = await api.put(`/Notification/${id}/Read`);
+    return response.data;
+  },
+
+  // Get notifications
+  getNotifications: async (pageIndex = 1, pageSize = 20) => {
+    const response = await api.get("/Notification", {
+      params: { pageIndex, pageSize }
+    });
+    return response.data;
+  },
+};
+
+// ─── Links API Functions ───────────────────────────────────────────────────────
+export const linksAPI = {
+  getProfileData: async (username = 'default') => {
+    try {
+      const data = localStorage.getItem(`links_${username}`);
+      if (data) return JSON.parse(data);
+    } catch (err) {
+      console.error(err);
+    }
+    // Default mock data if none exists
+    return {
+      username: username,
+      name: 'Intlakaa',
+      title: 'انطلاقة | وكالة إعلانات وتسويق رقمي 🎈',
+      bio: 'السعودية تحوّل فكرتك لعلامة تجارية تنافس بالسوق\nإدارة حسابات • إعلانات ممولة • تصميم • هوية',
+      avatar: '',
+      socials: { tiktok: '', whatsapp: '', instagram: '', x: '', youtube: '', facebook: '', snapchat: '' },
+      links: [
+        { id: 1, title: 'WhatsApp', url: '#', icon: 'whatsapp' },
+        { id: 2, title: 'انطلاقة | وكالة تسويق', url: '#', icon: 'default' },
+      ],
+      theme: {
+        bgColor: '#f3f4f6',
+        textColor: '#000000',
+        buttonBgColor: '#ffffff',
+        buttonTextColor: '#000000',
+      }
+    };
+  },
+  updateProfileData: async (username, data) => {
+    localStorage.setItem(`links_${username}`, JSON.stringify(data));
+    return { success: true };
+  }
 };
 
 export default api;

@@ -6,6 +6,7 @@ import { Bell, Search, User, Menu, Moon, Sun, Monitor, Globe, Check } from 'luci
 import Badge from '../ui/Badge'
 import RoleBadge from '../ui/RoleBadge'
 import { useFirebaseMessaging } from '../../hooks/useFirebaseMessaging'
+import { notificationAPI } from '../../lib/api'
 
 function DropdownMenu({ open, onClose, children }) {
   const ref = useRef(null)
@@ -55,6 +56,36 @@ export default function Header({ onMenuClick }) {
       date: new Date()
     }, ...prev])
   })
+
+  useEffect(() => {
+    if (user) {
+      notificationAPI.getNotifications(1, 20)
+        .then(res => {
+          // Attempt to extract the list depending on the backend response structure
+          const items = res.Data?.Data || res.Data || res.data || res.items || [];
+          if (Array.isArray(items)) {
+            setNotifications(items.map(n => ({
+              id: n.Id || n.id,
+              title: n.Title || n.title,
+              body: n.Body || n.body || n.Message || n.message,
+              isRead: n.IsRead || n.isRead || false,
+              date: n.CreatedAt || n.createdAt || new Date()
+            })));
+          }
+        })
+        .catch(err => console.error("Failed to load notifications", err));
+    }
+  }, [user]);
+
+  const handleReadNotification = async (n) => {
+    if (n.isRead) return;
+    try {
+      await notificationAPI.markAsRead(n.id);
+      setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, isRead: true } : item));
+    } catch (err) {
+      console.error("Failed to mark as read", err);
+    }
+  };
 
   const roleLabels = {
     patient: t('nav.patientPortal'),
@@ -109,7 +140,11 @@ export default function Header({ onMenuClick }) {
                   <p className="text-center text-sm text-text-muted py-4">No new notifications</p>
                 ) : (
                   notifications.map(n => (
-                    <div key={n.id} className={`p-2 mb-1 rounded-lg ${n.isRead ? 'bg-background-paper' : 'bg-background-subtle'}`}>
+                    <div 
+                      key={n.id} 
+                      onClick={() => handleReadNotification(n)}
+                      className={`p-2 mb-1 rounded-lg cursor-pointer transition-colors ${n.isRead ? 'bg-background-paper hover:bg-background-subtle' : 'bg-background-subtle border border-primary/20'}`}
+                    >
                       <p className="text-sm font-semibold text-text-heading">{n.title}</p>
                       <p className="text-xs text-text-muted">{n.body}</p>
                     </div>

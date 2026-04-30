@@ -13,6 +13,8 @@ const firebaseConfig = {
 // Initialize Firebase only if config is provided
 let app, messaging;
 
+console.log("🔥 Firebase Config Loaded:", firebaseConfig);
+
 try {
   app = initializeApp(firebaseConfig);
   messaging = getMessaging(app);
@@ -22,6 +24,7 @@ try {
 
 export const getFirebaseToken = async () => {
   if (!messaging) return null;
+  console.log("🔑 VAPID KEY:", import.meta.env.VITE_FIREBASE_VAPID_KEY);
   try {
     const currentToken = await getToken(messaging, { 
       vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY 
