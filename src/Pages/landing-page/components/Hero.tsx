@@ -14,7 +14,7 @@ const Hero = () => {
     <section className="w-full pb-16">
       <div className="w-full bg-gradient-hero p-8 md:p-14 shadow-soft">
         {/* Headline */}
-        <div className="max-w-3xl text-right">
+        <div className="max-w-3xl text-end">
           <h1 className="font-display text-3xl md:text-5xl lg:text-6xl font-extrabold leading-[1.3] text-foreground">
             دعم نفسي رقمي يجمع بين <span className="text-primary">التكنولوجيا</span> و <span className="text-primary">الإنسانية</span>
           </h1>
@@ -40,7 +40,7 @@ const Hero = () => {
 
         {/* Preview card */}
         <div className="mt-8 bg-card rounded-3xl p-6 md:p-8 shadow-card border border-border/50">
-          <div className="text-right text-sm text-muted-foreground mb-5">معاينة التطبيق</div>
+          <div className="text-end text-sm text-muted-foreground mb-5">معاينة التطبيق</div>
 
           {/* Communication */}
           <div className="rounded-2xl border border-border bg-secondary/40 p-5 mb-4">
@@ -49,27 +49,27 @@ const Hero = () => {
               <Pill icon={Video} label="فيديو" />
               <Pill icon={Phone} label="صوت" active />
             </div>
-            <p className="text-sm text-right text-muted-foreground">اختر طريقة التواصل الأنسب لك. جميع الجلسات تتم بتشفير وحفاظ كامل على السرية.</p>
+            <p className="text-sm text-end text-muted-foreground">اختر طريقة التواصل الأنسب لك. جميع الجلسات تتم بتشفير وحفاظ كامل على السرية.</p>
           </div>
 
           {/* AI Assessment */}
           <div className="rounded-2xl border border-border bg-secondary/40 p-5 mb-4">
-            <div className="text-right font-semibold mb-2 flex items-center justify-end gap-2">
+            <div className="text-end font-semibold mb-2 flex items-center justify-end gap-2">
               تقييم ذكي لحالتك <Sparkles className="w-4 h-4 text-primary" />
             </div>
-            <div className="bg-card rounded-xl p-4 text-right text-sm text-muted-foreground border border-border/60">
+            <div className="bg-card rounded-xl p-4 text-end text-sm text-muted-foreground border border-border/60">
               ✨ أسئلة قصيرة لتقييم أولي (قلق / اكتئاب / توتر). في النهاية نقترح لك المعالج الأنسب.
             </div>
           </div>
 
           {/* Articles */}
           <div className="rounded-2xl border border-border bg-secondary/40 p-5">
-            <div className="text-right font-semibold mb-3 flex items-center justify-end gap-2">
+            <div className="text-end font-semibold mb-3 flex items-center justify-end gap-2">
               مقالات للصحة النفسية <BookOpen className="w-4 h-4 text-primary" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
               {articles.map((a) => (
-                <div key={a} className="bg-card rounded-xl px-4 py-3 text-sm text-right border border-border/60 flex items-center justify-end gap-2 hover:border-primary/40 transition-colors cursor-pointer">
+                <div key={a} className="bg-card rounded-xl px-4 py-3 text-sm text-end border border-border/60 flex items-center justify-end gap-2 hover:border-primary/40 transition-colors cursor-pointer">
                   {a}
                   <BookOpen className="w-3.5 h-3.5 text-primary shrink-0" />
                 </div>

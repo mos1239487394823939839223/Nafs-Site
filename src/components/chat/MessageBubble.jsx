@@ -50,8 +50,8 @@ export default function MessageBubble({ message, isSent, showAvatar = true, part
           className={`
             px-3.5 py-2.5 shadow-sm
             ${isSent
-              ? 'bg-primary text-white rounded-2xl rounded-br-sm'
-              : 'bg-background-subtle border border-border/50 text-text rounded-2xl rounded-bl-sm'
+              ? 'bg-primary text-white rounded-2xl rounded-ee-sm'
+              : 'bg-background-subtle border border-border/50 text-text rounded-2xl rounded-es-sm'
             }
           `}
         >
@@ -113,7 +113,7 @@ export default function MessageBubble({ message, isSent, showAvatar = true, part
         </div>
 
         {/* Timestamp */}
-        <span className={`text-[10px] text-text-muted mt-1 px-1 ${isSent ? 'text-right' : 'text-left'}`}>
+        <span className={`text-[10px] text-text-muted mt-1 px-1 ${isSent ? 'text-end' : 'text-start'}`}>
           {formatTime(message.timestamp)}
         </span>
       </div>

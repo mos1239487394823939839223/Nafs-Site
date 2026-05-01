@@ -10,7 +10,7 @@ export const TreatmentProgram = () => {
   return (
     <section className="bg-card rounded-2xl p-6 shadow-card relative overflow-hidden" dir="ltr">
       <Leaf
-        className="absolute bottom-2 w-32 h-32 text-primary opacity-10 -rotate-12 pointer-events-none -left-2"
+        className="absolute bottom-2 w-32 h-32 text-primary opacity-10 -rotate-12 pointer-events-none -start-2"
       />
 
       <div className="relative">

@@ -10,8 +10,8 @@ export const HeroCard = () => {
 
   return (
     <section className="relative rounded-3xl overflow-hidden bg-gradient-hero shadow-card mb-6">
-      <div className={`flex flex-col items-center ${isRTL ? "md:flex-row-reverse" : "md:flex-row"}`}>
-        <div className={`flex-1 p-8 md:p-12 ${isRTL ? "text-right" : "text-left"}`}>
+      <div className={`flex flex-col items-center ${t("auto.mdflexrow")}`}>
+        <div className={`flex-1 p-8 md:p-12 text-start`}>
           <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-foreground leading-tight mb-3">
             {t("patientHome.hero.title")}
           </h1>

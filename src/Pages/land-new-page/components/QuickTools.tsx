@@ -23,7 +23,7 @@ export const QuickTools = () => {
               type="button"
               onClick={() => navigate(tool.href)}
               className={`flex items-center gap-3 p-4 rounded-2xl border border-border hover:border-primary/40 hover:bg-muted/40 transition-colors ${
-                isRTL ? "text-right flex-row-reverse" : "text-left"
+                "text-start"
               }`}
             >
               <Icon className="size-5 text-primary shrink-0" />

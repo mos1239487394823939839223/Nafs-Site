@@ -24,12 +24,12 @@ export const QuickActions = () => {
   return (
     <section
       className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6"
-      dir={isRTL ? "rtl" : "ltr"}
+      
     >
       {actions.map((a) => (
         <article
           key={a.key}
-          className={`bg-card rounded-2xl p-5 shadow-card ${isRTL ? "text-right" : "text-left"} hover:shadow-cta transition-shadow`}
+          className={`bg-card rounded-2xl p-5 shadow-card text-start hover:shadow-cta transition-shadow`}
         >
           <div className="w-11 h-11 rounded-xl bg-primary-soft flex items-center justify-center mb-4">
             <a.icon className="w-6 h-6 text-primary" />

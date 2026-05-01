@@ -149,7 +149,7 @@ export default function DocumentsUpload() {
           </h3>
           <p className="text-sm text-text-muted">
             {label('doctor.docs.subtitle', 'Upload your medical licenses, degrees and certificates')}
-            {totalCount > 0 && <span className="ml-2 text-primary font-medium">· {totalCount} {label('doctor.docs.files', 'files')}</span>}
+            {totalCount > 0 && <span className="ms-2 text-primary font-medium">· {totalCount} {label('doctor.docs.files', 'files')}</span>}
           </p>
         </div>
       </div>
@@ -312,7 +312,7 @@ export default function DocumentsUpload() {
             >
               {/* Modal Header */}
               <div className="flex items-center justify-between p-4 border-b border-border">
-                <p className="font-semibold text-text truncate pr-4">{previewFile.name}</p>
+                <p className="font-semibold text-text truncate pe-4">{previewFile.name}</p>
                 <button
                   onClick={() => setPreviewFile(null)}
                   className="p-1.5 hover:bg-background-subtle rounded-lg transition-colors flex-shrink-0"

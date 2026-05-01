@@ -101,13 +101,13 @@ export default function PatientDashboard() {
           : t("common.doctor", "Doctor"),
         specialty: t("patient.consultation", "Consultation"),
         date:
-          sessionDate?.toLocaleDateString(isRTL ? "ar-EG" : "en-US", {
+          sessionDate?.toLocaleDateString(t("auto.enus"), {
             month: "short",
             day: "numeric",
             year: "numeric",
           }) || "N/A",
         time:
-          sessionDate?.toLocaleTimeString(isRTL ? "ar-EG" : "en-US", {
+          sessionDate?.toLocaleTimeString(t("auto.enus"), {
             hour: "2-digit",
             minute: "2-digit",
             hour12: true,
@@ -134,7 +134,7 @@ export default function PatientDashboard() {
     : null;
 
   return (
-    <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="space-y-6" >
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="bg-gradient-to-br from-primary to-primary-dark text-white">
@@ -303,7 +303,7 @@ export default function PatientDashboard() {
                       </div>
                       <div
                         className={`text-xs text-text-muted ${
-                          isRTL ? "text-right" : "text-left"
+                          "text-start"
                         }`}
                       >
                         <div className="flex items-center gap-1">
@@ -327,7 +327,7 @@ export default function PatientDashboard() {
                   size="sm"
                   onClick={() => setShowBooking(true)}
                 >
-                  <Calendar className="w-4 h-4 mr-2" />
+                  <Calendar className="w-4 h-4 me-2" />
                   {t("patient.bookNewSession")}
                 </Button>
               </div>
@@ -341,7 +341,7 @@ export default function PatientDashboard() {
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>{t("patient.upcomingAppointments")}</CardTitle>
           <Button onClick={() => setShowBooking(true)}>
-            <Calendar className="w-4 h-4 mr-2" />
+            <Calendar className="w-4 h-4 me-2" />
             {t("patient.bookAppointment")}
           </Button>
         </CardHeader>
@@ -370,7 +370,7 @@ export default function PatientDashboard() {
                       </p>
                     </div>
                   </div>
-                  <div className={isRTL ? "text-left" : "text-right"}>
+                  <div className="text-end">
                     <div className="flex items-center gap-2 text-text-heading">
                       <Calendar className="w-4 h-4" />
                       <span className="font-medium" dir="ltr">

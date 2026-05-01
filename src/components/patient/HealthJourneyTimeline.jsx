@@ -109,7 +109,7 @@ export default function HealthJourneyTimeline() {
   const formatDate = (dateString) => {
     const date = new Date(dateString);
     const options = { month: "short", day: "numeric", year: "numeric" };
-    return date.toLocaleDateString(isRTL ? "ar-EG" : "en-US", options);
+    return date.toLocaleDateString(t("auto.enus"), options);
   };
 
   const getRelativeTime = (dateString) => {
@@ -136,7 +136,7 @@ export default function HealthJourneyTimeline() {
     return (
       <div className="bg-background-paper rounded-2xl shadow-sm p-6">
         <div className="flex items-center justify-between mb-6">
-          <div className={isRTL ? "text-right" : "text-left"}>
+          <div className="text-start">
             <h2 className="text-xl font-bold text-text-heading">
               {t("patient.healthJourney", "Health Journey")}
             </h2>
@@ -155,10 +155,10 @@ export default function HealthJourneyTimeline() {
   return (
     <div
       className="bg-background-paper rounded-2xl shadow-sm p-6"
-      dir={isRTL ? "rtl" : "ltr"}
+      
     >
       <div className="flex items-center justify-between mb-6">
-        <div className={isRTL ? "text-right" : "text-left"}>
+        <div className="text-start">
           <h2 className="text-xl font-bold text-text-heading">
             {t("patient.healthJourney", "Health Journey")}
           </h2>
@@ -186,7 +186,7 @@ export default function HealthJourneyTimeline() {
           {/* Timeline line */}
           <div
             className={`absolute ${
-              isRTL ? "right-6" : "left-6"
+              t("auto.start6")
             } top-0 bottom-0 w-0.5 bg-border`}
           ></div>
 
@@ -201,13 +201,13 @@ export default function HealthJourneyTimeline() {
                 <div
                   key={event.id}
                   className={`relative group ${
-                    isRTL ? "pr-16 text-right" : "pl-16 text-left"
+                    t("auto.ps16Textstart")
                   }`}
                 >
                   {/* Timeline dot */}
                   <div
                     className={`absolute ${
-                      isRTL ? "right-0" : "left-0"
+                      t("auto.start0")
                     } w-12 h-12 ${
                       config.bgColor
                     } rounded-full flex items-center justify-center border-2 ${

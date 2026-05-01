@@ -50,7 +50,7 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
       className={`bg-background-paper p-4 rounded-xl border border-border shadow-sm hover:shadow-md transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-4 ${
         isRTL ? "flex-row-reverse" : ""
       }`}
-      dir={isRTL ? "rtl" : "ltr"}
+      
     >
       {/* Patient Info */}
       <div
@@ -59,7 +59,7 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
         <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold text-lg">
           {patient.name.charAt(0)}
         </div>
-        <div className={isRTL ? "text-right" : "text-left"}>
+        <div className="text-start">
           <div className="flex items-center gap-2 flex-wrap">
             <h3 className="font-semibold text-text-heading">{patient.name}</h3>
             <span
@@ -124,13 +124,11 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
             </span>
             {patient.showJoin ? (
               <span className="text-emerald-600">
-                {isRTL ? "متاح الانضمام" : "Join available"}
+                {t("auto.joinAvailable")}
               </span>
             ) : (
               <span>
-                {isRTL
-                  ? "الانضمام قبل الموعد بـ 24 ساعة"
-                  : "Join opens within 24h"}
+                {t("auto.joinOpensWithin24h")}
               </span>
             )}
           </div>
@@ -153,12 +151,12 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
           {isShowingResults ? (
             <span className="inline-flex items-center gap-1">
               <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-              {isRTL ? "جار التحميل" : "Loading"}
+              {t("auto.loading")}
             </span>
           ) : (
             <span className="inline-flex items-center gap-1">
-              <Eye className={`w-4 h-4 ${isRTL ? "ml-1" : "mr-1"}`} />
-              {isRTL ? "عرض النتيجة" : "Show Result"}
+              <Eye className={`w-4 h-4 me-1`} />
+              {t("auto.showResult")}
             </span>
           )}
         </Button>
@@ -173,12 +171,12 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
           {isAddingTest ? (
             <span className="inline-flex items-center gap-1">
               <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-              {isRTL ? "جار التحضير" : "Preparing"}
+              {t("auto.preparing")}
             </span>
           ) : (
             <span className="inline-flex items-center gap-1">
-              <TestTube className={`w-4 h-4 ${isRTL ? "ml-1" : "mr-1"}`} />
-              {isRTL ? "إضافة تحليل" : "Add Test"}
+              <TestTube className={`w-4 h-4 me-1`} />
+              {t("auto.addTest")}
             </span>
           )}
         </Button>
@@ -196,12 +194,12 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
             {isCancelling ? (
               <span className="inline-flex items-center gap-1">
                 <span className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                {isRTL ? "جار الإلغاء" : "Cancelling"}
+                {t("auto.cancelling")}
               </span>
             ) : (
               <span className="inline-flex items-center gap-1">
-                <Cancel className={`w-4 h-4 ${isRTL ? "ml-1" : "mr-1"}`} />
-                {isRTL ? "إلغاء واسترداد" : "Cancel & Refund"}
+                <Cancel className={`w-4 h-4 me-1`} />
+                {t("auto.cancelRefund")}
               </span>
             )}
           </Button>
@@ -219,11 +217,11 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
             {isJoining ? (
               <span className="inline-flex items-center gap-1">
                 <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                {isRTL ? "جار الانضمام" : "Joining"}
+                {t("auto.joining")}
               </span>
             ) : (
               <span className="inline-flex items-center gap-1">
-                <Play className={`w-4 h-4 ${isRTL ? "ml-1" : "mr-1"}`} />
+                <Play className={`w-4 h-4 me-1`} />
                 {t("doctor.joinNow", "Join")}
               </span>
             )}
@@ -237,7 +235,7 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
           !patient.showJoin &&
           !patient.canCancel && (
             <Button size="sm" variant="outline" disabled className="opacity-60">
-              {isRTL ? "الإجراءات غير متاحة" : "No actions available"}
+              {t("auto.noActionsAvailable")}
             </Button>
           )}
       </div>

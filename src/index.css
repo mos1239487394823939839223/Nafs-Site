@@ -136,6 +136,18 @@ body {
   direction: ltr;
 }
 
+/* Auto-flip directional icons in RTL */
+[dir="rtl"] .lucide-chevron-right,
+[dir="rtl"] .lucide-chevron-left,
+[dir="rtl"] .lucide-arrow-right,
+[dir="rtl"] .lucide-arrow-left,
+[dir="rtl"] .lucide-arrow-up-right,
+[dir="rtl"] .lucide-arrow-up-left,
+[dir="rtl"] .lucide-arrow-down-right,
+[dir="rtl"] .lucide-arrow-down-left {
+  transform: scaleX(-1);
+}
+
 /* Smooth transitions */
 * {
   transition-property: background-color, border-color, color, fill, stroke;

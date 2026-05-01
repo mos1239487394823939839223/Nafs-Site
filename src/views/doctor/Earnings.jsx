@@ -102,17 +102,15 @@ export default function DoctorEarnings() {
   }, [earnings]);
 
   return (
-    <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="space-y-6" >
       <div>
         <h2 className="text-2xl font-bold text-text-heading">
-          {t("doctor.earningsTitle", isRTL ? "الأرباح" : "Earnings")}
+          {t("doctor.earningsTitle", t("auto.earnings"))}
         </h2>
         <p className="text-text-muted mt-1">
           {t(
             "doctor.earningsSubtitle",
-            isRTL
-              ? "راجع ملخص أرباحك وحركة المدفوعات"
-              : "Review your earnings summary and payment transactions",
+            t("auto.reviewYourEarningsSummaryAndPaymentTransactions"),
           )}
         </p>
         <div className="mt-3">
@@ -184,10 +182,10 @@ export default function DoctorEarnings() {
                 <TableHeader>
                   <TableRow hover={false}>
                     <TableHead>{t("common.date")}</TableHead>
-                    <TableHead>{t("common.patient", isRTL ? "المريض" : "Patient")}</TableHead>
+                    <TableHead>{t("common.patient", t("auto.patient"))}</TableHead>
                     <TableHead>{t("common.status")}</TableHead>
                     <TableHead>{t("common.type")}</TableHead>
-                    <TableHead className="text-right">{t("common.total")}</TableHead>
+                    <TableHead className="text-end">{t("common.total")}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -219,7 +217,7 @@ export default function DoctorEarnings() {
                             {providerName}
                           </span>
                         </TableCell>
-                        <TableCell className="text-right font-semibold text-text-heading">
+                        <TableCell className="text-end font-semibold text-text-heading">
                           {formatCurrency(item.Amount)}
                         </TableCell>
                             </>
@@ -232,9 +230,7 @@ export default function DoctorEarnings() {
                       <TableCell colSpan={5} className="text-center py-12 text-text-muted">
                         {t(
                           "admin.noTransactions",
-                          isRTL
-                            ? "لا توجد معاملات مدفوعة بعد"
-                            : "No paid transactions yet",
+                          t("auto.noPaidTransactionsYet"),
                         )}
                       </TableCell>
                     </TableRow>

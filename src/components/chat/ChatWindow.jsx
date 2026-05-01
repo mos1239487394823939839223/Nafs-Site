@@ -138,7 +138,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
       {/* ── Header ── */}
       <div className="relative px-4 md:px-5 py-3.5 border-b border-border/60 bg-background-paper">
         {/* subtle gradient line at top */}
-        <div className="absolute top-0 left-0 right-0 h-0.5 bg-gradient-to-r from-primary/60 via-secondary/40 to-transparent" />
+        <div className="absolute top-0 start-0 end-0 h-0.5 bg-gradient-to-r from-primary/60 via-secondary/40 to-transparent" />
 
         <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
           {onBack && (
@@ -160,12 +160,12 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
               )}
             </div>
             {conversation.participant.online && (
-              <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-background-paper rounded-full" />
+              <span className="absolute bottom-0 end-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-background-paper rounded-full" />
             )}
           </div>
 
           {/* Name + status */}
-          <div className={`flex-1 min-w-0 ${isRTL ? 'text-right' : 'text-left'}`}>
+          <div className={`flex-1 min-w-0 text-start`}>
             <h3 className="font-semibold text-text-heading text-sm truncate">{conversation.participant.name}</h3>
             <p className="text-xs text-emerald-500 font-medium">
               {conversation.participant.online ? t('common.online', 'Online') : t('common.offline', 'Offline')}
@@ -213,7 +213,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
             <div className="w-7 h-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
               <span className="text-xs text-primary font-bold">{initials}</span>
             </div>
-            <div className="bg-background-subtle border border-border/50 px-4 py-3 rounded-2xl rounded-bl-sm shadow-sm">
+            <div className="bg-background-subtle border border-border/50 px-4 py-3 rounded-2xl rounded-es-sm shadow-sm">
               <div className="flex items-center gap-1.5">
                 {[0, 0.2, 0.4].map((delay, i) => (
                   <span
@@ -242,7 +242,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
                     <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity" />
                     <button
                       onClick={() => removeAttachment(index)}
-                      className="absolute top-1 right-1 w-5 h-5 bg-black/70 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                      className="absolute top-1 end-1 w-5 h-5 bg-black/70 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -287,18 +287,18 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
               onKeyPress={handleKeyPress}
               placeholder={t('chat.typeMessage', 'Type a message...')}
               rows="1"
-              className={`w-full py-2.5 border border-border/70 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 resize-none max-h-32 bg-background-subtle text-text text-sm transition-all placeholder:text-text-muted ${isRTL ? 'px-4 pl-10' : 'px-4 pr-10'}`}
+              className={`w-full py-2.5 border border-border/70 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 resize-none max-h-32 bg-background-subtle text-text text-sm transition-all placeholder:text-text-muted px-4 pe-10`}
             />
             {/* Emoji button inside input */}
             <button
               onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              className={`absolute bottom-2.5 text-text-muted hover:text-primary transition-colors ${isRTL ? 'left-3' : 'right-3'}`}
+              className={`absolute bottom-2.5 text-text-muted hover:text-primary transition-colors end-3`}
             >
               <Smile className="w-4.5 h-4.5" style={{ fontSize: 18 }} />
             </button>
 
             {showEmojiPicker && (
-              <div ref={emojiPickerRef} className={`absolute bottom-12 z-50 ${isRTL ? 'left-0' : 'right-0'}`}>
+              <div ref={emojiPickerRef} className={`absolute bottom-12 z-50 end-0`}>
                 <EmojiPicker onEmojiClick={onEmojiClick} theme={theme} width={300} height={380} />
               </div>
             )}

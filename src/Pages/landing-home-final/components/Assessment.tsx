@@ -21,7 +21,7 @@ export const Assessment = () => {
           className="mx-auto max-h-72 w-auto object-contain"
         />
       </div>
-      <div className="order-1 text-center md:order-2 md:text-right">
+      <div className="order-1 text-center md:order-2 md:text-end">
         <h2 className="text-2xl font-bold text-foreground md:text-3xl">
           {t("landing.assessment.title")}
         </h2>

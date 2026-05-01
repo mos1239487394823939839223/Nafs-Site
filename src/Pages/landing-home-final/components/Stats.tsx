@@ -18,7 +18,7 @@ export const Stats = () => {
       {stats.map(({ icon: Icon, valueKey, labelKey }) => (
         <div key={labelKey} className="flex items-center justify-center gap-3">
           <Icon className="h-7 w-7 text-brand" strokeWidth={1.8} />
-          <div className="text-right">
+          <div className="text-end">
             <p className="text-2xl font-bold text-brand">{t(valueKey)}</p>
             <p className="text-xs text-muted-foreground">{t(labelKey)}</p>
           </div>

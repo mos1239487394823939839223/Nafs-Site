@@ -23,8 +23,8 @@ const Features = () => {
               <div className="w-12 h-12 rounded-2xl bg-primary-soft flex items-center justify-center mb-5">
                 <Icon className="w-5 h-5 text-primary" />
               </div>
-              <h3 className="font-display font-bold text-lg mb-2 text-right">{title}</h3>
-              <p className="text-sm text-muted-foreground text-right leading-relaxed">{desc}</p>
+              <h3 className="font-display font-bold text-lg mb-2 text-end">{title}</h3>
+              <p className="text-sm text-muted-foreground text-end leading-relaxed">{desc}</p>
             </div>
           ))}
         </div>

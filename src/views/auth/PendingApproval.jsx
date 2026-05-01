@@ -37,7 +37,7 @@ export default function PendingApproval() {
           </p>
 
           {/* Status Timeline */}
-          <div className="bg-background-subtle p-6 rounded-lg mb-8 text-left">
+          <div className="bg-background-subtle p-6 rounded-lg mb-8 text-start">
             <h3 className="font-semibold text-text-heading mb-4">{t('auth.whatHappensNext')}</h3>
             <div className="space-y-4">
               <div className="flex items-start gap-3">
@@ -85,7 +85,7 @@ export default function PendingApproval() {
               variant="outline"
               onClick={() => navigate('/')}
             >
-              <Home className="w-4 h-4 mr-2" />
+              <Home className="w-4 h-4 me-2" />
               {t('auth.backToHome')}
             </Button>
             <Button

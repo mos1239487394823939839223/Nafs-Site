@@ -22,25 +22,25 @@ export const Journey = () => {
           {/* Dotted connector line (desktop only) */}
           <div
             aria-hidden
-            className="hidden md:block absolute top-1/2 right-[12%] left-[12%] -translate-y-1/2 border-t-2 border-dashed border-brand/40 z-0"
+            className="hidden md:block absolute top-1/2 end-[12%] start-[12%] -translate-y-1/2 border-t-2 border-dashed border-brand/40 z-0"
           />
           {/* Connector dots */}
           <div
             aria-hidden
-            className="hidden md:block absolute top-1/2 right-[33%] -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-brand z-0"
+            className="hidden md:block absolute top-1/2 end-[33%] -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-brand z-0"
           />
           <div
             aria-hidden
-            className="hidden md:block absolute top-1/2 left-[33%] -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-brand z-0"
+            className="hidden md:block absolute top-1/2 start-[33%] -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-brand z-0"
           />
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
             {steps.map(({ number, icon: Icon, titleKey, descKey }) => (
               <div
                 key={number}
-                className="relative bg-card border border-border rounded-2xl p-6 pt-8 shadow-[var(--shadow-card)] text-right"
+                className="relative bg-card border border-border rounded-2xl p-6 pt-8 shadow-[var(--shadow-card)] text-end"
               >
-                <span className="absolute top-4 left-4 w-8 h-8 rounded-full bg-brand text-primary-foreground text-sm font-bold flex items-center justify-center">
+                <span className="absolute top-4 start-4 w-8 h-8 rounded-full bg-brand text-primary-foreground text-sm font-bold flex items-center justify-center">
                   {number}
                 </span>
                 <Icon className="w-10 h-10 text-brand mb-4" strokeWidth={1.75} />

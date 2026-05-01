@@ -124,6 +124,7 @@ function ArticleCard({
   onClick,
 }) {
   const cat = categoryConfig[article.category] || categoryConfig.news;
+  const { t } = useLanguage();
 
   return (
     <motion.div
@@ -176,7 +177,7 @@ function ArticleCard({
         {/* Title */}
         <h3
           className={`font-bold text-text-heading text-base leading-snug group-hover:text-primary transition-colors mb-2 ${
-            isRTL ? "text-right" : "text-left"
+            "text-start"
           }`}
         >
           {isRTL ? article.titleAr : article.title}
@@ -185,7 +186,7 @@ function ArticleCard({
         {/* Summary */}
         <p
           className={`text-sm text-text-muted line-clamp-2 leading-relaxed mb-4 ${
-            isRTL ? "text-right" : "text-left"
+            "text-start"
           }`}
         >
           {isRTL ? article.summaryAr : article.summary}
@@ -194,7 +195,7 @@ function ArticleCard({
         {/* Tags */}
         <div
           className={`flex flex-wrap gap-1.5 mb-4 ${
-            isRTL ? "justify-end" : "justify-start"
+            t("auto.justifystart")
           }`}
         >
           {(isRTL ? article.tagsAr : article.tags).slice(0, 3).map((tag, i) => (
@@ -209,8 +210,8 @@ function ArticleCard({
 
         {/* Read more */}
         <div className={`flex items-center gap-1.5 text-sm font-medium text-primary mb-3 ${isRTL ? 'flex-row-reverse justify-end' : ''}`}>
-          <span>{isRTL ? 'اقرأ المزيد' : 'Read more'}</span>
-          <span className="text-xs transition-transform group-hover:translate-x-0.5">{isRTL ? '←' : '→'}</span>
+          <span>{t("auto.readMore")}</span>
+          <span className="text-xs transition-transform group-hover:translate-x-0.5">{"→"}</span>
         </div>
 
         {/* Footer */}
@@ -238,11 +239,11 @@ function ArticleCard({
               }`}
             >
               <Clock className="w-3.5 h-3.5" />
-              {article.readTime} {isRTL ? "دقائق" : "min read"}
+              {article.readTime} {t("auto.minRead")}
             </span>
             <span>
               {new Date(article.publishedAt).toLocaleDateString(
-                isRTL ? "ar-EG" : "en-US",
+                t("auto.enus"),
                 { month: "short", day: "numeric" },
               )}
             </span>
@@ -256,6 +257,7 @@ function ArticleCard({
 function ArticleModal({ article, isRTL, onClose }) {
   if (!article) return null;
   const cat = categoryConfig[article.category] || categoryConfig.news;
+  const { t } = useLanguage();
 
   return (
     <AnimatePresence>
@@ -274,7 +276,7 @@ function ArticleModal({ article, isRTL, onClose }) {
           onClick={(e) => e.stopPropagation()}
         >
           <div className="h-2 bg-gradient-to-r from-primary via-secondary to-accent" />
-          <div className="p-6" dir={isRTL ? "rtl" : "ltr"}>
+          <div className="p-6" >
             <div
               className={`flex items-start justify-between gap-4 mb-4 ${
                 isRTL ? "flex-row-reverse" : ""
@@ -293,7 +295,7 @@ function ArticleModal({ article, isRTL, onClose }) {
 
             <h2
               className={`text-2xl font-bold text-text-heading mb-3 ${
-                isRTL ? "text-right" : "text-left"
+                "text-start"
               }`}
             >
               {isRTL ? article.titleAr : article.title}
@@ -319,12 +321,12 @@ function ArticleModal({ article, isRTL, onClose }) {
                 }`}
               >
                 <Clock className="w-4 h-4" />
-                {article.readTime} {isRTL ? "دقائق قراءة" : "min read"}
+                {article.readTime} {t("auto.minRead")}
               </span>
               <Circle className="w-1 h-1" />
               <span>
                 {new Date(article.publishedAt).toLocaleDateString(
-                  isRTL ? "ar-EG" : "en-US",
+                  t("auto.enus"),
                   { year: "numeric", month: "long", day: "numeric" },
                 )}
               </span>
@@ -332,7 +334,7 @@ function ArticleModal({ article, isRTL, onClose }) {
 
             <div
               className={`text-text-muted leading-relaxed mb-6 ${
-                isRTL ? "text-right" : "text-left"
+                "text-start"
               }`}
             >
               <p className="mb-4 text-base">
@@ -345,9 +347,7 @@ function ArticleModal({ article, isRTL, onClose }) {
                 <div className="p-6 bg-background-subtle rounded-xl text-center text-text-muted">
                   <ArticleIcon className="w-10 h-10 mx-auto mb-2 opacity-30" />
                   <p className="text-sm">
-                    {isRTL
-                      ? "المحتوى الكامل سيكون متاحاً قريباً"
-                      : "Full content coming soon"}
+                    {t("auto.fullContentComingSoon")}
                   </p>
                 </div>
               )}
@@ -355,7 +355,7 @@ function ArticleModal({ article, isRTL, onClose }) {
 
             <div
               className={`flex flex-wrap gap-2 ${
-                isRTL ? "justify-end" : "justify-start"
+                t("auto.justifystart")
               }`}
             >
               {(isRTL ? article.tagsAr : article.tags).map((tag, i) => (
@@ -376,7 +376,7 @@ function ArticleModal({ article, isRTL, onClose }) {
 }
 
 export default function PatientArticles() {
-  const { isRTL } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [bookmarks, setBookmarks] = useState(new Set());
@@ -415,7 +415,7 @@ export default function PatientArticles() {
   });
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="space-y-6 max-w-5xl mx-auto" >
       {/* Header */}
       <div
         className={`flex flex-col md:flex-row md:items-center justify-between gap-4 ${
@@ -425,28 +425,26 @@ export default function PatientArticles() {
         <div>
           <h1 className="text-3xl font-bold text-text-heading flex items-center gap-3">
             <ArticleIcon className="w-8 h-8 text-primary" />
-            {isRTL ? "المقالات الصحية" : "Health Articles"}
+            {t("auto.healthArticles")}
           </h1>
           <p className="text-text-muted mt-1">
-            {isRTL
-              ? "مقالات ودلائل من فريق الدعم والأطباء"
-              : "Articles and guides from support team & doctors"}
+            {t("auto.articlesAndGuidesFromSupportTeamDoctors")}
           </p>
         </div>
         {/* Search */}
         <div className="relative w-full md:w-72">
           <Search
             className={`absolute ${
-              isRTL ? "right-3" : "left-3"
+              "start-3"
             } top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted`}
           />
           <input
             type="text"
-            placeholder={isRTL ? "ابحث في المقالات..." : "Search articles..."}
+            placeholder={t("auto.searchArticles")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className={`w-full ${
-              isRTL ? "pr-10 pl-4" : "pl-10 pr-4"
+              "ps-10 pe-4"
             } py-2.5 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text transition-all`}
           />
         </div>
@@ -466,23 +464,23 @@ export default function PatientArticles() {
                 className="relative bg-gradient-to-br from-primary/90 to-secondary/80 rounded-2xl p-6 text-white cursor-pointer overflow-hidden shadow-lg"
                 onClick={() => setSelectedArticle(article)}
               >
-                <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
-                <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-8 -translate-x-8" />
+                <div className="absolute top-0 end-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
+                <div className="absolute bottom-0 start-0 w-24 h-24 bg-white/5 rounded-full translate-y-8 -translate-x-8" />
                 <div className="relative z-10">
                   <span className="inline-flex items-center gap-1.5 bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full mb-3">
                     <TrendingUp className="w-3.5 h-3.5" />
-                    {isRTL ? "مميز" : "Featured"}
+                    {t("auto.featured")}
                   </span>
                   <h3
                     className={`font-bold text-lg leading-snug mb-2 ${
-                      isRTL ? "text-right" : "text-left"
+                      "text-start"
                     }`}
                   >
                     {isRTL ? article.titleAr : article.title}
                   </h3>
                   <p
                     className={`text-white/80 text-sm line-clamp-2 ${
-                      isRTL ? "text-right" : "text-left"
+                      "text-start"
                     }`}
                   >
                     {isRTL ? article.summaryAr : article.summary}
@@ -495,7 +493,7 @@ export default function PatientArticles() {
                     <span>{isRTL ? article.authorAr : article.author}</span>
                     <Circle className="w-1 h-1" />
                     <span>
-                      {article.readTime} {isRTL ? "دقائق" : "min"}
+                      {article.readTime} {t("auto.min")}
                     </span>
                   </div>
                 </div>
@@ -545,12 +543,10 @@ export default function PatientArticles() {
         <div className="text-center py-20 bg-background-subtle/20 rounded-2xl border-2 border-dashed border-border">
           <ArticleIcon className="w-16 h-16 text-text-muted mx-auto mb-4 opacity-20" />
           <h3 className="text-xl font-medium text-text-muted">
-            {isRTL ? "لا توجد مقالات" : "No articles found"}
+            {t("auto.noArticlesFound")}
           </h3>
           <p className="text-text-muted mt-2 text-sm">
-            {isRTL
-              ? "جرب تغيير فلتر البحث"
-              : "Try changing your search or filter"}
+            {t("auto.tryChangingYourSearchOrFilter")}
           </p>
         </div>
       )}

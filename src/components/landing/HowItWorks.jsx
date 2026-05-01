@@ -29,7 +29,7 @@ const HowItWorks = () => {
         {/* Steps Container */}
         <div className="relative">
           {/* Horizontal Connecting Dashed Lines (Desktop) */}
-          <div className="hidden md:block absolute top-1/2 left-[10%] right-[10%] h-px -translate-y-1/2 z-0">
+          <div className="hidden md:block absolute top-1/2 start-[10%] end-[10%] h-px -translate-y-1/2 z-0">
             <div className="w-full h-full border-t-2 border-dashed border-[#1a4d35]/20" />
           </div>
           
@@ -45,12 +45,12 @@ const HowItWorks = () => {
               >
                 {/* Connector Dot between cards (Desktop) */}
                 {idx < 2 && (
-                  <div className={`hidden md:block absolute top-1/2 ${isRTL ? '-left-8' : '-right-8'} w-3 h-3 rounded-full bg-[#1a4d35] z-20 -translate-y-1/2 shadow-sm`} />
+                  <div className={`hidden md:block absolute top-1/2 ${t("auto.end8")} w-3 h-3 rounded-full bg-[#1a4d35] z-20 -translate-y-1/2 shadow-sm`} />
                 )}
 
                 <div className="bg-white rounded-[2rem] p-12 text-center border border-gray-100 shadow-[0_10px_40px_-15px_rgba(0,0,0,0.05)] hover:shadow-[0_20px_50px_-10px_rgba(0,0,0,0.08)] transition-all duration-500 relative min-h-[300px] flex flex-col items-center justify-center">
                   {/* Number Badge at Top Right */}
-                  <div className="absolute top-6 right-6 w-9 h-9 rounded-full bg-[#1a4d35] text-white flex items-center justify-center font-bold text-base shadow-sm z-30">
+                  <div className="absolute top-6 end-6 w-9 h-9 rounded-full bg-[#1a4d35] text-white flex items-center justify-center font-bold text-base shadow-sm z-30">
                     {s.n}
                   </div>
 

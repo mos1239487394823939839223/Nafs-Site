@@ -147,7 +147,7 @@ export default function AdminBookings() {
 
   const formatDate = (dateStr) => {
     if (!dateStr) return t("common.none", "N/A");
-    return new Date(dateStr).toLocaleDateString(isRTL ? "ar-EG" : "en-US", {
+    return new Date(dateStr).toLocaleDateString(t("auto.enus"), {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -156,7 +156,7 @@ export default function AdminBookings() {
 
   const formatTime = (dateStr) => {
     if (!dateStr) return "";
-    return new Date(dateStr).toLocaleTimeString(isRTL ? "ar-EG" : "en-US", {
+    return new Date(dateStr).toLocaleTimeString(t("auto.enus"), {
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
@@ -183,7 +183,7 @@ export default function AdminBookings() {
   });
 
   return (
-    <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="space-y-6" >
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
@@ -209,7 +209,7 @@ export default function AdminBookings() {
             <div className="relative flex-1 w-full">
               <Search
                 className={`absolute ${
-                  isRTL ? "right-3" : "left-3"
+                  "start-3"
                 } top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted`}
               />
               <input
@@ -221,7 +221,7 @@ export default function AdminBookings() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className={`w-full ${
-                  isRTL ? "pr-10 pl-4" : "pl-10 pr-4"
+                  "ps-10 pe-4"
                 } py-2.5 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary/20 outline-none text-text`}
               />
             </div>
@@ -373,9 +373,9 @@ export default function AdminBookings() {
                     }
                   >
                     {isRTL ? (
-                      <ChevronRight className="w-4 h-4 mr-1" />
+                      <ChevronRight className="w-4 h-4 me-1" />
                     ) : (
-                      <ChevronLeft className="w-4 h-4 mr-1" />
+                      <ChevronLeft className="w-4 h-4 me-1" />
                     )}
                     {t("common.previous")}
                   </Button>
@@ -390,9 +390,9 @@ export default function AdminBookings() {
                   >
                     {t("common.next")}
                     {isRTL ? (
-                      <ChevronLeft className="w-4 h-4 ml-1" />
+                      <ChevronLeft className="w-4 h-4 ms-1" />
                     ) : (
-                      <ChevronRight className="w-4 h-4 ml-1" />
+                      <ChevronRight className="w-4 h-4 ms-1" />
                     )}
                   </Button>
                 </div>

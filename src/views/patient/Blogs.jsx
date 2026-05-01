@@ -11,7 +11,7 @@ import { useToast } from '../../components/ui/Toast'
 /* ──── Article Card ──────────────────────────────────────────────────────── */
 function BlogCard({ blog, onClick, t, isRTL }) {
   const formatDate = (iso) =>
-    new Date(iso).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+    new Date(iso).toLocaleDateString(t("auto.enus"), { year: 'numeric', month: 'short', day: 'numeric' })
 
   return (
     <motion.div
@@ -26,17 +26,17 @@ function BlogCard({ blog, onClick, t, isRTL }) {
       <div className="p-5 space-y-3">
         <div className={`flex items-start justify-between gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <div className="flex-1 min-w-0">
-            <h3 className={`font-bold text-text-heading text-base leading-snug group-hover:text-primary transition-colors line-clamp-2 ${isRTL ? 'text-right' : 'text-left'}`}>
+            <h3 className={`font-bold text-text-heading text-base leading-snug group-hover:text-primary transition-colors line-clamp-2 text-start`}>
               {blog.title}
             </h3>
           </div>
         </div>
 
-        <p className={`text-sm text-text-muted line-clamp-3 leading-relaxed ${isRTL ? 'text-right' : 'text-left'}`}>
+        <p className={`text-sm text-text-muted line-clamp-3 leading-relaxed text-start`}>
           {blog.description}
         </p>
 
-        <div className={`flex flex-wrap gap-1.5 ${isRTL ? 'justify-end' : 'justify-start'}`}>
+        <div className={`flex flex-wrap gap-1.5 ${t("auto.justifystart")}`}>
           {blog.tags.slice(0, 3).map(tag => (
             <span key={tag} className="text-xs px-2.5 py-0.5 bg-background-subtle border border-border rounded-full text-text-muted flex items-center gap-1">
               <TagIcon style={{ width: 10, height: 10 }} />
@@ -70,15 +70,15 @@ function FeaturedCard({ blog, onClick, t, isRTL }) {
       className="relative bg-gradient-to-br from-primary/90 to-secondary/80 rounded-2xl p-6 text-white cursor-pointer overflow-hidden shadow-lg"
       onClick={() => onClick(blog)}
     >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
-      <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/5 rounded-full translate-y-8 -translate-x-8" />
+      <div className="absolute top-0 end-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
+      <div className="absolute bottom-0 start-0 w-24 h-24 bg-white/5 rounded-full translate-y-8 -translate-x-8" />
       <div className="relative z-10">
         <span className="inline-flex items-center gap-1.5 bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full mb-3">
           <TrendingUp style={{ width: 12, height: 12 }} /> {t('blogs.featuredBadge')}
         </span>
-        <h3 className={`font-bold text-lg leading-snug mb-2 ${isRTL ? 'text-right' : 'text-left'}`}>{blog.title}</h3>
-        <p className={`text-white/80 text-sm line-clamp-2 ${isRTL ? 'text-right' : 'text-left'}`}>{blog.description}</p>
-        <div className={`flex flex-wrap gap-1.5 mt-3 ${isRTL ? 'justify-end' : 'justify-start'}`}>
+        <h3 className={`font-bold text-lg leading-snug mb-2 text-start`}>{blog.title}</h3>
+        <p className={`text-white/80 text-sm line-clamp-2 text-start`}>{blog.description}</p>
+        <div className={`flex flex-wrap gap-1.5 mt-3 ${t("auto.justifystart")}`}>
           {blog.tags.slice(0, 2).map(tag => (
             <span key={tag} className="text-xs bg-white/15 text-white/90 px-2 py-0.5 rounded-full">{tag}</span>
           ))}
@@ -93,7 +93,7 @@ function BlogModal({ blog, onClose, t, isRTL }) {
   if (!blog) return null
 
   const formatDate = (iso) =>
-    new Date(iso).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    new Date(iso).toLocaleDateString(t("auto.enus"), { year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
     <AnimatePresence>
@@ -110,7 +110,7 @@ function BlogModal({ blog, onClose, t, isRTL }) {
           exit={{ scale: 0.96, opacity: 0, y: 10 }}
           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
           className="bg-background-paper rounded-3xl shadow-2xl max-w-2xl w-full max-h-[88vh] overflow-y-auto"
-          dir={isRTL ? 'rtl' : 'ltr'}
+          
           onClick={e => e.stopPropagation()}
         >
           <div className="h-2 bg-gradient-to-r from-primary via-secondary to-primary/40 rounded-t-3xl" />
@@ -125,7 +125,7 @@ function BlogModal({ blog, onClose, t, isRTL }) {
               </button>
             </div>
 
-            <h2 className={`text-2xl font-black text-text-heading leading-snug ${isRTL ? 'text-right' : 'text-left'}`}>
+            <h2 className={`text-2xl font-black text-text-heading leading-snug text-start`}>
               {blog.title}
             </h2>
 
@@ -140,11 +140,11 @@ function BlogModal({ blog, onClose, t, isRTL }) {
 
             <hr className="border-border" />
 
-            <div className={`text-text leading-relaxed text-base whitespace-pre-line ${isRTL ? 'text-right' : 'text-left'}`}>
+            <div className={`text-text leading-relaxed text-base whitespace-pre-line text-start`}>
               {blog.description}
             </div>
 
-            <div className={`flex flex-wrap gap-2 pt-2 ${isRTL ? 'justify-end' : 'justify-start'}`}>
+            <div className={`flex flex-wrap gap-2 pt-2 ${t("auto.justifystart")}`}>
               {blog.tags.map(tag => (
                 <span key={tag} className="flex items-center gap-1 text-sm px-3 py-1 bg-primary/10 text-primary rounded-full font-medium border border-primary/20">
                   <TagIcon style={{ width: 13, height: 13 }} />
@@ -171,7 +171,7 @@ export default function PatientBlogs() {
 
   useEffect(() => {
     if (!blogLoadError) return
-    toast.error(isRTL ? 'فشل تحميل المقالات من الخادم' : 'Failed to load blogs from server')
+    toast.error(t("auto.failedToLoadBlogsFromServer"))
   }, [blogLoadError, toast, isRTL])
 
   const handleSelectBlog = async (blog) => {
@@ -222,7 +222,7 @@ export default function PatientBlogs() {
   }), [blogs, search, activeTag])
 
   return (
-    <div className="space-y-6 max-w-5xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="space-y-6 max-w-5xl mx-auto" >
       {/* Header and Controls */}
       <div className={`flex flex-col lg:flex-row lg:items-center justify-between gap-5 ${isRTL ? 'lg:flex-row-reverse' : ''}`}>
         <div>
@@ -276,7 +276,7 @@ export default function PatientBlogs() {
                     ? '#ffffff' 
                     : 'var(--color-text)',
                   cursor: 'pointer',
-                  textAlign: isRTL ? 'right' : 'left',
+                  textAlign: t("auto.left"),
                 }),
                 singleValue: (base) => ({
                   ...base,
@@ -289,7 +289,7 @@ export default function PatientBlogs() {
           {/* Search */}
           <div className="relative w-full sm:w-64">
             <Search
-              className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-text-muted`}
+              className={`absolute ${t("auto.start4")} top-1/2 -translate-y-1/2 text-text-muted`}
               style={{ width: 17, height: 17 }}
             />
             <input
@@ -297,12 +297,12 @@ export default function PatientBlogs() {
               placeholder={t('blogs.searchPlaceholder')}
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className={`w-full ${isRTL ? 'pr-11 pl-10' : 'pl-11 pr-10'} py-3 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text transition-all`}
+              className={`w-full ps-11 pe-10 py-3 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text transition-all`}
             />
             {search && (
               <button
                 onClick={() => setSearch('')}
-                className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-text-muted hover:text-text`}
+                className={`absolute end-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text`}
               >
                 <X style={{ width: 14, height: 14 }} />
               </button>
@@ -313,7 +313,7 @@ export default function PatientBlogs() {
 
       {/* Results count */}
       {search && (
-        <p className={`text-sm text-text-muted ${isRTL ? 'text-right' : 'text-left'}`}>
+        <p className={`text-sm text-text-muted text-start`}>
           {filtered.length > 0
             ? `${filtered.length} ${t('blogs.searchResults')} "${search}"`
             : `${t('blogs.noResults')} "${search}"`}
@@ -355,8 +355,8 @@ export default function PatientBlogs() {
       {selected && <BlogModal blog={selected} onClose={() => setSelected(null)} t={t} isRTL={isRTL} />}
 
       {loadingBlogId && (
-        <p className={`text-xs text-text-muted ${isRTL ? 'text-right' : 'text-left'}`}>
-          {isRTL ? 'جاري تحميل تفاصيل المقال...' : 'Loading article details...'}
+        <p className={`text-xs text-text-muted text-start`}>
+          {t("auto.loadingArticleDetails")}
         </p>
       )}
     </div>

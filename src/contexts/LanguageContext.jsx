@@ -24,23 +24,40 @@ export function LanguageProvider({ children }) {
   const t = useCallback((key, fallback) => {
     const keys = key.split('.')
     let value = translations[language]
+    
+    // Attempt to find translation in current language
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
         value = value[k]
       } else {
-        // Fallback to English, then to fallback string, then to the key itself
+        // Fallback to English
         let enValue = translations.en
         for (const ek of keys) {
           if (enValue && typeof enValue === 'object' && ek in enValue) {
             enValue = enValue[ek]
           } else {
-            return fallback || key
+            if (import.meta.env?.DEV) {
+              console.warn(`[i18n] Missing translation key: "${key}"`)
+            }
+            return fallback || ''
           }
         }
-        return typeof enValue === 'string' ? enValue : (fallback || key)
+        
+        if (typeof enValue === 'string') return enValue
+        
+        if (import.meta.env?.DEV) {
+          console.warn(`[i18n] Missing translation key: "${key}"`)
+        }
+        return fallback || ''
       }
     }
-    return typeof value === 'string' ? value : (fallback || key)
+    
+    if (typeof value === 'string') return value
+    
+    if (import.meta.env?.DEV) {
+      console.warn(`[i18n] Missing translation key: "${key}"`)
+    }
+    return fallback || ''
   }, [language])
 
   // Change language and persist + sync with API

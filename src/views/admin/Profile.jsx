@@ -143,8 +143,8 @@ export default function AdminProfile() {
                     <rect width="100%" height="100%" fill="url(#grid)" />
                 </svg>
                 {/* Blur circles */}
-                <div className="absolute top-8 left-1/4 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
-                <div className="absolute bottom-0 right-1/3 w-64 h-64 bg-secondary/30 rounded-full blur-3xl" />
+                <div className="absolute top-8 start-1/4 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
+                <div className="absolute bottom-0 end-1/3 w-64 h-64 bg-secondary/30 rounded-full blur-3xl" />
             </div>
 
             {/* ─── Profile Info Bar ─── */}
@@ -167,7 +167,7 @@ export default function AdminProfile() {
                             <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
                         </label>
                         {/* Online indicator */}
-                        <div className="absolute bottom-2 right-2 w-4 h-4 bg-emerald-400 rounded-full border-2 border-background-paper shadow" />
+                        <div className="absolute bottom-2 end-2 w-4 h-4 bg-emerald-400 rounded-full border-2 border-background-paper shadow" />
                     </div>
                 </div>
                 <div className="pt-20 flex flex-row items-end justify-between pb-6 border-b border-border gap-4">

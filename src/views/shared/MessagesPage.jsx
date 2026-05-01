@@ -822,7 +822,7 @@ export default function MessagesPage() {
       console.error('Failed to send message:', error)
       // Remove optimistic message on failure
       setMessages(prev => prev.filter(m => m.id !== optimisticId))
-      const fallback = isRTL ? 'تعذر إرسال الرسالة' : 'Failed to send message'
+      const fallback = t("auto.failedToSendMessage")
       toast.error(String(error?.message || fallback))
     }
   }
@@ -884,7 +884,7 @@ export default function MessagesPage() {
   const openSupportChat = useCallback(async () => {
     if (!isPatient) return
     if (!currentUserId) {
-      toast.error(isRTL ? 'تعذر تحديد معرف المريض' : 'Unable to resolve patient id')
+      toast.error(t("auto.unableToResolvePatientId"))
       return
     }
 
@@ -1009,7 +1009,7 @@ export default function MessagesPage() {
           error?.response?.data?.Message ||
           error?.response?.data?.message ||
           error?.message ||
-          (isRTL ? 'تعذر فتح محادثة الدعم الفني' : 'Failed to open support chat')
+          (t("auto.failedToOpenSupportChat"))
         )
       )
       console.error('Failed to open support chat room:', error)
@@ -1042,7 +1042,7 @@ export default function MessagesPage() {
   return (
     <div
       className="flex min-h-[calc(100vh-6rem)] h-[calc(100vh-4.25rem)] overflow-hidden rounded-2xl border border-border/60 shadow-sm bg-background-paper"
-      dir={isRTL ? 'rtl' : 'ltr'}
+      
     >
 
       {/* ════════════════════ SIDEBAR ════════════════════ */}
@@ -1146,13 +1146,13 @@ export default function MessagesPage() {
 
           {/* Search */}
           <div className="relative">
-            <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none`} />
+            <Search className={`absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none`} />
             <input
               type="text"
               placeholder={t('chat.searchConversations', 'Search conversations...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2 bg-background-subtle border border-border/60 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-text placeholder:text-text-muted`}
+              className={`w-full ps-10 pe-4 py-2 bg-background-subtle border border-border/60 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-text placeholder:text-text-muted`}
             />
           </div>
         </div>
@@ -1209,7 +1209,7 @@ export default function MessagesPage() {
                             <span className="text-sm font-bold text-primary">{roomInitials}</span>
                           )}
                         </div>
-                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-background-paper rounded-full" />
+                        <span className="absolute bottom-0 end-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-background-paper rounded-full" />
                       </div>
 
                       {/* Content */}
@@ -1279,8 +1279,8 @@ export default function MessagesPage() {
           /* Empty state */
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
             <div className="absolute inset-0 pointer-events-none">
-              <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
-              <div className="absolute bottom-1/4 right-1/4 w-48 h-48 bg-secondary/5 rounded-full blur-3xl" />
+              <div className="absolute top-1/4 start-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
+              <div className="absolute bottom-1/4 end-1/4 w-48 h-48 bg-secondary/5 rounded-full blur-3xl" />
             </div>
             <div className="relative z-10">
               <div className="w-20 h-20 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-sm">

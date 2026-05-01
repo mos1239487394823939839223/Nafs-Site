@@ -73,17 +73,17 @@ export default function ProfileSettings({ user, onSave, onImageUpload }) {
               <Camera className="w-8 h-8 text-white" />
             </div>
           </div>
-          <label className="absolute bottom-0 right-0 p-2.5 bg-primary text-white rounded-full cursor-pointer hover:bg-primary-dark transition-transform hover:scale-105 shadow-lg">
+          <label className="absolute bottom-0 end-0 p-2.5 bg-primary text-white rounded-full cursor-pointer hover:bg-primary-dark transition-transform hover:scale-105 shadow-lg">
             <Camera className="w-4 h-4" />
             <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
           </label>
         </div>
-        <div className={`text-center space-y-2 ${isRTL ? 'md:text-right' : 'md:text-left'}`}>
+        <div className={`text-center space-y-2 ${t("auto.mdtextstart")}`}>
           <h3 className="text-lg font-semibold text-text">{t('settings.profilePhoto', 'Profile Photo')}</h3>
           <p className="text-sm text-text-light max-w-xs">
             {t('settings.uploadClearPhoto', 'Upload a clear photo to help your doctor identify you.')}
           </p>
-          <div className={`flex gap-2 justify-center ${isRTL ? 'md:justify-end' : 'md:justify-start'}`}>
+          <div className={`flex gap-2 justify-center ${t("auto.mdjustifystart")}`}>
             <Button size="sm" variant="outline" onClick={() => setAvatar(null)}>{t('common.remove', 'Remove')}</Button>
           </div>
         </div>

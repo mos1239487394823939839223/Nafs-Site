@@ -486,7 +486,7 @@ export default function PatientMessages() {
   const TypeIcon = contactType === 'support' ? SupportAgent : Stethoscope;
 
   return (
-    <div className="h-[calc(100vh-8rem)] flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="h-[calc(100vh-8rem)] flex flex-col" >
       <AnimatePresence mode="wait">
         {mode === "rooms" && (
           <motion.div
@@ -568,13 +568,13 @@ export default function PatientMessages() {
 
             {/* Search */}
             <div className="relative mb-4">
-              <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-text-light`} />
+              <Search className={`absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light`} />
               <input
                 type="text"
                 placeholder={t('chat.searchConversations')}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className={`w-full ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'} py-2 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-text`}
+                className={`w-full ps-10 pe-4 py-2 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all text-sm text-text`}
               />
             </div>
 
@@ -597,7 +597,7 @@ export default function PatientMessages() {
                   <button
                     key={room.Id || room.id}
                     onClick={() => handleOpenRoom(room)}
-                    className="w-full p-4 bg-background-paper border border-border rounded-xl text-left transition-all hover:border-primary/50 hover:bg-primary/5"
+                    className="w-full p-4 bg-background-paper border border-border rounded-xl text-start transition-all hover:border-primary/50 hover:bg-primary/5"
                   >
                     <div className={`flex items-center gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
                       <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
@@ -609,7 +609,7 @@ export default function PatientMessages() {
                             : <Stethoscope className="w-6 h-6 text-primary" />
                         )}
                       </div>
-                      <div className={`flex-1 min-w-0 ${isRTL ? 'text-right' : 'text-left'}`}>
+                      <div className={`flex-1 min-w-0 text-start`}>
                         <div className={`flex justify-between items-start gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
                           <h4 className="font-bold text-text-heading truncate">
                             {room.OtherParticipantName || room.Name || "Chat"}

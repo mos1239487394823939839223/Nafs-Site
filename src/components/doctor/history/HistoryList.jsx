@@ -47,7 +47,7 @@ export default function HistoryList({ sessions, onNoteClick, onViewNoteClick }) 
   return (
     <div
       className={`bg-background-paper rounded-2xl border border-border/50 shadow-sm overflow-hidden ${
-        isRTL ? "text-right" : "text-left"
+        "text-start"
       }`}
     >
       <div className="overflow-x-auto">
@@ -56,35 +56,35 @@ export default function HistoryList({ sessions, onNoteClick, onViewNoteClick }) 
             <tr>
               <th
                 className={`px-6 py-5 text-xs font-semibold text-text-muted uppercase tracking-wider ${
-                  isRTL ? "text-right" : "text-left"
+                  "text-start"
                 }`}
               >
                 {t("admin.dateAndTime", "Date and Time")}
               </th>
               <th
                 className={`px-6 py-5 text-xs font-semibold text-text-muted uppercase tracking-wider ${
-                  isRTL ? "text-right" : "text-left"
+                  "text-start"
                 }`}
               >
                 {t("common.patient", "Patient")}
               </th>
               <th
                 className={`px-6 py-5 text-xs font-semibold text-text-muted uppercase tracking-wider ${
-                  isRTL ? "text-right" : "text-left"
+                  "text-start"
                 }`}
               >
                 {t("doctor.duration", "Duration")}
               </th>
               <th
                 className={`px-6 py-5 text-xs font-semibold text-text-muted uppercase tracking-wider ${
-                  isRTL ? "text-right" : "text-left"
+                  "text-start"
                 }`}
               >
                 {t("common.status", "Status")}
               </th>
               <th
                 className={`px-6 py-5 text-xs font-semibold text-text-muted uppercase tracking-wider ${
-                  isRTL ? "text-left" : "text-right"
+                  "text-end"
                 }`}
               >
                 {t("common.actions", "Actions")}
@@ -131,9 +131,9 @@ export default function HistoryList({ sessions, onNoteClick, onViewNoteClick }) 
                 </td>
                 <td className="px-6 py-5">{getStatusBadge(session)}</td>
                 <td
-                  className={`px-6 py-5 ${isRTL ? "text-left" : "text-right"}`}
+                  className={`px-6 py-5 text-end`}
                 >
-                  <div className={`flex gap-1 ${isRTL ? "flex-row-reverse" : "flex-row"} justify-end`}>
+                  <div className={`flex gap-1 flex-row justify-end`}>
                     <Button
                       variant="ghost"
                       size="sm"

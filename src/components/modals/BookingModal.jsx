@@ -147,7 +147,7 @@ export default function BookingModal({ isOpen, onClose }) {
       title={t("patient.bookAppointment")}
       size="lg"
     >
-      <div dir={isRTL ? "rtl" : "ltr"}>
+      <div >
         {/* Step Indicator */}
         <div className="flex items-center justify-center mb-8">
           <div className="flex items-center gap-4">
@@ -265,7 +265,7 @@ export default function BookingModal({ isOpen, onClose }) {
                             </p>
                           )}
                         </div>
-                        <div className="text-right">
+                        <div className="text-end">
                           {fee !== "N/A" && (
                             <>
                               <p

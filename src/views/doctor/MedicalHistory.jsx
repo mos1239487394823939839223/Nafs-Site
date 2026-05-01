@@ -257,13 +257,13 @@ export default function MedicalHistory() {
                                 <p className="text-text-muted">{t('doctor.manageClinicalRecords')}</p>
                             </div>
                             <div className="relative w-full md:w-80">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-clinical-gray" />
+                                <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-clinical-gray" />
                                 <input
                                     type="text"
                                     placeholder={t('doctor.searchPatient')}
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
+                                    className="w-full ps-10 pe-4 py-2 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
                                 />
                             </div>
                         </div>

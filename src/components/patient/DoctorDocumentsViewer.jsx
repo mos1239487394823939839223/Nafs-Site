@@ -259,7 +259,7 @@ export default function DoctorDocumentsViewer({ doctorId }) {
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between p-4 border-b border-border bg-background-subtle">
-                <p className="font-semibold text-text truncate pr-4">{previewFile.name}</p>
+                <p className="font-semibold text-text truncate pe-4">{previewFile.name}</p>
                 <button
                   onClick={() => setPreviewFile(null)}
                   className="p-1.5 hover:bg-background-paper rounded-lg transition-colors flex-shrink-0"

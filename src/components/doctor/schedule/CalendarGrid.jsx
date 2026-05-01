@@ -85,11 +85,11 @@ export default function CalendarGrid({ selectedDate, onDateChange, slots, onSlot
         <div className="min-w-[800px]">
           {/* Days Header */}
           <div className="grid grid-cols-8 border-b border-border">
-            <div className="p-4 text-center font-medium text-text-muted border-r border-border bg-background-subtle">
+            <div className="p-4 text-center font-medium text-text-muted border-e border-border bg-background-subtle">
               Time
             </div>
             {weekDates.map((date, i) => (
-              <div key={i} className={`p-4 text-center border-r border-border last:border-r-0 ${date.toDateString() === new Date().toDateString() ? 'bg-primary/5' : ''
+              <div key={i} className={`p-4 text-center border-e border-border last:border-e-0 ${date.toDateString() === new Date().toDateString() ? 'bg-primary/5' : ''
                 }`}>
                 <div className="text-sm font-medium text-text-muted">{days[date.getDay()]}</div>
                 <div className={`text-lg font-bold ${date.toDateString() === new Date().toDateString() ? 'text-primary' : 'text-text'
@@ -104,7 +104,7 @@ export default function CalendarGrid({ selectedDate, onDateChange, slots, onSlot
           {hours.map((hour) => (
             <div key={hour} className="grid grid-cols-8 border-b border-border last:border-b-0">
               {/* Time Label */}
-              <div className="p-3 text-sm text-text-muted font-medium border-r border-border bg-background-subtle flex items-center justify-center">
+              <div className="p-3 text-sm text-text-muted font-medium border-e border-border bg-background-subtle flex items-center justify-center">
                 {hour > 12 ? `${hour - 12} PM` : hour === 12 ? '12 PM' : `${hour} AM`}
               </div>
 
@@ -124,7 +124,7 @@ export default function CalendarGrid({ selectedDate, onDateChange, slots, onSlot
                     whileTap={!isDisabled ? { scale: 0.95 } : {}}
                     disabled={isDisabled}
                     onClick={() => onSlotClick(date, hour)}
-                    className={`h-16 border-r border-border last:border-r-0 transition-all relative group ${isPast ? 'bg-gray-100 cursor-not-allowed opacity-50' :
+                    className={`h-16 border-e border-border last:border-e-0 transition-all relative group ${isPast ? 'bg-gray-100 cursor-not-allowed opacity-50' :
                       status === 'booked' ? 'bg-orange-100 border-2 border-orange-300 cursor-not-allowed' :
                         selected ? 'bg-emerald-600 ring-4 ring-emerald-300 text-white cursor-pointer shadow-lg z-10' :
                           status === 'available' ? 'bg-emerald-100 border-2 border-emerald-400 cursor-pointer hover:bg-emerald-200' :

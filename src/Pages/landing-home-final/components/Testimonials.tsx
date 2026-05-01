@@ -29,11 +29,11 @@ export const Testimonials = () => {
           className="rounded-2xl border border-border/60 bg-card p-6 shadow-[var(--shadow-card)]"
         >
           <Quote className="h-5 w-5 text-brand/60" />
-          <p className="mt-3 text-sm leading-relaxed text-foreground/80 text-right">
+          <p className="mt-3 text-sm leading-relaxed text-foreground/80 text-end">
             {it.quote}
           </p>
           <div className="mt-5 flex items-center justify-end gap-3">
-            <div className="text-right">
+            <div className="text-end">
               <p className="text-sm font-bold text-foreground">{it.name}</p>
               <p className="text-xs text-muted-foreground">{it.role}</p>
             </div>

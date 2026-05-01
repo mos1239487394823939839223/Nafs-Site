@@ -144,7 +144,7 @@ function LandingHero() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-16 grid lg:grid-cols-2 gap-12 items-center relative">
-        <div className={`flex flex-col gap-6 ${isRTL ? 'lg:order-1' : 'lg:order-2'}`}>
+        <div className={`flex flex-col gap-6 lg:order-2`}>
           <div className="inline-flex self-start items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
             <span className="w-2 h-2 rounded-full bg-primary animate-pulse" />
             {t('landing.hero.badges.available.title')}
@@ -178,7 +178,7 @@ function LandingHero() {
           </div>
         </div>
 
-        <div className={`relative ${isRTL ? 'lg:order-2' : 'lg:order-1'}`}>
+        <div className={`relative lg:order-1`}>
           <div className="relative rounded-3xl overflow-hidden shadow-card">
             <img src={heroImg} alt="Mental health support" className="w-full h-[420px] lg:h-[520px] object-cover" />
             <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent" />
@@ -369,10 +369,10 @@ function LandingDoctors() {
   const [activeIdx, setActiveIdx] = useState(0)
 
   const doctorData = [
-    { img: doctor1, name: isRTL ? 'د. سارة أحمد' : 'Dr. Sarah Ahmed', specialty: isRTL ? 'القلق والاكتئاب' : 'Anxiety & Depression', rating: 4.9, reviews: 128, price: 350 },
-    { img: doctor2, name: isRTL ? 'د. محمد علي' : 'Dr. Mohammed Ali', specialty: isRTL ? 'العلاج الأسري' : 'Family Therapy', rating: 4.8, reviews: 96, price: 400 },
-    { img: doctor3, name: isRTL ? 'د. ليلى حسن' : 'Dr. Layla Hassan', specialty: isRTL ? 'العلاج المعرفي' : 'Cognitive Therapy', rating: 4.9, reviews: 214, price: 450 },
-    { img: doctor4, name: isRTL ? 'د. كريم منصور' : 'Dr. Karim Mansour', specialty: isRTL ? 'صحة المراهقين' : 'Adolescent Health', rating: 4.7, reviews: 73, price: 380 },
+    { img: doctor1, name: t("auto.drSarahAhmed"), specialty: t("auto.anxietyDepression"), rating: 4.9, reviews: 128, price: 350 },
+    { img: doctor2, name: t("auto.drMohammedAli"), specialty: t("auto.familyTherapy"), rating: 4.8, reviews: 96, price: 400 },
+    { img: doctor3, name: t("auto.drLaylaHassan"), specialty: t("auto.cognitiveTherapy"), rating: 4.9, reviews: 214, price: 450 },
+    { img: doctor4, name: t("auto.drKarimMansour"), specialty: t("auto.adolescentHealth"), rating: 4.7, reviews: 73, price: 380 },
   ]
 
   return (
@@ -419,11 +419,11 @@ function LandingAssessment() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
         <div className="rounded-3xl bg-background-paper border border-border shadow-card overflow-hidden">
           <div className="grid lg:grid-cols-2 gap-0">
-            <div className={`relative h-72 lg:h-auto ${isRTL ? 'order-2' : 'order-1'}`}>
+            <div className={`relative h-72 lg:h-auto order-1`}>
               <img src={assessImg} alt="Assessment" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-primary/10" />
             </div>
-            <div className={`flex flex-col justify-center gap-6 p-8 lg:p-12 ${isRTL ? 'order-1' : 'order-2'}`}>
+            <div className={`flex flex-col justify-center gap-6 p-8 lg:p-12 order-2`}>
               <div className="inline-flex self-start items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-semibold">
                 {t('landing.assessment.cta')}
               </div>
@@ -614,7 +614,7 @@ function ChatBubble() {
 const LandingPage = () => {
   const { isRTL } = useLanguage()
   return (
-    <div dir={isRTL ? 'rtl' : 'ltr'} className="min-h-screen bg-background">
+    <div  className="min-h-screen bg-background">
       <LandingNavbar />
       <main>
         <LandingHero />

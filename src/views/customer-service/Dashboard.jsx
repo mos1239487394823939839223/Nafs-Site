@@ -51,9 +51,9 @@ export default function CustomerServiceDashboard() {
 
   const refundStatusOptions = [
     { value: 'all', label: tx('common.allStatuses', 'All Statuses') },
-    { value: '1', label: isRTL ? 'قيد المراجعة' : 'Pending Review' },
-    { value: '2', label: isRTL ? 'تمت الموافقة' : 'Approved' },
-    { value: '3', label: isRTL ? 'مرفوض' : 'Rejected' },
+    { value: '1', label: t("auto.pendingReview") },
+    { value: '2', label: t("auto.approved") },
+    { value: '3', label: t("auto.rejected") },
   ]
 
   const getRefundStatusMeta = (statusValue) => {
@@ -61,21 +61,21 @@ export default function CustomerServiceDashboard() {
     if (normalized === 2) {
       return {
         value: 2,
-        label: isRTL ? 'تمت الموافقة' : 'Approved',
+        label: t("auto.approved"),
         chipClass: 'bg-emerald-50 text-emerald-700 border-emerald-200',
       }
     }
     if (normalized === 3) {
       return {
         value: 3,
-        label: isRTL ? 'مرفوض' : 'Rejected',
+        label: t("auto.rejected"),
         chipClass: 'bg-red-50 text-red-700 border-red-200',
       }
     }
 
     return {
       value: 1,
-      label: isRTL ? 'قيد المراجعة' : 'Pending Review',
+      label: t("auto.pendingReview"),
       chipClass: 'bg-amber-50 text-amber-700 border-amber-200',
     }
   }
@@ -216,10 +216,10 @@ export default function CustomerServiceDashboard() {
   const getCaseTypeMeta = (room) => {
     const type = Number(room?.RoomType ?? room?.ChatRoomType ?? room?.Type ?? 2)
     const map = {
-      1: { label: isRTL ? 'حجز' : 'Booking', cls: 'bg-blue-50 text-blue-700 border-blue-200' },
-      2: { label: isRTL ? 'دعم عام' : 'General Support', cls: 'bg-gray-50 text-gray-700 border-gray-200' },
-      3: { label: isRTL ? 'طارئ' : 'Emergency', cls: 'bg-red-50 text-red-700 border-red-200' },
-      4: { label: isRTL ? 'تنمر' : 'Bullying', cls: 'bg-orange-50 text-orange-700 border-orange-200' },
+      1: { label: t("auto.booking"), cls: 'bg-blue-50 text-blue-700 border-blue-200' },
+      2: { label: t("auto.generalSupport"), cls: 'bg-gray-50 text-gray-700 border-gray-200' },
+      3: { label: t("auto.emergency"), cls: 'bg-red-50 text-red-700 border-red-200' },
+      4: { label: t("auto.bullying"), cls: 'bg-orange-50 text-orange-700 border-orange-200' },
     }
     return map[type] || map[2]
   }
@@ -228,22 +228,22 @@ export default function CustomerServiceDashboard() {
     {
       id: 'manual-payments',
       icon: ReceiptLong,
-      title: isRTL ? 'المدفوعات اليدوية' : 'Manual Payments',
-      subtitle: isRTL ? 'مراجعة إثباتات الدفع' : 'Review transfer proofs',
+      title: t("auto.manualPayments"),
+      subtitle: t("auto.reviewTransferProofs"),
       count: manualSummary.pending,
     },
     {
       id: 'refunds',
       icon: AccountBalanceWallet,
-      title: isRTL ? 'طلبات الاسترداد' : 'Refund Requests',
-      subtitle: isRTL ? 'اعتماد أو رفض الاسترداد' : 'Approve or reject refunds',
+      title: t("auto.refundRequests"),
+      subtitle: t("auto.approveOrRejectRefunds"),
       count: refundsSummary.pending,
     },
     {
       id: 'chat-rooms',
       icon: MessageSquare,
-      title: isRTL ? 'غرف المحادثة' : 'Chat Rooms',
-      subtitle: isRTL ? 'محادثات المرضى' : 'Patient conversations',
+      title: t("auto.chatRooms"),
+      subtitle: t("auto.patientConversations"),
       count: chatRooms.filter((r) => Number(r.UnreadCount) > 0).length,
     },
   ]
@@ -306,8 +306,8 @@ export default function CustomerServiceDashboard() {
     if (!processingRefundItem || !refundProcessMode) return
 
     const notesPrefix = refundProcessMode === 'approve'
-      ? (isRTL ? 'Approved by technical support' : 'Approved by technical support')
-      : (isRTL ? 'Rejected by technical support' : 'Rejected by technical support')
+      ? (t("auto.approvedByTechnicalSupport"))
+      : (t("auto.rejectedByTechnicalSupport"))
     const notesValue = String(refundProcessNotes || '').trim()
     const notes = notesValue ? `${notesPrefix}: ${notesValue}` : notesPrefix
 
@@ -319,8 +319,8 @@ export default function CustomerServiceDashboard() {
       } else {
         toast.success(
           refundProcessMode === 'approve'
-            ? (isRTL ? 'تمت الموافقة على الاسترداد' : 'Refund approved')
-            : (isRTL ? 'تم رفض الاسترداد' : 'Refund rejected'),
+            ? (t("auto.refundApproved"))
+            : (t("auto.refundRejected")),
         )
         setProcessingRefundItem(null)
         setRefundProcessMode(null)
@@ -349,14 +349,14 @@ export default function CustomerServiceDashboard() {
   }, [refunds, refundSearch])
 
   return (
-    <div className="space-y-6 max-w-7xl mx-auto" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="space-y-6 max-w-7xl mx-auto" >
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/20 via-secondary/10 to-background-paper p-6 md:p-8"
       >
-        <div className="absolute -top-16 -right-16 h-52 w-52 rounded-full bg-primary/20 blur-3xl" />
-        <div className="absolute -bottom-20 -left-14 h-52 w-52 rounded-full bg-secondary/20 blur-3xl" />
+        <div className="absolute -top-16 -end-16 h-52 w-52 rounded-full bg-primary/20 blur-3xl" />
+        <div className="absolute -bottom-20 -start-14 h-52 w-52 rounded-full bg-secondary/20 blur-3xl" />
 
         <div className="relative grid lg:grid-cols-3 gap-5 items-center">
           <div className="lg:col-span-2 space-y-2">
@@ -366,9 +366,7 @@ export default function CustomerServiceDashboard() {
             <p className="text-text-muted max-w-2xl">
               {activeModule === 'manual-payments'
                 ? tx('staff.manualPaymentDesc', 'Review transfer evidence quickly, approve valid payments, and reject suspicious submissions with clear reasons.')
-                : (isRTL
-                  ? 'تابع طلبات الاسترداد الناتجة عن الإلغاءات المدفوعة، ثم اعتمد أو ارفض الطلب مع ملاحظات واضحة.'
-                  : 'Track refund requests created from paid cancellations, then approve or reject each request with clear notes.')}
+                : (t("auto.trackRefundRequestsCreatedFromPaidCancellationsThenApproveOrRejectEachRequestWithClearNotes"))}
             </p>
           </div>
 
@@ -376,17 +374,17 @@ export default function CustomerServiceDashboard() {
             {activeModule === 'manual-payments' ? (
               <>
                 <SummaryChip icon={ReceiptLong} label={tx('common.total', 'Total')} value={manualSummary.total} tone="text-primary" />
-                <SummaryChip icon={PendingActions} label={isRTL ? 'في انتظار الدفع' : 'Pending'} value={manualSummary.pending} tone="text-amber-300" />
-                <SummaryChip icon={Verified} label={isRTL ? 'تم الدفع بنجاح' : 'Completed'} value={manualSummary.completed} tone="text-emerald-300" />
-                <SummaryChip icon={X} label={isRTL ? 'فشل الدفع' : 'Failed'} value={manualSummary.failed} tone="text-red-300" />
-                <SummaryChip icon={AccountBalanceWallet} label={isRTL ? 'تم استرداد المبلغ' : 'Refunded'} value={manualSummary.refunded} tone="text-sky-300" />
+                <SummaryChip icon={PendingActions} label={t("auto.pending")} value={manualSummary.pending} tone="text-amber-300" />
+                <SummaryChip icon={Verified} label={t("auto.completed")} value={manualSummary.completed} tone="text-emerald-300" />
+                <SummaryChip icon={X} label={t("auto.failed")} value={manualSummary.failed} tone="text-red-300" />
+                <SummaryChip icon={AccountBalanceWallet} label={t("auto.refunded")} value={manualSummary.refunded} tone="text-sky-300" />
               </>
             ) : (
               <>
                 <SummaryChip icon={AccountBalanceWallet} label={tx('common.total', 'Total')} value={refundsSummary.total} tone="text-primary" />
-                <SummaryChip icon={PendingActions} label={isRTL ? 'قيد المراجعة' : 'Pending Review'} value={refundsSummary.pending} tone="text-amber-300" />
-                <SummaryChip icon={CheckCircle} label={isRTL ? 'موافق عليه' : 'Approved'} value={refundsSummary.approved} tone="text-emerald-300" />
-                <SummaryChip icon={X} label={isRTL ? 'مرفوض' : 'Rejected'} value={refundsSummary.rejected} tone="text-red-300" />
+                <SummaryChip icon={PendingActions} label={t("auto.pendingReview")} value={refundsSummary.pending} tone="text-amber-300" />
+                <SummaryChip icon={CheckCircle} label={t("auto.approved")} value={refundsSummary.approved} tone="text-emerald-300" />
+                <SummaryChip icon={X} label={t("auto.rejected")} value={refundsSummary.rejected} tone="text-red-300" />
               </>
             )}
           </div>
@@ -417,7 +415,7 @@ export default function CustomerServiceDashboard() {
                       }`}>
                         <Icon className="w-5 h-5" />
                       </div>
-                      <div className={isRTL ? 'text-right' : 'text-left'}>
+                      <div className="text-start">
                         <p className="font-semibold text-text-heading">{tab.title}</p>
                         <p className="text-xs text-text-muted">{tab.subtitle}</p>
                       </div>
@@ -427,7 +425,7 @@ export default function CustomerServiceDashboard() {
                         ? 'bg-amber-50 text-amber-700 border-amber-200'
                         : 'bg-background-subtle text-text-muted border-border'
                     }`}>
-                      {tab.count} {isRTL ? 'معلق' : 'pending'}
+                      {tab.count} {t("auto.pending")}
                     </span>
                   </div>
                 </button>
@@ -444,12 +442,12 @@ export default function CustomerServiceDashboard() {
 
           <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-light" />
+              <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-text-light" />
               <input
                 value={manualPaymentsSearch}
                 onChange={(e) => setManualPaymentsSearch(e.target.value)}
                 placeholder={tx('staff.searchManualPayment', 'Search by patient, booking, reference...')}
-                className="pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 text-text w-full"
+                className="ps-9 pe-4 py-2 bg-background border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 text-text w-full"
               />
             </div>
 
@@ -539,7 +537,7 @@ export default function CustomerServiceDashboard() {
                             onClick={() => handleConfirmPayment(item)}
                           >
                             {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                            {isRTL ? 'تأكيد الدفع' : 'Mark Completed'}
+                            {t("auto.markCompleted")}
                           </Button>
 
                           <Button
@@ -549,12 +547,12 @@ export default function CustomerServiceDashboard() {
                             onClick={() => openRejectModal(item)}
                           >
                             <X className="w-4 h-4" />
-                            {isRTL ? 'فشل الدفع' : 'Mark Failed'}
+                            {t("auto.markFailed")}
                           </Button>
                         </div>
                       ) : (
                         <span className="text-xs text-text-muted">
-                          {isRTL ? 'تمت معالجة الحالة' : 'Already processed'}
+                          {t("auto.alreadyProcessed")}
                         </span>
                       )}
                     </div>
@@ -594,16 +592,16 @@ export default function CustomerServiceDashboard() {
       {activeModule === 'refunds' && (
       <Card className="border border-border/80 shadow-sm">
         <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-border pb-4">
-          <CardTitle className="text-xl">{isRTL ? 'طلبات الاسترداد' : 'Refund Requests'}</CardTitle>
+          <CardTitle className="text-xl">{t("auto.refundRequests")}</CardTitle>
 
           <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
             <div className="relative flex-1">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-text-light" />
+              <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-text-light" />
               <input
                 value={refundSearch}
                 onChange={(e) => setRefundSearch(e.target.value)}
-                placeholder={isRTL ? 'بحث باسم المريض أو الحجز...' : 'Search by patient or booking...'}
-                className="pl-9 pr-4 py-2 bg-background border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 text-text w-full"
+                placeholder={t("auto.searchByPatientOrBooking")}
+                className="ps-9 pe-4 py-2 bg-background border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 text-text w-full"
               />
             </div>
 
@@ -628,12 +626,12 @@ export default function CustomerServiceDashboard() {
           {refundsLoading ? (
             <div className="text-center py-16 text-text-muted">
               <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin" />
-              {isRTL ? 'جاري تحميل طلبات الاسترداد...' : 'Loading refund requests...'}
+              {t("auto.loadingRefundRequests")}
             </div>
           ) : filteredRefunds.length === 0 ? (
             <div className="text-center py-16 text-text-muted">
               <AccountBalanceWallet className="w-10 h-10 mx-auto mb-2 opacity-40" />
-              {isRTL ? 'لا توجد طلبات استرداد حالياً' : 'No refund requests found.'}
+              {t("auto.noRefundRequestsFound")}
             </div>
           ) : (
             <div className="grid lg:grid-cols-2 gap-4">
@@ -667,9 +665,9 @@ export default function CustomerServiceDashboard() {
                     </div>
 
                     <div className="space-y-1.5 text-sm text-text-muted mb-4">
-                      <p>{isRTL ? 'المبلغ' : 'Amount'}: {Number.isFinite(amount) && amount > 0 ? `${amount} EGP` : '-'}</p>
-                      <p>{isRTL ? 'سبب الإلغاء' : 'Cancellation reason'}: {reason}</p>
-                      <p>{isRTL ? 'تاريخ الطلب' : 'Requested at'}: {createdAtText}</p>
+                      <p>{t("auto.amount")}: {Number.isFinite(amount) && amount > 0 ? `${amount} EGP` : '-'}</p>
+                      <p>{t("auto.cancellationReason")}: {reason}</p>
+                      <p>{t("auto.requestedAt")}: {createdAtText}</p>
                     </div>
 
                     <div className="flex items-center justify-end gap-2">
@@ -682,7 +680,7 @@ export default function CustomerServiceDashboard() {
                             onClick={() => openRefundProcessModal(item, 'approve')}
                           >
                             {isBusy ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-                            {isRTL ? 'موافقة' : 'Approve'}
+                            {t("auto.approve")}
                           </Button>
 
                           <Button
@@ -692,12 +690,12 @@ export default function CustomerServiceDashboard() {
                             onClick={() => openRefundProcessModal(item, 'reject')}
                           >
                             <X className="w-4 h-4" />
-                            {isRTL ? 'رفض' : 'Reject'}
+                            {t("auto.reject")}
                           </Button>
                         </>
                       ) : (
                         <span className="text-xs text-text-muted">
-                          {isRTL ? 'تمت معالجة الطلب' : 'Already processed'}
+                          {t("auto.alreadyProcessed")}
                         </span>
                       )}
                     </div>
@@ -737,10 +735,10 @@ export default function CustomerServiceDashboard() {
       {activeModule === 'chat-rooms' && (
       <Card className="border border-border/80 shadow-sm">
         <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-border pb-4">
-          <CardTitle className="text-xl">{isRTL ? 'غرف المحادثة' : 'Chat Rooms'}</CardTitle>
+          <CardTitle className="text-xl">{t("auto.chatRooms")}</CardTitle>
           <Button variant="outline" size="sm" onClick={fetchChatRooms} disabled={chatRoomsLoading} className="gap-2">
             <Loader2 className={`w-4 h-4 ${chatRoomsLoading ? 'animate-spin' : 'hidden'}`} />
-            {isRTL ? 'تحديث' : 'Refresh'}
+            {t("auto.refresh")}
           </Button>
         </CardHeader>
         <CardContent className="pt-4">
@@ -751,7 +749,7 @@ export default function CustomerServiceDashboard() {
           ) : chatRooms.length === 0 ? (
             <div className="text-center py-12 text-text-muted">
               <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30" />
-              <p>{isRTL ? 'لا توجد غرف محادثة بعد' : 'No chat rooms yet'}</p>
+              <p>{t("auto.noChatRoomsYet")}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -765,7 +763,7 @@ export default function CustomerServiceDashboard() {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h4 className="font-semibold text-text-heading truncate">
-                          {room.OtherParticipantName || room.Name || (isRTL ? 'مجهول' : 'Unknown')}
+                          {room.OtherParticipantName || room.Name || (t("auto.unknown"))}
                         </h4>
                         <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${meta.cls}`}>
                           {meta.label}
@@ -777,7 +775,7 @@ export default function CustomerServiceDashboard() {
                         )}
                       </div>
                       <p className="text-sm text-text-muted truncate mt-0.5">
-                        {room.LastMessage || (isRTL ? 'لا توجد رسائل بعد' : 'No messages yet')}
+                        {room.LastMessage || (t("auto.noMessagesYet"))}
                       </p>
                     </div>
                   </div>
@@ -838,27 +836,23 @@ export default function CustomerServiceDashboard() {
         }}
         title={
           refundProcessMode === 'approve'
-            ? (isRTL ? 'موافقة على الاسترداد' : 'Approve Refund')
-            : (isRTL ? 'رفض الاسترداد' : 'Reject Refund')
+            ? (t("auto.approveRefund"))
+            : (t("auto.rejectRefund"))
         }
         size="md"
       >
         <div className="space-y-4">
           <p className="text-sm text-text-muted">
             {refundProcessMode === 'approve'
-              ? (isRTL
-                ? 'يمكنك إضافة ملاحظة اختيارية قبل الموافقة.'
-                : 'You can add an optional note before approval.')
-              : (isRTL
-                ? 'أضف ملاحظة توضح سبب الرفض.'
-                : 'Add a note to clarify the rejection reason.')}
+              ? (t("auto.youCanAddAnOptionalNoteBeforeApproval"))
+              : (t("auto.addANoteToClarifyTheRejectionReason"))}
           </p>
 
           <textarea
             value={refundProcessNotes}
             onChange={(e) => setRefundProcessNotes(e.target.value)}
             rows={4}
-            placeholder={isRTL ? 'الملاحظات' : 'Notes'}
+            placeholder={t("auto.notes")}
             className="w-full rounded-xl border border-border bg-background p-3 text-sm text-text focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
 
@@ -880,8 +874,8 @@ export default function CustomerServiceDashboard() {
             >
               {processingRefundId === processingRefundItem?.Id ? <Loader2 className="w-4 h-4 animate-spin" /> : refundProcessMode === 'approve' ? <CheckCircle className="w-4 h-4" /> : <X className="w-4 h-4" />}
               {refundProcessMode === 'approve'
-                ? (isRTL ? 'تأكيد الموافقة' : 'Confirm Approval')
-                : (isRTL ? 'تأكيد الرفض' : 'Confirm Rejection')}
+                ? (t("auto.confirmApproval"))
+                : (t("auto.confirmRejection"))}
             </Button>
           </div>
         </div>

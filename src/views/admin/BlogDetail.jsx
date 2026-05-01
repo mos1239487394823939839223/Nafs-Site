@@ -29,7 +29,7 @@ export default function BlogDetail() {
         const data = pickData(response) || response
         setBlog(data)
       } catch {
-        setError(isRTL ? 'فشل تحميل المقال' : 'Failed to load article')
+        setError(t("auto.failedToLoadArticle"))
       } finally {
         setLoading(false)
       }
@@ -39,7 +39,7 @@ export default function BlogDetail() {
 
   const formatDate = (iso) => {
     if (!iso) return ''
-    return new Date(iso).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', {
+    return new Date(iso).toLocaleDateString(t("auto.enus"), {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -57,30 +57,30 @@ export default function BlogDetail() {
 
   if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center py-32" dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className="flex flex-col items-center justify-center py-32" >
         <div className="w-10 h-10 border-3 border-primary border-t-transparent rounded-full animate-spin mb-4" />
-        <p className="text-text-muted text-sm">{isRTL ? 'جاري تحميل المقال...' : 'Loading article...'}</p>
+        <p className="text-text-muted text-sm">{t("auto.loadingArticle")}</p>
       </div>
     )
   }
 
   if (error || !blog) {
     return (
-      <div className="flex flex-col items-center justify-center py-32 text-center" dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className="flex flex-col items-center justify-center py-32 text-center" >
         <ArticleIcon className="text-text-muted opacity-20 mb-4" style={{ width: 64, height: 64 }} />
         <h2 className="text-xl font-bold text-text-heading mb-2">
-          {error || (isRTL ? 'المقال غير موجود' : 'Article not found')}
+          {error || (t("auto.articleNotFound"))}
         </h2>
         <Button variant="outline" onClick={() => navigate('/admin/blogs')} className="mt-4 gap-2">
           <BackArrow style={{ width: 16, height: 16 }} />
-          {isRTL ? 'العودة للمقالات' : 'Back to Articles'}
+          {t("auto.backToArticles")}
         </Button>
       </div>
     )
   }
 
   return (
-    <div className="w-full px-4 md:px-8 space-y-6 pb-12" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="w-full px-4 md:px-8 space-y-6 pb-12" >
       {/* Back Button */}
       <motion.div initial={{ opacity: 0, x: isRTL ? 20 : -20 }} animate={{ opacity: 1, x: 0 }}>
         <button
@@ -91,7 +91,7 @@ export default function BlogDetail() {
             className="group-hover:scale-110 transition-transform"
             style={{ width: 18, height: 18 }}
           />
-          {isRTL ? 'العودة للمقالات' : 'Back to Articles'}
+          {t("auto.backToArticles")}
         </button>
       </motion.div>
 
@@ -104,7 +104,7 @@ export default function BlogDetail() {
       >
         {/* Header - Simple Title Section */}
         <div className="p-8 md:p-12 pb-0 border-b border-border/30">
-          <div className={`h-1.5 w-20 bg-primary rounded-full mb-8 ${isRTL ? 'mr-0' : 'ml-0'}`} />
+          <div className={`h-1.5 w-20 bg-primary rounded-full mb-8 ${t("auto.ms0")}`} />
           {tags.length > 0 && (
             <div className="flex flex-wrap gap-2 mb-6">
               {tags.map((tag, i) => (
@@ -118,7 +118,7 @@ export default function BlogDetail() {
             {title}
           </h1>
 
-          <div className={`flex flex-wrap items-center gap-6 text-sm text-text-muted py-8 ${isRTL ? 'flex-row' : 'flex-row'}`}>
+          <div className={`flex flex-wrap items-center gap-6 text-sm text-text-muted py-8 flex-row`}>
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center">
                 <PersonIcon style={{ width: 16, height: 16 }} className="text-primary" />
@@ -139,7 +139,7 @@ export default function BlogDetail() {
           {/* Main Content Side */}
           <div className="flex-1 p-8 md:p-14 lg:p-16">
             <div
-              className={`prose prose-lg md:prose-xl max-w-none text-text leading-loose ${isRTL ? 'text-right' : 'text-left'}`}
+              className={`prose prose-lg md:prose-xl max-w-none text-text leading-loose text-start`}
               style={{ lineHeight: '2.2' }}
               dangerouslySetInnerHTML={{ __html: body }}
             />
@@ -158,7 +158,7 @@ export default function BlogDetail() {
                 </div>
                 <div className="mt-6 flex items-center gap-3 text-xs text-text-muted italic opacity-60 px-2">
                   <ImageIcon style={{ width: 14, height: 14 }} />
-                  {isRTL ? 'صورة مرفقة بالمقال' : 'Image attached to article'}
+                  {t("auto.imageAttachedToArticle")}
                 </div>
               </div>
             </div>

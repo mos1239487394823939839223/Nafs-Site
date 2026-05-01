@@ -308,13 +308,13 @@ export default function ForgotPassword() {
                           setNewPassword(e.target.value)
                           if (errors.newPassword) setErrors(prev => ({ ...prev, newPassword: '' }))
                         }}
-                        className={`w-full px-4 py-2 pr-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-text ${errors.newPassword ? 'border-red-500' : 'border-border'}`}
+                        className={`w-full px-4 py-2 pe-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-text ${errors.newPassword ? 'border-red-500' : 'border-border'}`}
                         placeholder="••••••••"
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"
+                        className="absolute end-3 top-1/2 -translate-y-1/2 text-text-muted hover:text-text"
                       >
                         {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                       </button>
@@ -349,7 +349,7 @@ export default function ForgotPassword() {
                       </div>
                     ) : (
                       <>
-                        <CheckCircle className="w-4 h-4 mr-2" />
+                        <CheckCircle className="w-4 h-4 me-2" />
                         {t('auth.resetPassword')}
                       </>
                     )}

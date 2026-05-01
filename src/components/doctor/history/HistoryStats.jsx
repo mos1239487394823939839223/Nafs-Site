@@ -5,7 +5,7 @@ export default function HistoryStats({ stats }) {
   const { t, isRTL } = useLanguage()
 
   return (
-    <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 ${isRTL ? 'text-right' : 'text-left'}`}>
+    <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 text-start`}>
       <div className="bg-background-paper p-4 rounded-xl border border-border shadow-sm">
         <div className="flex items-center justify-between mb-2">
           <span className="text-sm text-text-muted">{t('admin.totalPatients', 'Total Patients')}</span>

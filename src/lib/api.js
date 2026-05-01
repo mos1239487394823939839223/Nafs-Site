@@ -300,10 +300,24 @@ export const userAPI = {
 
   // Update language preference
   updateLang: async (language) => {
-    const response = await api.put("/User/UpdateLang", null, {
-      params: { Language: language },
-    });
-    return response.data;
+    // Map "ar" / "en" to likely backend integer enum.
+    // Try 0=ar, 1=en first. If 400, fallback to 1=ar, 2=en.
+    let langValue = language === "ar" ? 0 : 1;
+    try {
+      const response = await api.put("/User/UpdateLang", null, {
+        params: { Language: langValue },
+      });
+      return response.data;
+    } catch (e) {
+      if (e.response?.status === 400) {
+        langValue = language === "ar" ? 1 : 2;
+        const fallbackResponse = await api.put("/User/UpdateLang", null, {
+          params: { Language: langValue },
+        });
+        return fallbackResponse.data;
+      }
+      throw e;
+    }
   },
 
   // Change password (authenticated user)

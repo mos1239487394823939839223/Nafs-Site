@@ -293,7 +293,7 @@ export default function AdminDashboard() {
                       </div>
                       <Badge
                         variant={statusInfo.variant}
-                        className="flex-shrink-0 ml-2"
+                        className="flex-shrink-0 ms-2"
                       >
                         {statusInfo.label}
                       </Badge>

@@ -6,7 +6,7 @@ const Logo = () => (
         <path d="M12 14v8"/>
       </svg>
     </div>
-    <div className="text-right">
+    <div className="text-end">
       <div className="font-display font-extrabold text-2xl text-primary leading-none">نَفَس</div>
       <div className="text-[11px] text-muted-foreground mt-1">مساحتك الآمنة للصحة النفسية</div>
     </div>

@@ -20,7 +20,7 @@ export const Hero = () => {
   <section id="home" dir={isAr ? "rtl" : "ltr"} className="relative overflow-hidden bg-cream-deep pt-10">
     <div className="container relative z-10 mx-auto px-4">
       <div className="grid min-h-[500px] grid-cols-1 items-center gap-8 pb-28 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10 lg:pb-36">
-        <div className="order-2 text-right lg:order-1">
+        <div className="order-2 text-end lg:order-1">
           <h1 className="max-w-xl font-bold leading-[1.12] text-brand text-4xl md:text-5xl lg:text-[64px]">
             {t("landing.hero.heading")}
           </h1>
@@ -72,7 +72,7 @@ export const Hero = () => {
       <div className="container mx-auto px-4">
         <div className="grid grid-cols-2 gap-5 md:grid-cols-4 md:gap-6 place-items-center">
           {badges.map(({ icon: Icon, titleKey, subKey }) => (
-            <div key={titleKey} className="flex items-center gap-3 text-right">
+            <div key={titleKey} className="flex items-center gap-3 text-end">
               <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
                 <Icon className="h-5 w-5" />
               </span>

@@ -18,7 +18,7 @@ function DropdownMenu({ open, onClose, children }) {
   }, [open, onClose])
   if (!open) return null
   return (
-    <div ref={ref} className="absolute top-full mt-2 ltr:right-0 rtl:left-0 z-50 min-w-[150px] bg-background-paper border border-border rounded-xl shadow-lg py-1 animate-fade-in">
+    <div ref={ref} className="absolute top-full mt-2 ltr:end-0 rtl:start-0 z-50 min-w-[150px] bg-background-paper border border-border rounded-xl shadow-lg py-1 animate-fade-in">
       {children}
     </div>
   )
@@ -103,7 +103,7 @@ export default function Header({ onMenuClick }) {
         <div className="flex items-center gap-4">
           <button
             onClick={onMenuClick}
-            className={`lg:hidden p-2 hover:bg-background-subtle rounded-xl transition-colors ${isRTL ? '-mr-2' : '-ml-2'}`}
+            className="lg:hidden p-2 hover:bg-background-subtle rounded-xl transition-colors -ms-2"
           >
             <Menu className="w-6 h-6 text-text" />
           </button>
@@ -133,11 +133,11 @@ export default function Header({ onMenuClick }) {
             <DropdownMenu open={showNotifications} onClose={() => setShowNotifications(false)}>
               <div className="w-64 sm:w-80 p-2 max-h-80 overflow-y-auto">
                 <div className="flex justify-between items-center mb-2 px-2 pb-2 border-b border-border">
-                  <span className="font-bold text-sm">Notifications</span>
-                  <button onClick={() => setNotifications(prev => prev.map(n => ({...n, isRead: true})))} className="text-xs text-primary hover:underline">Mark all read</button>
+                  <span className="font-bold text-sm">{t('common.notifications') || 'Notifications'}</span>
+                  <button onClick={() => setNotifications(prev => prev.map(n => ({...n, isRead: true})))} className="text-xs text-primary hover:underline">{t('common.markAllRead') || 'Mark all read'}</button>
                 </div>
                 {notifications.length === 0 ? (
-                  <p className="text-center text-sm text-text-muted py-4">No new notifications</p>
+                  <p className="text-center text-sm text-text-muted py-4">{t('common.noAlerts') || 'No new notifications'}</p>
                 ) : (
                   notifications.map(n => (
                     <div 

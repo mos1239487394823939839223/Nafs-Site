@@ -39,8 +39,8 @@ export default function AIAssistant({ isOpen, onClose }) {
           initial={{ x: 400, opacity: 0 }}
           animate={{ x: 0, opacity: 1 }}
           exit={{ x: 400, opacity: 0 }}
-          className={`fixed ${isRTL ? 'left-0' : 'right-0'} top-0 h-screen w-96 bg-background-paper shadow-2xl z-50 flex flex-col border-l border-border`}
-          dir={isRTL ? 'rtl' : 'ltr'}
+          className={`fixed end-0 top-0 h-screen w-96 bg-background-paper shadow-2xl z-50 flex flex-col border-s border-border`}
+          
         >
           {/* Header */}
           <div className={`flex items-center justify-between p-6 border-b border-border bg-primary text-white ${isRTL ? 'flex-row-reverse' : ''}`}>
@@ -48,7 +48,7 @@ export default function AIAssistant({ isOpen, onClose }) {
               <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
                 <Bot className="w-6 h-6" />
               </div>
-              <div className={isRTL ? 'text-right' : 'text-left'}>
+              <div className="text-start">
                 <h3 className="font-semibold">{t('patient.aiHealthAssistant', 'AI Health Assistant')}</h3>
                 <p className="text-xs text-white/80">{t('patient.alwaysHereToHelp', 'Always here to help')}</p>
               </div>

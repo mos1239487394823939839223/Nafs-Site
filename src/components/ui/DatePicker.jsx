@@ -19,7 +19,7 @@ const CustomInput = forwardRef(({ value, onClick, placeholder, label, error, ico
       onClick={onClick}
       disabled={disabled}
       className={`
-        w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-left
+        w-full flex items-center gap-3 px-4 py-3 rounded-xl border text-start
         transition-all duration-200 bg-background
         focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary
         disabled:opacity-60 disabled:cursor-not-allowed

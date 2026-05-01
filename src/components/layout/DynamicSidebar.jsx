@@ -114,22 +114,19 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       { name: t("nav.users"), path: "/admin/users", icon: Users },
       { name: t("nav.bookings"), path: "/admin/bookings", icon: Calendar },
       {
-        name: t(
-          "nav.paymentDetails",
-          isRTL ? "بيانات الدفع" : "Payment Details",
-        ),
+        name: t("nav.paymentDetails"),
         path: "/admin/payment-details",
         icon: DollarSign,
       },
       { name: t("nav.blogs"), path: "/admin/blogs", icon: FileText },
       {
-        name: isRTL ? "الاختبارات" : "Tests",
+        name: t("admin.tests") || "Tests",
         path: "/admin/tests",
         icon: TestTube,
       },
       { name: t("nav.messages"), path: "/admin/messages", icon: MessageSquare },
       { name: t("nav.profile"), path: "/admin/profile", icon: Settings },
-      { name: isRTL ? "إدارة الروابط" : "Manage Links", path: "/admin/links", icon: Link2 },
+      { name: t("admin.manageLinks") || "Manage Links", path: "/admin/links", icon: Link2 },
     ],
     [Roles.STAFF]: [
       { name: t("nav.dashboard"), path: "/dashboard/staff", icon: Home },
@@ -173,19 +170,14 @@ export default function DynamicSidebar({ isOpen, onClose }) {
         className={`
           fixed top-0 h-full w-64 bg-background-paper
           transform transition-transform duration-300 ease-in-out z-50
+          start-0 border-e border-border
           ${
             isRTL
-              ? `right-0 border-l border-border ${
-                  isOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"
-                }`
-              : `left-0 border-r border-border ${
-                  isOpen
-                    ? "translate-x-0"
-                    : "-translate-x-full lg:translate-x-0"
-                }`
+              ? isOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"
+              : isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
           }
         `}
-        dir={isRTL ? "rtl" : "ltr"}
+        
       >
         <div className="flex flex-col h-full">
           {/* Header */}
@@ -233,7 +225,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                         ${
                           isActive
                             ? `bg-primary/10 text-primary ${
-                                isRTL ? "border-r-4" : "border-l-4"
+                                t("auto.borders4")
                               } border-primary`
                             : "text-text hover:bg-background-gray hover:text-primary"
                         }`

@@ -30,20 +30,20 @@ export default function ConsultationsList({ consultations, activeId, onSelect })
   })
 
   return (
-    <div className={`h-full flex flex-col bg-background-paper border-border ${isRTL ? 'border-l' : 'border-r'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className={`h-full flex flex-col bg-background-paper border-border border-e`} >
       {/* Header */}
       <div className="p-4 border-b border-border">
         <h2 className="text-lg font-semibold text-text-heading mb-3">{t('chat.activeConsultations', 'Active Consultations')}</h2>
 
         {/* Search */}
         <div className="relative">
-          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted ${isRTL ? 'right-3' : 'left-3'}`} />
+          <Search className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted start-3`} />
           <input
             type="text"
             placeholder={t('chat.searchConversations', 'Search conversations...')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className={`w-full py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm ${isRTL ? 'pr-10 pl-4' : 'pl-10 pr-4'}`}
+            className={`w-full py-2 border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary text-sm ps-10 pe-4`}
           />
         </div>
       </div>
@@ -56,9 +56,9 @@ export default function ConsultationsList({ consultations, activeId, onSelect })
               key={consultation.id}
               onClick={() => onSelect(consultation.id)}
               className={`
-                w-full p-4 border-b border-border text-left transition-colors
+                w-full p-4 border-b border-border text-start transition-colors
                 ${activeId === consultation.id
-                  ? (isRTL ? 'bg-primary/5 border-r-4 border-r-primary' : 'bg-primary/5 border-l-4 border-l-primary')
+                  ? ("bg-primary/5 border-s-4 border-s-primary")
                   : 'hover:bg-background-subtle'
                 }
               `}
@@ -81,17 +81,17 @@ export default function ConsultationsList({ consultations, activeId, onSelect })
                   </div>
                   {/* Online Status */}
                   {consultation.participant.online && (
-                    <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+                    <div className="absolute bottom-0 end-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
                   )}
                 </div>
 
                 {/* Content */}
-                <div className={`flex-1 min-w-0 ${isRTL ? 'text-right' : 'text-left'}`}>
+                <div className={`flex-1 min-w-0 text-start`}>
                   <div className="flex items-center justify-between mb-1">
                     <h3 className="font-semibold text-text-heading truncate">
                       {consultation.participant.name}
                     </h3>
-                    <span className={`text-xs text-text-muted flex-shrink-0 ${isRTL ? 'mr-2' : 'ml-2'}`}>
+                    <span className={`text-xs text-text-muted flex-shrink-0 -ms-2`}>
                       {formatTimestamp(consultation.timestamp)}
                     </span>
                   </div>
@@ -101,11 +101,11 @@ export default function ConsultationsList({ consultations, activeId, onSelect })
                   </p>
 
                   <div className="flex items-center justify-between">
-                    <p className={`text-sm text-text-light truncate flex-1 ${isRTL ? 'text-right' : 'text-left'}`}>
+                    <p className={`text-sm text-text-light truncate flex-1 text-start`}>
                       {consultation.lastMessage}
                     </p>
                     {consultation.unread > 0 && (
-                      <span className={`flex-shrink-0 w-5 h-5 bg-primary text-white text-xs rounded-full flex items-center justify-center ${isRTL ? 'mr-2' : 'ml-2'}`}>
+                      <span className={`flex-shrink-0 w-5 h-5 bg-primary text-white text-xs rounded-full flex items-center justify-center -ms-2`}>
                         {consultation.unread}
                       </span>
                     )}

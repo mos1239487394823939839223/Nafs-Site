@@ -9,14 +9,14 @@ import { useAuth } from "../../contexts/AuthContext";
 import { useDoctorDashboard } from "../../hooks/useDoctorDashboard";
 
 const MainDoctorDashboard = () => {
-  const { isRTL } = useLanguage();
+  const { t, isRTL } = useLanguage();
   const { user } = useAuth();
   const { todayBookings, recentPatients, stats, loading } = useDoctorDashboard();
 
   const doctorName = user?.Name ?? user?.name ?? "";
 
   return (
-    <div dir={isRTL ? "rtl" : "ltr"} className="min-h-screen bg-background">
+    <div  className="min-h-screen bg-background">
       <main className="p-5 md:p-8 max-w-[1100px] mx-auto w-full">
         <HeroCard doctorName={doctorName} />
         <StatTiles todayCount={todayBookings.length} />

@@ -44,7 +44,7 @@ export const Footer = () => {
   <footer dir={isAr ? "rtl" : "ltr"} className="bg-cream-deep">
     <div className="container mx-auto grid gap-10 px-4 py-12 md:grid-cols-4">
       {/* Contact */}
-      <div className="text-right">
+      <div className="text-end">
         <h4 className="mb-4 text-base font-bold text-foreground">{t("landing.footer.contact")}</h4>
         <ul className="space-y-3 text-sm text-muted-foreground">
           <li className="flex items-center justify-end gap-2">
@@ -62,7 +62,7 @@ export const Footer = () => {
         </ul>
       </div>
       {/* Support */}
-      <div className="text-right">
+      <div className="text-end">
         <h4 className="mb-4 text-base font-bold text-foreground">{t("landing.footer.supportHelp")}</h4>
         <ul className="space-y-2 text-sm text-muted-foreground">
           {supportLinks.map(({ key, href }) => (
@@ -71,7 +71,7 @@ export const Footer = () => {
         </ul>
       </div>
       {/* Quick links */}
-      <div className="text-right">
+      <div className="text-end">
         <h4 className="mb-4 text-base font-bold text-foreground">{t("landing.footer.quickLinks")}</h4>
         <ul className="space-y-2 text-sm text-muted-foreground">
           {quickLinks.map(({ key, href }) => (
@@ -80,7 +80,7 @@ export const Footer = () => {
         </ul>
       </div>
       {/* Brand */}
-      <div className="text-right">
+      <div className="text-end">
         <Logo />
         <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
           {t("landing.footer.tagline")}

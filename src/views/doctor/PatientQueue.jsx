@@ -98,7 +98,7 @@ export default function PatientQueue() {
       return items;
     } catch {
       setTestTypes([]);
-      toast.error(isRTL ? "فشل تحميل أنواع التحاليل" : "Failed to load test types");
+      toast.error(t("auto.failedToLoadTestTypes"));
       return [];
     } finally {
       setLoadingTestTypes(false);
@@ -108,7 +108,7 @@ export default function PatientQueue() {
   const formatTime = (dateTimeStr) => {
     if (!dateTimeStr) return "";
     const date = new Date(dateTimeStr);
-    return date.toLocaleTimeString(isRTL ? "ar-EG" : "en-US", {
+    return date.toLocaleTimeString(t("auto.enus"), {
       hour: "2-digit",
       minute: "2-digit",
       hour12: true,
@@ -118,7 +118,7 @@ export default function PatientQueue() {
   const formatDate = (dateTimeStr) => {
     if (!dateTimeStr) return "";
     const date = new Date(dateTimeStr);
-    return date.toLocaleDateString(isRTL ? "ar-EG" : "en-US", {
+    return date.toLocaleDateString(t("auto.enus"), {
       month: "short",
       day: "numeric",
       year: "numeric",
@@ -178,7 +178,7 @@ export default function PatientQueue() {
     try {
       if (patient?.meetingUrl) {
         window.open(patient.meetingUrl, "_blank");
-        toast.success(isRTL ? "تم فتح الجلسة" : "Session opened successfully");
+        toast.success(t("auto.sessionOpenedSuccessfully"));
         return;
       }
 
@@ -203,7 +203,7 @@ export default function PatientQueue() {
     } catch (error) {
       toast.error(
         error?.response?.data?.Message ||
-          (isRTL ? "فشل فتح الجلسة" : "Failed to open session"),
+          (t("auto.failedToOpenSession")),
       );
     } finally {
       setActionLoading({ type: null, bookingId: null });
@@ -215,7 +215,7 @@ export default function PatientQueue() {
     try {
       const response = await doctorAPI.cancelBooking(
         patient.bookingId,
-        isRTL ? "تم الإلغاء بواسطة الطبيب" : "Cancelled by doctor",
+        t("auto.cancelledByDoctor"),
       );
       if (response?.IsSuccess === false) {
         toast.error(response?.Message || t("errors.failedCancelAppointment"));
@@ -229,9 +229,7 @@ export default function PatientQueue() {
             ? {
                 ...booking,
                 Status: APPOINTMENT_STATUS.CANCELLED,
-                CancellationReason: isRTL
-                  ? "تم الإلغاء بواسطة الطبيب"
-                  : "Cancelled by doctor",
+                CancellationReason: t("auto.cancelledByDoctor"),
               }
             : booking,
         ),
@@ -250,7 +248,7 @@ export default function PatientQueue() {
 
   const handleShowResults = async (patient) => {
     if (!patient?.patientId) {
-      toast.error(isRTL ? "لا يوجد معرف مريض" : "Patient ID is missing");
+      toast.error(t("auto.patientIdIsMissing"));
       return;
     }
 
@@ -271,7 +269,7 @@ export default function PatientQueue() {
           testTypeName:
             record?.TestTypeName ||
             record?.testTypeName ||
-            (isRTL ? "تحليل" : "Test"),
+            (t("auto.test")),
           testDate:
             record?.TestDate ||
             record?.testDate ||
@@ -294,7 +292,7 @@ export default function PatientQueue() {
       setShowResultItems([]);
       toast.error(
         error?.response?.data?.Message ||
-          (isRTL ? "فشل تحميل النتائج" : "Failed to load results"),
+          (t("auto.failedToLoadResults")),
       );
     } finally {
       setShowResultLoading(false);
@@ -321,7 +319,7 @@ export default function PatientQueue() {
     if (action === "addTest") {
       const openModal = async () => {
         if (!patient?.patientId) {
-          toast.error(isRTL ? "لا يوجد معرف مريض" : "Patient ID is missing");
+          toast.error(t("auto.patientIdIsMissing"));
           return;
         }
 
@@ -355,17 +353,17 @@ export default function PatientQueue() {
       return;
     }
 
-    toast.error(isRTL ? "إجراء غير مدعوم" : "Unsupported action");
+    toast.error(t("auto.unsupportedAction"));
   };
 
   const handleSubmitAddTest = async () => {
     if (!addTestPatient?.patientId) {
-      toast.error(isRTL ? "لا يوجد معرف مريض" : "Patient ID is missing");
+      toast.error(t("auto.patientIdIsMissing"));
       return;
     }
 
     if (!addTestForm.testTypeId) {
-      toast.error(isRTL ? "اختر نوع التحليل" : "Please select a test type");
+      toast.error(t("auto.pleaseSelectATestType"));
       return;
     }
 
@@ -391,16 +389,16 @@ export default function PatientQueue() {
 
       const response = await medicalAPI.addPatientTest(payload);
       if (response?.IsSuccess === false) {
-        toast.error(response?.Message || (isRTL ? "فشل إضافة التحليل" : "Failed to add test"));
+        toast.error(response?.Message || (t("auto.failedToAddTest")));
         return;
       }
 
-      toast.success(isRTL ? "تمت إضافة التحليل" : "Test added successfully");
+      toast.success(t("auto.testAddedSuccessfully"));
       setAddTestPatient(null);
     } catch (error) {
       toast.error(
         error?.response?.data?.Message ||
-          (isRTL ? "فشل إضافة التحليل" : "Failed to add test"),
+          (t("auto.failedToAddTest")),
       );
     } finally {
       setActionLoading({ type: null, bookingId: null });
@@ -470,7 +468,7 @@ export default function PatientQueue() {
       </motion.div>
 
       {/* Cancellation Policy Banner */}
-      <div className={`flex items-center gap-3 p-4 mb-6 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 ${isRTL ? 'flex-row-reverse text-right' : ''}`}>
+      <div className={`flex items-center gap-3 p-4 mb-6 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 ${isRTL ? 'flex-row-reverse text-end' : ''}`}>
         <span className="text-amber-600 text-lg">⚠️</span>
         <p className="text-sm text-amber-700 dark:text-amber-400 font-medium">
           {t("doctor.cancelWindowHint", "Cancellation is allowed only 2 days before the slot start time.")}
@@ -485,7 +483,7 @@ export default function PatientQueue() {
         <div className="space-y-6">
           {/* Filters */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2">
-            <Filter className="w-5 h-5 text-text-light mr-2" />
+            <Filter className="w-5 h-5 text-text-light me-2" />
             {filters.map((f) => (
               <button
                 key={f.id}
@@ -576,22 +574,20 @@ export default function PatientQueue() {
                   <XCircle className="w-7 h-7 text-red-500" />
                 </div>
                 <h3 className="text-lg font-bold text-text-heading mb-2">
-                  {isRTL ? "إلغاء الموعد" : "Cancel Appointment"}
+                  {t("auto.cancelAppointment")}
                 </h3>
                 <p className="text-sm text-text-muted mb-1">
                   {cancelConfirmPatient.name}
                 </p>
                 <p className="text-sm text-text-muted mb-6">
-                  {isRTL
-                    ? "هل أنت متأكد أنك تريد إلغاء هذا الموعد؟"
-                    : "Are you sure you want to cancel this appointment?"}
+                  {t("auto.areYouSureYouWantToCancelThisAppointment")}
                 </p>
                 <div className="flex gap-3 justify-center">
                   <Button
                     variant="outline"
                     onClick={() => setCancelConfirmPatient(null)}
                   >
-                    {isRTL ? "لا، احتفظ به" : "No, Keep it"}
+                    {t("auto.noKeepIt")}
                   </Button>
                   <Button
                     className="bg-red-500 hover:bg-red-600 text-white"
@@ -604,7 +600,7 @@ export default function PatientQueue() {
                       actionLoading?.bookingId === cancelConfirmPatient.bookingId
                     }
                   >
-                    {isRTL ? "نعم، إلغاء الموعد" : "Yes, Cancel"}
+                    {t("auto.yesCancel")}
                   </Button>
                 </div>
               </div>
@@ -635,9 +631,9 @@ export default function PatientQueue() {
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <TestTube className="w-5 h-5 text-primary" />
                   </div>
-                  <div className={isRTL ? "text-right" : "text-left"}>
+                  <div className="text-start">
                     <h3 className="text-lg font-bold text-text-heading">
-                      {isRTL ? "إضافة تحليل للمريض" : "Add Test For Patient"}
+                      {t("auto.addTestForPatient")}
                     </h3>
                     <p className="text-sm text-text-muted">{addTestPatient.name}</p>
                   </div>
@@ -646,7 +642,7 @@ export default function PatientQueue() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-text-heading mb-1">
-                      {isRTL ? "نوع التحليل" : "Test Type"}
+                      {t("auto.testType")}
                     </label>
                     <select
                       value={addTestForm.testTypeId}
@@ -669,7 +665,7 @@ export default function PatientQueue() {
                       className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text outline-none focus:ring-2 focus:ring-primary/20"
                       disabled={loadingTestTypes}
                     >
-                      <option value="">{isRTL ? "اختر نوع التحليل" : "Select test type"}</option>
+                      <option value="">{t("auto.selectTestType")}</option>
                       {testTypes.map((type) => {
                         const typeId = type?.ID ?? type?.Id ?? type?.id;
                         const typeName =
@@ -677,7 +673,7 @@ export default function PatientQueue() {
                           type?.name ||
                           type?.Title ||
                           type?.title ||
-                          `${isRTL ? "تحليل" : "Test"} ${typeId}`;
+                          `${t("auto.test")} ${typeId}`;
                         return (
                           <option key={String(typeId)} value={String(typeId)}>
                             {typeName}
@@ -689,7 +685,7 @@ export default function PatientQueue() {
 
                   <div>
                     <label className="block text-sm font-medium text-text-heading mb-1">
-                      {isRTL ? "رابط الفحص (من نوع التحليل)" : "Scan URL (from test type)"}
+                      {t("auto.scanUrlFromTestType")}
                     </label>
                     <input
                       type="url"
@@ -697,16 +693,14 @@ export default function PatientQueue() {
                       readOnly
                       className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text outline-none focus:ring-2 focus:ring-primary/20"
                       placeholder={
-                        isRTL
-                          ? "لا يوجد رابط محدد لهذا النوع"
-                          : "No URL configured for this test type"
+                        t("auto.noUrlConfiguredForThisTestType")
                       }
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-text-heading mb-1">
-                      {isRTL ? "ملاحظات الفحص" : "Exam Notes"}
+                      {t("auto.examNotes")}
                     </label>
                     <textarea
                       rows={3}
@@ -715,13 +709,13 @@ export default function PatientQueue() {
                         setAddTestForm((prev) => ({ ...prev, examNotes: e.target.value }))
                       }
                       className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text outline-none focus:ring-2 focus:ring-primary/20 resize-none"
-                      placeholder={isRTL ? "أضف الملاحظات" : "Add notes"}
+                      placeholder={t("auto.addNotes")}
                     />
                   </div>
 
                   <div>
                     <label className="block text-sm font-medium text-text-heading mb-1">
-                      {isRTL ? "تاريخ التحليل" : "Test Date"}
+                      {t("auto.testDate")}
                     </label>
                     <input
                       type="datetime-local"
@@ -741,14 +735,14 @@ export default function PatientQueue() {
                     className="flex-1"
                     disabled={actionLoading?.type === "addTest"}
                   >
-                    {isRTL ? "إلغاء" : "Cancel"}
+                    {t("auto.cancel")}
                   </Button>
                   <Button
                     onClick={handleSubmitAddTest}
                     className="flex-1"
                     isLoading={actionLoading?.type === "addTest"}
                   >
-                    {isRTL ? "حفظ التحليل" : "Save Test"}
+                    {t("auto.saveTest")}
                   </Button>
                 </div>
               </div>
@@ -779,9 +773,9 @@ export default function PatientQueue() {
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <ResultsIcon className="w-5 h-5 text-primary" />
                   </div>
-                  <div className={isRTL ? "text-right" : "text-left"}>
+                  <div className="text-start">
                     <h3 className="text-lg font-bold text-text-heading">
-                      {isRTL ? "نتائج التحاليل" : "Test Results"}
+                      {t("auto.testResults")}
                     </h3>
                     <p className="text-sm text-text-muted">{showResultPatient.name}</p>
                   </div>
@@ -793,10 +787,10 @@ export default function PatientQueue() {
                   </div>
                 ) : showResultItems.length === 0 ? (
                   <div className="py-14 text-center text-text-muted border border-dashed border-border rounded-xl">
-                    {isRTL ? "لا توجد نتائج متاحة لهذا المريض" : "No test results found for this patient"}
+                    {t("auto.noTestResultsFoundForThisPatient")}
                   </div>
                 ) : (
-                  <div className="max-h-[60vh] overflow-y-auto space-y-3 pr-1">
+                  <div className="max-h-[60vh] overflow-y-auto space-y-3 pe-1">
                     {showResultItems.map((item) => (
                       <div
                         key={item.id}
@@ -807,7 +801,7 @@ export default function PatientQueue() {
                           <span className="text-xs text-text-muted">
                             {item.testDate
                               ? new Date(item.testDate).toLocaleString(
-                                  isRTL ? "ar-EG" : "en-US",
+                                  t("auto.enus"),
                                 )
                               : "-"}
                           </span>
@@ -815,17 +809,17 @@ export default function PatientQueue() {
 
                         <div className="space-y-1">
                           <p className="text-sm text-text-muted">
-                            {isRTL ? "النتيجة:" : "Result:"}
+                            {t("auto.result")}
                           </p>
                           <p className="text-sm text-text-heading whitespace-pre-wrap">
-                            {item.result || (isRTL ? "لا توجد نتيجة بعد" : "No result submitted yet")}
+                            {item.result || (t("auto.noResultSubmittedYet"))}
                           </p>
                         </div>
 
                         {item.examNotes ? (
                           <div className="mt-3 pt-3 border-t border-border">
                             <p className="text-sm text-text-muted">
-                              {isRTL ? "ملاحظات الفحص:" : "Exam Notes:"}
+                              {t("auto.examNotes")}
                             </p>
                             <p className="text-sm text-text-heading whitespace-pre-wrap">
                               {item.examNotes}
@@ -837,9 +831,9 @@ export default function PatientQueue() {
                   </div>
                 )}
 
-                <div className={`mt-6 flex ${isRTL ? "justify-start" : "justify-end"}`}>
+                <div className={`mt-6 flex ${t("auto.justifyend")}`}>
                   <Button variant="outline" onClick={() => setShowResultPatient(null)}>
-                    {isRTL ? "إغلاق" : "Close"}
+                    {t("auto.close")}
                   </Button>
                 </div>
               </div>

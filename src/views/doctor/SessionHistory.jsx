@@ -175,7 +175,7 @@ export default function SessionHistory() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="p-6 max-w-7xl mx-auto" >
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -257,9 +257,9 @@ export default function SessionHistory() {
                 onClick={() => setPageIndex((prev) => Math.max(1, prev - 1))}
               >
                 {isRTL ? (
-                  <ChevronRight className="w-4 h-4 mr-1" />
+                  <ChevronRight className="w-4 h-4 me-1" />
                 ) : (
-                  <ChevronLeft className="w-4 h-4 mr-1" />
+                  <ChevronLeft className="w-4 h-4 me-1" />
                 )}
                 {t("common.previous")}
               </Button>
@@ -274,9 +274,9 @@ export default function SessionHistory() {
               >
                 {t("common.next")}
                 {isRTL ? (
-                  <ChevronLeft className="w-4 h-4 ml-1" />
+                  <ChevronLeft className="w-4 h-4 ms-1" />
                 ) : (
-                  <ChevronRight className="w-4 h-4 ml-1" />
+                  <ChevronRight className="w-4 h-4 ms-1" />
                 )}
               </Button>
             </div>
@@ -294,17 +294,17 @@ export default function SessionHistory() {
         title={t("common.notes", "Notes")}
         size="md"
       >
-        <div className="space-y-4" dir={isRTL ? "rtl" : "ltr"}>
+        <div className="space-y-4" >
           {selectedSession && (
             <div className="rounded-xl border border-border bg-background-subtle p-3 text-sm text-text-muted">
               <p>
-                {isRTL ? "الجلسة:" : "Session:"}{" "}
+                {t("auto.session")}{" "}
                 <span className="font-semibold text-text-heading">
                   {selectedSession.patientName}
                 </span>
               </p>
               <p>
-                {isRTL ? "التاريخ:" : "Date:"}{" "}
+                {t("auto.date")}{" "}
                 <span className="font-medium text-text-heading">
                   {selectedSession.date}
                 </span>
@@ -314,14 +314,14 @@ export default function SessionHistory() {
 
           <div>
             <label className="block text-sm font-medium text-text-muted mb-2">
-              {isRTL ? "اكتب وصف الملاحظة" : "Write note description"}
+              {t("auto.writeNoteDescription")}
             </label>
             <textarea
               rows={5}
               value={noteText}
               onChange={(e) => setNoteText(e.target.value)}
               placeholder={
-                isRTL ? "اكتب الملاحظة هنا..." : "Write your note here..."
+                t("auto.writeYourNoteHere")
               }
               className="w-full px-4 py-3 border border-border rounded-xl bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary/40"
             />
@@ -362,17 +362,17 @@ export default function SessionHistory() {
         title={t("doctor.medicalHistory", "Medical History")}
         size="lg"
       >
-        <div className="space-y-4" dir={isRTL ? "rtl" : "ltr"}>
+        <div className="space-y-4" >
           {selectedSession && (
             <div className="rounded-xl border border-border bg-background-subtle p-3 text-sm text-text-muted">
               <p>
-                {isRTL ? "المريض:" : "Patient:"}{" "}
+                {t("auto.patient")}{" "}
                 <span className="font-semibold text-text-heading">
                   {selectedSession.patientName}
                 </span>
               </p>
               <p>
-                {isRTL ? "التاريخ:" : "Date:"}{" "}
+                {t("auto.date")}{" "}
                 <span className="font-medium text-text-heading">
                   {selectedSession.date}
                 </span>
@@ -399,7 +399,7 @@ export default function SessionHistory() {
                           ? 'bg-blue-100 text-blue-700'
                           : 'bg-green-100 text-green-700'
                       }`}>
-                        {record.Type === 1 ? (isRTL ? "اختبار طبي" : "Medical Test") : (isRTL ? "ملاحظة الطبيب" : "Doctor Note")}
+                        {record.Type === 1 ? (t("auto.medicalTest")) : (t("auto.doctorNote"))}
                       </span>
                     </div>
                     <span className="text-xs text-text-muted">
@@ -411,7 +411,7 @@ export default function SessionHistory() {
                   {record.DoctorName && (
                     <div>
                       <p className="text-sm font-semibold text-text-heading">
-                        {isRTL ? "الطبيب:" : "Doctor:"} {record.DoctorName}
+                        {t("auto.doctor")} {record.DoctorName}
                       </p>
                     </div>
                   )}
@@ -420,7 +420,7 @@ export default function SessionHistory() {
                   {record.TestTypeName && (
                     <div>
                       <p className="text-xs font-medium text-text-muted mb-1">
-                        {isRTL ? "نوع الاختبار:" : "Test Type:"}
+                        {t("auto.testType")}
                       </p>
                       <p className="text-sm text-text-light">{record.TestTypeName}</p>
                     </div>
@@ -430,7 +430,7 @@ export default function SessionHistory() {
                   {record.TestTypeDescription && (
                     <div>
                       <p className="text-xs font-medium text-text-muted mb-1">
-                        {isRTL ? "الوصف:" : "Description:"}
+                        {t("auto.description")}
                       </p>
                       <p className="text-sm text-text-light">{record.TestTypeDescription}</p>
                     </div>
@@ -440,7 +440,7 @@ export default function SessionHistory() {
                   {record.DoctorNote && (
                     <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 p-3 rounded">
                       <p className="text-xs font-medium text-yellow-800 dark:text-yellow-300 mb-1">
-                        {isRTL ? "ملاحظة الطبيب:" : "Doctor Note:"}
+                        {t("auto.doctorNote")}
                       </p>
                       <p className="text-sm text-yellow-900 dark:text-yellow-200">{record.DoctorNote}</p>
                     </div>
@@ -450,7 +450,7 @@ export default function SessionHistory() {
                   {record.ExamNotes && (
                     <div>
                       <p className="text-xs font-medium text-text-muted mb-1">
-                        {isRTL ? "ملاحظات الفحص:" : "Exam Notes:"}
+                        {t("auto.examNotes")}
                       </p>
                       <p className="text-sm text-text-light">{record.ExamNotes}</p>
                     </div>
@@ -460,7 +460,7 @@ export default function SessionHistory() {
                   {record.Result && (
                     <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 p-3 rounded">
                       <p className="text-xs font-medium text-green-800 dark:text-green-300 mb-1">
-                        {isRTL ? "النتيجة:" : "Result:"}
+                        {t("auto.result")}
                       </p>
                       <p className="text-sm text-green-900 dark:text-green-200 font-medium">{record.Result}</p>
                     </div>
@@ -470,7 +470,7 @@ export default function SessionHistory() {
                   {record.ScanUrl && (
                     <div>
                       <p className="text-xs font-medium text-text-muted mb-1">
-                        {isRTL ? "الملف:" : "File:"}
+                        {t("auto.file")}
                       </p>
                       <a
                         href={record.ScanUrl}
@@ -490,7 +490,7 @@ export default function SessionHistory() {
             </div>
           ) : (
             <div className="p-8 text-center text-text-muted">
-              {isRTL ? "لا توجد سجلات طبية" : "No medical history found"}
+              {t("auto.noMedicalHistoryFound")}
             </div>
           )}
 

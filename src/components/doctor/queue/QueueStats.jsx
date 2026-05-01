@@ -4,7 +4,7 @@ import { useLanguage } from '../../../contexts/LanguageContext'
 export default function QueueStats({ stats }) {
   const { t, isRTL } = useLanguage()
   return (
-    <div className={`grid grid-cols-3 gap-4 mb-6 ${isRTL ? 'text-right' : 'text-left'}`} dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className={`grid grid-cols-3 gap-4 mb-6 text-start`} >
       <div className="bg-background-paper p-4 rounded-xl border border-border shadow-sm">
         <div className={`flex items-center justify-between mb-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
           <span className="text-sm text-text-muted">{t('doctor.waiting', 'Waiting')}</span>

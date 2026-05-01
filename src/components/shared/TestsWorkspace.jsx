@@ -21,6 +21,7 @@ function UserResultCard({
   onViewDetails,
 }) {
   const hasResult = Boolean(String(result?.resultText || '').trim())
+  const { t } = useLanguage()
 
   return (
     <Card className="h-full hover:border-primary/40 transition-colors cursor-pointer" onClick={onViewDetails}>
@@ -28,11 +29,11 @@ function UserResultCard({
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-lg font-semibold text-text-heading">{test.name}</h2>
           <div className="flex items-center gap-2 flex-shrink-0">
-            <Badge variant="secondary">{test.tagName || (isRTL ? 'بدون وسم' : 'No tag')}</Badge>
+            <Badge variant="secondary">{test.tagName || (t("auto.noTag"))}</Badge>
             <button
               onClick={(e) => { e.stopPropagation(); onViewDetails(); }}
               className="p-1.5 rounded-lg text-text-muted hover:text-primary hover:bg-primary/10 transition-colors"
-              title={isRTL ? 'عرض التفاصيل' : 'View details'}
+              title={t("auto.viewDetails")}
             >
               <Eye className="w-4 h-4" />
             </button>
@@ -50,7 +51,7 @@ function UserResultCard({
             className="inline-flex items-center gap-1 text-primary text-sm font-medium hover:underline"
           >
             <OpenInNew className="w-4 h-4" />
-            {isRTL ? 'فتح الاختبار' : 'Open Test'}
+            {t("auto.openTest")}
           </a>
         ) : null}
 
@@ -58,20 +59,20 @@ function UserResultCard({
           <div className="rounded-xl border border-primary/30 bg-primary/5 p-3 space-y-2">
             <div className="flex items-center gap-2 text-primary font-semibold text-sm">
               <AssignmentTurnedIn className="w-4 h-4" />
-              {isRTL ? 'تم إرسال النتيجة' : 'Result submitted'}
+              {t("auto.resultSubmitted")}
             </div>
             <p className="text-sm text-text-heading whitespace-pre-wrap">{result.resultText}</p>
             <p className="text-xs text-text-muted">
-              {isRTL ? 'وقت الإدخال:' : 'Submitted at:'} {new Date(result.submittedAt).toLocaleString()}
+              {t("auto.submittedAt")} {new Date(result.submittedAt).toLocaleString()}
             </p>
           </div>
         ) : (
           <div className="space-y-2 pt-1" onClick={(e) => e.stopPropagation()}>
             <Input
-              label={isRTL ? 'اكتب نتيجتك بعد إنهاء الاختبار' : 'Enter your result after completing the test'}
+              label={t("auto.enterYourResultAfterCompletingTheTest")}
               value={pendingValue}
               onChange={(event) => onPendingChange(test.id, event.target.value)}
-              placeholder={isRTL ? 'مثال: 18/27 أو ملخص النتيجة' : 'Example: 18/27 or short summary'}
+              placeholder={t("auto.example1827OrShortSummary")}
             />
 
             <Button
@@ -80,7 +81,7 @@ function UserResultCard({
               className="gap-2"
             >
               <AssignmentTurnedIn className="w-4.5 h-4.5" />
-              {isRTL ? 'إرسال النتيجة' : 'Submit Result'}
+              {t("auto.submitResult")}
             </Button>
           </div>
         )}
@@ -90,7 +91,7 @@ function UserResultCard({
 }
 
 export default function TestsWorkspace({ roleLabel = 'user' }) {
-  const { isRTL } = useLanguage()
+  const { t, isRTL } = useLanguage()
   const { user } = useAuth()
   const toast = useToast()
   const isPatientView = String(roleLabel).toLowerCase() === 'patient'
@@ -154,7 +155,7 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
 
               return {
                 id: String(recordId),
-                name: testName || (isRTL ? 'اختبار طبي' : 'Medical Test'),
+                name: testName || (t("auto.medicalTest")),
                 description,
                 url: scanUrl,
                 tagName: doctorName || (testDate ? new Date(testDate).toLocaleDateString() : ''),
@@ -273,7 +274,7 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
         if (!cancelled) {
           setTests([])
           setDiseases([])
-          toast.error(extractErrorMessage(error, isRTL ? 'فشل تحميل الاختبارات' : 'Failed to load tests'))
+          toast.error(extractErrorMessage(error, t("auto.failedToLoadTests")))
         }
       } finally {
         if (!cancelled) {
@@ -383,21 +384,21 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
   const submitResultForTest = async (testId) => {
     const draftValue = String(resultDrafts[testId] || '').trim()
     if (!draftValue) {
-      toast.error(isRTL ? 'اكتب النتيجة أولا' : 'Please enter your result first')
+      toast.error(t("auto.pleaseEnterYourResultFirst"))
       return
     }
 
     const test = tests.find((item) => String(item.id) === String(testId))
     const recordId = String(testId || '').trim()
     if (!recordId) {
-      toast.error(isRTL ? 'نوع الاختبار غير صالح' : 'Invalid test type')
+      toast.error(t("auto.invalidTestType"))
       return
     }
 
     if (!isPatientView) {
       const patientId = String(userId || '').trim()
       if (!patientId) {
-        toast.error(isRTL ? 'تعذر تحديد هوية المستخدم' : 'Unable to resolve current user id')
+        toast.error(t("auto.unableToResolveCurrentUserId"))
         return
       }
     }
@@ -415,7 +416,7 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
           })
 
       if (response?.IsSuccess === false) {
-        toast.error(response?.Message || (isRTL ? 'فشل حفظ النتيجة' : 'Failed to save result'))
+        toast.error(response?.Message || (t("auto.failedToSaveResult")))
         return
       }
 
@@ -429,21 +430,19 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
       }))
       setResultsRefreshTick((prev) => prev + 1)
       setResultDrafts(prev => ({ ...prev, [testId]: '' }))
-      toast.success(isRTL ? 'تم حفظ النتيجة بنجاح' : 'Result saved successfully')
+      toast.success(t("auto.resultSavedSuccessfully"))
     } catch (error) {
-      toast.error(extractErrorMessage(error, isRTL ? 'فشل حفظ النتيجة' : 'Failed to save result'))
+      toast.error(extractErrorMessage(error, t("auto.failedToSaveResult")))
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  const headerTitle = isRTL ? 'الاختبارات المتاحة' : 'Available Tests'
-  const headerSubtitle = isRTL
-    ? 'افتح رابط الاختبار الخارجي ثم ارجع وأدخل نتيجتك. يمكن إدخال النتيجة مرة واحدة فقط.'
-    : 'Open the external test link, then return and submit your result. Each test can be submitted once only.'
+  const headerTitle = t("auto.availableTests")
+  const headerSubtitle = t("auto.openTheExternalTestLinkThenReturnAndSubmitYourResultEachTestCanBeSubmittedOnceOnly")
 
   return (
-    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="space-y-6" >
       <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 to-secondary/10 p-6">
         <h1 className="text-2xl md:text-3xl font-bold text-text-heading flex items-center gap-2">
           <Science className="w-7 h-7 text-primary" />
@@ -455,10 +454,10 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
       <Card>
         <CardContent className="space-y-4">
           <Input
-            label={isRTL ? 'بحث' : 'Search'}
+            label={t("auto.search")}
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder={isRTL ? 'ابحث باسم الاختبار أو الوصف أو التصنيف' : 'Search by test name, description, or tag'}
+            placeholder={t("auto.searchByTestNameDescriptionOrTag")}
           />
 
           <div className="flex items-center gap-2 flex-wrap">
@@ -471,7 +470,7 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
                   : 'border-border text-text-muted hover:border-primary/60'
               }`}
             >
-              {isRTL ? 'الكل' : 'All'}
+              {t("auto.all")}
             </button>
 
             {tags.map(tag => (
@@ -499,12 +498,12 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
               {testsLoading ? (
                 <>
                   <Loader2 className="w-12 h-12 mx-auto mb-3 opacity-40 animate-spin" />
-                  <p>{isRTL ? 'جاري تحميل الاختبارات...' : 'Loading tests...'}</p>
+                  <p>{t("auto.loadingTests")}</p>
                 </>
               ) : (
                 <>
                   <Science className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p>{isRTL ? 'لا توجد اختبارات متاحة حاليا' : 'No tests are available right now'}</p>
+                  <p>{t("auto.noTestsAreAvailableRightNow")}</p>
                 </>
               )}
             </div>

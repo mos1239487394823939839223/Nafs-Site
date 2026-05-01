@@ -312,7 +312,7 @@ export default function LocalDocumentsManager({
                 <p>{emptyMessage}</p>
               </div>
             ) : (
-              <div className="space-y-2 max-h-[45vh] overflow-auto pr-1">
+              <div className="space-y-2 max-h-[45vh] overflow-auto pe-1">
                 {documents.map((documentItem) => (
                   <div key={documentItem.id} className="rounded-xl border border-border-light bg-background-paper p-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                     <div className="min-w-0">

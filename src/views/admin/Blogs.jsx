@@ -131,7 +131,7 @@ function ArticleFormModal({ isOpen, onClose, onSave, initial, allTags = [], isSa
       title={initial ? t('blogs.editArticle') : `✨ ${t('blogs.addNew')}`}
       size="lg"
     >
-      <div className="space-y-5" dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className="space-y-5" >
         {/* Title */}
         <div>
           <label className="block text-sm font-semibold text-text-heading mb-1.5">
@@ -170,7 +170,7 @@ function ArticleFormModal({ isOpen, onClose, onSave, initial, allTags = [], isSa
         {/* Image Upload */}
         <div>
           <label className="block text-sm font-semibold text-text-heading mb-1.5">
-            {isRTL ? 'صورة المقال (اختياري)' : 'Article Image (Optional)'}
+            {t("auto.articleImageOptional")}
           </label>
           
           {form.images.length > 0 ? (
@@ -191,14 +191,14 @@ function ArticleFormModal({ isOpen, onClose, onSave, initial, allTags = [], isSa
               {uploading ? (
                 <div className="flex flex-col items-center gap-2">
                   <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-                  <span className="text-text-muted">{isRTL ? 'جاري الرفع...' : 'Uploading...'}</span>
+                  <span className="text-text-muted">{t("auto.uploading")}</span>
                 </div>
               ) : (
                 <>
                   <CloudUpload className="text-text-muted mb-2" style={{ width: 32, height: 32 }} />
-                  <span className="font-medium text-text-heading">{isRTL ? 'اضغط لرفع صورة' : 'Click to upload image'}</span>
+                  <span className="font-medium text-text-heading">{t("auto.clickToUploadImage")}</span>
                   <span className="text-xs text-text-muted mt-1">
-                    {isRTL ? 'يفضل مقاس ١٦:٩' : '16:9 aspect ratio recommended'}
+                    {t("auto.169AspectRatioRecommended")}
                   </span>
                 </>
               )}
@@ -218,7 +218,7 @@ function ArticleFormModal({ isOpen, onClose, onSave, initial, allTags = [], isSa
               onChange={(e) => setSelectedTagId(e.target.value)}
               className="flex-1 px-3 py-2.5 border border-border rounded-xl bg-background text-text text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             >
-              <option value="">{isRTL ? 'اختر وسم من القائمة' : 'Choose a tag from list'}</option>
+              <option value="">{t("auto.chooseATagFromList")}</option>
               {allTags
                 .filter((tag) => !form.tagIds.includes(tag.TagID ?? tag.tagID ?? tag.id))
                 .map((tag) => {
@@ -231,7 +231,7 @@ function ArticleFormModal({ isOpen, onClose, onSave, initial, allTags = [], isSa
                 })}
             </select>
             <Button type="button" variant="outline" onClick={handleAddTag} disabled={!selectedTagId}>
-              {isRTL ? 'إضافة' : 'Add'}
+              {t("auto.add")}
             </Button>
           </div>
 
@@ -247,7 +247,7 @@ function ArticleFormModal({ isOpen, onClose, onSave, initial, allTags = [], isSa
                   {tag.name}
                   <button
                     onClick={() => handleRemoveTag(tag.id)}
-                    className={`${isRTL ? 'mr-1' : 'ml-1'} hover:text-red-500 transition-colors`}
+                    className={`${t("auto.ms1")} hover:text-red-500 transition-colors`}
                   >
                     <X style={{ width: 12, height: 12 }} />
                   </button>
@@ -276,7 +276,7 @@ function ArticleFormModal({ isOpen, onClose, onSave, initial, allTags = [], isSa
 // ─── Create Tag Modal ─────────────────────────────────────────────────────────
 
 function CreateTagModal({ isOpen, onClose, onSave, isCreating }) {
-  const { isRTL } = useLanguage()
+  const { t, isRTL } = useLanguage()
   const [name, setName] = useState('')
   const [error, setError] = useState('')
 
@@ -289,18 +289,18 @@ function CreateTagModal({ isOpen, onClose, onSave, isCreating }) {
 
   const handleSave = () => {
     if (!name.trim()) {
-      setError(isRTL ? 'اسم الوسم مطلوب' : 'Tag name is required')
+      setError(t("auto.tagNameIsRequired"))
       return
     }
     onSave(name.trim())
   }
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title={isRTL ? '✨ إنشاء وسم جديد' : '✨ Create New Tag'} size="sm">
-      <div className="space-y-4" dir={isRTL ? 'rtl' : 'ltr'}>
+    <Modal isOpen={isOpen} onClose={onClose} title={t("auto.CreateNewTag")} size="sm">
+      <div className="space-y-4" >
         <div>
           <label className="block text-sm font-semibold text-text-heading mb-1.5">
-            {isRTL ? 'اسم الوسم' : 'Tag Name'} <span className="text-red-500">*</span>
+            {t("auto.tagName")} <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -312,7 +312,7 @@ function CreateTagModal({ isOpen, onClose, onSave, isCreating }) {
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSave()
             }}
-            placeholder={isRTL ? 'مثال: الصحة النفسية' : 'e.g. Mental Health'}
+            placeholder={t("auto.egMentalHealth")}
             className={`w-full px-4 py-3 rounded-xl border bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all text-sm ${error ? 'border-red-400' : 'border-border focus:border-primary'}`}
           />
           {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
@@ -320,11 +320,11 @@ function CreateTagModal({ isOpen, onClose, onSave, isCreating }) {
 
         <div className="flex gap-3 pt-2 border-t border-border">
           <Button variant="outline" className="flex-1" onClick={onClose}>
-            {isRTL ? 'إلغاء' : 'Cancel'}
+            {t("auto.cancel")}
           </Button>
           <Button className="flex-1 gap-2" onClick={handleSave} disabled={isCreating} isLoading={isCreating}>
             <Plus style={{ width: 16, height: 16 }} />
-            {isRTL ? 'إنشاء' : 'Create'}
+            {t("auto.create")}
           </Button>
         </div>
       </div>
@@ -340,7 +340,7 @@ function BlogCard({ blog, onEdit, onDelete, isAdmin, detailsPathPrefix }) {
   const [confirmDelete, setConfirmDelete] = useState(false)
 
   const formatDate = (iso) =>
-    new Date(iso).toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', {
+    new Date(iso).toLocaleDateString(t("auto.enus"), {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -377,7 +377,7 @@ function BlogCard({ blog, onEdit, onDelete, isAdmin, detailsPathPrefix }) {
       )}
       {!thumbnail && <div className="h-1.5 bg-gradient-to-r from-primary via-secondary to-primary/40" />}
 
-      <div className="p-5 space-y-3 flex-1 flex flex-col" dir={isRTL ? 'rtl' : 'ltr'}>
+      <div className="p-5 space-y-3 flex-1 flex flex-col" >
         <div className="flex items-start justify-between gap-3">
           <div className="flex-1 min-w-0">
             <h3 className="font-bold text-text-heading text-base leading-snug line-clamp-2 group-hover:text-primary transition-colors">
@@ -386,7 +386,7 @@ function BlogCard({ blog, onEdit, onDelete, isAdmin, detailsPathPrefix }) {
           </div>
         </div>
 
-        <p className={`text-sm text-text-muted line-clamp-2 leading-relaxed ${isRTL ? 'text-right' : 'text-left'}`}>
+        <p className={`text-sm text-text-muted line-clamp-2 leading-relaxed text-start`}>
           {blog.description}
         </p>
 
@@ -397,11 +397,11 @@ function BlogCard({ blog, onEdit, onDelete, isAdmin, detailsPathPrefix }) {
           }}
           className="text-xs font-semibold text-primary hover:text-primary/80 hover:underline transition-all cursor-pointer w-fit"
         >
-          {isRTL ? 'قراءة المزيد ←' : 'Read More →'}
+          {t("auto.readMore")}
         </button>
 
         <div className="mt-auto pt-4 flex flex-col gap-3">
-          <div className={`flex flex-wrap gap-1.5 ${isRTL ? 'justify-end' : 'justify-start'}`}>
+          <div className={`flex flex-wrap gap-1.5 ${t("auto.justifystart")}`}>
             {blog.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
@@ -533,7 +533,7 @@ export default function AdminBlogs() {
   // Show blog load error
   useEffect(() => {
     if (!blogLoadError) return
-    toast.error(isRTL ? 'فشل تحميل المقالات من الخادم' : 'Failed to load blogs from server')
+    toast.error(t("auto.failedToLoadBlogsFromServer"))
   }, [blogLoadError, toast, isRTL])
 
   // Load tags from API
@@ -648,10 +648,10 @@ export default function AdminBlogs() {
         return
       }
       setIsCreateTagOpen(false)
-      toast.success(isRTL ? 'تم إنشاء الوسم بنجاح' : 'Tag created successfully')
+      toast.success(t("auto.tagCreatedSuccessfully"))
       await loadTags()
     } catch (err) {
-      toast.error(extractErrorMessage(err, isRTL ? 'فشل إنشاء الوسم' : 'Failed to create tag'))
+      toast.error(extractErrorMessage(err, t("auto.failedToCreateTag")))
     } finally {
       setIsCreatingTag(false)
     }
@@ -686,20 +686,20 @@ export default function AdminBlogs() {
   const tabs = [
     {
       key: 'articles',
-      label: isRTL ? 'المقالات' : 'Articles',
+      label: t("auto.articles"),
       icon: <ArticleIcon style={{ width: 18, height: 18 }} />,
       count: blogs.length,
     },
     isAdmin && {
       key: 'tags',
-      label: isRTL ? 'الوسوم' : 'Tags',
+      label: t("auto.tags"),
       icon: <TagIcon style={{ width: 18, height: 18 }} />,
       count: allTags.length,
     },
   ].filter(Boolean)
 
   return (
-    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="space-y-6" >
       {/* ─── Header ──────────────────────────────────────────────────── */}
       <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
         <div>
@@ -723,7 +723,7 @@ export default function AdminBlogs() {
             ) : (
               <Button onClick={() => setIsCreateTagOpen(true)} className="gap-2 shadow-lg shadow-primary/20">
                 <Plus style={{ width: 18, height: 18 }} />
-                {isRTL ? 'إنشاء وسم' : 'Create Tag'}
+                {t("auto.createTag")}
               </Button>
             )}
           </>
@@ -771,7 +771,7 @@ export default function AdminBlogs() {
             {/* Search */}
             <div className="relative flex-1">
               <Search
-                className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-text-muted`}
+                className={`absolute ${t("auto.start4")} top-1/2 -translate-y-1/2 text-text-muted`}
                 style={{ width: 18, height: 18 }}
               />
               <input
@@ -779,7 +779,7 @@ export default function AdminBlogs() {
                 placeholder={t('blogs.searchPlaceholder')}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className={`w-full ${isRTL ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text transition-all`}
+                className={`w-full ${t("auto.ps11Pe4")} py-3 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text transition-all`}
               />
             </div>
 
@@ -791,7 +791,7 @@ export default function AdminBlogs() {
                 onChange={(e) => setFilterTagId(e.target.value)}
                 className="px-4 py-3 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text min-w-[180px]"
               >
-                <option value="">{isRTL ? 'كل الوسوم' : 'All Tags'}</option>
+                <option value="">{t("auto.allTags")}</option>
                 {allTags.map((tag) => (
                   <option key={tag.TagID ?? tag.tagID ?? tag.id} value={tag.TagID ?? tag.tagID ?? tag.id}>
                     {tag.Name ?? tag.name}
@@ -853,7 +853,7 @@ export default function AdminBlogs() {
           {tagsLoading ? (
             <div className="flex flex-col items-center justify-center py-20">
               <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin mb-3" />
-              <p className="text-sm text-text-muted">{isRTL ? 'جاري تحميل الوسوم...' : 'Loading tags...'}</p>
+              <p className="text-sm text-text-muted">{t("auto.loadingTags")}</p>
             </div>
           ) : allTags.length === 0 ? (
             <motion.div
@@ -863,15 +863,15 @@ export default function AdminBlogs() {
             >
               <TagIcon className="text-text-muted opacity-20 mb-4" style={{ width: 64, height: 64 }} />
               <h3 className="text-xl font-bold text-text-heading mb-2">
-                {isRTL ? 'لا توجد وسوم بعد' : 'No tags yet'}
+                {t("auto.noTagsYet")}
               </h3>
               <p className="text-text-muted text-sm mb-6">
-                {isRTL ? 'أنشئ أول وسم لتنظيم المقالات' : 'Create your first tag to organize articles'}
+                {t("auto.createYourFirstTagToOrganizeArticles")}
               </p>
               {isAdmin && (
                 <Button onClick={() => setIsCreateTagOpen(true)} className="gap-2">
                   <Plus style={{ width: 16, height: 16 }} />
-                  {isRTL ? 'إنشاء وسم' : 'Create Tag'}
+                  {t("auto.createTag")}
                 </Button>
               )}
             </motion.div>

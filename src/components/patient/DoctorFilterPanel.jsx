@@ -31,7 +31,7 @@ export default function DoctorFilterPanel({
   return (
     <div
       className="bg-background-paper border border-border rounded-2xl p-4 md:p-5 space-y-5 shadow-sm"
-      dir={isRTL ? "rtl" : "ltr"}
+      
     >
       <div className="flex items-center justify-between">
         <h3 className="font-semibold text-text-heading text-sm">

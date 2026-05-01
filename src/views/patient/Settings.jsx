@@ -111,7 +111,7 @@ export default function Settings() {
   return (
     <div
       className="min-h-screen bg-background p-6 md:p-10"
-      dir={isRTL ? "rtl" : "ltr"}
+      
     >
       <div className="max-w-4xl mx-auto">
         {/* Header */}
@@ -208,7 +208,7 @@ export default function Settings() {
                           }))
                         }
                         className={`w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-text ${
-                          isRTL ? "pl-10" : "pr-10"
+                          "pe-10"
                         }`}
                         placeholder={
                           key === "currentPassword"
@@ -225,12 +225,8 @@ export default function Settings() {
                         type="button"
                         aria-label={
                           showPasswords[visKey]
-                            ? isRTL
-                              ? "إخفاء كلمة المرور"
-                              : "Hide password"
-                            : isRTL
-                            ? "إظهار كلمة المرور"
-                            : "Show password"
+                            ? t("auto.hidePassword")
+                            : t("auto.showPassword")
                         }
                         onClick={() =>
                           setShowPasswords((prev) => ({
@@ -239,7 +235,7 @@ export default function Settings() {
                           }))
                         }
                         className={`absolute inset-y-0 ${
-                          isRTL ? "left-3" : "right-3"
+                          "end-3"
                         } z-10 flex items-center text-text-muted hover:text-text-heading`}
                       >
                         {showPasswords[visKey] ? (

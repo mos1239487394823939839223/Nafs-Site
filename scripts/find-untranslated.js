@@ -54,7 +54,12 @@ const enKeys = getAllKeys(en);
 for (const { key, value, type } of enKeys) {
   if (type === 'string') {
     const arValue = getValueByKey(ar, key);
-    if (!arValue || arValue === '' || arValue === value) {
+    
+    // A string is missing if it doesn't exist, is empty, or equals English 
+    // AND the English string contains actual letters (to avoid flagging numbers/emails)
+    const hasLetters = /[a-zA-Z]/.test(value);
+    
+    if (!arValue || arValue === '' || (arValue === value && hasLetters)) {
       missingInArabic.push({
         key,
         enValue: value,

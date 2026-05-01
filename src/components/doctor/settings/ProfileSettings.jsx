@@ -72,17 +72,17 @@ export default function ProfileSettings({ user, onSave, onImageUpload }) {
               <Camera className="w-8 h-8 text-white" />
             </div>
           </div>
-          <label className="absolute bottom-0 right-0 p-2.5 bg-primary text-white rounded-full cursor-pointer hover:bg-primary-dark transition-transform hover:scale-105 shadow-lg">
+          <label className="absolute bottom-0 end-0 p-2.5 bg-primary text-white rounded-full cursor-pointer hover:bg-primary-dark transition-transform hover:scale-105 shadow-lg">
             <Camera className="w-4 h-4" />
             <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
           </label>
         </div>
-        <div className={`text-center md:text-left space-y-2 ${isRTL ? 'md:text-right' : ''}`}>
+        <div className={`text-center md:text-start space-y-2 ${isRTL ? 'md:text-end' : ''}`}>
           <h3 className="text-lg font-semibold text-text">{t('settings.profilePhoto', 'Profile Photo')}</h3>
           <p className="text-sm text-text-light max-w-xs">
             {t('settings.uploadPhotoDesc', 'Upload a professional photo using JPG, GIF or PNG. Max size 800K.')}
           </p>
-          <div className={`flex gap-2 justify-center ${isRTL ? 'md:justify-end' : 'md:justify-start'}`}>
+          <div className={`flex gap-2 justify-center ${t("auto.mdjustifystart")}`}>
             <Button size="sm" variant="outline" onClick={() => setAvatar(null)}>{t('settings.removePhoto', 'Remove')}</Button>
           </div>
         </div>
@@ -149,7 +149,7 @@ export default function ProfileSettings({ user, onSave, onImageUpload }) {
             className="bg-background-gray/20"
             placeholder={t('doctorReg.bioPlaceholder', 'Share your expertise, qualifications, and patient philosophy...')}
           />
-          <p className={`text-xs text-text-light mt-1 ${isRTL ? 'text-left' : 'text-right'}`}>{formData.bio.length}/500</p>
+          <p className={`text-xs text-text-light mt-1 text-end`}>{formData.bio.length}/500</p>
         </div>
       </div>
 

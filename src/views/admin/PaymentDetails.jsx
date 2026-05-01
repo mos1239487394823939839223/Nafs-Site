@@ -111,7 +111,7 @@ export default function AdminPaymentDetails() {
         toast.error(
           extractErrorMessage(
             error,
-            isRTL ? "تعذر تحميل بيانات الدفع" : "Failed to load payment data",
+            t("auto.failedToLoadPaymentData"),
           ),
         );
       } finally {
@@ -146,7 +146,7 @@ export default function AdminPaymentDetails() {
 
     const providerLabel =
       providers.find((p) => Number(p.ID) === Number(selectedProvider))?.Name ||
-      (isRTL ? "وسيلة دفع" : "Payment Method");
+      (t("auto.paymentMethod"));
 
     const freshForm = {
       ...emptyForm,
@@ -189,9 +189,7 @@ export default function AdminPaymentDetails() {
   const handleSave = async () => {
     if (!form.title || !form.accountNumber || form.provider === "") {
       toast.error(
-        isRTL
-          ? "أدخل العنوان ورقم الحساب ووسيلة الدفع"
-          : "Please enter title, account number, and provider",
+        t("auto.pleaseEnterTitleAccountNumberAndProvider"),
       );
       return;
     }
@@ -210,15 +208,13 @@ export default function AdminPaymentDetails() {
 
       await refreshInstructions();
       toast.success(
-        isRTL
-          ? "تم حفظ تعليمات الدفع بنجاح"
-          : "Payment instructions saved successfully",
+        t("auto.paymentInstructionsSavedSuccessfully"),
       );
     } catch (error) {
       toast.error(
         extractErrorMessage(
           error,
-          isRTL ? "تعذر حفظ البيانات" : "Failed to save payment instructions",
+          t("auto.failedToSavePaymentInstructions"),
         ),
       );
     } finally {
@@ -250,9 +246,7 @@ export default function AdminPaymentDetails() {
       toast.success(
         t(
           "admin.paymentInstructionDeletedSuccess",
-          isRTL
-            ? "تم حذف تعليمات الدفع بنجاح"
-            : "Payment instructions deleted successfully",
+          t("auto.paymentInstructionsDeletedSuccessfully"),
         ),
       );
       setDeleteModalOpen(false);
@@ -262,9 +256,7 @@ export default function AdminPaymentDetails() {
           error,
           t(
             "admin.paymentInstructionDeleteFailed",
-            isRTL
-              ? "تعذر حذف البيانات"
-              : "Failed to delete payment instructions",
+            t("auto.failedToDeletePaymentInstructions"),
           ),
         ),
       );
@@ -274,39 +266,37 @@ export default function AdminPaymentDetails() {
   };
 
   return (
-    <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
+    <div className="space-y-6" >
       <div>
         <h2 className="text-2xl font-bold text-text-heading">
-          {isRTL ? "بيانات الدفع" : "Payment Details"}
+          {t("auto.paymentDetails")}
         </h2>
         <p className="text-text-muted mt-1">
-          {isRTL
-            ? "إدارة بيانات الحساب المستخدمة في التحويلات اليدوية."
-            : "Manage account details used for manual transfers."}
+          {t("auto.manageAccountDetailsUsedForManualTransfers")}
         </p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle>
-            {isRTL ? "تفاصيل تعليمات التحويل" : "Transfer Instructions Details"}
+            {t("auto.transferInstructionsDetails")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {loading ? (
             <p className="text-text-muted">
-              {isRTL ? "جار تحميل البيانات..." : "Loading payment details..."}
+              {t("auto.loadingPaymentDetails")}
             </p>
           ) : (
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <Select
-                label={isRTL ? "وسيلة الدفع" : "Payment Provider"}
+                label={t("auto.paymentProvider")}
                 value={selectedProvider === "" ? "" : Number(selectedProvider)}
                 onChange={handleProviderChange}
                 disabled={loadingProviders || saving || providers.length === 0}
               >
                 {providers.length === 0 ? (
-                  <MenuItem value="">{isRTL ? "لا توجد وسائل" : "No providers"}</MenuItem>
+                  <MenuItem value="">{t("auto.noProviders")}</MenuItem>
                 ) : (
                   providers.map((provider) => (
                     <MenuItem key={provider.ID} value={provider.ID}>
@@ -317,38 +307,36 @@ export default function AdminPaymentDetails() {
               </Select>
 
               <Input
-                label={isRTL ? "عنوان التعليمات" : "Instruction Title"}
+                label={t("auto.instructionTitle")}
                 value={form.title}
                 onChange={(e) => handleChange("title", e.target.value)}
                 placeholder={
-                  isRTL ? "مثال: تحويل بنكي مباشر" : "Example: Direct bank transfer"
+                  t("auto.exampleDirectBankTransfer")
                 }
               />
 
               <Input
-                label={isRTL ? "اسم الحساب" : "Account Name"}
+                label={t("auto.accountName")}
                 value={form.accountName}
                 onChange={(e) => handleChange("accountName", e.target.value)}
-                placeholder={isRTL ? "أدخل اسم الحساب" : "Enter account name"}
+                placeholder={t("auto.enterAccountName")}
               />
 
               <Input
-                label={isRTL ? "رقم الحساب" : "Account Number"}
+                label={t("auto.accountNumber")}
                 value={form.accountNumber}
                 onChange={(e) => handleChange("accountNumber", e.target.value)}
-                placeholder={isRTL ? "أدخل رقم الحساب" : "Enter account number"}
+                placeholder={t("auto.enterAccountNumber")}
               />
 
               <div className="md:col-span-2">
                 <Textarea
-                  label={isRTL ? "تعليمات التحويل" : "Transfer Instructions"}
+                  label={t("auto.transferInstructions")}
                   rows={4}
                   value={form.instructions}
                   onChange={(e) => handleChange("instructions", e.target.value)}
                   placeholder={
-                    isRTL
-                      ? "أضف خطوات التحويل التي يجب على العميل اتباعها"
-                      : "Add transfer steps the patient should follow"
+                    t("auto.addTransferStepsThePatientShouldFollow")
                   }
                 />
               </div>
@@ -357,7 +345,7 @@ export default function AdminPaymentDetails() {
 
           <div
             className={`mt-6 flex gap-3 ${
-              isRTL ? "justify-start" : "justify-end"
+              t("auto.justifyend")
             }`}
           >
             <Button
@@ -365,7 +353,7 @@ export default function AdminPaymentDetails() {
               disabled={!isDirty || saving || deleting || loading}
               onClick={() => setForm(initialForm)}
             >
-              {isRTL ? "إلغاء التغييرات" : "Discard Changes"}
+              {t("auto.discardChanges")}
             </Button>
             <Button
               variant="danger"
@@ -373,10 +361,10 @@ export default function AdminPaymentDetails() {
               onClick={handleDeleteRequest}
             >
               {deleting
-                ? t("admin.paymentInstructionDeleting", isRTL ? "جار الحذف..." : "Deleting...")
+                ? t("admin.paymentInstructionDeleting", t("auto.deleting"))
                 : t(
                     "admin.paymentInstructionDeleteButton",
-                    isRTL ? "حذف التعليمات" : "Delete Instructions",
+                    t("auto.deleteInstructions"),
                   )}
             </Button>
             <Button
@@ -386,12 +374,8 @@ export default function AdminPaymentDetails() {
               onClick={handleSave}
             >
               {saving
-                ? isRTL
-                  ? "جار الحفظ..."
-                  : "Saving..."
-                : isRTL
-                ? "حفظ التعليمات"
-                : "Save Instructions"}
+                ? t("auto.saving")
+                : t("auto.saveInstructions")}
             </Button>
           </div>
         </CardContent>
@@ -402,7 +386,7 @@ export default function AdminPaymentDetails() {
         onClose={() => !deleting && setDeleteModalOpen(false)}
         title={t(
           "admin.paymentInstructionDeleteTitle",
-          isRTL ? "تأكيد حذف تعليمات الدفع" : "Confirm Payment Instructions Deletion",
+          t("auto.confirmPaymentInstructionsDeletion"),
         )}
         size="sm"
       >
@@ -410,9 +394,7 @@ export default function AdminPaymentDetails() {
           <p className="text-sm text-text-muted leading-6">
             {t(
               "admin.paymentInstructionDeleteDescription",
-              isRTL
-                ? "سيتم حذف تعليمات الدفع الخاصة بوسيلة الدفع المحددة. يمكنك إضافتها مرة أخرى لاحقًا إذا لزم الأمر."
-                : "The payment instructions for the selected provider will be removed. You can add them again later if needed.",
+              t("auto.thePaymentInstructionsForTheSelectedProviderWillBeRemovedYouCanAddThemAgainLaterIfNeeded"),
             )}
           </p>
           <div className="rounded-xl border border-border bg-background-subtle p-3 text-sm">
@@ -420,19 +402,19 @@ export default function AdminPaymentDetails() {
             <p className="text-text-muted mt-1">{form.accountNumber || "-"}</p>
           </div>
           <div
-            className={`flex gap-3 ${isRTL ? "justify-start" : "justify-end"}`}
+            className={`flex gap-3 ${t("auto.justifyend")}`}
           >
             <Button
               variant="outline"
               disabled={deleting}
               onClick={() => setDeleteModalOpen(false)}
             >
-              {t("common.cancel", isRTL ? "إلغاء" : "Cancel")}
+              {t("common.cancel", t("auto.cancel"))}
             </Button>
             <Button variant="danger" disabled={deleting} onClick={handleDelete}>
               {deleting
-                ? t("admin.paymentInstructionDeleting", isRTL ? "جار الحذف..." : "Deleting...")
-                : t("admin.paymentInstructionDeleteConfirm", isRTL ? "تأكيد الحذف" : "Confirm Delete")}
+                ? t("admin.paymentInstructionDeleting", t("auto.deleting"))
+                : t("admin.paymentInstructionDeleteConfirm", t("auto.confirmDelete"))}
             </Button>
           </div>
         </div>

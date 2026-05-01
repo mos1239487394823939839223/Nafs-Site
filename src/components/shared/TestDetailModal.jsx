@@ -54,7 +54,7 @@ export default function TestDetailModal({ open, onOpenChange, test, result, isRT
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      dir={isRTL ? "rtl" : "ltr"}
+      
     >
       {/* Backdrop */}
       <div
@@ -106,7 +106,7 @@ export default function TestDetailModal({ open, onOpenChange, test, result, isRT
               className="inline-flex items-center gap-2 text-primary text-sm font-medium hover:underline bg-primary/5 px-4 py-2.5 rounded-xl border border-primary/20 transition-colors hover:bg-primary/10"
             >
               <ExternalLink className="w-4 h-4" />
-              {isRTL ? "فتح الاختبار" : "Open Test"}
+              {t("auto.openTest")}
             </a>
           )}
 
@@ -115,13 +115,13 @@ export default function TestDetailModal({ open, onOpenChange, test, result, isRT
             <div className="flex items-center gap-2 mb-3">
               <Tag className="w-4 h-4 text-text-muted" />
               <h3 className="text-sm font-semibold text-text-heading">
-                {isRTL ? "الأمراض المرتبطة" : "Associated Conditions"}
+                {t("auto.associatedConditions")}
               </h3>
             </div>
             {loadingDiseases ? (
               <div className="flex items-center gap-2 text-text-muted text-sm">
                 <Loader2 className="w-4 h-4 animate-spin" />
-                {isRTL ? "جاري التحميل..." : "Loading..."}
+                {t("auto.loading")}
               </div>
             ) : tagNames.length > 0 ? (
               <div className="flex flex-wrap gap-2">
@@ -136,7 +136,7 @@ export default function TestDetailModal({ open, onOpenChange, test, result, isRT
               </div>
             ) : (
               <p className="text-sm text-text-muted italic">
-                {isRTL ? "لا توجد أمراض مرتبطة" : "No associated conditions"}
+                {t("auto.noAssociatedConditions")}
               </p>
             )}
           </div>
@@ -146,26 +146,26 @@ export default function TestDetailModal({ open, onOpenChange, test, result, isRT
             <div className="flex items-center gap-2 mb-3">
               <ClipboardCheck className="w-4 h-4 text-text-muted" />
               <h3 className="text-sm font-semibold text-text-heading">
-                {isRTL ? "النتيجة" : "Result"}
+                {t("auto.result")}
               </h3>
             </div>
             {hasResult ? (
               <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 space-y-2">
                 <div className="flex items-center gap-2 text-primary font-semibold text-sm">
                   <ClipboardCheck className="w-4 h-4" />
-                  {isRTL ? "تم إرسال النتيجة" : "Result submitted"}
+                  {t("auto.resultSubmitted")}
                 </div>
                 <p className="text-sm text-text-heading whitespace-pre-wrap">
                   {result.resultText}
                 </p>
                 <p className="text-xs text-text-muted">
-                  {isRTL ? "وقت الإدخال:" : "Submitted at:"}{" "}
+                  {t("auto.submittedAt")}{" "}
                   {new Date(result.submittedAt).toLocaleString()}
                 </p>
               </div>
             ) : (
               <p className="text-sm text-text-muted italic">
-                {isRTL ? "لم تُرسل نتيجة بعد" : "No result submitted yet"}
+                {t("auto.noResultSubmittedYet")}
               </p>
             )}
           </div>

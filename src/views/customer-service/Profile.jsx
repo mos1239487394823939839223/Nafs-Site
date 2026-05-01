@@ -139,7 +139,7 @@ export default function StaffProfile() {
     .slice(0, 2)
 
   return (
-    <div className="min-h-screen bg-background" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="min-h-screen bg-background" >
       {/* ─── Cover Hero ─── */}
       <div className="h-56 md:h-72 w-full overflow-hidden relative">
         <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-secondary" />
@@ -151,8 +151,8 @@ export default function StaffProfile() {
           </defs>
           <rect width="100%" height="100%" fill="url(#staff-grid)" />
         </svg>
-        <div className="absolute top-8 left-1/4 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-1/3 w-64 h-64 bg-secondary/30 rounded-full blur-3xl" />
+        <div className="absolute top-8 start-1/4 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 end-1/3 w-64 h-64 bg-secondary/30 rounded-full blur-3xl" />
       </div>
 
       <div className="max-w-4xl mx-auto px-4 md:px-6 relative">
@@ -172,7 +172,7 @@ export default function StaffProfile() {
               <Camera className="w-7 h-7 text-white" />
               <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
             </label>
-            <div className="absolute bottom-2 right-2 w-4 h-4 bg-emerald-400 rounded-full border-2 border-background-paper shadow" />
+            <div className="absolute bottom-2 end-2 w-4 h-4 bg-emerald-400 rounded-full border-2 border-background-paper shadow" />
           </div>
         </div>
         <div className="pt-20 flex flex-row items-end justify-between pb-6 border-b border-border gap-4">
@@ -268,7 +268,7 @@ export default function StaffProfile() {
 
       <AnimatePresence>
         {editModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" dir={isRTL ? 'rtl' : 'ltr'}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" >
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -338,7 +338,7 @@ export default function StaffProfile() {
 
       <AnimatePresence>
         {passwordModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" dir={isRTL ? 'rtl' : 'ltr'}>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" >
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}

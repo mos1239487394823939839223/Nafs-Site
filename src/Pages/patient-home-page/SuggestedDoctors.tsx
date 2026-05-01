@@ -73,7 +73,7 @@ export const SuggestedDoctors = () => {
           onClick={() => setScroll(Math.max(0, scroll - 1))}
           disabled={scroll === 0}
           aria-label="previous"
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card shadow-card border border-border hidden md:flex items-center justify-center hover:bg-muted disabled:opacity-40"
+          className="absolute start-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card shadow-card border border-border hidden md:flex items-center justify-center hover:bg-muted disabled:opacity-40"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
@@ -82,7 +82,7 @@ export const SuggestedDoctors = () => {
           onClick={() => setScroll(scroll + 1)}
           disabled={scroll >= Math.max(0, doctors.length - 4)}
           aria-label="next"
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card shadow-card border border-border hidden md:flex items-center justify-center hover:bg-muted disabled:opacity-40"
+          className="absolute end-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card shadow-card border border-border hidden md:flex items-center justify-center hover:bg-muted disabled:opacity-40"
         >
           <ChevronRight className="w-5 h-5" />
         </button>

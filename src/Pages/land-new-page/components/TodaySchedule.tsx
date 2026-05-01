@@ -111,7 +111,7 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
 
                 <div
                   className={`flex items-center gap-3 min-w-0 ${
-                    isRTL ? "flex-row-reverse text-right" : "flex-row text-left"
+                    t("auto.flexrowTextstart")
                   }`}
                 >
                   <img

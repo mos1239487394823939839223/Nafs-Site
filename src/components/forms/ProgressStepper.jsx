@@ -6,11 +6,11 @@ export default function ProgressStepper({ steps, currentStep }) {
     <div className="w-full py-6 flex flex-col items-center">
       <div className="flex items-center justify-between w-full max-w-sm relative">
         {/* Background Progress Track */}
-        <div className="absolute top-5 left-0 w-full h-0.5 bg-background-subtle -z-10" />
+        <div className="absolute top-5 start-0 w-full h-0.5 bg-background-subtle -z-10" />
         
         {/* Active Progress Line */}
         <div 
-          className="absolute top-5 left-0 h-0.5 bg-primary -z-10 transition-all duration-500 ease-in-out"
+          className="absolute top-5 start-0 h-0.5 bg-primary -z-10 transition-all duration-500 ease-in-out"
           style={{ 
             width: `${((currentStep - 1) / (steps.length - 1)) * 100}%`
           }}

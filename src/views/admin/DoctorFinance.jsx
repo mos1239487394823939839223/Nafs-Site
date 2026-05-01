@@ -34,7 +34,7 @@ export default function DoctorFinance() {
   const doctorName =
     doctorFromState?.Name ||
     doctorFromState?.name ||
-    `${isRTL ? 'طبيب' : 'Doctor'} #${doctorId || '-'}`
+    `${t("auto.doctor")} #${doctorId || '-'}`
 
   const formatCurrency = (value) => {
     const numeric = toNumber(value, 0)
@@ -116,7 +116,7 @@ export default function DoctorFinance() {
   }
 
   return (
-    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="space-y-6" >
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-text-heading">
@@ -125,7 +125,7 @@ export default function DoctorFinance() {
           <p className="text-sm text-text-muted mt-1">{doctorName}</p>
         </div>
         <Button variant="outline" onClick={() => navigate('/admin/users')}>
-          {t('common.backToList', isRTL ? 'العودة للقائمة' : 'Back to List')}
+          {t('common.backToList', t("auto.backToList"))}
         </Button>
       </div>
 
@@ -260,9 +260,9 @@ export default function DoctorFinance() {
                 <TableHeader>
                   <TableRow hover={false}>
                     <TableHead>{t('common.date')}</TableHead>
-                    <TableHead>{t('common.patient', isRTL ? 'المريض' : 'Patient')}</TableHead>
+                    <TableHead>{t('common.patient', t("auto.patient"))}</TableHead>
                     <TableHead>{t('common.status')}</TableHead>
-                    <TableHead className="text-right">{t('common.total')}</TableHead>
+                    <TableHead className="text-end">{t('common.total')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -276,7 +276,7 @@ export default function DoctorFinance() {
                         </TableCell>
                         <TableCell>{item.PatientName || '-'}</TableCell>
                         <TableCell>{item.Status ?? '-'}</TableCell>
-                        <TableCell className="text-right font-semibold">
+                        <TableCell className="text-end font-semibold">
                           {formatCurrency(item.Amount)}
                         </TableCell>
                       </TableRow>

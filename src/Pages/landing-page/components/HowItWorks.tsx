@@ -14,7 +14,7 @@ const HowItWorks = () => (
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
         {steps.map((s) => (
-          <div key={s.n} className="bg-gradient-hero rounded-3xl p-8 text-right border border-border/40">
+          <div key={s.n} className="bg-gradient-hero rounded-3xl p-8 text-end border border-border/40">
             <div className="font-display font-extrabold text-5xl text-primary/30 mb-4">{s.n}</div>
             <h3 className="font-display font-bold text-xl mb-2">{s.title}</h3>
             <p className="text-muted-foreground text-sm leading-relaxed">{s.desc}</p>

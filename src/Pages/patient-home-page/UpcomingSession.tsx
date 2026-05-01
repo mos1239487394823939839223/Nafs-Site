@@ -53,7 +53,7 @@ export const UpcomingSession = () => {
   }, []);
 
   const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString(isRTL ? "ar-EG" : "en-US", {
+    new Date(iso).toLocaleDateString(t("auto.enus"), {
       weekday: "long",
       day: "numeric",
       month: "long",
@@ -61,7 +61,7 @@ export const UpcomingSession = () => {
     });
 
   const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString(isRTL ? "ar-EG" : "en-US", {
+    new Date(iso).toLocaleTimeString(t("auto.enus"), {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -98,7 +98,7 @@ export const UpcomingSession = () => {
               loading="lazy"
               className="w-14 h-14 rounded-full object-cover flex-shrink-0"
             />
-            <div className="text-left">
+            <div className="text-start">
               <p className="font-bold">{session.DoctorName}</p>
               <span className="inline-block mt-1 text-[11px] bg-primary-soft text-primary px-2 py-0.5 rounded-full">
                 {t("patientHome.upcomingSession.sessionType")}

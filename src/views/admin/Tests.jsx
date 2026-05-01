@@ -37,7 +37,7 @@ function isValidUrl(url) {
 }
 
 export default function AdminTests() {
-  const { isRTL } = useLanguage()
+  const { t, isRTL } = useLanguage()
   const toast = useToast()
 
   const [activeTab, setActiveTab] = useState('tests')
@@ -126,7 +126,7 @@ export default function AdminTests() {
       setTags(normalized)
     } catch (error) {
       setTags([])
-      toast.error(extractErrorMessage(error, isRTL ? 'فشل تحميل الوسوم' : 'Failed to load tags'))
+      toast.error(extractErrorMessage(error, t("auto.failedToLoadTags")))
     } finally {
       setTagsLoading(false)
     }
@@ -150,7 +150,7 @@ export default function AdminTests() {
       setTests(normalized)
     } catch (error) {
       setTests([])
-      toast.error(extractErrorMessage(error, isRTL ? 'فشل تحميل الاختبارات' : 'Failed to load tests'))
+      toast.error(extractErrorMessage(error, t("auto.failedToLoadTests")))
     } finally {
       setTestsLoading(false)
     }
@@ -232,19 +232,19 @@ export default function AdminTests() {
   const tabs = [
     {
       key: 'tests',
-      label: isRTL ? 'الاختبارات' : 'Tests',
+      label: t("auto.tests"),
       icon: <FlaskConical style={{ width: 18, height: 18 }} />,
       count: tests.length,
     },
     {
       key: 'tags',
-      label: isRTL ? 'وسوم الاختبارات' : 'Test Tags',
+      label: t("auto.testTags"),
       icon: <Tag style={{ width: 18, height: 18 }} />,
       count: tags.length,
     },
     {
       key: 'results',
-      label: isRTL ? 'النتائج' : 'Results',
+      label: t("auto.results"),
       icon: <ClipboardCheck style={{ width: 18, height: 18 }} />,
       count: results.length,
     },
@@ -263,21 +263,21 @@ export default function AdminTests() {
     const nextErrors = {}
 
     if (!formData.name.trim()) {
-      nextErrors.name = isRTL ? 'اسم الاختبار مطلوب' : 'Test name is required'
+      nextErrors.name = t("auto.testNameIsRequired")
     }
 
     if (!formData.description.trim()) {
-      nextErrors.description = isRTL ? 'الوصف مطلوب' : 'Description is required'
+      nextErrors.description = t("auto.descriptionIsRequired")
     }
 
     if (!formData.url.trim()) {
-      nextErrors.url = isRTL ? 'الرابط مطلوب' : 'URL is required'
+      nextErrors.url = t("auto.urlIsRequired")
     } else if (!isValidUrl(formData.url.trim())) {
-      nextErrors.url = isRTL ? 'الرابط غير صحيح' : 'Please enter a valid URL'
+      nextErrors.url = t("auto.pleaseEnterAValidUrl")
     }
 
     if (!formData.tagId.trim()) {
-      nextErrors.tag = isRTL ? 'التصنيف مطلوب' : 'Tag is required'
+      nextErrors.tag = t("auto.tagIsRequired")
     }
 
     setErrors(nextErrors)
@@ -288,7 +288,7 @@ export default function AdminTests() {
     event.preventDefault()
 
     if (!validate()) {
-      toast.error(isRTL ? 'يرجى تصحيح الأخطاء' : 'Please fix the form errors')
+      toast.error(t("auto.pleaseFixTheFormErrors"))
       return
     }
 
@@ -298,7 +298,7 @@ export default function AdminTests() {
         const selectedTag = tags.find((tag) => String(tag.id) === String(formData.tagId))
         const selectedTagName = String(selectedTag?.name || '').trim()
         if (!selectedTagName) {
-          toast.error(isRTL ? 'الوسم المحدد غير صالح' : 'Selected tag is invalid')
+          toast.error(t("auto.selectedTagIsInvalid"))
           return
         }
 
@@ -311,7 +311,7 @@ export default function AdminTests() {
 
         const response = await medicalAPI.createTestType(payload)
         if (response?.IsSuccess === false) {
-          toast.error(response?.Message || (isRTL ? 'فشل إنشاء الاختبار' : 'Failed to create test'))
+          toast.error(response?.Message || (t("auto.failedToCreateTest")))
           return
         }
 
@@ -319,9 +319,9 @@ export default function AdminTests() {
         setFormData(initialForm)
         setErrors({})
         setIsCreateModalOpen(false)
-        toast.success(isRTL ? 'تمت إضافة الاختبار بنجاح' : 'Test added successfully')
+        toast.success(t("auto.testAddedSuccessfully"))
       } catch (error) {
-        toast.error(extractErrorMessage(error, isRTL ? 'فشل إنشاء الاختبار' : 'Failed to create test'))
+        toast.error(extractErrorMessage(error, t("auto.failedToCreateTest")))
       } finally {
         setIsCreatingTest(false)
       }
@@ -339,7 +339,7 @@ export default function AdminTests() {
   const validateTag = () => {
     const nextErrors = {}
     if (!tagForm.name.trim()) {
-      nextErrors.name = isRTL ? 'اسم الوسم مطلوب' : 'Tag name is required'
+      nextErrors.name = t("auto.tagNameIsRequired")
     }
     setTagErrors(nextErrors)
     return Object.keys(nextErrors).length === 0
@@ -349,7 +349,7 @@ export default function AdminTests() {
     event.preventDefault()
 
     if (!validateTag()) {
-      toast.error(isRTL ? 'يرجى تصحيح الأخطاء' : 'Please fix the form errors')
+      toast.error(t("auto.pleaseFixTheFormErrors"))
       return
     }
 
@@ -364,7 +364,7 @@ export default function AdminTests() {
         const response = await medicalAPI.createDisease(payload)
 
         if (response?.IsSuccess === false) {
-          toast.error(response?.Message || (isRTL ? 'فشل إنشاء الوسم' : 'Failed to create tag'))
+          toast.error(response?.Message || (t("auto.failedToCreateTag")))
           return
         }
 
@@ -372,9 +372,9 @@ export default function AdminTests() {
         setTagForm(initialTagForm)
         setTagErrors({})
         setIsCreateTagModalOpen(false)
-        toast.success(isRTL ? 'تم إنشاء الوسم بنجاح' : 'Tag created successfully')
+        toast.success(t("auto.tagCreatedSuccessfully"))
       } catch (error) {
-        toast.error(extractErrorMessage(error, isRTL ? 'فشل إنشاء الوسم' : 'Failed to create tag'))
+        toast.error(extractErrorMessage(error, t("auto.failedToCreateTag")))
       } finally {
         setIsCreatingTag(false)
       }
@@ -395,19 +395,17 @@ export default function AdminTests() {
   }))
 
   return (
-    <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="space-y-6" >
       <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
         <div>
           <h1 className="text-2xl font-bold text-text-heading flex items-center gap-3">
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
               <FlaskConical className="text-primary" style={{ width: 22, height: 22 }} />
             </div>
-            {isRTL ? 'إدارة الاختبارات' : 'Manage Tests'}
+            {t("auto.manageTests")}
           </h1>
           <p className="text-text-muted mt-1 text-sm">
-            {isRTL
-              ? 'أنشئ الاختبارات والوسوم وتابع نتائج المرضى والأطباء في مكان واحد.'
-              : 'Create tests and tags, then monitor all doctor and patient results in one place.'}
+            {t("auto.createTestsAndTagsThenMonitorAllDoctorAndPatientResultsInOnePlace")}
           </p>
         </div>
 
@@ -418,27 +416,27 @@ export default function AdminTests() {
             disabled={tags.length === 0}
           >
             <PlusCircle style={{ width: 18, height: 18 }} />
-            {isRTL ? 'إنشاء اختبار' : 'Create Test'}
+            {t("auto.createTest")}
           </Button>
         ) : activeTab === 'tags' ? (
           <Button onClick={() => setIsCreateTagModalOpen(true)} className="gap-2 shadow-lg shadow-primary/20">
             <PlusCircle style={{ width: 18, height: 18 }} />
-            {isRTL ? 'إنشاء وسم' : 'Create Tag'}
+            {t("auto.createTag")}
           </Button>
         ) : null}
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="p-4">
-          <p className="text-sm text-text-muted">{isRTL ? 'إجمالي الاختبارات' : 'Total Tests'}</p>
+          <p className="text-sm text-text-muted">{t("auto.totalTests")}</p>
           <p className="text-3xl font-bold text-text-heading mt-1">{testsWithTags.length}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-sm text-text-muted">{isRTL ? 'التصنيفات' : 'Tags'}</p>
+          <p className="text-sm text-text-muted">{t("auto.tags")}</p>
           <p className="text-3xl font-bold text-text-heading mt-1">{tagsCount}</p>
         </Card>
         <Card className="p-4">
-          <p className="text-sm text-text-muted">{isRTL ? 'إجمالي النتائج' : 'Total Results'}</p>
+          <p className="text-sm text-text-muted">{t("auto.totalResults")}</p>
           <p className="text-3xl font-bold text-text-heading mt-1">{resultsCount}</p>
         </Card>
       </div>
@@ -478,45 +476,45 @@ export default function AdminTests() {
           <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-3">
             <div className="relative">
               <Search
-                className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-text-muted`}
+                className={`absolute ${t("auto.start4")} top-1/2 -translate-y-1/2 text-text-muted`}
                 style={{ width: 18, height: 18 }}
               />
               <input
                 type="text"
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder={isRTL ? 'ابحث باسم الاختبار أو الوصف أو الوسم' : 'Search by test name, description, or tag'}
-                className={`w-full ${isRTL ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text transition-all`}
+                placeholder={t("auto.searchByTestNameDescriptionOrTag")}
+                className={`w-full ${t("auto.ps11Pe4")} py-3 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text transition-all`}
               />
             </div>
             <SelectDropdown
               value={selectedDiseaseFilter}
               onChange={(value) => setSelectedDiseaseFilter(String(value || ''))}
               options={[
-                { value: '', label: isRTL ? 'كل التصنيفات' : 'All Tags' },
+                { value: '', label: t("auto.allTags") },
                 ...tagOptions,
               ]}
-              placeholder={isRTL ? 'تصفية بالتصنيف' : 'Filter by tag'}
+              placeholder={t("auto.filterByTag")}
             />
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>{isRTL ? 'الاختبارات الحالية' : 'Current Tests'}</CardTitle>
+              <CardTitle>{t("auto.currentTests")}</CardTitle>
             </CardHeader>
             <CardContent>
               {testsLoading ? (
                 <div className="text-center py-12 text-text-muted">
                   <Loader2 className="w-12 h-12 mx-auto mb-3 opacity-40 animate-spin" />
-                  <p>{isRTL ? 'جاري تحميل الاختبارات...' : 'Loading tests...'}</p>
+                  <p>{t("auto.loadingTests")}</p>
                 </div>
               ) : filteredTests.length === 0 ? (
                 <div className="text-center py-12 text-text-muted">
                   <FlaskConical className="w-12 h-12 mx-auto mb-3 opacity-30" />
                   <p>
                     {search
-                      ? (isRTL ? 'لا توجد نتائج مطابقة' : 'No matching tests')
-                      : (isRTL ? 'لا توجد اختبارات مضافة بعد' : 'No tests added yet')}
+                      ? (t("auto.noMatchingTests"))
+                      : (t("auto.noTestsAddedYet"))}
                   </p>
                 </div>
               ) : (
@@ -529,7 +527,7 @@ export default function AdminTests() {
                       <div className="space-y-2 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-semibold text-text-heading text-lg">{test.name}</h3>
-                          <Badge variant="secondary">{test.tagName || (isRTL ? 'بدون وسم' : 'No tag')}</Badge>
+                          <Badge variant="secondary">{test.tagName || (t("auto.noTag"))}</Badge>
                         </div>
                         <p className="text-sm text-text-muted">{test.description}</p>
                         {test.url && (
@@ -540,7 +538,7 @@ export default function AdminTests() {
                             className="inline-flex items-center gap-1 text-primary text-sm hover:underline"
                           >
                             <ExternalLink className="w-4 h-4" />
-                            {isRTL ? 'فتح الرابط' : 'Open URL'}
+                            {t("auto.openUrl")}
                           </a>
                         )}
                       </div>
@@ -562,18 +560,18 @@ export default function AdminTests() {
         >
           <Card>
             <CardHeader>
-              <CardTitle>{isRTL ? 'وسوم الاختبارات' : 'Test Tags'}</CardTitle>
+              <CardTitle>{t("auto.testTags")}</CardTitle>
             </CardHeader>
             <CardContent>
               {tagsLoading ? (
                 <div className="text-center py-12 text-text-muted">
                   <Tag className="w-12 h-12 mx-auto mb-3 opacity-30 animate-pulse" />
-                  <p>{isRTL ? 'جاري تحميل الوسوم...' : 'Loading tags...'}</p>
+                  <p>{t("auto.loadingTags")}</p>
                 </div>
               ) : tags.length === 0 ? (
                 <div className="text-center py-12 text-text-muted">
                   <Tag className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                  <p>{isRTL ? 'لا توجد وسوم بعد' : 'No tags yet'}</p>
+                  <p>{t("auto.noTagsYet")}</p>
                 </div>
               ) : (
                 <div className="flex items-center gap-2 flex-wrap">
@@ -597,21 +595,21 @@ export default function AdminTests() {
         >
           <div className="relative">
             <Search
-              className={`absolute ${isRTL ? 'right-4' : 'left-4'} top-1/2 -translate-y-1/2 text-text-muted`}
+              className={`absolute ${t("auto.start4")} top-1/2 -translate-y-1/2 text-text-muted`}
               style={{ width: 18, height: 18 }}
             />
             <input
               type="text"
               value={resultsSearch}
               onChange={(event) => setResultsSearch(event.target.value)}
-              placeholder={isRTL ? 'ابحث بالمستخدم أو الاختبار أو النتيجة' : 'Search by user, test, or result'}
-              className={`w-full ${isRTL ? 'pr-11 pl-4' : 'pl-11 pr-4'} py-3 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text transition-all`}
+              placeholder={t("auto.searchByUserTestOrResult")}
+              className={`w-full ${t("auto.ps11Pe4")} py-3 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text transition-all`}
             />
           </div>
 
           <Card>
             <CardHeader>
-              <CardTitle>{isRTL ? 'نتائج جميع المستخدمين' : 'All User Results'}</CardTitle>
+              <CardTitle>{t("auto.allUserResults")}</CardTitle>
             </CardHeader>
             <CardContent>
               {filteredResults.length === 0 ? (
@@ -619,8 +617,8 @@ export default function AdminTests() {
                   <ClipboardCheck className="w-12 h-12 mx-auto mb-3 opacity-30" />
                   <p>
                     {resultsSearch
-                      ? (isRTL ? 'لا توجد نتائج مطابقة' : 'No matching results')
-                      : (isRTL ? 'لا توجد نتائج بعد' : 'No results yet')}
+                      ? (t("auto.noMatchingResults"))
+                      : (t("auto.noResultsYet"))}
                   </p>
                 </div>
               ) : (
@@ -631,15 +629,15 @@ export default function AdminTests() {
                       <div key={result.id} className="rounded-xl border border-border p-4 space-y-2">
                         <div className="flex items-center flex-wrap gap-2">
                           <h3 className="font-semibold text-text-heading">
-                            {test?.name || (isRTL ? 'اختبار محذوف' : 'Deleted test')}
+                            {test?.name || (t("auto.deletedTest"))}
                           </h3>
-                          <Badge variant="secondary">{result.userRole || (isRTL ? 'مستخدم' : 'User')}</Badge>
-                          <Badge variant="secondary">{result.userName || (isRTL ? 'بدون اسم' : 'Unnamed')}</Badge>
+                          <Badge variant="secondary">{result.userRole || (t("auto.user"))}</Badge>
+                          <Badge variant="secondary">{result.userName || (t("auto.unnamed"))}</Badge>
                           {test?.tagName && <Badge variant="secondary">{test.tagName}</Badge>}
                         </div>
                         <p className="text-sm text-text-muted whitespace-pre-wrap">{result.resultText}</p>
                         <p className="text-xs text-text-muted">
-                          {isRTL ? 'وقت الإدخال:' : 'Submitted at:'} {new Date(result.submittedAt).toLocaleString()}
+                          {t("auto.submittedAt")} {new Date(result.submittedAt).toLocaleString()}
                         </p>
                       </div>
                     )
@@ -654,31 +652,31 @@ export default function AdminTests() {
       <Modal
         isOpen={isCreateModalOpen}
         onClose={closeCreateModal}
-        title={isRTL ? 'إضافة اختبار جديد' : 'Add New Test'}
+        title={t("auto.addNewTest")}
         size="md"
       >
         <form onSubmit={handleSubmit} className="space-y-4 pt-2">
           <Input
-            label={isRTL ? 'اسم الاختبار' : 'Test Name'}
+            label={t("auto.testName")}
             name="name"
             value={formData.name}
             onChange={handleChange}
             error={errors.name}
-            placeholder={isRTL ? 'مثل: PHQ-9' : 'e.g. PHQ-9'}
+            placeholder={t("auto.egPhq9")}
           />
 
           <Textarea
-            label={isRTL ? 'الوصف' : 'Description'}
+            label={t("auto.description")}
             name="description"
             rows={3}
             value={formData.description}
             onChange={handleChange}
             error={errors.description}
-            placeholder={isRTL ? 'اكتب وصفا مختصرا للاختبار' : 'Write a short description for the test'}
+            placeholder={t("auto.writeAShortDescriptionForTheTest")}
           />
 
           <Input
-            label={isRTL ? 'الرابط' : 'URL'}
+            label={t("auto.url")}
             name="url"
             value={formData.url}
             onChange={handleChange}
@@ -687,7 +685,7 @@ export default function AdminTests() {
           />
 
           <SelectDropdown
-            label={isRTL ? 'الوسم' : 'Tag'}
+            label={t("auto.tag")}
             value={formData.tagId}
             onChange={(value) => {
               setFormData(prev => ({ ...prev, tagId: String(value) }))
@@ -696,19 +694,19 @@ export default function AdminTests() {
               }
             }}
             options={tagOptions}
-            placeholder={isRTL ? 'اختر وسم' : 'Select tag'}
+            placeholder={t("auto.selectTag")}
             error={errors.tag}
           />
 
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={closeCreateModal}>
-              {isRTL ? 'إلغاء' : 'Cancel'}
+              {t("auto.cancel")}
             </Button>
             <Button type="submit" disabled={isCreatingTest}>
-              {!isCreatingTest && <PlusCircle className="w-4 h-4 mr-2" />}
+              {!isCreatingTest && <PlusCircle className="w-4 h-4 me-2" />}
               {isCreatingTest
-                ? (isRTL ? 'جار الإنشاء...' : 'Creating...')
-                : (isRTL ? 'إنشاء الاختبار' : 'Create Test')}
+                ? (t("auto.creating"))
+                : (t("auto.createTest"))}
             </Button>
           </div>
         </form>
@@ -717,12 +715,12 @@ export default function AdminTests() {
       <Modal
         isOpen={isCreateTagModalOpen}
         onClose={closeCreateTagModal}
-        title={isRTL ? 'إنشاء وسم جديد' : 'Create New Tag'}
+        title={t("auto.createNewTag")}
         size="sm"
       >
         <form onSubmit={handleCreateTag} className="space-y-4 pt-2">
           <Input
-            label={isRTL ? 'اسم الوسم' : 'Tag Name'}
+            label={t("auto.tagName")}
             name="name"
             value={tagForm.name}
             onChange={(event) => {
@@ -732,29 +730,29 @@ export default function AdminTests() {
               }
             }}
             error={tagErrors.name}
-            placeholder={isRTL ? 'مثل: نفسي / سلوكي / قلق' : 'e.g. Psychological / Behavioral / Anxiety'}
+            placeholder={t("auto.egPsychologicalBehavioralAnxiety")}
           />
 
           <Textarea
-            label={isRTL ? 'الوصف' : 'Description'}
+            label={t("auto.description")}
             name="description"
             rows={3}
             value={tagForm.description}
             onChange={(event) => {
               setTagForm((prev) => ({ ...prev, description: event.target.value }))
             }}
-            placeholder={isRTL ? 'وصف اختياري للتصنيف المرضي' : 'Optional disease category description'}
+            placeholder={t("auto.optionalDiseaseCategoryDescription")}
           />
 
           <div className="flex items-center justify-end gap-2 pt-2">
             <Button type="button" variant="outline" onClick={closeCreateTagModal}>
-              {isRTL ? 'إلغاء' : 'Cancel'}
+              {t("auto.cancel")}
             </Button>
             <Button type="submit" disabled={isCreatingTag}>
-              <PlusCircle className="w-4 h-4 mr-2" />
+              <PlusCircle className="w-4 h-4 me-2" />
               {isCreatingTag
-                ? (isRTL ? 'جار الإنشاء...' : 'Creating...')
-                : (isRTL ? 'إنشاء الوسم' : 'Create Tag')}
+                ? (t("auto.creating"))
+                : (t("auto.createTag"))}
             </Button>
           </div>
         </form>

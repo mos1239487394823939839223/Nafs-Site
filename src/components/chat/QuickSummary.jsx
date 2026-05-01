@@ -8,11 +8,11 @@ export default function QuickSummary({ patientData, isOpen, onToggle }) {
   return (
     <div
       className={`
-        bg-background-paper ${isRTL ? 'border-r' : 'border-l'} border-border h-full overflow-y-auto
+        bg-background-paper border-s border-border h-full overflow-y-auto
         transition-all duration-300
         ${isOpen ? 'w-80' : 'w-0 overflow-hidden'}
       `}
-      dir={isRTL ? 'rtl' : 'ltr'}
+      
     >
       <div className="p-4">
         {/* Header */}
@@ -75,7 +75,7 @@ export default function QuickSummary({ patientData, isOpen, onToggle }) {
                     {test.status}
                   </span>
                 </div>
-                <span className={`text-xs text-text-light block ${isRTL ? 'text-right' : 'text-left'}`} dir="ltr">{test.date}</span>
+                <span className={`text-xs text-text-light block text-start`} dir="ltr">{test.date}</span>
               </div>
             ))}
           </div>
@@ -89,7 +89,7 @@ export default function QuickSummary({ patientData, isOpen, onToggle }) {
           </div>
           <div className="space-y-2">
             {patientData.medications?.map((med, index) => (
-              <div key={index} className={`p-2 bg-accent/10 rounded-xl ${isRTL ? 'text-right' : 'text-left'}`}>
+              <div key={index} className={`p-2 bg-accent/10 rounded-xl text-start`}>
                 <span className="text-sm text-text">{med}</span>
               </div>
             ))}
@@ -105,7 +105,7 @@ export default function QuickSummary({ patientData, isOpen, onToggle }) {
             </div>
             <div className="space-y-2">
               {patientData.allergies.map((allergy, index) => (
-                <div key={index} className={`p-2 bg-red-500/10 border border-red-500/20 rounded-xl ${isRTL ? 'text-right' : 'text-left'}`}>
+                <div key={index} className={`p-2 bg-red-500/10 border border-red-500/20 rounded-xl text-start`}>
                   <span className="text-sm text-red-600 dark:text-red-400 font-medium">{allergy}</span>
                 </div>
               ))}

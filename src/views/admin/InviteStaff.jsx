@@ -246,7 +246,7 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
                         key={level.value}
                         type="button"
                         onClick={() => setFormData(prev => ({ ...prev, permissions: level.value }))}
-                        className={`w-full rounded-xl border-2 p-4 text-left transition-all ${
+                        className={`w-full rounded-xl border-2 p-4 text-start transition-all ${
                           selected
                             ? 'border-primary bg-primary/5'
                             : 'border-border bg-background-subtle hover:border-primary/40 hover:bg-primary/3'
@@ -443,13 +443,13 @@ export default function InviteStaff() {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {/* Search */}
         <div className="relative max-w-xs w-full">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+          <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
           <input
             type="text"
             placeholder={t('common.search') || 'Search staff…'}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-border bg-background-subtle py-2.5 pl-10 pr-4 text-sm text-text-heading placeholder-text-muted outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
+            className="w-full rounded-xl border border-border bg-background-subtle py-2.5 ps-10 pe-4 text-sm text-text-heading placeholder-text-muted outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/20"
           />
         </div>
 
@@ -500,7 +500,7 @@ export default function InviteStaff() {
           </motion.div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-start border-collapse">
               <thead>
                 <tr className="border-b border-border bg-background-subtle">
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-muted">

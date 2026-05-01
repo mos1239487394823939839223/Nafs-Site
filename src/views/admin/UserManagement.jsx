@@ -251,7 +251,7 @@ function AddStaffModal({ open, onClose, onSuccess, t }) {
                                                 key={level.value}
                                                 type="button"
                                                 onClick={() => setFormData(prev => ({ ...prev, permissions: level.value }))}
-                                                className={`w-full rounded-xl border-2 p-4 text-left transition-all ${selected ? 'border-primary bg-primary/5' : 'border-border bg-background-subtle hover:border-primary/40 hover:bg-primary/3'}`}
+                                                className={`w-full rounded-xl border-2 p-4 text-start transition-all ${selected ? 'border-primary bg-primary/5' : 'border-border bg-background-subtle hover:border-primary/40 hover:bg-primary/3'}`}
                                             >
                                                 <div className="flex items-start gap-3">
                                                     <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${level.iconBg}`}>
@@ -673,7 +673,7 @@ export default function UserManagement() {
 
     return (
         <TooltipProvider>
-            <div className="space-y-6" dir={isRTL ? 'rtl' : 'ltr'}>
+            <div className="space-y-6" >
                 {/* Hero */}
                 <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-secondary/10 to-background-paper p-6">
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
@@ -738,21 +738,21 @@ export default function UserManagement() {
                         <TabsTrigger value="support">
                             <Headphones className="w-4 h-4" />
                             {t('admin.staff', 'Staff')}
-                            <span className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                            <span className="ms-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
                                 {supportStaff.length}
                             </span>
                         </TabsTrigger>
                         <TabsTrigger value="doctors">
                             <Stethoscope className="w-4 h-4" />
                             {t('admin.doctors')}
-                            <span className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                            <span className="ms-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
                                 {doctors.length}
                             </span>
                         </TabsTrigger>
                         <TabsTrigger value="patients">
                             <Users className="w-4 h-4" />
                             {t('admin.patients', 'Patients')}
-                            <span className="ml-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                            <span className="ms-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
                                 {patients.length}
                             </span>
                         </TabsTrigger>
@@ -760,18 +760,18 @@ export default function UserManagement() {
 
                             {/* Search Bar */}
                             <div className="relative">
-                        <Search className={`absolute ${isRTL ? 'right-3' : 'left-3'} top-1/2 -translate-y-1/2 w-4 h-4 text-text-light`} />
+                        <Search className={`absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light`} />
                         <input
                             type="text"
                             placeholder={`${t('common.search')} ${activeTab === 'doctors' ? t('admin.doctors') : t('admin.users')}...`}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className={`w-full sm:max-w-sm h-10 ${isRTL ? 'pr-10 pl-10' : 'pl-10 pr-10'} rounded-xl border border-border-light bg-background-subtle/50 text-sm text-text placeholder:text-text-light/50 hover:bg-background-subtle hover:border-border-dark focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-background transition-all`}
+                            className={`w-full sm:max-w-sm h-10 ${t("auto.ps10Pe10")} rounded-xl border border-border-light bg-background-subtle/50 text-sm text-text placeholder:text-text-light/50 hover:bg-background-subtle hover:border-border-dark focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-background transition-all`}
                         />
                         {searchTerm && (
                             <button
                                 onClick={() => setSearchTerm('')}
-                                className={`absolute ${isRTL ? 'left-3' : 'right-3'} top-1/2 -translate-y-1/2 text-text-light hover:text-text transition-colors`}
+                                className={`absolute end-3 top-1/2 -translate-y-1/2 text-text-light hover:text-text transition-colors`}
                             >
                                 <X className="w-4 h-4" />
                             </button>
@@ -1121,7 +1121,7 @@ export default function UserManagement() {
                                                     <User className="w-12 h-12 text-text-light/40" />
                                                 )}
                                             </div>
-                                            <label className="absolute -bottom-1 -right-1 p-2.5 bg-primary text-white rounded-full cursor-pointer hover:bg-primary-dark transition-all shadow-lg">
+                                            <label className="absolute -bottom-1 -end-1 p-2.5 bg-primary text-white rounded-full cursor-pointer hover:bg-primary-dark transition-all shadow-lg">
                                                 <Camera className="w-4 h-4" />
                                                 <input
                                                     type="file"
@@ -1141,7 +1141,7 @@ export default function UserManagement() {
                                             </label>
                                         </div>
 
-                                        <div className="flex-1 text-center md:text-left">
+                                        <div className="flex-1 text-center md:text-start">
                                             <h3 className="text-lg font-semibold text-text-heading">{t('settings.profilePhoto')}</h3>
                                             <p className="text-sm text-text-muted mt-1">Upload a clear professional photo for the doctor account.</p>
                                             <p className="text-xs text-text-light mt-2">Recommended: JPG or PNG, square ratio.</p>

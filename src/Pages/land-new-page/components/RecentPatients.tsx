@@ -102,7 +102,7 @@ export const RecentPatients = ({ patients = [], loading = false }: RecentPatient
               <div
                 key={p.BookingId ?? i}
                 className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 p-3 rounded-2xl hover:bg-muted/40 transition-colors"
-                dir={isRTL ? "rtl" : "ltr"}
+                
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <img

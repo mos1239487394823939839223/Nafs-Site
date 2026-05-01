@@ -25,7 +25,7 @@ export default function DailyAgenda() {
   const [loading, setLoading] = useState(true)
 
   const formatDateDisplay = (date) => {
-    return date.toLocaleDateString(isRTL ? 'ar-EG' : 'en-US', {
+    return date.toLocaleDateString(t("auto.enus"), {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -120,9 +120,9 @@ export default function DailyAgenda() {
   }
 
   return (
-    <div className="bg-background-paper rounded-2xl shadow-sm p-6 border border-border" dir={isRTL ? 'rtl' : 'ltr'}>
+    <div className="bg-background-paper rounded-2xl shadow-sm p-6 border border-border" >
       <div className={`flex items-center justify-between mb-6 ${isRTL ? 'flex-row-reverse' : ''}`}>
-        <div className={isRTL ? 'text-right' : 'text-left'}>
+        <div className="text-start">
           <h2 className="text-xl font-bold text-text-heading">{t('doctor.dailyAgenda', 'Daily Agenda')}</h2>
           <p className="text-sm text-text-muted mt-1" dir="auto">{formatDateDisplay(selectedDate)}</p>
         </div>
@@ -132,7 +132,7 @@ export default function DailyAgenda() {
             type="date"
             value={selectedDate.toISOString().split('T')[0]}
             onChange={handleDateChange}
-            className="absolute top-full right-0 mt-2 opacity-0 w-0 h-0"
+            className="absolute top-full end-0 mt-2 opacity-0 w-0 h-0"
           />
           <Button
             size="sm"
@@ -140,7 +140,7 @@ export default function DailyAgenda() {
             onClick={() => dateInputRef.current?.showPicker()}
             className={isRTL ? 'flex-row-reverse' : ''}
           >
-            <Calendar className={`w-4 h-4 ${isRTL ? 'ml-2' : 'mr-2'}`} />
+            <Calendar className={`w-4 h-4 me-2`} />
             {t('common.changeDate', 'Change Date')}
           </Button>
         </div>
@@ -151,7 +151,7 @@ export default function DailyAgenda() {
           <Loader2 className="w-8 h-8 text-primary animate-spin" />
         </div>
       ) : (
-        <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
+        <div className="space-y-2 max-h-[600px] overflow-y-auto pe-2">
           {timeSlots.map((slot, index) => (
             <div
               key={index}
@@ -160,7 +160,7 @@ export default function DailyAgenda() {
               ${getSlotColor(slot.type, slot.priority)}
               ${getSlotHoverColor(slot.type)}
               ${slot.type === 'appointment' ? 'cursor-pointer' : ''}
-              ${isRTL ? 'text-right' : 'text-left'}
+              text-start
             `}
             >
               <div className={`flex items-start gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
@@ -194,7 +194,7 @@ export default function DailyAgenda() {
                         <span className="font-semibold text-text-heading">{slot.patient}</span>
                         {slot.priority === 'urgent' && (
                           <Badge variant="danger" size="sm">
-                            <AlertCircle className={`w-3 h-3 ${isRTL ? 'ml-1' : 'mr-1'}`} />
+                            <AlertCircle className={`w-3 h-3 me-1`} />
                             {t('common.urgent', 'Urgent')}
                           </Badge>
                         )}
@@ -232,7 +232,7 @@ export default function DailyAgenda() {
       )}
 
       {/* Summary */}
-      <div className={`mt-6 pt-6 border-t border-border ${isRTL ? 'text-right' : 'text-left'}`}>
+      <div className={`mt-6 pt-6 border-t border-border text-start`}>
         <div className="grid grid-cols-3 gap-4 text-center">
           <div>
             <div className="text-2xl font-bold text-primary">{stats.appointments}</div>

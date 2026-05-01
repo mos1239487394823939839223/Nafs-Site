@@ -238,13 +238,13 @@ export default function AdminMessages() {
                             </Button>
                         </div>
                         <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
+                            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted" />
                             <input
                                 type="text"
                                 placeholder={t('chat.searchConversations')}
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 bg-background-subtle border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20"
+                                className="w-full ps-10 pe-4 py-2 bg-background-subtle border border-border rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20"
                             />
                         </div>
                     </div>
@@ -265,8 +265,8 @@ export default function AdminMessages() {
                                     key={room.Id || room.id}
                                     onClick={() => setActiveRoom(room)}
                                     className={`
-                                        w-full p-4 border-b border-border/50 text-left transition-all
-                                        ${(activeRoom?.Id || activeRoom?.id) === (room.Id || room.id) ? 'bg-primary/5 border-l-4 border-l-primary' : 'hover:bg-background-subtle'}
+                                        w-full p-4 border-b border-border/50 text-start transition-all
+                                        ${(activeRoom?.Id || activeRoom?.id) === (room.Id || room.id) ? 'bg-primary/5 border-s-4 border-s-primary' : 'hover:bg-background-subtle'}
                                     `}
                                 >
                                     <div className="flex items-center gap-3">
@@ -287,7 +287,7 @@ export default function AdminMessages() {
                                                     {room.OtherParticipantName || room.Name || 'Chat'}
                                                 </h4>
                                                 {room.UnreadCount > 0 && (
-                                                    <span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full ml-2">
+                                                    <span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full ms-2">
                                                         {room.UnreadCount}
                                                     </span>
                                                 )}

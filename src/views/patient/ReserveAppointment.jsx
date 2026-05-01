@@ -131,14 +131,14 @@ export default function ReserveAppointment() {
   };
 
   const formatCurrency = (amount) =>
-    `${Number(amount || 0).toLocaleString(isRTL ? "ar-EG" : "en-US")} EGP`;
+    `${Number(amount || 0).toLocaleString(t("auto.enus"))} EGP`;
 
   const getProviderUiMeta = (provider) => {
     if (!provider) {
       return {
         icon: AccountBalanceWallet,
-        label: isRTL ? "غير محدد" : "Not selected",
-        desc: isRTL ? "اختر وسيلة الدفع" : "Select payment provider",
+        label: t("auto.notSelected"),
+        desc: t("auto.selectPaymentProvider"),
         accent: "from-slate-100 to-slate-50",
         iconBg: "bg-slate-100",
         iconColor: "text-slate-600",
@@ -152,8 +152,8 @@ export default function ReserveAppointment() {
     if (isInsta) {
       return {
         icon: FlashOn,
-        label: provider?.Name || (isRTL ? "إنستا باي" : "InstaPay"),
-        desc: isRTL ? "تحويل فوري" : "Instant transfer",
+        label: provider?.Name || (t("auto.instapay")),
+        desc: t("auto.instantTransfer"),
         accent: "from-amber-100 to-orange-50",
         iconBg: "bg-amber-100",
         iconColor: "text-amber-700",
@@ -163,8 +163,8 @@ export default function ReserveAppointment() {
 
     return {
       icon: AccountBalanceWallet,
-      label: provider?.Name || (isRTL ? "محفظة رقمية" : "Digital Wallet"),
-      desc: isRTL ? "تحويل يدوي" : "Manual transfer",
+      label: provider?.Name || (t("auto.digitalWallet")),
+      desc: t("auto.manualTransfer"),
       accent: "from-emerald-100 to-teal-50",
       iconBg: "bg-emerald-100",
       iconColor: "text-emerald-700",
@@ -537,9 +537,7 @@ export default function ReserveAppointment() {
         if (selectedSlotKey === targetSlotKey) {
           setBookedSlot(null);
           toast.error(
-            isRTL
-              ? "تم إلغاء الموعد المحدد من الدكتور. اختر موعدًا آخر."
-              : "The selected slot was cancelled by the doctor. Please choose another slot.",
+            t("auto.theSelectedSlotWasCancelledByTheDoctorPleaseChooseAnotherSlot"),
           );
         }
       }
@@ -775,9 +773,7 @@ export default function ReserveAppointment() {
       sessionStart.getTime() - Date.now() < TWO_DAYS_IN_MS
     ) {
       toast.error(
-        isRTL
-          ? "يمكن الإلغاء قبل الموعد بـ 48 ساعة على الأقل"
-          : "Cancellation is allowed only at least 48 hours before the appointment",
+        t("auto.cancellationIsAllowedOnlyAtLeast48HoursBeforeTheAppointment"),
       );
       return;
     }
@@ -846,18 +842,14 @@ export default function ReserveAppointment() {
 
     if (!hasSelectedProvider) {
       toast.error(
-        isRTL
-          ? "يرجى اختيار وسيلة دفع أولًا"
-          : "Please choose a payment provider first",
+        t("auto.pleaseChooseAPaymentProviderFirst"),
       );
       return false;
     }
 
     if (!paymentScreenshot) {
       toast.error(
-        isRTL
-          ? "يرجى إرفاق صورة التحويل"
-          : "Please attach a transfer screenshot",
+        t("auto.pleaseAttachATransferScreenshot"),
       );
       return false;
     }
@@ -869,9 +861,7 @@ export default function ReserveAppointment() {
 
       if (!screenshotUrl) {
         toast.error(
-          isRTL
-            ? "فشل رفع صورة التحويل"
-            : "Failed to upload transfer screenshot",
+          t("auto.failedToUploadTransferScreenshot"),
         );
         return false;
       }
@@ -889,9 +879,7 @@ export default function ReserveAppointment() {
       }
 
       toast.success(
-        isRTL
-          ? "تم إرسال إثبات الدفع. سيظل الحجز قيد المراجعة حتى يراجعه الدعم الفني."
-          : "Payment proof submitted. Booking will stay pending until technical support reviews it.",
+        t("auto.paymentProofSubmittedBookingWillStayPendingUntilTechnicalSupportReviewsIt"),
       );
       fetchPatientBookings(bookingsPagination.pageIndex);
       fetchBookingsForSlots();
@@ -899,7 +887,7 @@ export default function ReserveAppointment() {
     } catch (error) {
       toast.error(
         error?.response?.data?.Message ||
-          (isRTL ? "فشل إرسال إثبات الدفع" : "Failed to submit payment proof"),
+          (t("auto.failedToSubmitPaymentProof")),
       );
       return false;
     } finally {
@@ -926,18 +914,14 @@ export default function ReserveAppointment() {
       selectedPaymentProvider === ""
     ) {
       toast.error(
-        isRTL
-          ? "يرجى اختيار وسيلة دفع أولًا"
-          : "Please choose a payment provider first",
+        t("auto.pleaseChooseAPaymentProviderFirst"),
       );
       return;
     }
 
     if (!paymentScreenshot) {
       toast.error(
-        isRTL
-          ? "يرجى إرفاق صورة التحويل"
-          : "Please attach a transfer screenshot",
+        t("auto.pleaseAttachATransferScreenshot"),
       );
       return;
     }
@@ -1085,9 +1069,7 @@ export default function ReserveAppointment() {
           fetchDoctorSlots(selectedDoctor.Id, selectedDate);
           fetchBookingsForSlots();
           toast.error(
-            isRTL
-              ? "هذا الموعد لم يعد متاحًا. اختر موعدًا آخر."
-              : "This slot is no longer available. Please choose another slot.",
+            t("auto.thisSlotIsNoLongerAvailablePleaseChooseAnotherSlot"),
           );
           return;
         }
@@ -1108,9 +1090,7 @@ export default function ReserveAppointment() {
         setBookingPendingReview(true);
         setStep(3);
         toast.success(
-          isRTL
-            ? "تم إرسال طلب الحجز والدفع بنجاح وهو الآن قيد المراجعة."
-            : "Booking and payment request submitted successfully and is now pending review.",
+          t("auto.bookingAndPaymentRequestSubmittedSuccessfullyAndIsNowPendingReview"),
         );
       } else {
         toast.error(response.Message || t("errors.bookingFailed"));
@@ -1127,9 +1107,7 @@ export default function ReserveAppointment() {
         fetchDoctorSlots(selectedDoctor.Id, selectedDate);
         fetchBookingsForSlots();
         toast.error(
-          isRTL
-            ? "هذا الموعد لم يعد متاحًا. اختر موعدًا آخر."
-            : "This slot is no longer available. Please choose another slot.",
+          t("auto.thisSlotIsNoLongerAvailablePleaseChooseAnotherSlot"),
         );
       } else {
         toast.error(errorMsg);
@@ -1286,7 +1264,7 @@ export default function ReserveAppointment() {
   return (
     <div
       className="max-w-6xl mx-auto space-y-6 p-4 md:p-6"
-      dir={isRTL ? "rtl" : "ltr"}
+      
     >
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
@@ -1340,7 +1318,7 @@ export default function ReserveAppointment() {
       {(mainTab === "all" || mainTab === "available") ? (
         <div className="space-y-6">
           {step > 1 && step < 3 && (
-            <div className={`flex ${isRTL ? "justify-end" : "justify-start"}`}>
+            <div className={`flex ${t("auto.justifystart")}`}>
               <Button
                 variant="ghost"
                 onClick={() => {
@@ -1467,7 +1445,7 @@ export default function ReserveAppointment() {
                                 </TableHead>
                                 <TableHead
                                   className={`w-[15%] ${
-                                    isRTL ? "text-left" : "text-right"
+                                    "text-end"
                                   }`}
                                 >
                                   {t("common.action")}
@@ -1507,9 +1485,9 @@ export default function ReserveAppointment() {
                                               {doctor.NextAvailableSlot && (
                                                 <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-[11px] font-medium border border-emerald-200 dark:border-emerald-700">
                                                   <Clock className="w-3 h-3 flex-shrink-0" />
-                                                  {new Date(doctor.NextAvailableSlot).toLocaleDateString(isRTL ? "ar-EG" : "en-US", { month: "short", day: "numeric" })}
+                                                  {new Date(doctor.NextAvailableSlot).toLocaleDateString(t("auto.enus"), { month: "short", day: "numeric" })}
                                                   {" · "}
-                                                  {new Date(doctor.NextAvailableSlot).toLocaleTimeString(isRTL ? "ar-EG" : "en-US", { hour: "numeric", minute: "2-digit" })}
+                                                  {new Date(doctor.NextAvailableSlot).toLocaleTimeString(t("auto.enus"), { hour: "numeric", minute: "2-digit" })}
                                                 </span>
                                               )}
                                               <p className="text-xs text-text-muted">
@@ -1559,7 +1537,7 @@ export default function ReserveAppointment() {
                                     </TableCell>
                                     <TableCell
                                       className={`py-4 ${
-                                        isRTL ? "text-left" : "text-right"
+                                        "text-end"
                                       }`}
                                     >
                                       <Button
@@ -1611,7 +1589,7 @@ export default function ReserveAppointment() {
                                     {/* Header: Image & Name */}
                                     <div className="flex items-start gap-4 mb-3">
                                       <div
-                                        className={`w-16 h-16 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center border shadow-inner ml-0 rtl:ml-3 mr-3 rtl:mr-0 ${specialtyTheme.avatar}`}
+                                        className={`w-16 h-16 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center border shadow-inner ms-0 rtl:ms-3 me-3 rtl:me-0 ${specialtyTheme.avatar}`}
                                       >
                                         {doctor.Image ? (
                                           <img
@@ -1623,7 +1601,7 @@ export default function ReserveAppointment() {
                                           <User className="w-8 h-8 text-primary" />
                                         )}
                                       </div>
-                                      <div className="flex-1 min-w-0 flex flex-col justify-center text-left rtl:text-right mt-1">
+                                      <div className="flex-1 min-w-0 flex flex-col justify-center text-start rtl:text-end mt-1">
                                         <h3 className="font-bold text-text-heading text-base sm:text-lg truncate leading-tight mb-1">
                                           {doctor.Name}
                                         </h3>
@@ -1648,10 +1626,10 @@ export default function ReserveAppointment() {
                                           <div className="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs font-medium border border-emerald-200 dark:border-emerald-700">
                                             <Clock className="w-3.5 h-3.5 flex-shrink-0" />
                                             <span>
-                                              {isRTL ? "أقرب موعد:" : "Next:"}{" "}
-                                              {new Date(doctor.NextAvailableSlot).toLocaleDateString(isRTL ? "ar-EG" : "en-US", { weekday: "short", month: "short", day: "numeric" })}
+                                              {t("auto.next")}{" "}
+                                              {new Date(doctor.NextAvailableSlot).toLocaleDateString(t("auto.enus"), { weekday: "short", month: "short", day: "numeric" })}
                                               {" · "}
-                                              {new Date(doctor.NextAvailableSlot).toLocaleTimeString(isRTL ? "ar-EG" : "en-US", { hour: "numeric", minute: "2-digit" })}
+                                              {new Date(doctor.NextAvailableSlot).toLocaleTimeString(t("auto.enus"), { hour: "numeric", minute: "2-digit" })}
                                             </span>
                                           </div>
                                         )}
@@ -1660,7 +1638,7 @@ export default function ReserveAppointment() {
 
                                     {/* Description */}
                                     <p
-                                      className="text-xs sm:text-[13px] text-text-muted leading-relaxed line-clamp-3 mb-5 mt-2 flex-grow text-left rtl:text-right"
+                                      className="text-xs sm:text-[13px] text-text-muted leading-relaxed line-clamp-3 mb-5 mt-2 flex-grow text-start rtl:text-end"
                                       title={doctor.Description}
                                     >
                                       {doctor.Description ||
@@ -1784,7 +1762,7 @@ export default function ReserveAppointment() {
                   <CardContent className="p-5 md:p-6">
                     <div
                       className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${
-                        isRTL ? "text-right" : "text-left"
+                        "text-start"
                       }`}
                     >
                       <div
@@ -1809,7 +1787,7 @@ export default function ReserveAppointment() {
                         <div className="flex-1 space-y-3">
                           <div>
                             <h2 className="text-2xl font-bold text-text-heading leading-tight">
-                              {isRTL ? "د." : "Dr."} {selectedDoctor.Name}
+                              {t("auto.dr")} {selectedDoctor.Name}
                             </h2>
                             <div
                               className={`mt-2 flex items-center gap-2 ${
@@ -1830,7 +1808,7 @@ export default function ReserveAppointment() {
                                 4.8
                               </span>
                               <span className="text-xs text-text-muted">
-                                {isRTL ? "(٢٤ مراجعة)" : "(24 reviews)"}
+                                {t("auto.24Reviews")}
                               </span>
                             </div>
                           </div>
@@ -1866,24 +1844,22 @@ export default function ReserveAppointment() {
                       <div className="lg:col-span-5 grid grid-cols-2 gap-3">
                         <div className="p-4 bg-background-subtle rounded-xl border border-border/60">
                           <p className="text-xs text-text-muted mb-1">
-                            {isRTL ? "سنوات الخبرة" : "Experience"}
+                            {t("auto.experience")}
                           </p>
                           <p className="font-bold text-text-heading text-base">
                             {selectedDoctor.YearsOfExperience || "—"}{" "}
-                            {isRTL ? "سنة" : "yrs"}
+                            {t("auto.yrs")}
                           </p>
                         </div>
 
                         <div className="p-4 bg-background-subtle rounded-xl border border-border/60">
                           <p className="text-xs text-text-muted mb-1">
-                            {isRTL ? "رسوم الاستشارة" : "Consultation Fee"}
+                            {t("auto.consultationFee")}
                           </p>
                           <p className="font-bold text-text-heading text-base">
                             {selectedDoctor.ConsultationFee
                               ? `${selectedDoctor.ConsultationFee} EGP`
-                              : isRTL
-                              ? "غير محدد"
-                              : "Not specified"}
+                              : t("auto.notSpecified")}
                           </p>
                         </div>
 
@@ -1922,7 +1898,7 @@ export default function ReserveAppointment() {
                               size="sm"
                               onClick={() => setIsDocsModalOpen(true)}
                             >
-                              {isRTL ? "عرض" : "View"}
+                              {t("auto.view")}
                             </Button>
                           </div>
                         </div>
@@ -1951,7 +1927,7 @@ export default function ReserveAppointment() {
                             isRTL ? "flex-row-reverse" : ""
                           }`}
                         >
-                          <div className={isRTL ? "text-right" : ""}>
+                          <div className={isRTL ? "text-end" : ""}>
                             <h3 className="text-lg md:text-xl font-bold text-text-heading flex items-center gap-2">
                               <Calendar className="w-5 h-5 text-primary" />
                               {t("patient.selectTimeSlot")}
@@ -1963,7 +1939,7 @@ export default function ReserveAppointment() {
                           <div className="hidden sm:flex items-center gap-2 text-xs bg-primary/10 text-primary px-3 py-1.5 rounded-full border border-primary/20">
                             <Clock className="w-4 h-4" />
                             <span>
-                              {isRTL ? "اختر موعدًا واحدًا" : "Pick one slot"}
+                              {t("auto.pickOneSlot")}
                             </span>
                           </div>
                         </div>
@@ -1971,10 +1947,10 @@ export default function ReserveAppointment() {
                         {/* Period filter chips + Available-only toggle */}
                         <div className="flex flex-wrap items-center gap-2">
                           {[
-                            { id: "all", labelEn: "All 🗓", labelAr: "الكل 🗓" },
-                            { id: "morning", labelEn: "Morning 🌅", labelAr: "الصباح 🌅" },
-                            { id: "afternoon", labelEn: "Afternoon ☀️", labelAr: "الظهيرة ☀️" },
-                            { id: "evening", labelEn: "Evening 🌙", labelAr: "المساء 🌙" },
+                            { id: "all", label: `${t("auto.all")} 🗓` },
+                            { id: "morning", label: `${t("auto.morning")} 🌅` },
+                            { id: "afternoon", label: `${t("auto.afternoon")} ☀️` },
+                            { id: "evening", label: `${t("auto.evening")} 🌙` },
                           ].map((chip) => (
                             <button
                               key={chip.id}
@@ -1985,7 +1961,7 @@ export default function ReserveAppointment() {
                                   : "bg-background-paper text-text-muted border-border hover:border-primary/50 hover:text-primary"
                               }`}
                             >
-                              {isRTL ? chip.labelAr : chip.labelEn}
+                              {chip.label}
                             </button>
                           ))}
                           <button
@@ -1996,7 +1972,7 @@ export default function ReserveAppointment() {
                                 : "bg-background-paper text-text-muted border-border hover:border-emerald-500/50 hover:text-emerald-600"
                             }`}
                           >
-                            {isRTL ? "المتاحة فقط" : "Available only"}
+                            {t("auto.availableOnly")}
                           </button>
                         </div>
 
@@ -2004,20 +1980,20 @@ export default function ReserveAppointment() {
                         <div className="flex flex-wrap items-center gap-4 text-xs text-text-muted">
                           <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full bg-primary block" />
-                            <span>{isRTL ? "محدد" : "Selected"}</span>
+                            <span>{t("auto.selected")}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 block" />
-                            <span>{isRTL ? "متاح" : "Available"}</span>
+                            <span>{t("auto.available")}</span>
                           </div>
                           <div className="flex items-center gap-2">
                             <span className="w-2.5 h-2.5 rounded-full bg-amber-500 block" />
-                            <span>{isRTL ? "طلبي" : "My request"}</span>
+                            <span>{t("auto.myRequest")}</span>
                           </div>
                           {!slotShowAvailableOnly && (
                             <div className="flex items-center gap-2">
                               <span className="w-2.5 h-2.5 rounded-full bg-slate-400 block" />
-                              <span>{isRTL ? "محجوز" : "Booked"}</span>
+                              <span>{t("auto.booked")}</span>
                             </div>
                           )}
                         </div>
@@ -2124,14 +2100,14 @@ export default function ReserveAppointment() {
                                         </span>
                                         <span className="text-sm text-text-muted">
                                           {date.toLocaleDateString(
-                                            isRTL ? "ar-EG" : "en-US",
+                                            t("auto.enus"),
                                             { month: "short", day: "numeric" },
                                           )}
                                         </span>
                                         {date.toDateString() ===
                                           new Date().toDateString() && (
                                           <span className="text-xs bg-primary text-white px-2 py-0.5 rounded-full">
-                                            {isRTL ? "اليوم" : "Today"}
+                                            {t("auto.today")}
                                           </span>
                                         )}
                                       </div>
@@ -2143,34 +2119,30 @@ export default function ReserveAppointment() {
                                       >
                                         <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 border border-primary/25 text-primary">
                                           {totalCount}{" "}
-                                          {isRTL
-                                            ? "إجمالي المواعيد"
-                                            : "total slots"}
+                                          {t("auto.totalSlots")}
                                         </span>
                                         {availableCount > 0 && (
                                           <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">
                                             {availableCount}{" "}
-                                            {isRTL ? "متاح" : "available"}
+                                            {t("auto.available")}
                                           </span>
                                         )}
                                         {myRequestsCount > 0 && (
                                           <span className="text-xs px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
                                             {myRequestsCount}{" "}
-                                            {isRTL ? "طلبي" : "my request"}
+                                            {t("auto.myRequest")}
                                           </span>
                                         )}
                                         {bookedCount > 0 && (
                                           <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 border border-slate-300 text-slate-700">
                                             {bookedCount}{" "}
-                                            {isRTL ? "محجوز" : "booked"}
+                                            {t("auto.booked")}
                                           </span>
                                         )}
                                         {availableCount === 0 &&
                                           myRequestsCount === 0 && (
                                             <span className="text-xs px-2.5 py-1 rounded-full bg-background-subtle border border-border text-text-muted">
-                                              {isRTL
-                                                ? "غير متاح"
-                                                : "Unavailable"}
+                                              {t("auto.unavailable")}
                                             </span>
                                           )}
                                       </div>
@@ -2192,9 +2164,7 @@ export default function ReserveAppointment() {
                                       const periodBuckets = [
                                         {
                                           id: "early",
-                                          label: isRTL
-                                            ? "الصباح المبكر"
-                                            : "Early Morning",
+                                          label: t("auto.earlyMorning"),
                                           min: 0,
                                           max: 8,
                                           chipClass:
@@ -2202,7 +2172,7 @@ export default function ReserveAppointment() {
                                         },
                                         {
                                           id: "morning",
-                                          label: isRTL ? "الصباح" : "Morning",
+                                          label: t("auto.morning"),
                                           min: 8,
                                           max: 12,
                                           chipClass:
@@ -2210,9 +2180,7 @@ export default function ReserveAppointment() {
                                         },
                                         {
                                           id: "afternoon",
-                                          label: isRTL
-                                            ? "بعد الظهر"
-                                            : "Afternoon",
+                                          label: t("auto.afternoon"),
                                           min: 12,
                                           max: 17,
                                           chipClass:
@@ -2220,7 +2188,7 @@ export default function ReserveAppointment() {
                                         },
                                         {
                                           id: "evening",
-                                          label: isRTL ? "المساء" : "Evening",
+                                          label: t("auto.evening"),
                                           min: 17,
                                           max: 24,
                                           chipClass:
@@ -2281,7 +2249,7 @@ export default function ReserveAppointment() {
                                                   className={`text-[11px] px-2 py-0.5 rounded-full border font-medium ${bucket.chipClass}`}
                                                 >
                                                   {bucket.slots.length}{" "}
-                                                  {isRTL ? "موعد" : "slots"}
+                                                  {t("auto.slots")}
                                                 </span>
                                               </div>
 
@@ -2403,18 +2371,14 @@ export default function ReserveAppointment() {
                                                         )}
                                                         {isBookedByOthers && (
                                                           <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 border border-slate-300 text-slate-700">
-                                                            {isRTL
-                                                              ? "محجوز"
-                                                              : "Booked"}
+                                                            {t("auto.booked")}
                                                           </span>
                                                         )}
                                                         {!myBooking &&
                                                           !isBookedByOthers &&
                                                           !isSelected && (
                                                             <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100/80 border border-emerald-300/70 text-emerald-700">
-                                                              {isRTL
-                                                                ? "متاح"
-                                                                : "Available"}
+                                                              {t("auto.available")}
                                                             </span>
                                                           )}
                                                       </div>
@@ -2424,9 +2388,7 @@ export default function ReserveAppointment() {
                                                         isAvailableSlot) && (
                                                         <div
                                                           className={`mt-1.5 text-[11px] font-medium opacity-85 flex items-center gap-1 ${
-                                                            isRTL
-                                                              ? "flex-row-reverse text-right"
-                                                              : "text-left"
+                                                            "text-start"
                                                           }`}
                                                         >
                                                           <Clock className="w-3 h-3" />
@@ -2434,9 +2396,7 @@ export default function ReserveAppointment() {
                                                             {detailParts.join(
                                                               " • ",
                                                             ) ||
-                                                              (isRTL
-                                                                ? "اضغط للحجز"
-                                                                : "Tap to reserve")}
+                                                              (t("auto.tapToReserve"))}
                                                           </span>
                                                         </div>
                                                       )}
@@ -2475,7 +2435,7 @@ export default function ReserveAppointment() {
                     <Card className="p-5 md:p-6 sticky top-4 border border-border/80">
                       <h3
                         className={`font-bold text-lg text-text-heading ${
-                          isRTL ? "text-right" : ""
+                          isRTL ? "text-end" : ""
                         }`}
                       >
                         {t("patient.bookingSummary")}
@@ -2501,7 +2461,7 @@ export default function ReserveAppointment() {
                             )}
                           </div>
 
-                          <div className={isRTL ? "text-right" : ""}>
+                          <div className={isRTL ? "text-end" : ""}>
                             <p className="text-xs text-text-light">
                               {t("common.doctor")}
                             </p>
@@ -2519,7 +2479,7 @@ export default function ReserveAppointment() {
                               }`}
                             >
                               <Stethoscope className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                              <div className={isRTL ? "text-right" : ""}>
+                              <div className={isRTL ? "text-end" : ""}>
                                 <p className="text-xs text-text-light">
                                   {t("common.specialty")}
                                 </p>
@@ -2535,7 +2495,7 @@ export default function ReserveAppointment() {
                         <div className="rounded-xl border border-border bg-background-subtle p-3.5">
                           <p
                             className={`text-xs text-text-muted mb-1 ${
-                              isRTL ? "text-right" : ""
+                              isRTL ? "text-end" : ""
                             }`}
                           >
                             {t("patient.selectedTime")}
@@ -2543,7 +2503,7 @@ export default function ReserveAppointment() {
                           {bookedSlot ? (
                             <p
                               className={`font-semibold text-text-heading text-sm ${
-                                isRTL ? "text-right" : ""
+                                isRTL ? "text-end" : ""
                               }`}
                               dir="ltr"
                             >
@@ -2553,34 +2513,28 @@ export default function ReserveAppointment() {
                           ) : (
                             <p
                               className={`text-sm text-text-muted ${
-                                isRTL ? "text-right" : ""
+                                isRTL ? "text-end" : ""
                               }`}
                             >
-                              {isRTL
-                                ? "لم يتم اختيار موعد بعد"
-                                : "No slot selected yet"}
+                              {t("auto.noSlotSelectedYet")}
                             </p>
                           )}
                         </div>
 
                         <div
-                          className={`space-y-2 ${isRTL ? "text-right" : ""}`}
+                          className={`space-y-2 ${isRTL ? "text-end" : ""}`}
                         >
                           <p className="text-xs text-text-muted font-semibold">
-                            {isRTL ? "طريقة الدفع" : "Payment Method"}
+                            {t("auto.paymentMethod")}
                           </p>
                           {paymentProvidersLoading && (
                             <p className="text-xs text-text-muted">
-                              {isRTL
-                                ? "جاري تحميل وسائل الدفع..."
-                                : "Loading payment providers..."}
+                              {t("auto.loadingPaymentProviders")}
                             </p>
                           )}
                           <div className="rounded-xl border border-border bg-background-subtle p-3">
                             <label className="text-[11px] text-text-muted block mb-1.5">
-                              {isRTL
-                                ? "اختر وسيلة الدفع"
-                                : "Choose payment provider"}
+                              {t("auto.choosePaymentProvider")}
                             </label>
                             <select
                               value={selectedPaymentProvider}
@@ -2596,9 +2550,7 @@ export default function ReserveAppointment() {
                             >
                               {availablePaymentProviders.length === 0 ? (
                                 <option value="">
-                                  {isRTL
-                                    ? "لا توجد وسائل دفع متاحة حاليًا"
-                                    : "No payment providers available right now"}
+                                  {t("auto.noPaymentProvidersAvailableRightNow")}
                                 </option>
                               ) : null}
                               {availablePaymentProviders.map((provider) => (
@@ -2615,14 +2567,12 @@ export default function ReserveAppointment() {
 
                           <div className="rounded-xl border border-border bg-background-paper p-3 mt-3 space-y-2">
                             <p className="text-[11px] text-text-muted">
-                              {isRTL ? "تعليمات الدفع" : "Payment Instructions"}
+                              {t("auto.paymentInstructions")}
                             </p>
 
                             {paymentInstructionLoading ? (
                               <p className="text-xs text-text-muted">
-                                {isRTL
-                                  ? "جاري تحميل تعليمات الدفع..."
-                                  : "Loading payment instructions..."}
+                                {t("auto.loadingPaymentInstructions")}
                               </p>
                             ) : paymentInstruction ? (
                               <>
@@ -2634,7 +2584,7 @@ export default function ReserveAppointment() {
 
                                 {paymentInstruction?.AccountNumber ? (
                                   <p className="text-xs text-text-muted">
-                                    {isRTL ? "رقم الحساب:" : "Account Number:"}{" "}
+                                    {t("auto.accountNumber")}{" "}
                                     <span className="font-mono text-text-heading font-semibold">
                                       {paymentInstruction.AccountNumber}
                                     </span>
@@ -2643,7 +2593,7 @@ export default function ReserveAppointment() {
 
                                 {paymentInstruction?.AccountName ? (
                                   <p className="text-xs text-text-muted">
-                                    {isRTL ? "اسم الحساب:" : "Account Name:"}{" "}
+                                    {t("auto.accountName")}{" "}
                                     <span className="text-text-heading font-medium">
                                       {paymentInstruction.AccountName}
                                     </span>
@@ -2652,34 +2602,30 @@ export default function ReserveAppointment() {
                               </>
                             ) : (
                               <p className="text-xs text-text-muted">
-                                {isRTL
-                                  ? "لا توجد تعليمات متاحة لهذه الوسيلة حاليًا."
-                                  : "No instructions are currently available for this provider."}
+                                {t("auto.noInstructionsAreCurrentlyAvailableForThisProvider")}
                               </p>
                             )}
                           </div>
                         </div>
 
                         <div
-                          className={`space-y-1 ${isRTL ? "text-right" : ""}`}
+                          className={`space-y-1 ${isRTL ? "text-end" : ""}`}
                         >
                           <p className="text-xs text-text-muted">
-                            {isRTL ? "قيمة الجلسة" : "Session Fee"}
+                            {t("auto.sessionFee")}
                           </p>
                           <p className="font-semibold text-text-heading text-base">
                             {bookingBaseFee > 0
                               ? formatCurrency(bookingBaseFee)
-                              : isRTL
-                              ? "غير محدد"
-                              : "Not specified"}
+                              : t("auto.notSpecified")}
                           </p>
                         </div>
 
                         <div
-                          className={`space-y-1 ${isRTL ? "text-right" : ""}`}
+                          className={`space-y-1 ${isRTL ? "text-end" : ""}`}
                         >
                           <p className="text-xs text-text-muted">
-                            {isRTL ? "رسوم التحويل" : "Transfer Fees"}
+                            {t("auto.transferFees")}
                           </p>
                           <p className="font-semibold text-text-heading text-base">
                             {bookingBaseFee > 0
@@ -2690,11 +2636,11 @@ export default function ReserveAppointment() {
 
                         <div
                           className={`pt-3 border-t border-border ${
-                            isRTL ? "text-right" : ""
+                            isRTL ? "text-end" : ""
                           }`}
                         >
                           <p className="text-xs text-text-muted">
-                            {isRTL ? "الإجمالي" : "Total Price"}
+                            {t("auto.totalPrice")}
                           </p>
                           <p className="font-bold text-lg text-primary">
                             {bookingBaseFee > 0
@@ -2710,7 +2656,7 @@ export default function ReserveAppointment() {
                         onClick={handleConfirmBookingClick}
                       >
                         {loading ? (
-                          <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                          <Loader2 className="w-4 h-4 animate-spin me-2" />
                         ) : null}
                         {t("patient.confirmAppointment")}
                       </Button>
@@ -2722,7 +2668,7 @@ export default function ReserveAppointment() {
                 <Modal
                   isOpen={isPaymentModalOpen}
                   onClose={() => setIsPaymentModalOpen(false)}
-                  title={isRTL ? "تفاصيل الدفع" : "Payment Details"}
+                  title={t("auto.paymentDetails")}
                   size="md"
                 >
                   <div className="space-y-5">
@@ -2752,9 +2698,7 @@ export default function ReserveAppointment() {
                           {activeProviderMeta.label}
                         </p>
                         <p className="text-xs text-text-muted">
-                          {isRTL
-                            ? "يرجى اتباع التعليمات بدقة"
-                            : "Please follow the instructions carefully"}
+                          {t("auto.pleaseFollowTheInstructionsCarefully")}
                         </p>
                       </div>
                     </div>
@@ -2762,7 +2706,7 @@ export default function ReserveAppointment() {
                     {/* Instructions */}
                     <div className="bg-background-subtle rounded-xl p-4 space-y-3">
                       <p className="text-sm font-bold text-text-heading">
-                        {isRTL ? "تعليمات التحويل" : "Transfer Instructions"}
+                        {t("auto.transferInstructions")}
                       </p>
                       <div className="space-y-2 text-sm text-text-muted">
                         <div className="flex items-start gap-2">
@@ -2781,13 +2725,13 @@ export default function ReserveAppointment() {
                           </span>
                           <div>
                             <p className="text-text-heading font-semibold">
-                              {isRTL ? "إلى الحساب:" : "To account:"}
+                              {t("auto.toAccount")}
                             </p>
                             <p className="font-mono text-primary text-base font-bold mt-0.5">
                               {paymentInstruction?.AccountNumber || "—"}
                             </p>
                             <p className="text-xs text-text-muted mt-0.5">
-                              {isRTL ? "اسم الحساب:" : "Account name:"}{" "}
+                              {t("auto.accountName")}{" "}
                               {paymentInstruction?.AccountName || "—"}
                             </p>
                           </div>
@@ -2805,7 +2749,7 @@ export default function ReserveAppointment() {
                             {paymentInstruction?.Instructions ? 4 : 3}
                           </span>
                           <p>
-                            {isRTL ? "رسوم الجلسة:" : "Session Fee:"}{" "}
+                            {t("auto.sessionFee")}{" "}
                             <span className="font-bold text-text-heading">
                               {bookingBaseFee > 0
                                 ? formatCurrency(bookingBaseFee)
@@ -2818,7 +2762,7 @@ export default function ReserveAppointment() {
                             {paymentInstruction?.Instructions ? 5 : 4}
                           </span>
                           <p>
-                            {isRTL ? "رسوم التحويل:" : "Transfer Fees:"}{" "}
+                            {t("auto.transferFees")}{" "}
                             <span className="font-bold text-text-heading">
                               {bookingBaseFee > 0
                                 ? formatCurrency(transferFee)
@@ -2831,7 +2775,7 @@ export default function ReserveAppointment() {
                             {paymentInstruction?.Instructions ? 6 : 5}
                           </span>
                           <p>
-                            {isRTL ? "الإجمالي المطلوب:" : "Total amount:"}{" "}
+                            {t("auto.totalAmount")}{" "}
                             <span className="font-bold text-text-heading">
                               {bookingBaseFee > 0
                                 ? formatCurrency(bookingTotalFee)
@@ -2844,9 +2788,7 @@ export default function ReserveAppointment() {
                             {paymentInstruction?.Instructions ? 7 : 6}
                           </span>
                           <p>
-                            {isRTL
-                              ? "التقط سكرين شوت وارفعه أدناه"
-                              : "Take a screenshot and upload it below"}
+                            {t("auto.takeAScreenshotAndUploadItBelow")}
                           </p>
                         </div>
                       </div>
@@ -2856,12 +2798,10 @@ export default function ReserveAppointment() {
                     {activeProviderMeta.requireReference && (
                       <div>
                         <label className="text-sm font-semibold text-text-heading block mb-1.5">
-                          <ReceiptLong className="w-4 h-4 inline-block mr-1" />
-                          {isRTL
-                            ? "رقم المرجع (Reference Number)"
-                            : "Reference Number"}
-                          <span className="text-text-muted ml-1">
-                            ({isRTL ? "اختياري" : "optional"})
+                          <ReceiptLong className="w-4 h-4 inline-block me-1" />
+                          {t("auto.referenceNumber")}
+                          <span className="text-text-muted ms-1">
+                            ({t("auto.optional")})
                           </span>
                         </label>
                         <input
@@ -2869,9 +2809,7 @@ export default function ReserveAppointment() {
                           value={referenceNumber}
                           onChange={(e) => setReferenceNumber(e.target.value)}
                           placeholder={
-                            isRTL
-                              ? "أدخل رقم المرجع من الإيصال"
-                              : "Enter reference number from receipt"
+                            t("auto.enterReferenceNumberFromReceipt")
                           }
                           className="w-full px-4 py-3 border-2 border-border rounded-xl bg-background text-text text-sm focus:outline-none focus:border-primary transition-colors"
                         />
@@ -2881,8 +2819,8 @@ export default function ReserveAppointment() {
                     {/* Screenshot Upload */}
                     <div>
                       <label className="text-sm font-semibold text-text-heading block mb-1.5">
-                        {isRTL ? "إرفاق سكرين شوت" : "Attach Screenshot"}
-                        <span className="text-red-500 ml-1">*</span>
+                        {t("auto.attachScreenshot")}
+                        <span className="text-red-500 ms-1">*</span>
                       </label>
                       <label
                         className={`flex flex-col items-center justify-center gap-2 w-full h-32 border-2 border-dashed rounded-xl cursor-pointer transition-all ${
@@ -2906,16 +2844,14 @@ export default function ReserveAppointment() {
                               {paymentScreenshot.name}
                             </p>
                             <p className="text-xs text-text-muted">
-                              {isRTL ? "اضغط لتغيير الصورة" : "Click to change"}
+                              {t("auto.clickToChange")}
                             </p>
                           </>
                         ) : (
                           <>
                             <UploadIcon className="w-7 h-7 text-text-muted" />
                             <p className="text-sm text-text-muted">
-                              {isRTL
-                                ? "اضغط لرفع صورة التحويل"
-                                : "Click to upload transfer screenshot"}
+                              {t("auto.clickToUploadTransferScreenshot")}
                             </p>
                             <p className="text-xs text-text-muted">
                               PNG, JPG, WEBP
@@ -2944,7 +2880,7 @@ export default function ReserveAppointment() {
                         {loading || paymentLoading ? (
                           <Loader2 className="w-4 h-4 animate-spin" />
                         ) : null}
-                        {isRTL ? "دفع وإرسال الإثبات" : "Pay & Submit Proof"}
+                        {t("auto.paySubmitProof")}
                       </Button>
                     </div>
                   </div>
@@ -2958,17 +2894,17 @@ export default function ReserveAppointment() {
                     }`}
                   >
                     <Star className="w-6 h-6 text-amber-400" />
-                    {isRTL ? "تقييمات الدكتور" : "Doctor Reviews"}
+                    {t("auto.doctorReviews")}
                   </h3>
 
                   {/* Add Review */}
                   <Card className="p-5">
                     <h4
                       className={`font-semibold text-text-heading mb-3 ${
-                        isRTL ? "text-right" : ""
+                        isRTL ? "text-end" : ""
                       }`}
                     >
-                      {isRTL ? "أضف تقييمك" : "Add Your Review"}
+                      {t("auto.addYourReview")}
                     </h4>
                     <div
                       className={`flex items-center gap-2 mb-3 ${
@@ -3002,18 +2938,16 @@ export default function ReserveAppointment() {
                         setNewReview((r) => ({ ...r, comment: e.target.value }))
                       }
                       placeholder={
-                        isRTL
-                          ? "اكتب تجربتك مع الطبيب..."
-                          : "Share your experience with this doctor..."
+                        t("auto.shareYourExperienceWithThisDoctor")
                       }
                       rows={3}
                       className={`w-full p-3 border border-border rounded-xl bg-background text-text text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all ${
-                        isRTL ? "text-right" : ""
+                        isRTL ? "text-end" : ""
                       }`}
                     />
                     <div
                       className={`flex ${
-                        isRTL ? "justify-start" : "justify-end"
+                        t("auto.justifyend")
                       } mt-3`}
                     >
                       <Button
@@ -3040,9 +2974,7 @@ export default function ReserveAppointment() {
 
                             if (response?.IsSuccess !== false) {
                               toast.success(
-                                isRTL
-                                  ? "تمت إضافة التقييم بنجاح"
-                                  : "Review added successfully",
+                                t("auto.reviewAddedSuccessfully"),
                               );
 
                               // Optimistically update UI
@@ -3059,18 +2991,14 @@ export default function ReserveAppointment() {
                             } else {
                               toast.error(
                                 response?.Message ||
-                                  (isRTL
-                                    ? "حدث خطأ أثناء الإضافة"
-                                    : "Failed to add review"),
+                                  (t("auto.failedToAddReview")),
                               );
                             }
                           } catch (error) {
                             console.error("Error adding review:", error);
                             toast.error(
                               error.response?.data?.Message ||
-                                (isRTL
-                                  ? "حدث خطأ أثناء الإضافة"
-                                  : "Failed to add review"),
+                                (t("auto.failedToAddReview")),
                             );
                           } finally {
                             setNewReview({ rating: 0, comment: "" });
@@ -3084,7 +3012,7 @@ export default function ReserveAppointment() {
                         ) : (
                           <Send className="w-4 h-4" />
                         )}
-                        {isRTL ? "إرسال" : "Submit"}
+                        {t("auto.submit")}
                       </Button>
                     </div>
                   </Card>
@@ -3115,9 +3043,9 @@ export default function ReserveAppointment() {
                                   <User className="w-5 h-5 text-primary" />
                                 )}
                               </div>
-                              <div className={isRTL ? "text-right" : ""}>
+                              <div className={isRTL ? "text-end" : ""}>
                                 <p className="font-semibold text-text-heading text-sm">
-                                  {isRTL ? "مريض" : "Patient"}
+                                  {t("auto.patient")}
                                 </p>
                                 <div className="flex items-center gap-1 mt-0.5">
                                   {[1, 2, 3, 4, 5].map((s) => (
@@ -3136,7 +3064,7 @@ export default function ReserveAppointment() {
                             {r.CreatedAt && (
                               <span className="text-xs text-text-muted flex-shrink-0">
                                 {new Date(r.CreatedAt).toLocaleDateString(
-                                  isRTL ? "ar-EG" : "en-US",
+                                  t("auto.enus"),
                                   {
                                     month: "short",
                                     day: "numeric",
@@ -3148,7 +3076,7 @@ export default function ReserveAppointment() {
                           </div>
                           <p
                             className={`text-sm text-text-muted mt-3 leading-relaxed ${
-                              isRTL ? "text-right" : ""
+                              isRTL ? "text-end" : ""
                             }`}
                           >
                             {r.Comment}
@@ -3160,7 +3088,7 @@ export default function ReserveAppointment() {
                     <div className="text-center py-8 text-text-muted bg-background-paper border rounded-xl shadow-sm">
                       <Star className="w-10 h-10 mx-auto text-amber-200 mb-2" />
                       <p>
-                        {isRTL ? "لا توجد تقييمات حتى الآن" : "No reviews yet"}
+                        {t("auto.noReviewsYet")}
                       </p>
                     </div>
                   )}
@@ -3180,16 +3108,12 @@ export default function ReserveAppointment() {
                 </div>
                 <h2 className="text-3xl font-bold text-text-heading mb-4">
                   {bookingPendingReview
-                    ? isRTL
-                      ? "تم استلام طلبك"
-                      : "Request Submitted"
+                    ? t("auto.requestSubmitted")
                     : t("patient.bookingConfirmedTitle")}
                 </h2>
                 <p className="text-text-muted mb-8">
                   {bookingPendingReview
-                    ? isRTL
-                      ? "حجزك الآن في حالة Pending حتى يقوم فريق الدعم الفني بمراجعة إثبات التحويل."
-                      : "Your booking is currently pending until technical support reviews your transfer proof."
+                    ? t("auto.yourBookingIsCurrentlyPendingUntilTechnicalSupportReviewsYourTransferProof")
                     : t("patient.bookingConfirmedDesc")}
                 </p>
                 <Button
@@ -3307,7 +3231,7 @@ export default function ReserveAppointment() {
                             </Badge>
 
                             <Badge variant={paymentStatusInfo.badgeVariant}>
-                              {isRTL ? "الدفع: " : "Payment: "}
+                              {t("auto.payment")}
                               {paymentStatusInfo.label}
                             </Badge>
 
@@ -3329,9 +3253,7 @@ export default function ReserveAppointment() {
                                     <span>
                                       {Number(paymentStatusInfo?.value) === 2 ||
                                       booking?.PaymentConfirmed === true
-                                        ? isRTL
-                                          ? "إلغاء واسترداد"
-                                          : "Cancel & Refund"
+                                        ? t("auto.cancelRefund")
                                         : t("patient.cancelAppointment")}
                                     </span>
                                   </>
@@ -3456,21 +3378,13 @@ export default function ReserveAppointment() {
                 </div>
                 <h3 className="text-lg font-bold text-text-heading mb-2">
                   {cancelWillRefund
-                    ? isRTL
-                      ? "إلغاء الموعد واسترداد المبلغ"
-                      : "Cancel Appointment & Refund"
-                    : isRTL
-                    ? "إلغاء الموعد"
-                    : "Cancel Appointment"}
+                    ? t("auto.cancelAppointmentRefund")
+                    : t("auto.cancelAppointment")}
                 </h3>
                 <p className="text-sm text-text-muted mb-6">
                   {cancelWillRefund
-                    ? isRTL
-                      ? "هل أنت متأكد أنك تريد إلغاء هذا الموعد؟ سيتم إرسال طلب استرداد للدعم الفني لأن الدفع تم تأكيده."
-                      : "Are you sure you want to cancel this appointment? A refund request will be sent to technical support because payment is confirmed."
-                    : isRTL
-                    ? "هل أنت متأكد أنك تريد إلغاء هذا الموعد؟"
-                    : "Are you sure you want to cancel this appointment?"}
+                    ? t("auto.areYouSureYouWantToCancelThisAppointmentARefundRequestWillBeSentToTechnicalSupportBecausePaymentIsConfirmed")
+                    : t("auto.areYouSureYouWantToCancelThisAppointment")}
                 </p>
                 <div className="flex gap-3 justify-center">
                   <Button
@@ -3485,12 +3399,8 @@ export default function ReserveAppointment() {
                     isLoading={cancellingId === cancelConfirmId}
                   >
                     {cancelWillRefund
-                      ? isRTL
-                        ? "نعم، إلغاء واسترداد"
-                        : "Yes, Cancel & Refund"
-                      : isRTL
-                      ? "نعم، إلغاء الموعد"
-                      : "Yes, Cancel"}
+                      ? t("auto.yesCancelRefund")
+                      : t("auto.yesCancel")}
                   </Button>
                 </div>
               </div>

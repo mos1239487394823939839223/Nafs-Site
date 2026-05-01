@@ -121,7 +121,7 @@ export default function ActiveTickets() {
           <div className="flex items-center gap-2 mb-4">
             <AlertCircle className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
             <h3 className="font-semibold text-text-heading">{t('staff.open')}</h3>
-            <span className="ml-auto text-sm text-text-muted bg-background-paper px-2 py-1 rounded-full">
+            <span className="ms-auto text-sm text-text-muted bg-background-paper px-2 py-1 rounded-full">
               {groupedByStatus.open.length}
             </span>
           </div>
@@ -171,7 +171,7 @@ export default function ActiveTickets() {
           <div className="flex items-center gap-2 mb-4">
             <MessageSquare className="w-5 h-5 text-primary" />
             <h3 className="font-semibold text-text-heading">{t('staff.inProgress')}</h3>
-            <span className="ml-auto text-sm text-text-muted bg-background-paper px-2 py-1 rounded-full">
+            <span className="ms-auto text-sm text-text-muted bg-background-paper px-2 py-1 rounded-full">
               {groupedByStatus['in-progress'].length}
             </span>
           </div>
@@ -217,7 +217,7 @@ export default function ActiveTickets() {
           <div className="flex items-center gap-2 mb-4">
             <CheckCircle className="w-5 h-5 text-green-600 dark:text-green-400" />
             <h3 className="font-semibold text-text-heading">{t('staff.resolved')}</h3>
-            <span className="ml-auto text-sm text-text-muted bg-background-paper px-2 py-1 rounded-full">
+            <span className="ms-auto text-sm text-text-muted bg-background-paper px-2 py-1 rounded-full">
               {groupedByStatus.resolved.length}
             </span>
           </div>

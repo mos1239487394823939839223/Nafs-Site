@@ -90,7 +90,7 @@ export default function RoleSelection() {
                     variant={role.id === 'patient' ? 'primary' : 'secondary'}
                   >
                     <span>{t('auth.getStarted')}</span>
-                    <ArrowRight className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform" />
+                    <ArrowRight className="w-5 h-5 ms-2 group-hover:translate-x-1 transition-transform" />
                   </Button>
                 </div>
               </div>

@@ -13,12 +13,12 @@ export const HeroCard = ({ doctorName }: HeroCardProps) => {
     <section className="rounded-3xl bg-card border border-border shadow-card mb-6 overflow-hidden">
       <div
         className={`flex flex-col items-stretch ${
-          isRTL ? "md:flex-row" : "md:flex-row-reverse"
+          t("auto.mdflexrowreverse")
         }`}
       >
         <div
           className={`flex-1 text-center p-8 md:p-10 flex flex-col justify-center ${
-            isRTL ? "md:text-right" : "md:text-left"
+            t("auto.mdtextstart")
           }`}
         >
           {doctorName && (

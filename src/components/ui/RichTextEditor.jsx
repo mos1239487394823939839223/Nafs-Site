@@ -98,7 +98,7 @@ export default function RichTextEditor({ content, onChange, placeholder, error, 
     editorProps: {
       attributes: {
         class: 'prose prose-sm max-w-none focus:outline-none min-h-[180px] px-4 py-3 text-text',
-        dir: isRTL ? 'rtl' : 'ltr',
+        dir: t("auto.ltr"),
       },
     },
   })
