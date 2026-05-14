@@ -97,28 +97,28 @@ export default function Header({ onMenuClick }) {
   const ThemeIcon = theme === 'dark' ? Moon : theme === 'light' ? Sun : Monitor
 
   return (
-    <header className="bg-background-paper border-b border-border px-4 md:px-6 py-4 transition-colors duration-300">
-      <div className="flex items-center justify-between">
+    <header className="bg-background-paper border-b border-border px-3 sm:px-4 md:px-6 py-3 md:py-4 transition-colors duration-300">
+      <div className="flex items-center justify-between gap-2">
         {/* Title */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0 flex-1">
           <button
             onClick={onMenuClick}
-            className="lg:hidden p-2 hover:bg-background-subtle rounded-xl transition-colors -ms-2"
+            className="lg:hidden p-2 hover:bg-background-subtle rounded-xl transition-colors -ms-2 flex-shrink-0"
           >
             <Menu className="w-6 h-6 text-text" />
           </button>
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg sm:text-xl md:text-2xl font-semibold text-text truncate max-w-[120px] sm:max-w-none">
+          <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+            <h2 className="text-base sm:text-xl md:text-2xl font-semibold text-text truncate">
               {roleLabels[role] || t('nav.dashboard')}
             </h2>
-            <div className="hidden sm:block">
+            <div className="hidden md:block flex-shrink-0">
               <RoleBadge role={role} size="sm" />
             </div>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-1 sm:gap-2 md:gap-4 flex-shrink-0">
           {/* Notifications Dropdown */}
           <div className="relative">
             <button
@@ -131,7 +131,7 @@ export default function Header({ onMenuClick }) {
               )}
             </button>
             <DropdownMenu open={showNotifications} onClose={() => setShowNotifications(false)}>
-              <div className="w-64 sm:w-80 p-2 max-h-80 overflow-y-auto">
+              <div className="w-[calc(100vw-2rem)] max-w-[20rem] sm:w-80 p-2 max-h-80 overflow-y-auto">
                 <div className="flex justify-between items-center mb-2 px-2 pb-2 border-b border-border">
                   <span className="font-bold text-sm">{t('common.notifications') || 'Notifications'}</span>
                   <button onClick={() => setNotifications(prev => prev.map(n => ({...n, isRead: true})))} className="text-xs text-primary hover:underline">{t('common.markAllRead') || 'Mark all read'}</button>

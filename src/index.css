@@ -115,6 +115,9 @@ body {
 
 body {
   min-height: 100vh;
+  /* prevent words breaking layout on small screens */
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
 
 #root {
@@ -124,6 +127,42 @@ body {
 
 * {
   box-sizing: border-box;
+  /* prevent any element from forcing horizontal overflow */
+  min-width: 0;
+}
+
+/* Make images & media responsive by default */
+img,
+video,
+canvas,
+svg {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Native HTML tables — make them horizontally scrollable on small screens.
+   MUI tables are scrollable via their TableContainer wrapper so we exclude them. */
+@media (max-width: 768px) {
+  table:not(.MuiTable-root) {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+  }
+}
+
+/* Pre/code: avoid overflow */
+pre,
+code {
+  max-width: 100%;
+  overflow-x: auto;
+  word-break: break-word;
+}
+
+/* Prevent buttons/anchors with long text overflowing on mobile */
+button,
+a {
+  word-break: break-word;
 }
 
 /* RTL Support */
@@ -153,6 +192,15 @@ body {
   transition-property: background-color, border-color, color, fill, stroke;
   transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   transition-duration: 150ms;
+}
+
+/* Hide scrollbar but keep scroll behavior — for filter chip rows etc. */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }
 
 /* Custom scrollbar */

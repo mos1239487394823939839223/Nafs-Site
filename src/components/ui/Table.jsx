@@ -15,6 +15,9 @@ const Table = React.forwardRef(({ className, children, sx, ...props }, ref) => (
       borderRadius: '12px',
       border: 1,
       borderColor: 'divider',
+      overflowX: 'auto',
+      WebkitOverflowScrolling: 'touch',
+      maxWidth: '100%',
       ...sx,
     }}
   >
@@ -22,6 +25,7 @@ const Table = React.forwardRef(({ className, children, sx, ...props }, ref) => (
       ref={ref}
       className={className}
       size="medium"
+      sx={{ minWidth: 480 }}
       {...props}
     >
       {children}
@@ -58,10 +62,13 @@ const TableHead = React.forwardRef(({ className, children, ...props }, ref) => (
     component="th"
     sx={{
       fontWeight: 600,
-      fontSize: '0.75rem',
+      fontSize: '0.7rem',
       textTransform: 'uppercase',
       letterSpacing: '0.05em',
       color: 'text.secondary',
+      px: { xs: 1.5, sm: 2 },
+      py: { xs: 1.5, sm: 2 },
+      whiteSpace: 'nowrap',
     }}
     {...props}
   >
@@ -76,6 +83,9 @@ const TableCell = React.forwardRef(({ className, children, ...props }, ref) => (
     className={className}
     sx={{
       fontSize: '0.875rem',
+      px: { xs: 1.5, sm: 2 },
+      py: { xs: 1.5, sm: 2 },
+      maxWidth: 200,
     }}
     {...props}
   >

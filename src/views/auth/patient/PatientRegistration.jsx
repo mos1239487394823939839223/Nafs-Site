@@ -15,7 +15,20 @@ import {
   formatPhone,
   validateEmail,
 } from "../../../lib/validation";
-import { ArrowLeft, ArrowRight, CheckCircle, User, Heart, Shield, Lock, ShieldCheck as VerifiedUser, History, HelpCircle as Quiz, AlertTriangle as Emergency, Headphones as SupportAgent } from 'lucide-react';
+import {
+  ArrowLeft,
+  ArrowRight,
+  CheckCircle,
+  User,
+  Heart,
+  Shield,
+  Lock,
+  ShieldCheck as VerifiedUser,
+  History,
+  HelpCircle as Quiz,
+  AlertTriangle as Emergency,
+  Headphones as SupportAgent,
+} from "lucide-react";
 
 import { api, authAPI } from "../../../lib/api";
 import { useLanguage } from "../../../contexts/LanguageContext";
@@ -39,8 +52,8 @@ export default function PatientRegistration() {
         t("auth.intro.privacy.f1"),
         t("auth.intro.privacy.f2"),
         t("auth.intro.privacy.f3"),
-        t("auth.intro.privacy.f4")
-      ]
+        t("auth.intro.privacy.f4"),
+      ],
     },
     {
       title: t("auth.intro.security.title"),
@@ -51,8 +64,8 @@ export default function PatientRegistration() {
         t("auth.intro.security.f1"),
         t("auth.intro.security.f2"),
         t("auth.intro.security.f3"),
-        t("auth.intro.security.f4")
-      ]
+        t("auth.intro.security.f4"),
+      ],
     },
     {
       title: t("auth.intro.followup.title"),
@@ -63,8 +76,8 @@ export default function PatientRegistration() {
         t("auth.intro.followup.f1"),
         t("auth.intro.followup.f2"),
         t("auth.intro.followup.f3"),
-        t("auth.intro.followup.f4")
-      ]
+        t("auth.intro.followup.f4"),
+      ],
     },
     {
       title: t("auth.intro.tests.title"),
@@ -75,8 +88,8 @@ export default function PatientRegistration() {
         t("auth.intro.tests.f1"),
         t("auth.intro.tests.f2"),
         t("auth.intro.tests.f3"),
-        t("auth.intro.tests.f4")
-      ]
+        t("auth.intro.tests.f4"),
+      ],
     },
     {
       title: t("auth.intro.emergency.title"),
@@ -87,8 +100,8 @@ export default function PatientRegistration() {
         t("auth.intro.emergency.f1"),
         t("auth.intro.emergency.f2"),
         t("auth.intro.emergency.f3"),
-        t("auth.intro.emergency.f4")
-      ]
+        t("auth.intro.emergency.f4"),
+      ],
     },
     {
       title: t("auth.intro.support.title"),
@@ -99,14 +112,24 @@ export default function PatientRegistration() {
         t("auth.intro.support.f1"),
         t("auth.intro.support.f2"),
         t("auth.intro.support.f3"),
-        t("auth.intro.support.f4")
-      ]
-    }
+        t("auth.intro.support.f4"),
+      ],
+    },
   ];
 
   const steps = [
-    { id: 1, title: t('auth.basicInfo'), subtitle: t('auth.personalDetails'), icon: User },
-    { id: 2, title: t('auth.verification'), subtitle: t('auth.verifyEmail'), icon: Shield },
+    {
+      id: 1,
+      title: t("auth.basicInfo"),
+      subtitle: t("auth.personalDetails"),
+      icon: User,
+    },
+    {
+      id: 2,
+      title: t("auth.verification"),
+      subtitle: t("auth.verifyEmail"),
+      icon: Shield,
+    },
   ];
 
   const {
@@ -144,37 +167,37 @@ export default function PatientRegistration() {
     let isValid = true;
 
     if (!validateRequired(formData.firstName)) {
-      setFieldError("firstName", t('errors.firstNameRequired'));
+      setFieldError("firstName", t("errors.firstNameRequired"));
       isValid = false;
     }
 
     if (!validateRequired(formData.lastName)) {
-      setFieldError("lastName", t('errors.lastNameRequired'));
+      setFieldError("lastName", t("errors.lastNameRequired"));
       isValid = false;
     }
 
     if (!validateEmail(formData.email)) {
-      setFieldError("email", t('errors.invalidEmail'));
+      setFieldError("email", t("errors.invalidEmail"));
       isValid = false;
     }
 
     if (!validateRequired(formData.password) || formData.password.length < 6) {
-      setFieldError("password", t('errors.passwordTooShort'));
+      setFieldError("password", t("errors.passwordTooShort"));
       isValid = false;
     }
 
     if (!validatePhone(formData.phone)) {
-      setFieldError("phone", t('errors.invalidPhone'));
+      setFieldError("phone", t("errors.invalidPhone"));
       isValid = false;
     }
 
     if (!validateDate(formData.dateOfBirth)) {
-      setFieldError("dateOfBirth", t('errors.invalidDate'));
+      setFieldError("dateOfBirth", t("errors.invalidDate"));
       isValid = false;
     }
 
     if (!validateRequired(formData.gender)) {
-      setFieldError("gender", t('errors.selectGender'));
+      setFieldError("gender", t("errors.selectGender"));
       isValid = false;
     }
 
@@ -202,9 +225,7 @@ export default function PatientRegistration() {
         console.log("✅ OTP sent successfully according to server");
         setOtpSent(true);
         setOtpTimer(60);
-        toast.success(
-          response.Data?.Message || t('success.otpSent'),
-        );
+        toast.success(response.Data?.Message || t("success.otpSent"));
 
         // Countdown timer
         const interval = setInterval(() => {
@@ -224,19 +245,23 @@ export default function PatientRegistration() {
         console.error("Error Message:", response.Message);
 
         // If it's a cooldown error, OTP was already sent — treat as soft success
-        const isCooldown = response.Message &&
-          (response.Message.toLowerCase().includes('wait') ||
-           response.Message.toLowerCase().includes('seconds') ||
-           response.Message.toLowerCase().includes('ثانية'));
+        const isCooldown =
+          response.Message &&
+          (response.Message.toLowerCase().includes("wait") ||
+            response.Message.toLowerCase().includes("seconds") ||
+            response.Message.toLowerCase().includes("ثانية"));
 
         if (isCooldown) {
           setOtpSent(true);
-          toast.success(t('auth.otpAlreadySent') || 'OTP was already sent to your email. Please check your inbox.');
+          toast.success(
+            t("auth.otpAlreadySent") ||
+              "OTP was already sent to your email. Please check your inbox.",
+          );
           console.groupEnd();
           return true;
         }
 
-        toast.error(response.Message || t('errors.failedSendOtp'));
+        toast.error(response.Message || t("errors.failedSendOtp"));
         console.groupEnd();
         return false;
       }
@@ -247,10 +272,7 @@ export default function PatientRegistration() {
         console.error("Response Status:", error.response.status);
         console.error("Response Headers:", error.response.headers);
       }
-      toast.error(
-        error.response?.data?.Message ||
-        t('errors.failedSendOtp'),
-      );
+      toast.error(error.response?.data?.Message || t("errors.failedSendOtp"));
       console.groupEnd();
       return false;
     } finally {
@@ -261,7 +283,7 @@ export default function PatientRegistration() {
   // Step 2 Validation
   const validateStep2 = () => {
     if (!formData.otp || formData.otp.length !== 6) {
-      setFieldError("otp", t('errors.otpRequired'));
+      setFieldError("otp", t("errors.otpRequired"));
       return false;
     }
     return true;
@@ -313,7 +335,7 @@ export default function PatientRegistration() {
         const errorMsg =
           registerResponse.data.Details ||
           registerResponse.data.Message ||
-          t('errors.somethingWentWrong');
+          t("errors.somethingWentWrong");
         toast.error(errorMsg);
         console.groupEnd();
         return;
@@ -323,7 +345,9 @@ export default function PatientRegistration() {
         registerResponse.data?.IsSuccess !== false &&
         registerResponse.status === 200
       ) {
-        console.log("✅ Registration reported successful, proceeding to send OTP...");
+        console.log(
+          "✅ Registration reported successful, proceeding to send OTP...",
+        );
 
         // Registration successful, now send OTP
         const otpSent = await handleSendOTP();
@@ -332,7 +356,9 @@ export default function PatientRegistration() {
         // Always move to OTP step after successful registration.
         // If OTP send failed due to cooldown, the user already has an OTP in their email.
         if (!otpSent) {
-          toast.success('OTP was already sent to your email. Please check your inbox.');
+          toast.success(
+            "OTP was already sent to your email. Please check your inbox.",
+          );
         }
         nextStep();
       } else {
@@ -340,7 +366,9 @@ export default function PatientRegistration() {
           "❌ Registration failed (IsSuccess check):",
           registerResponse.data?.Message || registerResponse.data,
         );
-        toast.error(registerResponse.data?.Message || t('errors.somethingWentWrong'));
+        toast.error(
+          registerResponse.data?.Message || t("errors.somethingWentWrong"),
+        );
       }
     } catch (error) {
       console.error("❌ Registration Threw Exception:", error);
@@ -351,7 +379,7 @@ export default function PatientRegistration() {
         error.response?.data?.Message ||
         error.response?.data?.message ||
         error.message ||
-        t('errors.somethingWentWrong');
+        t("errors.somethingWentWrong");
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -369,19 +397,19 @@ export default function PatientRegistration() {
           // Register user first, then send OTP
           await handleRegisterUser();
         } else {
-          toast.error(t('errors.fixErrors'));
+          toast.error(t("errors.fixErrors"));
         }
       } else if (currentStep === 2) {
         isValid = validateStep2();
         if (isValid) {
           await handleSubmit();
         } else {
-          toast.error(t('errors.fixErrors'));
+          toast.error(t("errors.fixErrors"));
         }
       }
     } catch (error) {
       console.error("Unexpected error in handleNext:", error);
-      toast.error(t('errors.unexpectedError'));
+      toast.error(t("errors.unexpectedError"));
       setLoading(false);
     }
   };
@@ -394,7 +422,7 @@ export default function PatientRegistration() {
       const otpResponse = await authAPI.verifyOtp(formData.email, formData.otp);
 
       if (!otpResponse.IsSuccess) {
-        toast.error(otpResponse.Message || t('errors.failedVerifyOtp'));
+        toast.error(otpResponse.Message || t("errors.failedVerifyOtp"));
         setLoading(false);
         return;
       }
@@ -402,7 +430,7 @@ export default function PatientRegistration() {
       setLoading(false);
 
       // Registration and verification successful
-      toast.success(t('success.registrationSuccess'));
+      toast.success(t("success.registrationSuccess"));
       navigate("/auth/login");
     } catch (error) {
       console.error("OTP verification failed:", error);
@@ -411,7 +439,7 @@ export default function PatientRegistration() {
         error.response?.data?.Message ||
         error.response?.data?.message ||
         error.message ||
-        t('errors.failedVerifyOtp');
+        t("errors.failedVerifyOtp");
       toast.error(errorMessage);
     }
   };
@@ -422,7 +450,7 @@ export default function PatientRegistration() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background-paper to-background py-12 px-4 flex items-center justify-center">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background-paper to-background py-6 sm:py-12 px-3 sm:px-4 flex items-center justify-center">
       <div className="w-full max-w-4xl">
         <AnimatePresence mode="wait">
           {showIntro ? (
@@ -439,26 +467,37 @@ export default function PatientRegistration() {
                   const card = introCards[introStep];
                   return (
                     <>
-                      <div className="bg-gradient-to-r from-primary to-primary-dark p-8 text-white relative overflow-hidden">
+                      <div className="bg-gradient-to-r from-primary to-primary-dark p-5 sm:p-8 text-white relative overflow-hidden">
                         <div className="absolute inset-0 bg-black/10"></div>
-                        <div className="flex items-center gap-4 mb-4 relative z-10">
-                          <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                            <card.icon className="w-8 h-8 text-white" />
+                        <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4 relative z-10">
+                          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm flex-shrink-0">
+                            <card.icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                           </div>
                           <div>
-                            <h2 className="text-2xl font-bold text-white">{card.title}</h2>
-                            <p className="text-white/80 text-sm">{card.subtitle}</p>
+                            <h2 className="text-xl sm:text-2xl font-bold text-white">
+                              {card.title}
+                            </h2>
+                            <p className="text-white/80 text-xs sm:text-sm">
+                              {card.subtitle}
+                            </p>
                           </div>
                         </div>
-                        <p className="text-white/95 relative z-10">{card.description}</p>
+                        <p className="text-white/95 relative z-10 text-sm sm:text-base">
+                          {card.description}
+                        </p>
                       </div>
 
                       {/* Features */}
-                      <div className="p-8 flex-1 bg-background-paper">
-                        <h3 className="font-semibold text-text-heading mb-4">{t('auth.whatYouGet')}</h3>
+                      <div className="p-5 sm:p-8 flex-1 bg-background-paper">
+                        <h3 className="font-semibold text-text-heading mb-4">
+                          {t("auth.whatYouGet")}
+                        </h3>
                         <ul className="space-y-3">
                           {card.features.map((feature, idx) => (
-                            <li key={idx} className="flex items-center gap-3 text-text-muted">
+                            <li
+                              key={idx}
+                              className="flex items-center gap-3 text-text-muted"
+                            >
                               <div className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                                 <div className="w-2 h-2 bg-primary rounded-full" />
                               </div>
@@ -469,22 +508,8 @@ export default function PatientRegistration() {
                       </div>
 
                       {/* Navigation buttons for intro */}
-                      <div className="p-8 pt-0 flex gap-3">
+                      <div className="p-5 sm:p-8 pt-0 flex gap-3">
                         <Button
-                          variant="outline"
-                          onClick={() => {
-                            if (introStep === 0) {
-                              navigate('/auth/role-selection');
-                            } else {
-                              setIntroStep(introStep - 1);
-                            }
-                          }}
-                          className="flex-1"
-                        >
-                          <ArrowLeft className="w-4 h-4 me-2 rtl:rotate-180" />
-                          <span>{t('common.back')}</span>
-                        </Button>
-                        <Button 
                           onClick={() => {
                             if (introStep < introCards.length - 1) {
                               setIntroStep(introStep + 1);
@@ -494,8 +519,31 @@ export default function PatientRegistration() {
                           }}
                           className="flex-1 group"
                         >
-                          <span>{introStep === introCards.length - 1 ? t('auth.getStarted') : t('common.next')}</span>
-                          <ArrowRight className="w-4 h-4 ms-2 rtl:rotate-180 group-hover:translate-x-1 rtl:group-hover:-translate-x-1 transition-transform" />
+                          {introStep === introCards.length - 1 ? (
+                            <>
+                              <ArrowRight className="w-4 h-4 me-2 rtl:rotate-180" />
+                              <span>{t("auth.getStarted")}</span>
+                            </>
+                          ) : (
+                            <>
+                              <ArrowLeft className="w-4 h-4 me-2 rtl:rotate-180" />
+                              <span>{t("common.next")}</span>
+                            </>
+                          )}
+                        </Button>
+                        <Button
+                          variant="outline"
+                          onClick={() => {
+                            if (introStep === 0) {
+                              navigate("/auth/role-selection");
+                            } else {
+                              setIntroStep(introStep - 1);
+                            }
+                          }}
+                          className="flex-1"
+                        >
+                          <span>{t("common.back")}</span>
+                          <ArrowRight className="w-4 h-4 ms-2 rtl:rotate-180" />
                         </Button>
                       </div>
                     </>
@@ -511,7 +559,7 @@ export default function PatientRegistration() {
               exit={{ opacity: 0, y: -20 }}
               className="w-full max-w-2xl mx-auto"
             >
-              <div className="bg-background-paper/80 backdrop-blur-sm rounded-3xl shadow-2xl p-8 md:p-10 border border-white/20">
+              <div className="bg-background-paper/80 backdrop-blur-sm rounded-3xl shadow-2xl p-5 sm:p-8 md:p-10 border border-white/20">
                 <AnimatePresence mode="wait">
                   {/* Step 1: Basic Info */}
                   {currentStep === 1 && (
@@ -528,46 +576,48 @@ export default function PatientRegistration() {
                         </div>
                         <div>
                           <h2 className="text-xl font-semibold text-text-heading">
-                            {t('auth.basicInformation')}
+                            {t("auth.basicInformation")}
                           </h2>
                           <p className="text-sm text-text-muted">
-                            {t('auth.tellUsAboutYourself')}
+                            {t("auth.tellUsAboutYourself")}
                           </p>
                         </div>
                       </div>
 
                       <div className="grid md:grid-cols-2 gap-6">
                         <Input
-                          label={t('auth.firstName')}
+                          label={t("auth.firstName")}
                           value={formData.firstName}
                           onChange={(e) =>
                             handleFieldChange("firstName", e.target.value)
                           }
                           error={errors.firstName}
-                          placeholder={t('auth.placeholders.firstName')}
+                          placeholder={t("auth.placeholders.firstName")}
                         />
                         <Input
-                          label={t('auth.lastName')}
+                          label={t("auth.lastName")}
                           value={formData.lastName}
                           onChange={(e) =>
                             handleFieldChange("lastName", e.target.value)
                           }
                           error={errors.lastName}
-                          placeholder={t('auth.placeholders.lastName')}
+                          placeholder={t("auth.placeholders.lastName")}
                         />
                       </div>
 
                       <div className="grid md:grid-cols-2 gap-6 mb-6">
                         <Input
-                          label={t('auth.email')}
+                          label={t("auth.email")}
                           type="email"
                           value={formData.email}
-                          onChange={(e) => handleFieldChange("email", e.target.value)}
+                          onChange={(e) =>
+                            handleFieldChange("email", e.target.value)
+                          }
                           error={errors.email}
-                          placeholder={t('auth.placeholders.email')}
+                          placeholder={t("auth.placeholders.email")}
                         />
                         <Input
-                          label={t('auth.password')}
+                          label={t("auth.password")}
                           type="password"
                           value={formData.password}
                           onChange={(e) =>
@@ -579,17 +629,19 @@ export default function PatientRegistration() {
                       </div>
 
                       <Input
-                        label={t('auth.phoneNumber')}
+                        label={t("auth.phoneNumber")}
                         type="tel"
                         value={formData.phone}
-                        onChange={(e) => handleFieldChange("phone", e.target.value)}
+                        onChange={(e) =>
+                          handleFieldChange("phone", e.target.value)
+                        }
                         error={errors.phone}
-                        placeholder={t('auth.placeholders.phone')}
+                        placeholder={t("auth.placeholders.phone")}
                       />
 
                       <div className="grid md:grid-cols-2 gap-6">
                         <Input
-                          label={t('auth.dateOfBirth')}
+                          label={t("auth.dateOfBirth")}
                           type="date"
                           value={formData.dateOfBirth}
                           onChange={(e) =>
@@ -600,27 +652,30 @@ export default function PatientRegistration() {
                           slotProps={{ inputLabel: { shrink: true } }}
                         />
                         <Select
-                          label={t('common.gender')}
+                          label={t("common.gender")}
                           value={formData.gender}
                           onChange={(e) =>
                             handleFieldChange("gender", e.target.value)
                           }
                           error={errors.gender}
                         >
-                          <option value="">{t('common.selectGender')}</option>
-                          <option value="male">{t('common.male')}</option>
-                          <option value="female">{t('common.female')}</option>
-                          <option value="other">{t('common.other')}</option>
+                          <option value="">{t("common.selectGender")}</option>
+                          <option value="male">{t("common.male")}</option>
+                          <option value="female">{t("common.female")}</option>
+                          <option value="other">{t("common.other")}</option>
                         </Select>
                       </div>
 
-                      {formData.dateOfBirth && validateDate(formData.dateOfBirth) && (
-                        <div className="bg-primary/10 p-4 rounded-lg">
-                          <p className="text-sm text-primary">
-                            {t('common.age')}: {calculateAge(formData.dateOfBirth)} {t('common.yearsOld')}
-                          </p>
-                        </div>
-                      )}
+                      {formData.dateOfBirth &&
+                        validateDate(formData.dateOfBirth) && (
+                          <div className="bg-primary/10 p-4 rounded-lg">
+                            <p className="text-sm text-primary">
+                              {t("common.age")}:{" "}
+                              {calculateAge(formData.dateOfBirth)}{" "}
+                              {t("common.yearsOld")}
+                            </p>
+                          </div>
+                        )}
                     </motion.div>
                   )}
 
@@ -639,17 +694,17 @@ export default function PatientRegistration() {
                         </div>
                         <div>
                           <h2 className="text-xl font-semibold text-clinical-darkGray">
-                            {t('auth.emailVerification')}
+                            {t("auth.emailVerification")}
                           </h2>
                           <p className="text-sm text-clinical-gray">
-                            {t('auth.verifyYourEmail')}
+                            {t("auth.verifyYourEmail")}
                           </p>
                         </div>
                       </div>
 
                       <div className="bg-primary/10 p-6 rounded-lg text-center">
                         <p className="text-text-heading mb-2">
-                          {t('auth.verificationSentTo')}
+                          {t("auth.verificationSentTo")}
                         </p>
                         <p className="text-xl font-semibold text-primary">
                           {formData.email}
@@ -659,7 +714,7 @@ export default function PatientRegistration() {
                       <div className="space-y-4">
                         <div>
                           <label className="block text-sm font-medium text-text-heading mb-2">
-                            {t('auth.enter6Digit')}
+                            {t("auth.enter6Digit")}
                           </label>
                           <input
                             type="text"
@@ -671,19 +726,22 @@ export default function PatientRegistration() {
                                 e.target.value.replace(/\D/g, ""),
                               )
                             }
-                            className={`w-full px-4 py-3 text-center text-2xl font-mono tracking-widest border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-text ${errors.otp ? "border-red-500" : "border-border"
-                              }`}
-                            placeholder={t('auth.placeholders.otp')}
+                            className={`w-full px-4 py-3 text-center text-2xl font-mono tracking-widest border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary bg-background text-text ${
+                              errors.otp ? "border-red-500" : "border-border"
+                            }`}
+                            placeholder={t("auth.placeholders.otp")}
                           />
                           {errors.otp && (
-                            <p className="mt-1 text-sm text-red-500">{errors.otp}</p>
+                            <p className="mt-1 text-sm text-red-500">
+                              {errors.otp}
+                            </p>
                           )}
                         </div>
 
                         <div className="text-center">
                           {otpTimer > 0 ? (
                             <p className="text-sm text-clinical-gray">
-                              {t('auth.resendIn')}{" "}
+                              {t("auth.resendIn")}{" "}
                               <span className="font-semibold text-medical-blue">
                                 {otpTimer}s
                               </span>
@@ -693,7 +751,7 @@ export default function PatientRegistration() {
                               onClick={handleSendOTP}
                               className="text-sm text-primary hover:underline"
                             >
-                              {t('auth.resendOtp')}
+                              {t("auth.resendOtp")}
                             </button>
                           )}
                         </div>
@@ -716,23 +774,23 @@ export default function PatientRegistration() {
                     disabled={loading}
                   >
                     <ArrowLeft className="w-4 h-4 me-2 rtl:rotate-180" />
-                    {t('common.back')}
+                    {t("common.back")}
                   </Button>
 
                   <Button onClick={handleNext} disabled={loading}>
                     {loading ? (
                       <div className="flex items-center gap-2">
                         <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        <span>{t('common.processing')}</span>
+                        <span>{t("common.processing")}</span>
                       </div>
                     ) : isLastStep ? (
                       <>
                         <CheckCircle className="w-4 h-4 me-2 rtl:rotate-180" />
-                        {t('auth.completeRegistration')}
+                        {t("auth.completeRegistration")}
                       </>
                     ) : (
                       <>
-                        {t('common.next')}
+                        {t("common.next")}
                         <ArrowRight className="w-4 h-4 ms-2 rtl:rotate-180" />
                       </>
                     )}

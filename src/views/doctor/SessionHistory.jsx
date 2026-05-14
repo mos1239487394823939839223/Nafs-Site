@@ -175,18 +175,18 @@ export default function SessionHistory() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto" >
+    <div className="p-2 sm:p-4 md:p-6 max-w-7xl mx-auto" >
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex items-center justify-between mb-8"
+        className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 sm:mb-8"
       >
         <div>
-          <h1 className="text-3xl font-bold text-text mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-text mb-2">
             {t("doctor.sessionHistory")}
           </h1>
-          <p className="text-text-light">{t("doctor.sessionHistoryDesc")}</p>
+          <p className="text-sm sm:text-base text-text-light">{t("doctor.sessionHistoryDesc")}</p>
         </div>
         <div className="flex gap-3">
           <Button variant="outline" className="gap-2">
@@ -204,11 +204,11 @@ export default function SessionHistory() {
       <HistoryStats stats={stats} />
 
       {/* Filter Bar */}
-      <div className="mb-6 flex items-center justify-between bg-background-paper p-4 rounded-xl border border-border shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2 text-text-light text-sm font-medium">
+      <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-background-paper p-3 sm:p-4 rounded-xl border border-border shadow-sm">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="flex items-center gap-2 text-text-light text-sm font-medium shrink-0">
             <Filter className="w-4 h-4" />
-            <span>{t("common.filterBy")}:</span>
+            <span className="hidden sm:inline">{t("common.filterBy")}:</span>
           </div>
           <SelectDropdown
             value={statusFilter === null ? "" : String(statusFilter)}
@@ -226,7 +226,7 @@ export default function SessionHistory() {
               { value: "5", label: t("bookingStatus.cancelled") },
               { value: "6", label: t("bookingStatus.noShow") },
             ]}
-            className="w-48"
+            className="w-full sm:w-48"
           />
         </div>
         <div className="text-sm text-text-muted">

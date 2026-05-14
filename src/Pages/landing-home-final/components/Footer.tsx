@@ -42,28 +42,31 @@ export const Footer = () => {
 
   return (
   <footer dir={isAr ? "rtl" : "ltr"} className="bg-cream-deep">
-    <div className="container mx-auto grid gap-10 px-4 py-12 md:grid-cols-4">
+    <div className="container mx-auto grid gap-8 sm:gap-10 px-4 py-10 sm:py-12 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
       {/* Contact */}
-      <div className="text-end">
-        <h4 className="mb-4 text-base font-bold text-foreground">{t("landing.footer.contact")}</h4>
-        <ul className="space-y-3 text-sm text-muted-foreground">
-          <li className="flex items-center justify-end gap-2">
+      <div className="text-start sm:text-end">
+        <h4 className="mb-3 sm:mb-4 text-base font-bold text-foreground">{t("landing.footer.contact")}</h4>
+        <ul className="space-y-2 sm:space-y-3 text-sm text-muted-foreground">
+          <li className="flex items-center sm:justify-end gap-2">
+            <Phone className="h-4 w-4 text-brand sm:hidden" />
             <span>{t("landing.footer.phone")}</span>
-            <Phone className="h-4 w-4 text-brand" />
+            <Phone className="h-4 w-4 text-brand hidden sm:inline" />
           </li>
-          <li className="flex items-center justify-end gap-2">
-            <span>{t("landing.footer.email")}</span>
-            <Mail className="h-4 w-4 text-brand" />
+          <li className="flex items-center sm:justify-end gap-2">
+            <Mail className="h-4 w-4 text-brand sm:hidden" />
+            <span className="break-all">{t("landing.footer.email")}</span>
+            <Mail className="h-4 w-4 text-brand hidden sm:inline" />
           </li>
-          <li className="flex items-center justify-end gap-2">
+          <li className="flex items-center sm:justify-end gap-2">
+            <MapPin className="h-4 w-4 text-brand sm:hidden" />
             <span>{t("landing.footer.location")}</span>
-            <MapPin className="h-4 w-4 text-brand" />
+            <MapPin className="h-4 w-4 text-brand hidden sm:inline" />
           </li>
         </ul>
       </div>
       {/* Support */}
-      <div className="text-end">
-        <h4 className="mb-4 text-base font-bold text-foreground">{t("landing.footer.supportHelp")}</h4>
+      <div className="text-start sm:text-end">
+        <h4 className="mb-3 sm:mb-4 text-base font-bold text-foreground">{t("landing.footer.supportHelp")}</h4>
         <ul className="space-y-2 text-sm text-muted-foreground">
           {supportLinks.map(({ key, href }) => (
             <li key={key}><a href={href} className="hover:text-brand">{t(key)}</a></li>
@@ -71,8 +74,8 @@ export const Footer = () => {
         </ul>
       </div>
       {/* Quick links */}
-      <div className="text-end">
-        <h4 className="mb-4 text-base font-bold text-foreground">{t("landing.footer.quickLinks")}</h4>
+      <div className="text-start sm:text-end">
+        <h4 className="mb-3 sm:mb-4 text-base font-bold text-foreground">{t("landing.footer.quickLinks")}</h4>
         <ul className="space-y-2 text-sm text-muted-foreground">
           {quickLinks.map(({ key, href }) => (
             <li key={key}><a href={href} className="hover:text-brand">{t(key)}</a></li>
@@ -80,12 +83,12 @@ export const Footer = () => {
         </ul>
       </div>
       {/* Brand */}
-      <div className="text-end">
+      <div className="text-start sm:text-end">
         <Logo />
-        <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-3 sm:mt-4 text-sm leading-relaxed text-muted-foreground">
           {t("landing.footer.tagline")}
         </p>
-        <div className="mt-4 flex items-center gap-3 justify-end">
+        <div className="mt-4 flex items-center gap-3 justify-start sm:justify-end">
           <a href="#" aria-label="Instagram" className="text-muted-foreground hover:text-brand"><IconInstagram /></a>
           <a href="#" aria-label="Twitter" className="text-muted-foreground hover:text-brand"><IconTwitterX /></a>
           <a href="#" aria-label="Facebook" className="text-muted-foreground hover:text-brand"><IconFacebook /></a>

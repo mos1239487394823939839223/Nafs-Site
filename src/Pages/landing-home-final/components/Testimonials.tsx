@@ -22,7 +22,7 @@ export const Testimonials = () => {
     <h2 className="text-center text-2xl font-bold text-foreground md:text-3xl">
       {t("landing.testimonials.title")}
     </h2>
-    <div className="mt-8 grid gap-4 md:grid-cols-3">
+    <div className="mt-8 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
       {items.map((it, idx) => (
         <div
           key={idx}

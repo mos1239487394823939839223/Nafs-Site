@@ -146,20 +146,20 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background-paper to-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background-paper to-background flex items-center justify-center p-3 sm:p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
         {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary">{t('auth.platformName')}</h1>
-          <p className="text-text-light mt-2">{t('auth.resetYourPassword')}</p>
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-primary">{t('auth.platformName')}</h1>
+          <p className="text-text-light mt-2 text-sm sm:text-base">{t('auth.resetYourPassword')}</p>
         </div>
 
         {/* Card */}
-        <div className="bg-background-paper rounded-2xl shadow-xl p-8">
+        <div className="bg-background-paper rounded-2xl shadow-xl p-5 sm:p-8">
           <AnimatePresence mode="wait">
             {/* Step 1: Email */}
             {step === 1 && (

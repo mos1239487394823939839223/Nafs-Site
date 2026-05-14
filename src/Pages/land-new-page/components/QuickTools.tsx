@@ -10,11 +10,11 @@ export const QuickTools = () => {
   const { t, isRTL } = useLanguage();
 
   return (
-    <section className="rounded-3xl bg-card border border-border shadow-card p-6 md:p-7 mb-6">
-      <h2 className="text-lg font-bold text-foreground text-center mb-6">
+    <section className="rounded-3xl bg-card border border-border shadow-card p-4 sm:p-6 md:p-7 mb-6">
+      <h2 className="text-lg font-bold text-foreground text-center mb-4 sm:mb-6">
         {t("doctor.dashboardHome.quickTools.title")}
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {quickTools.map((tool) => {
           const Icon = iconMap[tool.icon as keyof typeof iconMap];
           return (

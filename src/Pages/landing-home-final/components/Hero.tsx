@@ -17,26 +17,26 @@ export const Hero = () => {
   ];
 
   return (
-  <section id="home" dir={isAr ? "rtl" : "ltr"} className="relative overflow-hidden bg-cream-deep pt-10">
+  <section id="home" dir={isAr ? "rtl" : "ltr"} className="relative overflow-hidden bg-cream-deep pt-6 sm:pt-10">
     <div className="container relative z-10 mx-auto px-4">
-      <div className="grid min-h-[500px] grid-cols-1 items-center gap-8 pb-28 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10 lg:pb-36">
-        <div className="order-2 text-end lg:order-1">
-          <h1 className="max-w-xl font-bold leading-[1.12] text-brand text-4xl md:text-5xl lg:text-[64px]">
+      <div className="grid min-h-[400px] sm:min-h-[500px] grid-cols-1 items-center gap-6 sm:gap-8 pb-24 sm:pb-28 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10 lg:pb-36">
+        <div className="order-2 text-start lg:order-1">
+          <h1 className="max-w-xl font-bold leading-[1.12] text-brand text-3xl sm:text-4xl md:text-5xl lg:text-[64px]">
             {t("landing.hero.heading")}
           </h1>
-          <p className="mt-6 max-w-lg text-base leading-[2] text-muted-foreground md:text-lg">
+          <p className="mt-4 sm:mt-6 max-w-lg text-sm sm:text-base leading-[1.8] sm:leading-[2] text-muted-foreground md:text-lg">
             {t("landing.hero.subtitle")}
           </p>
-          <div className="mt-8 flex flex-wrap justify-end gap-3 lg:justify-start">
+          <div className="mt-6 sm:mt-8 flex flex-wrap justify-start gap-3">
             <Button
-              className="h-auto rounded-xl bg-brand px-8 py-4 text-base font-medium text-brand-foreground hover:bg-brand/90"
+              className="h-auto rounded-xl bg-brand px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-medium text-brand-foreground hover:bg-brand/90"
               onClick={() => navigate("/auth/login")}
             >
               {t("landing.hero.bookNow")}
             </Button>
             <Button
               variant="outline"
-              className="h-auto rounded-xl border-border bg-card px-7 py-4 text-base font-medium text-foreground hover:bg-secondary"
+              className="h-auto rounded-xl border-border bg-card px-5 sm:px-7 py-3 sm:py-4 text-sm sm:text-base font-medium text-foreground hover:bg-secondary"
               onClick={() => navigate("/auth/login")}
             >
               {t("landing.hero.freeAssessment")}
@@ -44,13 +44,13 @@ export const Hero = () => {
           </div>
         </div>
 
-        <div className="order-1 relative mx-auto h-[280px] w-full max-w-[590px] md:h-[380px] lg:order-2 lg:h-[440px] lg:max-w-none">
+        <div className="order-1 relative mx-auto h-[220px] sm:h-[280px] w-full max-w-[590px] md:h-[380px] lg:order-2 lg:h-[440px] lg:max-w-none">
           <img
             src={heroImg}
             alt={t("landing.hero.heading")}
             width={1280}
             height={1024}
-            className="h-full w-full object-cover object-center"
+            className="h-full w-full object-cover object-center rounded-2xl lg:rounded-none"
           />
         </div>
       </div>
@@ -70,15 +70,15 @@ export const Hero = () => {
 
     <div className="relative z-30 bg-background pb-8 pt-10 lg:pt-12">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-2 gap-5 md:grid-cols-4 md:gap-6 place-items-center">
+        <div className="grid grid-cols-2 gap-3 sm:gap-5 md:grid-cols-4 md:gap-6 place-items-center">
           {badges.map(({ icon: Icon, titleKey, subKey }) => (
-            <div key={titleKey} className="flex items-center gap-3 text-end">
-              <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
-                <Icon className="h-5 w-5" />
+            <div key={titleKey} className="flex items-center gap-2 sm:gap-3 text-start">
+              <span className="grid h-9 w-9 sm:h-11 sm:w-11 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
+                <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
               </span>
-              <div>
-                <p className="text-sm font-bold text-foreground">{t(titleKey)}</p>
-                <p className="text-xs text-muted-foreground">{t(subKey)}</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-bold text-foreground">{t(titleKey)}</p>
+                <p className="text-[10px] sm:text-xs text-muted-foreground">{t(subKey)}</p>
               </div>
             </div>
           ))}

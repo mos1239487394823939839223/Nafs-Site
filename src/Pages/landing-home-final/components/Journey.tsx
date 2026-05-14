@@ -38,9 +38,9 @@ export const Journey = () => {
             {steps.map(({ number, icon: Icon, titleKey, descKey }) => (
               <div
                 key={number}
-                className="relative bg-card border border-border rounded-2xl p-6 pt-8 shadow-[var(--shadow-card)] text-end"
+                className="relative bg-card border border-border rounded-2xl p-6 pt-6 mt-4 shadow-[var(--shadow-card)] text-start"
               >
-                <span className="absolute top-4 start-4 w-8 h-8 rounded-full bg-brand text-primary-foreground text-sm font-bold flex items-center justify-center">
+                <span className="absolute -top-4 start-4 w-8 h-8 rounded-full bg-brand text-primary-foreground text-sm font-bold flex items-center justify-center">
                   {number}
                 </span>
                 <Icon className="w-10 h-10 text-brand mb-4" strokeWidth={1.75} />

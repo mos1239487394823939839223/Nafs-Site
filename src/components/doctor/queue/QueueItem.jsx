@@ -137,7 +137,7 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
 
       {/* Actions */}
       <div
-        className={`flex items-center gap-2 self-end md:self-auto ${
+        className={`flex items-center gap-2 self-end md:self-auto flex-wrap ${
           isRTL ? "flex-row-reverse" : ""
         }`}
       >

@@ -46,10 +46,10 @@ export const Doctors = () => {
   return (
   <section id="doctors" dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-12">
     <div className="mb-6 flex items-center justify-between">
+      <h2 className="text-2xl font-bold text-foreground md:text-3xl">{t("landing.doctors.title")}</h2>
       <a href="/auth/login" className="text-sm font-medium text-brand hover:underline">
         {t("landing.doctors.viewAll")}
       </a>
-      <h2 className="text-2xl font-bold text-foreground md:text-3xl">{t("landing.doctors.title")}</h2>
     </div>
 
     <div className="relative">
@@ -57,16 +57,16 @@ export const Doctors = () => {
         aria-label={isAr ? "السابق" : "Previous"}
         className="absolute -start-2 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-border bg-card p-2 shadow-[var(--shadow-card)] hover:bg-secondary md:block"
       >
-        <ChevronRight className="h-5 w-5 text-foreground" />
+        <ChevronLeft className="h-5 w-5 text-foreground rtl:rotate-180" />
       </button>
       <button
         aria-label={isAr ? "التالي" : "Next"}
         className="absolute -end-2 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-border bg-card p-2 shadow-[var(--shadow-card)] hover:bg-secondary md:block"
       >
-        <ChevronLeft className="h-5 w-5 text-foreground" />
+        <ChevronRight className="h-5 w-5 text-foreground rtl:rotate-180" />
       </button>
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         {loading
           ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
           : doctors.map((doc) => (

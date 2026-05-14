@@ -30,11 +30,11 @@ export const PerformanceSummary = ({
   ];
 
   return (
-    <section className="rounded-3xl bg-card border border-border shadow-card p-6 md:p-7 mb-6">
-      <h2 className="text-lg font-bold text-foreground text-center mb-6">
+    <section className="rounded-3xl bg-card border border-border shadow-card p-4 sm:p-6 md:p-7 mb-6">
+      <h2 className="text-lg font-bold text-foreground text-center mb-4 sm:mb-6">
         {t("doctor.dashboardHome.performance.title")}
       </h2>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
         {performanceCards.map((m, idx) => {
           const Icon = iconMap[m.icon as keyof typeof iconMap];
           const displayValue =
@@ -46,7 +46,7 @@ export const PerformanceSummary = ({
           return (
             <div key={m.labelKey} className="text-center flex flex-col items-center">
               <Icon className="size-6 mb-2 text-primary" />
-              <p className="text-3xl font-extrabold text-foreground">{displayValue}</p>
+              <p className="text-2xl sm:text-3xl font-extrabold text-foreground">{displayValue}</p>
               <p className="text-sm text-foreground/80 mt-1">{t(m.labelKey)}</p>
               <p className="text-xs text-muted-foreground mt-1">{t(m.deltaKey)}</p>
             </div>

@@ -9,30 +9,30 @@ export default function PendingApproval() {
   const { t } = useLanguage()
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-3 sm:p-4 py-8">
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="w-full max-w-2xl"
       >
-        <div className="bg-background-paper rounded-2xl shadow-xl p-8 md:p-12 text-center border border-border">
+        <div className="bg-background-paper rounded-2xl shadow-xl p-5 sm:p-8 md:p-12 text-center border border-border">
           {/* Icon */}
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring' }}
-            className="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-6"
+            className="w-20 h-20 sm:w-24 sm:h-24 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6"
           >
-            <Clock className="w-12 h-12 text-yellow-600" />
+            <Clock className="w-10 h-10 sm:w-12 sm:h-12 text-yellow-600" />
           </motion.div>
 
           {/* Title */}
-          <h1 className="text-3xl font-bold text-text-heading mb-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-text-heading mb-3 sm:mb-4">
             {t('auth.pendingApprovalTitle')}
           </h1>
 
           {/* Description */}
-          <p className="text-lg text-text-muted mb-8">
+          <p className="text-base sm:text-lg text-text-muted mb-6 sm:mb-8">
             {t('auth.pendingApprovalDesc')}
           </p>
 

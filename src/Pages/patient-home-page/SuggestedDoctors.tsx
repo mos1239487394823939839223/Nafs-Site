@@ -57,7 +57,7 @@ export const SuggestedDoctors = () => {
   const skeletonCards = Array.from({ length: 4 });
 
   return (
-    <section className="bg-card rounded-2xl p-6 shadow-card mb-6" dir="ltr">
+    <section className="bg-card rounded-2xl p-4 sm:p-6 shadow-card mb-6" dir="ltr">
       <div className="flex items-center justify-between mb-5">
         <button
           onClick={() => navigate("/dashboard/patient/reserve")}
@@ -68,7 +68,7 @@ export const SuggestedDoctors = () => {
         <h2 className="text-lg font-bold">{t("patientHome.suggestedDoctors.title")}</h2>
       </div>
 
-      <div className="relative px-10">
+      <div className="relative md:px-10">
         <button
           onClick={() => setScroll(Math.max(0, scroll - 1))}
           disabled={scroll === 0}
@@ -89,7 +89,7 @@ export const SuggestedDoctors = () => {
 
         <div className="overflow-hidden">
           <div
-            className="grid grid-cols-2 lg:grid-cols-4 gap-4 transition-transform duration-300"
+            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 transition-transform duration-300"
             style={{
               transform: `translateX(-${scroll * 25}%)`,
             }}

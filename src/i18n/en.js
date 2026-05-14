@@ -91,6 +91,8 @@ export default {
     noResults: "No results found",
     theme: "Theme",
     doctor: "Doctor",
+    reject: "Reject",
+    unknownPatient: "Unknown Patient",
   },
 
   // Auth
@@ -190,40 +192,44 @@ export default {
       lastName: "Hassan",
       email: "you@example.com",
       phone: "+20 XXX XXX XXXX",
-      otp: "000000"
+      otp: "000000",
     },
     emailVerification: "Email Verification",
     verifyEmail: "Verify Email",
     verifyYourEmail: "Verify your email address",
     registrationSuccess: "Registration successful! Please sign in.",
-    registrationSubmitted: "Registration submitted! Your account is pending approval.",
+    registrationSubmitted:
+      "Registration submitted! Your account is pending approval.",
     intro: {
       privacy: {
         title: "Total Privacy",
         subtitle: "Your data protection is our top priority",
-        description: "We guarantee the highest levels of confidentiality and privacy.",
+        description:
+          "We guarantee the highest levels of confidentiality and privacy.",
         f1: "Full encryption for all conversations",
         f2: "No data sharing with any third party",
         f3: "Possibility to use a pseudonym",
-        f4: "Delete records at any time"
+        f4: "Delete records at any time",
       },
       security: {
         title: "Guaranteed Security",
         subtitle: "A safe environment to express your feelings",
-        description: "A trusted platform where we use the latest protection technologies.",
+        description:
+          "A trusted platform where we use the latest protection technologies.",
         f1: "Certified and licensed therapists",
         f2: "Global protection protocols",
         f3: "Periodic service quality checks",
-        f4: "100% secure electronic payment"
+        f4: "100% secure electronic payment",
       },
       followup: {
         title: "Regular Follow-up",
         subtitle: "Your recovery journey is our focus",
-        description: "We help you track your psychological progress step by step.",
+        description:
+          "We help you track your psychological progress step by step.",
         f1: "Monthly progress reports",
         f2: "Appointment and session reminders",
         f3: "Tracking evolution of feelings and behavior",
-        f4: "Periodic self-assessment tools"
+        f4: "Periodic self-assessment tools",
       },
       tests: {
         title: "Psychological Tests",
@@ -232,27 +238,29 @@ export default {
         f1: "Anxiety, depression, and stress tests",
         f2: "Instant results and accurate analysis",
         f3: "Recommendations based on test results",
-        f4: "Customized educational content according to your needs"
+        f4: "Customized educational content according to your needs",
       },
       emergency: {
         title: "Emergency Messages",
         subtitle: "We're not just an app, we're always by your side",
-        description: "Smart alert system for cases needing immediate intervention.",
+        description:
+          "Smart alert system for cases needing immediate intervention.",
         f1: "Emergency button for quick contact",
         f2: "Alert the therapist in critical cases",
         f3: "Immediate referral to nearby support centers",
-        f4: "Crisis management guide"
+        f4: "Crisis management guide",
       },
       support: {
         title: "24-Hour Support",
         subtitle: "Our team is always here to help you",
-        description: "Technical and psychological support available around the clock.",
+        description:
+          "Technical and psychological support available around the clock.",
         f1: "Quick response to inquiries",
         f2: "Help with booking appointments",
         f3: "Solve technical problems immediately",
-        f4: "Direct communication via chat"
-      }
-    }
+        f4: "Direct communication via chat",
+      },
+    },
   },
 
   // Doctor Registration
@@ -272,7 +280,8 @@ export default {
     consultationFee: "Consultation Fee (EGP)",
     languagesSpoken: "Languages Spoken",
     professionalBio: "Professional Bio",
-    bioPlaceholder: "Describe your professional background, education, and approach to care...",
+    bioPlaceholder:
+      "Describe your professional background, education, and approach to care...",
     bioMinChars: "min characters",
     uploadCredentials: "Upload your medical credentials",
     medicalLicenseNumber: "Medical License Number",
@@ -282,17 +291,19 @@ export default {
     additionalCertificates: "Additional Certificates",
     uploadCertificates: "Upload certificates",
     certificateTypes: "Board certifications, fellowships, etc.",
-    documentReviewNote: "Our medical board will review your documents within 24-48 business hours.",
+    documentReviewNote:
+      "Our medical board will review your documents within 24-48 business hours.",
     setYourAvailability: "Set Your Availability",
     chooseWorkingDays: "Choose your working days and hours",
     startTime: "Start Time",
     endTime: "End Time",
-    availabilityTip: "You can adjust your schedule anytime from your doctor dashboard.",
+    availabilityTip:
+      "You can adjust your schedule anytime from your doctor dashboard.",
     submitForApproval: "Submit for Approval",
     placeholders: {
       experience: "e.g., 10",
       fee: "e.g., 500",
-      license: "e.g., EG-12345-2020"
+      license: "e.g., EG-12345-2020",
     },
     specialties: {
       cardiology: "Cardiology",
@@ -304,13 +315,13 @@ export default {
       psychiatry: "Psychiatry",
       gynecology: "Gynecology",
       ophthalmology: "Ophthalmology",
-      ent: "ENT (Ear, Nose, Throat)"
+      ent: "ENT (Ear, Nose, Throat)",
     },
     languages: {
       arabic: "Arabic",
       english: "English",
       french: "French",
-      german: "German"
+      german: "German",
     },
     minimumFee: "Minimum consultation fee is 100 EGP",
   },
@@ -366,10 +377,26 @@ export default {
     },
     quickActions: {
       title: "Quick Actions",
-      sessions: { title: "My Sessions", desc: "View and manage all your sessions", cta: "View Sessions" },
-      content:  { title: "Content Library", desc: "Articles and diverse videos", cta: "Explore" },
-      programs: { title: "Treatment Programs", desc: "Programs designed to help you", cta: "View Programs" },
-      assessment: { title: "Psychological Assessment", desc: "A quick test to help you understand your condition", cta: "Start Assessment" },
+      sessions: {
+        title: "My Sessions",
+        desc: "View and manage all your sessions",
+        cta: "View Sessions",
+      },
+      content: {
+        title: "Content Library",
+        desc: "Articles and diverse videos",
+        cta: "Explore",
+      },
+      programs: {
+        title: "Treatment Programs",
+        desc: "Programs designed to help you",
+        cta: "View Programs",
+      },
+      assessment: {
+        title: "Psychological Assessment",
+        desc: "A quick test to help you understand your condition",
+        cta: "Start Assessment",
+      },
     },
     upcomingSession: {
       title: "Your Upcoming Sessions",
@@ -810,7 +837,8 @@ export default {
     manager: "Manager",
     managerDesc: "Full access including team management and reporting",
     bullyingSpecialist: "Anti-Bullying Specialist",
-    bullyingSpecialistDesc: "Specializes in handling bullying and harassment cases reported by patients",
+    bullyingSpecialistDesc:
+      "Specializes in handling bullying and harassment cases reported by patients",
     bookingsManagement: "Bookings Management",
     manageBookingsDesc: "Manage and monitor all platform bookings",
     searchPatientsDocs: "Search by patient or doctor name...",
@@ -843,7 +871,8 @@ export default {
     paymentInstructionDeleteButton: "Delete Instructions",
     paymentInstructionDeleteConfirm: "Confirm Delete",
     paymentInstructionDeleting: "Deleting...",
-    paymentInstructionDeletedSuccess: "Payment instructions deleted successfully",
+    paymentInstructionDeletedSuccess:
+      "Payment instructions deleted successfully",
     paymentInstructionDeleteFailed: "Failed to delete payment instructions",
     doctorFinanceTitle: "Doctor Finance Overview",
     totalConfirmed: "Total Confirmed",
@@ -938,10 +967,11 @@ export default {
         part1: "Digital Mental Support combining",
         tech: "Technology",
         and: " and ",
-        humanity: "Humanity"
+        humanity: "Humanity",
       },
       heading: "Take a Breath, We're With You.",
-      subtitle: "A confidential and safe mental health platform that helps you understand yourself and talk to certified specialists whenever you need.",
+      subtitle:
+        "A confidential and safe mental health platform that helps you understand yourself and talk to certified specialists whenever you need.",
       bookNow: "Book a Session Now",
       freeAssessment: "Free Self-Assessment",
       startFree: "Start Free Assessment",
@@ -949,12 +979,18 @@ export default {
       trust: {
         privacy: "Encrypted Privacy",
         doctors: "Certified Doctors",
-        flexibility: "Appointment Flexibility"
+        flexibility: "Appointment Flexibility",
       },
       badges: {
         rating: { title: "High Rating", sub: "4.9 out of 5 stars" },
-        available: { title: "Available 24/7", sub: "We're here whenever you need" },
-        certified: { title: "Certified Doctors", sub: "+100 specialist doctors" },
+        available: {
+          title: "Available 24/7",
+          sub: "We're here whenever you need",
+        },
+        certified: {
+          title: "Certified Doctors",
+          sub: "+100 specialist doctors",
+        },
         privacy: { title: "Full Privacy", sub: "Your privacy is our priority" },
       },
       preview: {
@@ -962,50 +998,71 @@ export default {
         chat: "Chat",
         video: "Video",
         voice: "Voice",
-        commDesc: "Choose the communication method that best suits you. All sessions are conducted with full encryption and confidentiality.",
+        commDesc:
+          "Choose the communication method that best suits you. All sessions are conducted with full encryption and confidentiality.",
         aiTitle: "Smart Assessment for your case",
-        aiDesc: "Short questions for an initial assessment (anxiety / depression / stress). In the end, we suggest the most suitable therapist for you.",
+        aiDesc:
+          "Short questions for an initial assessment (anxiety / depression / stress). In the end, we suggest the most suitable therapist for you.",
         articlesTitle: "Mental Health Articles",
         articles: [
           "How do I understand anxiety attacks?",
           "A simple routine for your day's peace",
-          "Relationships and your psychological boundaries"
-        ]
-      }
+          "Relationships and your psychological boundaries",
+        ],
+      },
     },
     features: {
       title: "Everything you need in one place",
       subtitle: "A complete mental health ecosystem",
       items: {
-        0: { title: "Secure Payment", desc: "Reliable and local payment options — easy and fast." },
-        1: { title: "Flexible Booking", desc: "Multiple slots for each therapist with smart reminders and calendar integration." },
-        2: { title: "Video, Voice & Chat Sessions", desc: "Live communication with your therapist in the way that suits you, from anywhere." },
-        3: { title: "Full Privacy", desc: "End-to-end encryption and strict protection for your data." },
-        4: { title: "Awareness Content Library", desc: "Reliable articles and tools written by mental health specialists." },
-        5: { title: "Smart Assessment Assistant", desc: "A robot that asks short questions to suggest the most suitable therapist for your case." }
-      }
+        0: {
+          title: "Secure Payment",
+          desc: "Reliable and local payment options — easy and fast.",
+        },
+        1: {
+          title: "Flexible Booking",
+          desc: "Multiple slots for each therapist with smart reminders and calendar integration.",
+        },
+        2: {
+          title: "Video, Voice & Chat Sessions",
+          desc: "Live communication with your therapist in the way that suits you, from anywhere.",
+        },
+        3: {
+          title: "Full Privacy",
+          desc: "End-to-end encryption and strict protection for your data.",
+        },
+        4: {
+          title: "Awareness Content Library",
+          desc: "Reliable articles and tools written by mental health specialists.",
+        },
+        5: {
+          title: "Smart Assessment Assistant",
+          desc: "A robot that asks short questions to suggest the most suitable therapist for your case.",
+        },
+      },
     },
     howItWorks: {
       title: "How Nafs works?",
       subtitle: "Three simple steps separate you from your mental comfort",
       step1: {
         title: "Initial Assessment",
-        desc: "Answer a few questions for our smart system to understand your status."
+        desc: "Answer a few questions for our smart system to understand your status.",
       },
       step2: {
         title: "Choose therapist",
-        desc: "We suggest the most suitable specialists based on your assessment."
+        desc: "We suggest the most suitable specialists based on your assessment.",
       },
       step3: {
         title: "Start journey",
-        desc: "Book your first session and start your psychological recovery journey."
-      }
+        desc: "Book your first session and start your psychological recovery journey.",
+      },
     },
     cta: {
       title: "Take a deep breath, we are here",
-      subtitle: "Start your journey towards real mental comfort today — the first assessment is completely free.",
+      subtitle:
+        "Start your journey towards real mental comfort today — the first assessment is completely free.",
       button: "Start Free Assessment",
-      browse: "Browse Therapists"
+      browse: "Browse Therapists",
     },
     footer: {
       rights: "© 2026 Nafs — All rights reserved",
@@ -1027,24 +1084,60 @@ export default {
     },
     journey: {
       title: "How to Start Your Journey?",
-      step1: { title: "Assess Your Mental State", desc: "Answer a few simple questions to better understand your situation." },
-      step2: { title: "Choose Your Doctor", desc: "We recommend the best specialists based on your condition and needs." },
-      step3: { title: "Book Your Session & Begin", desc: "Pick a time that suits you and start your journey toward a better life." },
+      step1: {
+        title: "Assess Your Mental State",
+        desc: "Answer a few simple questions to better understand your situation.",
+      },
+      step2: {
+        title: "Choose Your Doctor",
+        desc: "We recommend the best specialists based on your condition and needs.",
+      },
+      step3: {
+        title: "Book Your Session & Begin",
+        desc: "Pick a time that suits you and start your journey toward a better life.",
+      },
     },
     emergency: {
       title: "Need Help Right Now? We're Here for You",
-      blackmail: { title: "Experiencing Blackmail?", desc: "Contact us in full confidentiality — we will provide support and protection.", cta: "Request Protection" },
-      call: { title: "Emergency Call", desc: "Talk to a specialist immediately, privately and securely.", cta: "Emergency Call" },
-      danger: { title: "Feeling in Danger?", desc: "Don't hesitate. Ask for help now — your safety comes first.", cta: "Request Help" },
+      blackmail: {
+        title: "Experiencing Blackmail?",
+        desc: "Contact us in full confidentiality — we will provide support and protection.",
+        cta: "Request Protection",
+      },
+      call: {
+        title: "Emergency Call",
+        desc: "Talk to a specialist immediately, privately and securely.",
+        cta: "Emergency Call",
+      },
+      danger: {
+        title: "Feeling in Danger?",
+        desc: "Don't hesitate. Ask for help now — your safety comes first.",
+        cta: "Request Help",
+      },
     },
     services: {
       title: "Our Services",
       viewAll: "View All Services",
-      individual: { title: "Individual Sessions", desc: "Personal psychological support with specialists." },
-      relationships: { title: "Relationship Support", desc: "Improve your relationships and understand yourself and others." },
-      children: { title: "Child Support", desc: "Sessions for children and adolescents." },
-      family: { title: "Family Counseling", desc: "Solve family problems and improve communication." },
-      programs: { title: "Therapy Programs", desc: "Specialized programs for treating anxiety and depression." },
+      individual: {
+        title: "Individual Sessions",
+        desc: "Personal psychological support with specialists.",
+      },
+      relationships: {
+        title: "Relationship Support",
+        desc: "Improve your relationships and understand yourself and others.",
+      },
+      children: {
+        title: "Child Support",
+        desc: "Sessions for children and adolescents.",
+      },
+      family: {
+        title: "Family Counseling",
+        desc: "Solve family problems and improve communication.",
+      },
+      programs: {
+        title: "Therapy Programs",
+        desc: "Specialized programs for treating anxiety and depression.",
+      },
     },
     doctors: {
       title: "Choose Your Suitable Doctor",
@@ -1066,9 +1159,24 @@ export default {
     testimonials: {
       title: "What Our Clients Say",
       items: [
-        { name: "Fatima Ali", role: "Client", quote: "Support was fast and the specialists were very understanding." },
-        { name: "Ahmed Mahmoud", role: "Client", quote: "They helped me get through a difficult time with professionalism and full privacy." },
-        { name: "Mona Khaled", role: "Client", quote: "Wonderful platform, I felt truly understood. The doctor was amazing." },
+        {
+          name: "Fatima Ali",
+          role: "Client",
+          quote:
+            "Support was fast and the specialists were very understanding.",
+        },
+        {
+          name: "Ahmed Mahmoud",
+          role: "Client",
+          quote:
+            "They helped me get through a difficult time with professionalism and full privacy.",
+        },
+        {
+          name: "Mona Khaled",
+          role: "Client",
+          quote:
+            "Wonderful platform, I felt truly understood. The doctor was amazing.",
+        },
       ],
     },
     finalCta: {
@@ -1151,6 +1259,24 @@ export default {
     manageSupport: "Manage your support account information.",
     chatRooms: "Chat Rooms",
     patientConversations: "Patient Conversations",
+    manualPaymentDesc:
+      "Review transfer evidence quickly, approve valid payments, and reject suspicious submissions with clear reasons.",
+    paymentConfirmed: "Payment confirmed successfully",
+    paymentRejected: "Payment rejected",
+    cashWallet: "Cash Wallet",
+    provider: "Provider",
+    requestsList: "Requests List",
+    searchManualPayment: "Search by patient, booking, reference...",
+    loadingManualPayments: "Loading manual payments...",
+    noManualPayments: "No manual payment requests found.",
+    referenceNumber: "Reference",
+    sessionTime: "Session",
+    submittedAt: "Submitted",
+    rejectionReason: "Rejection reason",
+    noScreenshot: "No screenshot",
+    rejectManualPayment: "Reject Manual Payment",
+    rejectPrompt: "Provide a rejection reason for this payment request.",
+    rejectionReasonPlaceholder: "Reason (optional)",
   },
 
   // Documents
@@ -1201,6 +1327,7 @@ export default {
     connectionTimeout:
       "Connection timed out. Please check your internet connection or try again later.",
     somethingWentWrong: "Something went wrong. Please try again.",
+    loadFailed: "Failed to load data. Please try again.",
     unauthorized: "Session expired. Please sign in again.",
     fillRequired: "Please fill in all required fields",
     fixErrors: "Please fix the errors before continuing",
@@ -1313,7 +1440,8 @@ export default {
     ltr: "ltr",
     start3: "start-3",
     ps10Pe4: "ps-10 pe-4",
-    bgprimary5Borders4Bordersprimary: "bg-primary/5 border-s-4 border-s-primary",
+    bgprimary5Borders4Bordersprimary:
+      "bg-primary/5 border-s-4 border-s-primary",
     ms2: "-ms-2",
     borders: "border-s",
     enus: "en-US",
@@ -1348,7 +1476,8 @@ export default {
     noResultSubmittedYet: "No result submitted yet",
     noTag: "No tag",
     viewDetails: "View details",
-    enterYourResultAfterCompletingTheTest: "Enter your result after completing the test",
+    enterYourResultAfterCompletingTheTest:
+      "Enter your result after completing the test",
     example1827OrShortSummary: "Example: 18/27 or short summary",
     submitResult: "Submit Result",
     medicalTest: "Medical Test",
@@ -1359,9 +1488,11 @@ export default {
     failedToSaveResult: "Failed to save result",
     resultSavedSuccessfully: "Result saved successfully",
     availableTests: "Available Tests",
-    openTheExternalTestLinkThenReturnAndSubmitYourResultEachTestCanBeSubmittedOnceOnly: "Open the external test link, then return and submit your result. Each test can be submitted once only.",
+    openTheExternalTestLinkThenReturnAndSubmitYourResultEachTestCanBeSubmittedOnceOnly:
+      "Open the external test link, then return and submit your result. Each test can be submitted once only.",
     search: "Search",
-    searchByTestNameDescriptionOrTag: "Search by test name, description, or tag",
+    searchByTestNameDescriptionOrTag:
+      "Search by test name, description, or tag",
     all: "All",
     loadingTests: "Loading tests...",
     noTestsAreAvailableRightNow: "No tests are available right now",
@@ -1400,19 +1531,24 @@ export default {
     allTags: "All Tags",
     loadingTags: "Loading tags...",
     noTagsYet: "No tags yet",
-    createYourFirstTagToOrganizeArticles: "Create your first tag to organize articles",
+    createYourFirstTagToOrganizeArticles:
+      "Create your first tag to organize articles",
     doctor: "Doctor:",
     backToList: "Back to List",
     patient: "Patient",
     failedToLoadPaymentData: "Failed to load payment data",
     paymentMethod: "Payment Method",
-    pleaseEnterTitleAccountNumberAndProvider: "Please enter title, account number, and provider",
-    paymentInstructionsSavedSuccessfully: "Payment instructions saved successfully",
+    pleaseEnterTitleAccountNumberAndProvider:
+      "Please enter title, account number, and provider",
+    paymentInstructionsSavedSuccessfully:
+      "Payment instructions saved successfully",
     failedToSavePaymentInstructions: "Failed to save payment instructions",
-    paymentInstructionsDeletedSuccessfully: "Payment instructions deleted successfully",
+    paymentInstructionsDeletedSuccessfully:
+      "Payment instructions deleted successfully",
     failedToDeletePaymentInstructions: "Failed to delete payment instructions",
     paymentDetails: "Payment Details",
-    manageAccountDetailsUsedForManualTransfers: "Manage account details used for manual transfers.",
+    manageAccountDetailsUsedForManualTransfers:
+      "Manage account details used for manual transfers.",
     transferInstructionsDetails: "Transfer Instructions Details",
     loadingPaymentDetails: "Loading payment details...",
     paymentProvider: "Payment Provider",
@@ -1424,7 +1560,8 @@ export default {
     accountNumber: "Account Number:",
     enterAccountNumber: "Enter account number",
     transferInstructions: "Transfer Instructions",
-    addTransferStepsThePatientShouldFollow: "Add transfer steps the patient should follow",
+    addTransferStepsThePatientShouldFollow:
+      "Add transfer steps the patient should follow",
     justifyend: "justify-end",
     discardChanges: "Discard Changes",
     deleting: "Deleting...",
@@ -1432,7 +1569,8 @@ export default {
     saving: "Saving...",
     saveInstructions: "Save Instructions",
     confirmPaymentInstructionsDeletion: "Confirm Payment Instructions Deletion",
-    thePaymentInstructionsForTheSelectedProviderWillBeRemovedYouCanAddThemAgainLaterIfNeeded: "The payment instructions for the selected provider will be removed. You can add them again later if needed.",
+    thePaymentInstructionsForTheSelectedProviderWillBeRemovedYouCanAddThemAgainLaterIfNeeded:
+      "The payment instructions for the selected provider will be removed. You can add them again later if needed.",
     confirmDelete: "Confirm Delete",
     failedToLoadTags: "Failed to load tags",
     tests: "Tests",
@@ -1448,7 +1586,8 @@ export default {
     failedToCreateTest: "Failed to create test",
     testAddedSuccessfully: "Test added successfully",
     manageTests: "Manage Tests",
-    createTestsAndTagsThenMonitorAllDoctorAndPatientResultsInOnePlace: "Create tests and tags, then monitor all doctor and patient results in one place.",
+    createTestsAndTagsThenMonitorAllDoctorAndPatientResultsInOnePlace:
+      "Create tests and tags, then monitor all doctor and patient results in one place.",
     createTest: "Create Test",
     totalTests: "Total Tests",
     totalResults: "Total Results",
@@ -1474,7 +1613,8 @@ export default {
     selectTag: "Select tag",
     creating: "Creating...",
     createNewTag: "Create New Tag",
-    egPsychologicalBehavioralAnxiety: "e.g. Psychological / Behavioral / Anxiety",
+    egPsychologicalBehavioralAnxiety:
+      "e.g. Psychological / Behavioral / Anxiety",
     optionalDiseaseCategoryDescription: "Optional disease category description",
     ps10Pe10: "ps-10 pe-10",
     pendingReview: "Pending Review",
@@ -1494,7 +1634,8 @@ export default {
     rejectedByTechnicalSupport: "Rejected by technical support",
     refundApproved: "Refund approved",
     refundRejected: "Refund rejected",
-    trackRefundRequestsCreatedFromPaidCancellationsThenApproveOrRejectEachRequestWithClearNotes: "Track refund requests created from paid cancellations, then approve or reject each request with clear notes.",
+    trackRefundRequestsCreatedFromPaidCancellationsThenApproveOrRejectEachRequestWithClearNotes:
+      "Track refund requests created from paid cancellations, then approve or reject each request with clear notes.",
     pending: "pending",
     completed: "Completed",
     failed: "Failed",
@@ -1516,13 +1657,16 @@ export default {
     noMessagesYet: "No messages yet",
     approveRefund: "Approve Refund",
     rejectRefund: "Reject Refund",
-    youCanAddAnOptionalNoteBeforeApproval: "You can add an optional note before approval.",
-    addANoteToClarifyTheRejectionReason: "Add a note to clarify the rejection reason.",
+    youCanAddAnOptionalNoteBeforeApproval:
+      "You can add an optional note before approval.",
+    addANoteToClarifyTheRejectionReason:
+      "Add a note to clarify the rejection reason.",
     notes: "Notes",
     confirmApproval: "Confirm Approval",
     confirmRejection: "Confirm Rejection",
     earnings: "Earnings",
-    reviewYourEarningsSummaryAndPaymentTransactions: "Review your earnings summary and payment transactions",
+    reviewYourEarningsSummaryAndPaymentTransactions:
+      "Review your earnings summary and payment transactions",
     noPaidTransactionsYet: "No paid transactions yet",
     failedToLoadTestTypes: "Failed to load test types",
     sessionOpenedSuccessfully: "Session opened successfully",
@@ -1535,7 +1679,8 @@ export default {
     pleaseSelectATestType: "Please select a test type",
     failedToAddTest: "Failed to add test",
     cancelAppointment: "Cancel Appointment",
-    areYouSureYouWantToCancelThisAppointment: "Are you sure you want to cancel this appointment?",
+    areYouSureYouWantToCancelThisAppointment:
+      "Are you sure you want to cancel this appointment?",
     noKeepIt: "No, Keep it",
     yesCancel: "Yes, Cancel",
     addTestForPatient: "Add Test For Patient",
@@ -1562,7 +1707,8 @@ export default {
     minRead: "min read",
     fullContentComingSoon: "Full content coming soon",
     healthArticles: "Health Articles",
-    articlesAndGuidesFromSupportTeamDoctors: "Articles and guides from support team & doctors",
+    articlesAndGuidesFromSupportTeamDoctors:
+      "Articles and guides from support team & doctors",
     searchArticles: "Search articles...",
     featured: "Featured",
     min: "min",
@@ -1577,15 +1723,20 @@ export default {
     instantTransfer: "Instant transfer",
     digitalWallet: "Digital Wallet",
     manualTransfer: "Manual transfer",
-    theSelectedSlotWasCancelledByTheDoctorPleaseChooseAnotherSlot: "The selected slot was cancelled by the doctor. Please choose another slot.",
-    cancellationIsAllowedOnlyAtLeast48HoursBeforeTheAppointment: "Cancellation is allowed only at least 48 hours before the appointment",
+    theSelectedSlotWasCancelledByTheDoctorPleaseChooseAnotherSlot:
+      "The selected slot was cancelled by the doctor. Please choose another slot.",
+    cancellationIsAllowedOnlyAtLeast48HoursBeforeTheAppointment:
+      "Cancellation is allowed only at least 48 hours before the appointment",
     pleaseChooseAPaymentProviderFirst: "Please choose a payment provider first",
     pleaseAttachATransferScreenshot: "Please attach a transfer screenshot",
     failedToUploadTransferScreenshot: "Failed to upload transfer screenshot",
-    paymentProofSubmittedBookingWillStayPendingUntilTechnicalSupportReviewsIt: "Payment proof submitted. Booking will stay pending until technical support reviews it.",
+    paymentProofSubmittedBookingWillStayPendingUntilTechnicalSupportReviewsIt:
+      "Payment proof submitted. Booking will stay pending until technical support reviews it.",
     failedToSubmitPaymentProof: "Failed to submit payment proof",
-    thisSlotIsNoLongerAvailablePleaseChooseAnotherSlot: "This slot is no longer available. Please choose another slot.",
-    bookingAndPaymentRequestSubmittedSuccessfullyAndIsNowPendingReview: "Booking and payment request submitted successfully and is now pending review.",
+    thisSlotIsNoLongerAvailablePleaseChooseAnotherSlot:
+      "This slot is no longer available. Please choose another slot.",
+    bookingAndPaymentRequestSubmittedSuccessfullyAndIsNowPendingReview:
+      "Booking and payment request submitted successfully and is now pending review.",
     next: "Next:",
     dr: "Dr.",
     "24Reviews": "(24 reviews)",
@@ -1612,14 +1763,17 @@ export default {
     noSlotSelectedYet: "No slot selected yet",
     loadingPaymentProviders: "Loading payment providers...",
     choosePaymentProvider: "Choose payment provider",
-    noPaymentProvidersAvailableRightNow: "No payment providers available right now",
+    noPaymentProvidersAvailableRightNow:
+      "No payment providers available right now",
     paymentInstructions: "Payment Instructions",
     loadingPaymentInstructions: "Loading payment instructions...",
-    noInstructionsAreCurrentlyAvailableForThisProvider: "No instructions are currently available for this provider.",
+    noInstructionsAreCurrentlyAvailableForThisProvider:
+      "No instructions are currently available for this provider.",
     sessionFee: "Session Fee:",
     transferFees: "Transfer Fees:",
     totalPrice: "Total Price",
-    pleaseFollowTheInstructionsCarefully: "Please follow the instructions carefully",
+    pleaseFollowTheInstructionsCarefully:
+      "Please follow the instructions carefully",
     toAccount: "To account:",
     totalAmount: "Total amount:",
     takeAScreenshotAndUploadItBelow: "Take a screenshot and upload it below",
@@ -1632,16 +1786,19 @@ export default {
     paySubmitProof: "Pay & Submit Proof",
     doctorReviews: "Doctor Reviews",
     addYourReview: "Add Your Review",
-    shareYourExperienceWithThisDoctor: "Share your experience with this doctor...",
+    shareYourExperienceWithThisDoctor:
+      "Share your experience with this doctor...",
     reviewAddedSuccessfully: "Review added successfully",
     failedToAddReview: "Failed to add review",
     submit: "Submit",
     noReviewsYet: "No reviews yet",
     requestSubmitted: "Request Submitted",
-    yourBookingIsCurrentlyPendingUntilTechnicalSupportReviewsYourTransferProof: "Your booking is currently pending until technical support reviews your transfer proof.",
+    yourBookingIsCurrentlyPendingUntilTechnicalSupportReviewsYourTransferProof:
+      "Your booking is currently pending until technical support reviews your transfer proof.",
     payment: "Payment: ",
     cancelAppointmentRefund: "Cancel Appointment & Refund",
-    areYouSureYouWantToCancelThisAppointmentARefundRequestWillBeSentToTechnicalSupportBecausePaymentIsConfirmed: "Are you sure you want to cancel this appointment? A refund request will be sent to technical support because payment is confirmed.",
+    areYouSureYouWantToCancelThisAppointmentARefundRequestWillBeSentToTechnicalSupportBecausePaymentIsConfirmed:
+      "Are you sure you want to cancel this appointment? A refund request will be sent to technical support because payment is confirmed.",
     yesCancelRefund: "Yes, Cancel & Refund",
     hidePassword: "Hide password",
     showPassword: "Show password",
@@ -1659,6 +1816,6 @@ export default {
     order2: "order-2",
     failedToSendMessage: "Failed to send message",
     unableToResolvePatientId: "Unable to resolve patient id",
-    failedToOpenSupportChat: "Failed to open support chat"
-  }
+    failedToOpenSupportChat: "Failed to open support chat",
+  },
 };

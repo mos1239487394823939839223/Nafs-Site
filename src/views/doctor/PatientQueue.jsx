@@ -1,12 +1,22 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Users, Filter, Loader2, ChevronLeft, ChevronRight, XCircle, TestTube, ClipboardCheck as ResultsIcon } from "lucide-react";
+import {
+  Users,
+  Filter,
+  Loader2,
+  ChevronLeft,
+  ChevronRight,
+  XCircle,
+  TestTube,
+  ClipboardCheck as ResultsIcon,
+} from "lucide-react";
 import { useToast } from "../../components/ui/Toast";
 
 import QueueItem from "../../components/doctor/queue/QueueItem";
 import QueueStats from "../../components/doctor/queue/QueueStats";
 import Button from "../../components/ui/Button";
+import FilterChips from "../../components/shared/FilterChips";
 import { doctorAPI, medicalAPI } from "../../lib/api";
 import {
   APPOINTMENT_STATUS,
@@ -126,52 +136,51 @@ export default function PatientQueue() {
   };
 
   // Map bookings to patient queue format
-  const patients = bookings
-    .map((booking) => {
-      const now = new Date();
-      const sessionStart = new Date(booking.SessionStartTime);
-      const diffMs = sessionStart.getTime() - now.getTime();
-      const joinWindowMs = 24 * 60 * 60 * 1000;
-      const waitTime = Math.max(0, Math.floor((now - sessionStart) / 60000));
-      const statusKey = getAppointmentStatusKey(booking.Status, booking);
-      const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
+  const patients = bookings.map((booking) => {
+    const now = new Date();
+    const sessionStart = new Date(booking.SessionStartTime);
+    const diffMs = sessionStart.getTime() - now.getTime();
+    const joinWindowMs = 24 * 60 * 60 * 1000;
+    const waitTime = Math.max(0, Math.floor((now - sessionStart) / 60000));
+    const statusKey = getAppointmentStatusKey(booking.Status, booking);
+    const twoDaysMs = 2 * 24 * 60 * 60 * 1000;
 
-      const canCancel =
-        (statusKey === "pending" ||
-          statusKey === "confirmed" ||
-          statusKey === "pendingPayment") &&
-        diffMs >= twoDaysMs;
-      const showJoin =
-        (statusKey === "confirmed" || statusKey === "inProgress") &&
-        diffMs >= 0 &&
-        diffMs <= joinWindowMs;
+    const canCancel =
+      (statusKey === "pending" ||
+        statusKey === "confirmed" ||
+        statusKey === "pendingPayment") &&
+      diffMs >= twoDaysMs;
+    const showJoin =
+      (statusKey === "confirmed" || statusKey === "inProgress") &&
+      diffMs >= 0 &&
+      diffMs <= joinWindowMs;
 
-      return {
-        id: booking.Id,
-        bookingId: booking.Id,
-        patientId: booking.PatientId,
-        name: booking.PatientName || "Unknown Patient",
-        status: statusKey,
-        statusCode: booking.Status,
-        waitTime:
-          statusKey === "pending" ||
-          statusKey === "confirmed" ||
-          statusKey === "pendingPayment" ||
-          statusKey === "inProgress"
-            ? waitTime
-            : 0,
-        specialty: "Consultation",
-        time: formatTime(booking.SessionStartTime),
-        sessionTimeLabel: formatTime(booking.SessionStartTime),
-        sessionDateLabel: formatDate(booking.SessionStartTime),
-        duration: booking.DurationMinutes,
-        meetingUrl: booking.MeetingUrl,
-        paymentConfirmed: booking.PaymentConfirmed,
-        paymentStatus: booking.PaymentStatus,
-        canCancel,
-        showJoin,
-      };
-    });
+    return {
+      id: booking.Id,
+      bookingId: booking.Id,
+      patientId: booking.PatientId,
+      name: booking.PatientName || "Unknown Patient",
+      status: statusKey,
+      statusCode: booking.Status,
+      waitTime:
+        statusKey === "pending" ||
+        statusKey === "confirmed" ||
+        statusKey === "pendingPayment" ||
+        statusKey === "inProgress"
+          ? waitTime
+          : 0,
+      specialty: "Consultation",
+      time: formatTime(booking.SessionStartTime),
+      sessionTimeLabel: formatTime(booking.SessionStartTime),
+      sessionDateLabel: formatDate(booking.SessionStartTime),
+      duration: booking.DurationMinutes,
+      meetingUrl: booking.MeetingUrl,
+      paymentConfirmed: booking.PaymentConfirmed,
+      paymentStatus: booking.PaymentStatus,
+      canCancel,
+      showJoin,
+    };
+  });
 
   const handleJoin = async (patient) => {
     setActionLoading({ type: "join", bookingId: patient.bookingId });
@@ -202,8 +211,7 @@ export default function PatientQueue() {
       navigate(`/dashboard/doctor/messages${query ? `?${query}` : ""}`);
     } catch (error) {
       toast.error(
-        error?.response?.data?.Message ||
-          (t("auto.failedToOpenSession")),
+        error?.response?.data?.Message || t("auto.failedToOpenSession"),
       );
     } finally {
       setActionLoading({ type: null, bookingId: null });
@@ -267,9 +275,7 @@ export default function PatientQueue() {
         .map((record) => ({
           id: String(record?.RecordID ?? record?.RecordId ?? record?.id ?? ""),
           testTypeName:
-            record?.TestTypeName ||
-            record?.testTypeName ||
-            (t("auto.test")),
+            record?.TestTypeName || record?.testTypeName || t("auto.test"),
           testDate:
             record?.TestDate ||
             record?.testDate ||
@@ -291,8 +297,7 @@ export default function PatientQueue() {
     } catch (error) {
       setShowResultItems([]);
       toast.error(
-        error?.response?.data?.Message ||
-          (t("auto.failedToLoadResults")),
+        error?.response?.data?.Message || t("auto.failedToLoadResults"),
       );
     } finally {
       setShowResultLoading(false);
@@ -331,11 +336,14 @@ export default function PatientQueue() {
           }
 
           const now = new Date();
-          const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+          const localDateTime = new Date(
+            now.getTime() - now.getTimezoneOffset() * 60000,
+          )
             .toISOString()
             .slice(0, 16);
           const firstType = availableTypes[0];
-          const firstTypeId = firstType?.ID ?? firstType?.Id ?? firstType?.id ?? "";
+          const firstTypeId =
+            firstType?.ID ?? firstType?.Id ?? firstType?.id ?? "";
 
           setAddTestForm({
             testTypeId: firstTypeId ? String(firstTypeId) : "",
@@ -389,17 +397,14 @@ export default function PatientQueue() {
 
       const response = await medicalAPI.addPatientTest(payload);
       if (response?.IsSuccess === false) {
-        toast.error(response?.Message || (t("auto.failedToAddTest")));
+        toast.error(response?.Message || t("auto.failedToAddTest"));
         return;
       }
 
       toast.success(t("auto.testAddedSuccessfully"));
       setAddTestPatient(null);
     } catch (error) {
-      toast.error(
-        error?.response?.data?.Message ||
-          (t("auto.failedToAddTest")),
-      );
+      toast.error(error?.response?.data?.Message || t("auto.failedToAddTest"));
     } finally {
       setActionLoading({ type: null, bookingId: null });
     }
@@ -437,7 +442,7 @@ export default function PatientQueue() {
         p.status === "pending" ||
         p.status === "confirmed" ||
         p.status === "pendingPayment" ||
-        p.status === "inProgress"
+        p.status === "inProgress",
     ).length,
     avgWait:
       patients.filter((p) => p.waitTime > 0).length > 0
@@ -452,7 +457,7 @@ export default function PatientQueue() {
   };
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div dir={isRTL ? "rtl" : "ltr"} className="p-2 sm:p-4 md:p-6 max-w-7xl mx-auto">
       {/* Page Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
@@ -468,10 +473,13 @@ export default function PatientQueue() {
       </motion.div>
 
       {/* Cancellation Policy Banner */}
-      <div className={`flex items-center gap-3 p-4 mb-6 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700 ${isRTL ? 'flex-row-reverse text-end' : ''}`}>
-        <span className="text-amber-600 text-lg">⚠️</span>
+      <div className="flex items-center gap-3 p-4 mb-6 rounded-xl border border-amber-200 bg-amber-50 dark:bg-amber-900/20 dark:border-amber-700">
+        <span className="text-amber-600 text-lg shrink-0">⚠️</span>
         <p className="text-sm text-amber-700 dark:text-amber-400 font-medium">
-          {t("doctor.cancelWindowHint", "Cancellation is allowed only 2 days before the slot start time.")}
+          {t(
+            "doctor.cancelWindowHint",
+            "Cancellation is allowed only 2 days before the slot start time.",
+          )}
         </p>
       </div>
 
@@ -482,25 +490,14 @@ export default function PatientQueue() {
         {/* Main Queue List */}
         <div className="space-y-6">
           {/* Filters */}
-          <div className="flex items-center gap-2 overflow-x-auto pb-2">
-            <Filter className="w-5 h-5 text-text-light me-2" />
-            {filters.map((f) => (
-              <button
-                key={f.id}
-                onClick={() => {
-                  setFilter(f.id);
-                  setPageIndex(1);
-                }}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap ${
-                  filter === f.id
-                    ? "bg-primary text-white shadow-md"
-                    : "bg-background-paper text-text-muted border border-border hover:bg-background-subtle"
-                }`}
-              >
-                {f.label}
-              </button>
-            ))}
-          </div>
+          <FilterChips
+            items={filters}
+            value={filter}
+            onChange={(id) => {
+              setFilter(id);
+              setPageIndex(1);
+            }}
+          />
 
           {/* List */}
           <div className="min-h-[400px]">
@@ -597,7 +594,8 @@ export default function PatientQueue() {
                     }}
                     isLoading={
                       actionLoading?.type === "cancel" &&
-                      actionLoading?.bookingId === cancelConfirmPatient.bookingId
+                      actionLoading?.bookingId ===
+                        cancelConfirmPatient.bookingId
                     }
                   >
                     {t("auto.yesCancel")}
@@ -627,7 +625,9 @@ export default function PatientQueue() {
               className="relative w-full max-w-lg bg-background-paper rounded-2xl shadow-2xl border border-border overflow-hidden z-10"
             >
               <div className="p-6">
-                <div className={`flex items-center gap-2 mb-5 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div
+                  className={`flex items-center gap-2 mb-5 ${isRTL ? "flex-row-reverse" : ""}`}
+                >
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <TestTube className="w-5 h-5 text-primary" />
                   </div>
@@ -635,7 +635,9 @@ export default function PatientQueue() {
                     <h3 className="text-lg font-bold text-text-heading">
                       {t("auto.addTestForPatient")}
                     </h3>
-                    <p className="text-sm text-text-muted">{addTestPatient.name}</p>
+                    <p className="text-sm text-text-muted">
+                      {addTestPatient.name}
+                    </p>
                   </div>
                 </div>
 
@@ -692,9 +694,7 @@ export default function PatientQueue() {
                       value={addTestForm.scanUrl}
                       readOnly
                       className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text outline-none focus:ring-2 focus:ring-primary/20"
-                      placeholder={
-                        t("auto.noUrlConfiguredForThisTestType")
-                      }
+                      placeholder={t("auto.noUrlConfiguredForThisTestType")}
                     />
                   </div>
 
@@ -706,7 +706,10 @@ export default function PatientQueue() {
                       rows={3}
                       value={addTestForm.examNotes}
                       onChange={(e) =>
-                        setAddTestForm((prev) => ({ ...prev, examNotes: e.target.value }))
+                        setAddTestForm((prev) => ({
+                          ...prev,
+                          examNotes: e.target.value,
+                        }))
                       }
                       className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text outline-none focus:ring-2 focus:ring-primary/20 resize-none"
                       placeholder={t("auto.addNotes")}
@@ -721,14 +724,19 @@ export default function PatientQueue() {
                       type="datetime-local"
                       value={addTestForm.testDate}
                       onChange={(e) =>
-                        setAddTestForm((prev) => ({ ...prev, testDate: e.target.value }))
+                        setAddTestForm((prev) => ({
+                          ...prev,
+                          testDate: e.target.value,
+                        }))
                       }
                       className="w-full px-3 py-2 border border-border rounded-lg bg-background text-text outline-none focus:ring-2 focus:ring-primary/20"
                     />
                   </div>
                 </div>
 
-                <div className={`mt-6 flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div
+                  className={`mt-6 flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}
+                >
                   <Button
                     variant="outline"
                     onClick={() => setAddTestPatient(null)}
@@ -769,7 +777,9 @@ export default function PatientQueue() {
               className="relative w-full max-w-3xl bg-background-paper rounded-2xl shadow-2xl border border-border overflow-hidden z-10"
             >
               <div className="p-6">
-                <div className={`flex items-center gap-2 mb-5 ${isRTL ? "flex-row-reverse" : ""}`}>
+                <div
+                  className={`flex items-center gap-2 mb-5 ${isRTL ? "flex-row-reverse" : ""}`}
+                >
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <ResultsIcon className="w-5 h-5 text-primary" />
                   </div>
@@ -777,7 +787,9 @@ export default function PatientQueue() {
                     <h3 className="text-lg font-bold text-text-heading">
                       {t("auto.testResults")}
                     </h3>
-                    <p className="text-sm text-text-muted">{showResultPatient.name}</p>
+                    <p className="text-sm text-text-muted">
+                      {showResultPatient.name}
+                    </p>
                   </div>
                 </div>
 
@@ -796,8 +808,12 @@ export default function PatientQueue() {
                         key={item.id}
                         className="p-4 rounded-xl border border-border bg-background"
                       >
-                        <div className={`flex items-center justify-between gap-3 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}>
-                          <h4 className="font-semibold text-text-heading">{item.testTypeName}</h4>
+                        <div
+                          className={`flex items-center justify-between gap-3 mb-2 ${isRTL ? "flex-row-reverse" : ""}`}
+                        >
+                          <h4 className="font-semibold text-text-heading">
+                            {item.testTypeName}
+                          </h4>
                           <span className="text-xs text-text-muted">
                             {item.testDate
                               ? new Date(item.testDate).toLocaleString(
@@ -812,7 +828,7 @@ export default function PatientQueue() {
                             {t("auto.result")}
                           </p>
                           <p className="text-sm text-text-heading whitespace-pre-wrap">
-                            {item.result || (t("auto.noResultSubmittedYet"))}
+                            {item.result || t("auto.noResultSubmittedYet")}
                           </p>
                         </div>
 
@@ -832,7 +848,10 @@ export default function PatientQueue() {
                 )}
 
                 <div className={`mt-6 flex ${t("auto.justifyend")}`}>
-                  <Button variant="outline" onClick={() => setShowResultPatient(null)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowResultPatient(null)}
+                  >
                     {t("auto.close")}
                   </Button>
                 </div>

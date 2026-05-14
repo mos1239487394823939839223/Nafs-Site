@@ -708,7 +708,7 @@ export default function UserManagement() {
                 </div>
 
                 {/* KPI Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
                     <div className="rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-white p-5 shadow-sm">
                         <p className="text-sm text-white/80">{t('admin.doctors')}</p>
                         <p className="text-3xl font-bold mt-1">{doctors.length}</p>
@@ -786,116 +786,140 @@ export default function UserManagement() {
                             </div>
                         ) : (
                             <>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow hover={false}>
-                                            <TableHead>{t('common.name')}</TableHead>
-                                            <TableHead>{t('common.specialty')}</TableHead>
-                                            <TableHead>{t('common.email')}</TableHead>
-                                            <TableHead>{t('common.phone')}</TableHead>
-                                            <TableHead>{t('common.status')}</TableHead>
-                                            <TableHead className="text-center">{t('common.actions')}</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {filteredDoctors.length > 0 ? (
-                                            filteredDoctors.map((doctor) => (
-                                                <TableRow key={doctor.Id || doctor.id || doctor.Email}>
-                                                    <TableCell>
-                                                        <div className="flex items-center gap-3">
-                                                            <UserAvatar name={doctor.Name || doctor.name} src={doctor.Image || doctor.image} size="sm" />
-                                                            <span className="font-semibold text-text-heading">{doctor.Name || doctor.name}</span>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <div className="flex flex-wrap gap-1">
-                                                            {(doctor.Specialist || doctor.specialist || []).length > 0
-                                                                ? (doctor.Specialist || doctor.specialist).map((s, i) => (
-                                                                    <Badge key={i} variant="secondary">{s}</Badge>
-                                                                ))
-                                                                : <span className="text-text-muted">—</span>
-                                                            }
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="text-text-muted">{doctor.Email || doctor.email}</TableCell>
-                                                    <TableCell className="text-text-muted">{doctor.PhoneNumber || doctor.phoneNumber || '—'}</TableCell>
-                                                    <TableCell>
-                                                        <Badge variant={doctor.IsActive !== false ? 'success' : 'default'}>
-                                                            <Activity className="w-3 h-3" />
-                                                            {doctor.IsActive !== false ? t('common.active') : t('common.inactive')}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-center">
-                                                        <div className="flex items-center justify-center gap-2">
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                    <button
-                                                                        onClick={() => openDoctorFinancePage(doctor)}
-                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors"
-                                                                    >
+                                {/* ── Mobile cards (hidden on md+) ── */}
+                                <div className="flex flex-col gap-3 md:hidden">
+                                    {filteredDoctors.length === 0 ? (
+                                        <div className="flex flex-col items-center gap-3 py-12 text-center">
+                                            <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
+                                                <Stethoscope className="w-7 h-7 text-text-muted" />
+                                            </div>
+                                            <p className="text-text-muted font-medium">{t('admin.noDoctorsFound')}</p>
+                                        </div>
+                                    ) : filteredDoctors.map((doctor) => (
+                                        <div key={doctor.Id || doctor.id || doctor.Email}
+                                            className="bg-background-paper border border-border rounded-2xl p-4 flex flex-col gap-3 shadow-sm">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <UserAvatar name={doctor.Name || doctor.name} src={doctor.Image || doctor.image} size="md" />
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="font-semibold text-text-heading truncate">{doctor.Name || doctor.name}</p>
+                                                    <p className="text-xs text-text-muted truncate">{doctor.Email || doctor.email}</p>
+                                                </div>
+                                                <Badge variant={doctor.IsActive !== false ? 'success' : 'default'} className="shrink-0">
+                                                    {doctor.IsActive !== false ? t('common.active') : t('common.inactive')}
+                                                </Badge>
+                                            </div>
+                                            {(doctor.Specialist || doctor.specialist || []).length > 0 && (
+                                                <div className="flex flex-wrap gap-1">
+                                                    {(doctor.Specialist || doctor.specialist).map((s, i) => (
+                                                        <Badge key={i} variant="secondary">{s}</Badge>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <div className="flex items-center gap-2 pt-1 border-t border-border">
+                                                <button onClick={() => openDoctorFinancePage(doctor)}
+                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
+                                                    <Eye className="w-4 h-4 text-secondary" />
+                                                    {t('common.view')}
+                                                </button>
+                                                <button onClick={() => handleToggleDoctor(doctor.Id || doctor.id)}
+                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
+                                                    {doctor.IsActive !== false
+                                                        ? <><ToggleRight className="w-4 h-4 text-emerald-500" />{t('common.inactive')}</>
+                                                        : <><ToggleLeft className="w-4 h-4 text-text-muted" />{t('common.active')}</>}
+                                                </button>
+                                                <button onClick={() => openResetPasswordModal(doctor)}
+                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
+                                                    <Lock className="w-4 h-4 text-primary" />
+                                                    {t('auth.resetPassword')}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* ── Desktop table (hidden on mobile) ── */}
+                                <div className="hidden md:block">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow hover={false}>
+                                                <TableHead>{t('common.name')}</TableHead>
+                                                <TableHead>{t('common.specialty')}</TableHead>
+                                                <TableHead>{t('common.email')}</TableHead>
+                                                <TableHead>{t('common.phone')}</TableHead>
+                                                <TableHead>{t('common.status')}</TableHead>
+                                                <TableHead className="text-center">{t('common.actions')}</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {filteredDoctors.length > 0 ? (
+                                                filteredDoctors.map((doctor) => (
+                                                    <TableRow key={doctor.Id || doctor.id || doctor.Email}>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-3 min-w-0">
+                                                                <UserAvatar name={doctor.Name || doctor.name} src={doctor.Image || doctor.image} size="sm" />
+                                                                <span className="font-semibold text-text-heading truncate">{doctor.Name || doctor.name}</span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <div className="flex flex-wrap gap-1">
+                                                                {(doctor.Specialist || doctor.specialist || []).length > 0
+                                                                    ? (doctor.Specialist || doctor.specialist).map((s, i) => <Badge key={i} variant="secondary">{s}</Badge>)
+                                                                    : <span className="text-text-muted">—</span>}
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-text-muted max-w-[180px] truncate">{doctor.Email || doctor.email}</TableCell>
+                                                        <TableCell className="text-text-muted whitespace-nowrap">{doctor.PhoneNumber || doctor.phoneNumber || '—'}</TableCell>
+                                                        <TableCell>
+                                                            <Badge variant={doctor.IsActive !== false ? 'success' : 'default'}>
+                                                                <Activity className="w-3 h-3" />
+                                                                {doctor.IsActive !== false ? t('common.active') : t('common.inactive')}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <Tooltip><TooltipTrigger asChild>
+                                                                    <button onClick={() => openDoctorFinancePage(doctor)}
+                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
                                                                         <Eye className="w-4 h-4 text-secondary" />
                                                                     </button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent>
-                                                                    {t('common.view')}
-                                                                </TooltipContent>
-                                                            </Tooltip>
-
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                    <button
-                                                                        onClick={() => handleToggleDoctor(doctor.Id || doctor.id)}
-                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors"
-                                                                    >
-                                                                        {doctor.IsActive !== false ? (
-                                                                            <ToggleRight className="w-5 h-5 text-emerald-500" />
-                                                                        ) : (
-                                                                            <ToggleLeft className="w-5 h-5 text-text-muted" />
-                                                                        )}
+                                                                </TooltipTrigger><TooltipContent>{t('common.view')}</TooltipContent></Tooltip>
+                                                                <Tooltip><TooltipTrigger asChild>
+                                                                    <button onClick={() => handleToggleDoctor(doctor.Id || doctor.id)}
+                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
+                                                                        {doctor.IsActive !== false
+                                                                            ? <ToggleRight className="w-5 h-5 text-emerald-500" />
+                                                                            : <ToggleLeft className="w-5 h-5 text-text-muted" />}
                                                                     </button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent>
-                                                                    {doctor.IsActive !== false ? t('common.inactive') : t('common.active')}
-                                                                </TooltipContent>
-                                                            </Tooltip>
-
-                                                            <Tooltip>
-                                                                <TooltipTrigger asChild>
-                                                                    <button
-                                                                        onClick={() => openResetPasswordModal(doctor)}
-                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors"
-                                                                    >
+                                                                </TooltipTrigger><TooltipContent>{doctor.IsActive !== false ? t('common.inactive') : t('common.active')}</TooltipContent></Tooltip>
+                                                                <Tooltip><TooltipTrigger asChild>
+                                                                    <button onClick={() => openResetPasswordModal(doctor)}
+                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
                                                                         <Lock className="w-4 h-4 text-primary" />
                                                                     </button>
-                                                                </TooltipTrigger>
-                                                                <TooltipContent>
-                                                                    {t('auth.resetPassword')}
-                                                                </TooltipContent>
-                                                            </Tooltip>
+                                                                </TooltipTrigger><TooltipContent>{t('auth.resetPassword')}</TooltipContent></Tooltip>
+                                                            </div>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            ) : (
+                                                <TableRow hover={false}>
+                                                    <TableCell colSpan={6} className="text-center py-12">
+                                                        <div className="flex flex-col items-center gap-3">
+                                                            <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
+                                                                <Stethoscope className="w-7 h-7 text-text-muted" />
+                                                            </div>
+                                                            <p className="text-text-muted font-medium">{t('admin.noDoctorsFound')}</p>
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
-                                            ))
-                                        ) : (
-                                            <TableRow hover={false}>
-                                                <TableCell colSpan={6} className="text-center py-12">
-                                                    <div className="flex flex-col items-center gap-3">
-                                                        <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
-                                                            <Stethoscope className="w-7 h-7 text-text-muted" />
-                                                        </div>
-                                                        <p className="text-text-muted font-medium">{t('admin.noDoctorsFound')}</p>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
 
                                 {/* Pagination */}
-                                <div className="flex items-center justify-between mt-4">
-                                    <span className="text-sm text-text-muted">
-                                        {filteredDoctors.length} {t('admin.doctors')}
-                                    </span>
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mt-4">
+                                    <span className="text-sm text-text-muted">{filteredDoctors.length} {t('admin.doctors')}</span>
                                     <Pagination page={doctorsPage} total={doctorsTotalPages} onChange={setDoctorsPage} />
                                 </div>
                             </>
@@ -910,82 +934,104 @@ export default function UserManagement() {
                             </div>
                         ) : (
                             <>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow hover={false}>
-                                            <TableHead>{t('common.name')}</TableHead>
-                                            <TableHead>{t('common.email')}</TableHead>
-                                            <TableHead>{t('common.phone')}</TableHead>
-                                            <TableHead>{t('common.role')}</TableHead>
-                                            <TableHead>{t('common.status')}</TableHead>
-                                            <TableHead className="text-center">{t('common.actions')}</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {filteredPatients.length > 0 ? (
-                                            filteredPatients.map((patient) => (
-                                                <TableRow key={patient.Id || patient.id || patient.Email}>
-                                                    <TableCell>
-                                                        <div className="flex items-center gap-3">
-                                                            <UserAvatar
-                                                                name={patient.Name || patient.name}
-                                                                src={patient.Image || patient.image}
-                                                                size="sm"
-                                                                className="ring-secondary/30"
-                                                            />
-                                                            <span className="font-semibold text-text-heading">{patient.Name || patient.name}</span>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="text-text-muted">{patient.Email || patient.email}</TableCell>
-                                                    <TableCell className="text-text-muted">{patient.PhoneNumber || patient.phoneNumber || '—'}</TableCell>
-                                                    <TableCell>
-                                                        <Badge variant="primary">
-                                                            <ShieldCheck className="w-3 h-3" />
-                                                            {patient.RoleName || patient.roleName || '—'}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant={patient.IsActive !== false ? 'success' : 'default'}>
-                                                            {patient.IsActive !== false ? t('common.active') : t('common.inactive')}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-center">
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <button
-                                                                    onClick={() => openResetPasswordModal(patient)}
-                                                                    className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors"
-                                                                >
+                                {/* ── Mobile cards ── */}
+                                <div className="flex flex-col gap-3 md:hidden">
+                                    {filteredPatients.length === 0 ? (
+                                        <div className="flex flex-col items-center gap-3 py-12 text-center">
+                                            <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
+                                                <Users className="w-7 h-7 text-text-muted" />
+                                            </div>
+                                            <p className="text-text-muted font-medium">{t('admin.noUsersFound')}</p>
+                                        </div>
+                                    ) : filteredPatients.map((patient) => (
+                                        <div key={patient.Id || patient.id || patient.Email}
+                                            className="bg-background-paper border border-border rounded-2xl p-4 flex flex-col gap-3 shadow-sm">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <UserAvatar name={patient.Name || patient.name} src={patient.Image || patient.image} size="md" className="ring-secondary/30" />
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="font-semibold text-text-heading truncate">{patient.Name || patient.name}</p>
+                                                    <p className="text-xs text-text-muted truncate">{patient.Email || patient.email}</p>
+                                                </div>
+                                                <Badge variant={patient.IsActive !== false ? 'success' : 'default'} className="shrink-0">
+                                                    {patient.IsActive !== false ? t('common.active') : t('common.inactive')}
+                                                </Badge>
+                                            </div>
+                                            <div className="flex items-center gap-2 pt-1 border-t border-border">
+                                                <button onClick={() => openResetPasswordModal(patient)}
+                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
+                                                    <Lock className="w-4 h-4 text-primary" />
+                                                    {t('auth.resetPassword')}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* ── Desktop table ── */}
+                                <div className="hidden md:block">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow hover={false}>
+                                                <TableHead>{t('common.name')}</TableHead>
+                                                <TableHead>{t('common.email')}</TableHead>
+                                                <TableHead>{t('common.phone')}</TableHead>
+                                                <TableHead>{t('common.role')}</TableHead>
+                                                <TableHead>{t('common.status')}</TableHead>
+                                                <TableHead className="text-center">{t('common.actions')}</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {filteredPatients.length > 0 ? (
+                                                filteredPatients.map((patient) => (
+                                                    <TableRow key={patient.Id || patient.id || patient.Email}>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-3 min-w-0">
+                                                                <UserAvatar name={patient.Name || patient.name} src={patient.Image || patient.image} size="sm" className="ring-secondary/30" />
+                                                                <span className="font-semibold text-text-heading truncate">{patient.Name || patient.name}</span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-text-muted max-w-[180px] truncate">{patient.Email || patient.email}</TableCell>
+                                                        <TableCell className="text-text-muted whitespace-nowrap">{patient.PhoneNumber || patient.phoneNumber || '—'}</TableCell>
+                                                        <TableCell>
+                                                            <Badge variant="primary">
+                                                                <ShieldCheck className="w-3 h-3" />
+                                                                {patient.RoleName || patient.roleName || '—'}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge variant={patient.IsActive !== false ? 'success' : 'default'}>
+                                                                {patient.IsActive !== false ? t('common.active') : t('common.inactive')}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            <Tooltip><TooltipTrigger asChild>
+                                                                <button onClick={() => openResetPasswordModal(patient)}
+                                                                    className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
                                                                     <Lock className="w-4 h-4 text-primary" />
                                                                 </button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>
-                                                                {t('auth.resetPassword')}
-                                                            </TooltipContent>
-                                                        </Tooltip>
+                                                            </TooltipTrigger><TooltipContent>{t('auth.resetPassword')}</TooltipContent></Tooltip>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            ) : (
+                                                <TableRow hover={false}>
+                                                    <TableCell colSpan={6} className="text-center py-12">
+                                                        <div className="flex flex-col items-center gap-3">
+                                                            <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
+                                                                <Users className="w-7 h-7 text-text-muted" />
+                                                            </div>
+                                                            <p className="text-text-muted font-medium">{t('admin.noUsersFound')}</p>
+                                                        </div>
                                                     </TableCell>
                                                 </TableRow>
-                                            ))
-                                        ) : (
-                                            <TableRow hover={false}>
-                                                <TableCell colSpan={6} className="text-center py-12">
-                                                    <div className="flex flex-col items-center gap-3">
-                                                        <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
-                                                            <Users className="w-7 h-7 text-text-muted" />
-                                                        </div>
-                                                        <p className="text-text-muted font-medium">{t('admin.noUsersFound')}</p>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
 
                                 {/* Pagination */}
-                                <div className="flex items-center justify-between mt-4">
-                                    <span className="text-sm text-text-muted">
-                                        {filteredPatients.length} {t('admin.users')}
-                                    </span>
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mt-4">
+                                    <span className="text-sm text-text-muted">{filteredPatients.length} {t('admin.users')}</span>
                                     <Pagination page={patientsPage} total={patientsTotalPages} onChange={setPatientsPage} />
                                 </div>
                             </>
@@ -1000,84 +1046,111 @@ export default function UserManagement() {
                             </div>
                         ) : (
                             <>
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow hover={false}>
-                                            <TableHead>{t('common.name')}</TableHead>
-                                            <TableHead>{t('common.email')}</TableHead>
-                                            <TableHead>{t('common.phone')}</TableHead>
-                                            <TableHead>{t('common.role')}</TableHead>
-                                            <TableHead>{t('common.status')}</TableHead>
-                                            <TableHead className="text-center">{t('common.actions')}</TableHead>
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {filteredSupportStaff.length > 0 ? (
-                                            filteredSupportStaff.map((staff) => (
-                                                <TableRow key={staff.Id || staff.id || staff.Email}>
-                                                    <TableCell>
-                                                        <div className="flex items-center gap-3">
-                                                            <UserAvatar
-                                                                name={staff.Name || staff.name}
-                                                                src={staff.Image || staff.image}
-                                                                size="sm"
-                                                            />
-                                                            <span className="font-semibold text-text-heading">{staff.Name || staff.name}</span>
-                                                        </div>
-                                                    </TableCell>
-                                                    <TableCell className="text-text-muted">{staff.Email || staff.email}</TableCell>
-                                                    <TableCell className="text-text-muted">{staff.PhoneNumber || staff.phoneNumber || '—'}</TableCell>
-                                                    <TableCell>
-                                                        {(staff.RoleID === 1 || staff.RoleName?.toUpperCase() === 'ADMIN') ? (
-                                                            <Badge variant="primary">
-                                                                <ShieldCheck className="w-3 h-3" />
-                                                                {t('admin.adminRole', 'Admin')}
+                                {/* ── Mobile cards ── */}
+                                <div className="flex flex-col gap-3 md:hidden">
+                                    {filteredSupportStaff.length === 0 ? (
+                                        <div className="flex flex-col items-center gap-3 py-12 text-center">
+                                            <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
+                                                <Headphones className="w-7 h-7 text-text-muted" />
+                                            </div>
+                                            <p className="text-text-muted font-medium">{t('admin.noSupportStaffFound', 'No support staff found')}</p>
+                                        </div>
+                                    ) : filteredSupportStaff.map((staff) => (
+                                        <div key={staff.Id || staff.id || staff.Email}
+                                            className="bg-background-paper border border-border rounded-2xl p-4 flex flex-col gap-3 shadow-sm">
+                                            <div className="flex items-center gap-3 min-w-0">
+                                                <UserAvatar name={staff.Name || staff.name} src={staff.Image || staff.image} size="md" />
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="font-semibold text-text-heading truncate">{staff.Name || staff.name}</p>
+                                                    <p className="text-xs text-text-muted truncate">{staff.Email || staff.email}</p>
+                                                </div>
+                                                <Badge variant={staff.IsActive !== false ? 'success' : 'default'} className="shrink-0">
+                                                    {staff.IsActive !== false ? t('common.active') : t('common.inactive')}
+                                                </Badge>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                {(staff.RoleID === 1 || staff.RoleName?.toUpperCase() === 'ADMIN') ? (
+                                                    <Badge variant="primary"><ShieldCheck className="w-3 h-3" />{t('admin.adminRole', 'Admin')}</Badge>
+                                                ) : (
+                                                    <Badge variant="secondary"><Headphones className="w-3 h-3" />{t('admin.customerSupport', 'Customer Support')}</Badge>
+                                                )}
+                                            </div>
+                                            <div className="flex items-center gap-2 pt-1 border-t border-border">
+                                                <button onClick={() => openResetPasswordModal(staff)}
+                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
+                                                    <Lock className="w-4 h-4 text-primary" />
+                                                    {t('auth.resetPassword')}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* ── Desktop table ── */}
+                                <div className="hidden md:block">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow hover={false}>
+                                                <TableHead>{t('common.name')}</TableHead>
+                                                <TableHead>{t('common.email')}</TableHead>
+                                                <TableHead>{t('common.phone')}</TableHead>
+                                                <TableHead>{t('common.role')}</TableHead>
+                                                <TableHead>{t('common.status')}</TableHead>
+                                                <TableHead className="text-center">{t('common.actions')}</TableHead>
+                                            </TableRow>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {filteredSupportStaff.length > 0 ? (
+                                                filteredSupportStaff.map((staff) => (
+                                                    <TableRow key={staff.Id || staff.id || staff.Email}>
+                                                        <TableCell>
+                                                            <div className="flex items-center gap-3 min-w-0">
+                                                                <UserAvatar name={staff.Name || staff.name} src={staff.Image || staff.image} size="sm" />
+                                                                <span className="font-semibold text-text-heading truncate">{staff.Name || staff.name}</span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell className="text-text-muted max-w-[180px] truncate">{staff.Email || staff.email}</TableCell>
+                                                        <TableCell className="text-text-muted whitespace-nowrap">{staff.PhoneNumber || staff.phoneNumber || '—'}</TableCell>
+                                                        <TableCell>
+                                                            {(staff.RoleID === 1 || staff.RoleName?.toUpperCase() === 'ADMIN') ? (
+                                                                <Badge variant="primary"><ShieldCheck className="w-3 h-3" />{t('admin.adminRole', 'Admin')}</Badge>
+                                                            ) : (
+                                                                <Badge variant="secondary"><Headphones className="w-3 h-3" />{t('admin.customerSupport', 'Customer Support')}</Badge>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge variant={staff.IsActive !== false ? 'success' : 'default'}>
+                                                                {staff.IsActive !== false ? t('common.active') : t('common.inactive')}
                                                             </Badge>
-                                                        ) : (
-                                                            <Badge variant="secondary">
-                                                                <Headphones className="w-3 h-3" />
-                                                                {t('admin.customerSupport', 'Customer Support')}
-                                                            </Badge>
-                                                        )}
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge variant={staff.IsActive !== false ? 'success' : 'default'}>
-                                                            {staff.IsActive !== false ? t('common.active') : t('common.inactive')}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell className="text-center">
-                                                        <Tooltip>
-                                                            <TooltipTrigger asChild>
-                                                                <button
-                                                                    onClick={() => openResetPasswordModal(staff)}
-                                                                    className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors"
-                                                                >
+                                                        </TableCell>
+                                                        <TableCell className="text-center">
+                                                            <Tooltip><TooltipTrigger asChild>
+                                                                <button onClick={() => openResetPasswordModal(staff)}
+                                                                    className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
                                                                     <Lock className="w-4 h-4 text-primary" />
                                                                 </button>
-                                                            </TooltipTrigger>
-                                                            <TooltipContent>
-                                                                {t('auth.resetPassword')}
-                                                            </TooltipContent>
-                                                        </Tooltip>
+                                                            </TooltipTrigger><TooltipContent>{t('auth.resetPassword')}</TooltipContent></Tooltip>
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ))
+                                            ) : (
+                                                <TableRow hover={false}>
+                                                    <TableCell colSpan={6} className="text-center py-12">
+                                                        <div className="flex flex-col items-center gap-3">
+                                                            <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
+                                                                <Headphones className="w-7 h-7 text-text-muted" />
+                                                            </div>
+                                                            <p className="text-text-muted font-medium">{t('admin.noSupportStaffFound', 'No support staff found')}</p>
+                                                        </div>
                                                     </TableCell>
                                                 </TableRow>
-                                            ))
-                                        ) : (
-                                            <TableRow hover={false}>
-                                                <TableCell colSpan={6} className="text-center py-12">
-                                                    <div className="flex flex-col items-center gap-3">
-                                                        <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
-                                                            <Headphones className="w-7 h-7 text-text-muted" />
-                                                        </div>
-                                                        <p className="text-text-muted font-medium">{t('admin.noSupportStaffFound', 'No support staff found')}</p>
-                                                    </div>
-                                                </TableCell>
-                                            </TableRow>
-                                        )}
-                                    </TableBody>
-                                </Table>
+                                            )}
+                                        </TableBody>
+                                    </Table>
+                                </div>
 
-                                <div className="flex items-center justify-between mt-4">
+                                {/* Pagination */}
+                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mt-4">
                                     <span className="text-sm text-text-muted">
                                         {filteredSupportStaff.filter(s => s.RoleID !== 1 && s.RoleName?.toUpperCase() !== 'ADMIN').length} {t('admin.customerSupport', 'Customer Support')}
                                         {' · '}

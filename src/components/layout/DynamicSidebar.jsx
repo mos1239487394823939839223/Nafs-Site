@@ -35,12 +35,16 @@ export default function DynamicSidebar({ isOpen, onClose }) {
 
   const handleEmergencyClick = () => {
     if (onClose && window.innerWidth < 1024) onClose();
-    navigate("/dashboard/patient/messages?type=support&caseType=emergency&support=1");
+    navigate(
+      "/dashboard/patient/messages?type=support&caseType=emergency&support=1",
+    );
   };
 
   const handleProtectionClick = () => {
     if (onClose && window.innerWidth < 1024) onClose();
-    navigate("/dashboard/patient/messages?type=support&caseType=billing&support=1");
+    navigate(
+      "/dashboard/patient/messages?type=support&caseType=billing&support=1",
+    );
   };
 
   // Navigation items for each role
@@ -126,7 +130,6 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       },
       { name: t("nav.messages"), path: "/admin/messages", icon: MessageSquare },
       { name: t("nav.profile"), path: "/admin/profile", icon: Settings },
-      { name: t("admin.manageLinks") || "Manage Links", path: "/admin/links", icon: Link2 },
     ],
     [Roles.STAFF]: [
       { name: t("nav.dashboard"), path: "/dashboard/staff", icon: Home },
@@ -168,16 +171,19 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       {/* Sidebar */}
       <aside
         className={`
-          fixed top-0 h-full w-64 bg-background-paper
+          fixed top-0 h-full w-[85vw] max-w-[280px] sm:w-64 bg-background-paper
           transform transition-transform duration-300 ease-in-out z-50
           start-0 border-e border-border
           ${
             isRTL
-              ? isOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"
-              : isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+              ? isOpen
+                ? "translate-x-0"
+                : "translate-x-full lg:translate-x-0"
+              : isOpen
+                ? "translate-x-0"
+                : "-translate-x-full lg:translate-x-0"
           }
         `}
-        
       >
         <div className="flex flex-col h-full">
           {/* Header */}
@@ -224,9 +230,9 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                         `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200
                         ${
                           isActive
-                            ? `bg-primary/10 text-primary ${
-                                t("auto.borders4")
-                              } border-primary`
+                            ? `bg-primary/10 text-primary ${t(
+                                "auto.borders4",
+                              )} border-primary`
                             : "text-text hover:bg-background-gray hover:text-primary"
                         }`
                       }

@@ -18,7 +18,7 @@ export const Services = () => {
 
   return (
   <section id="services" dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-12">
-    <h2 className="text-center text-3xl font-bold text-foreground">{t("landing.services.title")}</h2>
+    <h2 className="text-center text-2xl sm:text-3xl font-bold text-foreground">{t("landing.services.title")}</h2>
     <div className="mt-8 grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
       {services.map(({ icon: Icon, titleKey, descKey }) => (
         <div

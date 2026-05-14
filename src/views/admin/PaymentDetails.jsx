@@ -266,12 +266,12 @@ export default function AdminPaymentDetails() {
   };
 
   return (
-    <div className="space-y-6" >
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-text-heading">
+        <h2 className="text-xl sm:text-2xl font-bold text-text-heading">
           {t("auto.paymentDetails")}
         </h2>
-        <p className="text-text-muted mt-1">
+        <p className="text-sm sm:text-base text-text-muted mt-1">
           {t("auto.manageAccountDetailsUsedForManualTransfers")}
         </p>
       </div>
@@ -288,7 +288,7 @@ export default function AdminPaymentDetails() {
               {t("auto.loadingPaymentDetails")}
             </p>
           ) : (
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <Select
                 label={t("auto.paymentProvider")}
                 value={selectedProvider === "" ? "" : Number(selectedProvider)}
@@ -343,15 +343,12 @@ export default function AdminPaymentDetails() {
             </div>
           )}
 
-          <div
-            className={`mt-6 flex gap-3 ${
-              t("auto.justifyend")
-            }`}
-          >
+          <div className="mt-6 flex flex-wrap items-center justify-end gap-2 sm:gap-3">
             <Button
               variant="outline"
               disabled={!isDirty || saving || deleting || loading}
               onClick={() => setForm(initialForm)}
+              className="whitespace-nowrap"
             >
               {t("auto.discardChanges")}
             </Button>
@@ -359,6 +356,7 @@ export default function AdminPaymentDetails() {
               variant="danger"
               disabled={!form.id || saving || deleting || loading}
               onClick={handleDeleteRequest}
+              className="whitespace-nowrap"
             >
               {deleting
                 ? t("admin.paymentInstructionDeleting", t("auto.deleting"))
@@ -372,6 +370,7 @@ export default function AdminPaymentDetails() {
                 !isDirty || saving || deleting || loading || selectedProvider === ""
               }
               onClick={handleSave}
+              className="whitespace-nowrap"
             >
               {saving
                 ? t("auto.saving")
@@ -401,17 +400,16 @@ export default function AdminPaymentDetails() {
             <p className="font-semibold text-text-heading">{form.title || "-"}</p>
             <p className="text-text-muted mt-1">{form.accountNumber || "-"}</p>
           </div>
-          <div
-            className={`flex gap-3 ${t("auto.justifyend")}`}
-          >
+          <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
             <Button
               variant="outline"
               disabled={deleting}
               onClick={() => setDeleteModalOpen(false)}
+              className="whitespace-nowrap"
             >
               {t("common.cancel", t("auto.cancel"))}
             </Button>
-            <Button variant="danger" disabled={deleting} onClick={handleDelete}>
+            <Button variant="danger" disabled={deleting} onClick={handleDelete} className="whitespace-nowrap">
               {deleting
                 ? t("admin.paymentInstructionDeleting", t("auto.deleting"))
                 : t("admin.paymentInstructionDeleteConfirm", t("auto.confirmDelete"))}

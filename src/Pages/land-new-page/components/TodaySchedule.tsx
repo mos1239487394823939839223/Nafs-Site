@@ -23,7 +23,7 @@ interface TodayScheduleProps {
 function formatTimeRange(start?: string, end?: string): string {
   if (!start) return "";
   const fmt = (s: string) =>
-    new Date(s).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    new Date(s).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
   return end ? `${fmt(start)} – ${fmt(end)}` : fmt(start);
 }
 
@@ -31,17 +31,17 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
   const { t, isRTL } = useLanguage();
 
   return (
-    <section className="rounded-3xl bg-card border border-border shadow-card p-6 md:p-7 mb-6">
+    <section className="rounded-3xl bg-card border border-border shadow-card p-4 sm:p-6 md:p-7 mb-6">
       <div className="flex items-center justify-between mb-5">
+        <h2 className="text-lg font-bold text-foreground">
+          {t("doctor.dashboardHome.schedule.title")}
+        </h2>
         <Link
           to="/dashboard/doctor/schedule"
           className="text-sm font-semibold text-primary hover:text-primary/80"
         >
           {t("doctor.dashboardHome.schedule.viewFull")}
         </Link>
-        <h2 className="text-lg font-bold text-foreground">
-          {t("doctor.dashboardHome.schedule.title")}
-        </h2>
       </div>
 
       {loading && (
@@ -89,44 +89,42 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
             return (
               <div
                 key={b.BookingId ?? i}
-                className="flex items-center justify-between gap-4 p-3 rounded-2xl hover:bg-muted/40 transition-colors"
+                className="flex flex-wrap items-center gap-3 sm:gap-4 p-3 rounded-2xl hover:bg-muted/40 transition-colors"
               >
-                <button
-                  type="button"
-                  className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors ${
-                    isPrimary
-                      ? "bg-primary hover:bg-primary/90 text-primary-foreground"
-                      : "border border-border text-foreground hover:bg-muted"
-                  }`}
-                >
-                  {t(ctaKey)}
-                </button>
-
-                {timeLabel && (
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>{timeLabel}</span>
-                    <Clock className="size-4" />
-                  </div>
-                )}
-
-                <div
-                  className={`flex items-center gap-3 min-w-0 ${
-                    t("auto.flexrowTextstart")
-                  }`}
-                >
+                <div className="flex items-center gap-3 min-w-0 flex-1">
                   <img
                     src={avatar}
                     alt={b.PatientName as string ?? ""}
-                    className="size-11 rounded-full object-cover"
+                    className="size-10 sm:size-11 rounded-full object-cover shrink-0"
                   />
                   <div className="min-w-0">
-                    <p className="font-semibold text-foreground truncate">
+                    <p className="font-semibold text-foreground truncate text-sm sm:text-base">
                       {b.PatientName as string ?? ""}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
                       {t("doctor.dashboardHome.schedule.sessionTypes.individual")}
                     </p>
                   </div>
+                </div>
+
+                <div className="flex items-center gap-2 sm:gap-3 ms-auto sm:ms-0">
+                  {timeLabel && (
+                    <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
+                      <Clock className="size-3.5 sm:size-4" />
+                      <span dir="ltr">{timeLabel}</span>
+                    </div>
+                  )}
+
+                  <button
+                    type="button"
+                    className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition-colors ${
+                      isPrimary
+                        ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                        : "border border-border text-foreground hover:bg-muted"
+                    }`}
+                  >
+                    {t(ctaKey)}
+                  </button>
                 </div>
               </div>
             );

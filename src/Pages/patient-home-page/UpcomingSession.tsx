@@ -67,7 +67,7 @@ export const UpcomingSession = () => {
     });
 
   return (
-    <section className="bg-card rounded-2xl p-6 shadow-card mb-6" dir="ltr">
+    <section className="bg-card rounded-2xl p-4 sm:p-6 shadow-card mb-6" dir="ltr">
       <div className="flex items-center justify-between mb-5">
         <button
           onClick={() => navigate("/dashboard/patient/reserve")}

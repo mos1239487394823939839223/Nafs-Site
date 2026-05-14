@@ -180,27 +180,27 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background-paper to-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background-paper to-background flex items-center justify-center p-3 sm:p-4">
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="w-full max-w-md"
       >
         {/* Logo */}
-        <div className="text-center mb-8">
-          <h1 className="text-4xl font-bold text-primary">
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-3xl sm:text-4xl font-bold text-primary">
             {t("auth.platformName")}
           </h1>
-          <p className="text-text-light mt-2">{t("auth.platformTagline")}</p>
+          <p className="text-text-light mt-2 text-sm sm:text-base">{t("auth.platformTagline")}</p>
         </div>
 
         {/* Card */}
-        <div className="bg-background-paper rounded-2xl shadow-xl p-8">
+        <div className="bg-background-paper rounded-2xl shadow-xl p-5 sm:p-8">
           <div className="text-center mb-6">
-            <h2 className="text-2xl font-bold text-text">
+            <h2 className="text-xl sm:text-2xl font-bold text-text">
               {t("auth.signInTitle")}
             </h2>
-            <p className="text-text-muted mt-2">{t("auth.signInSubtitle")}</p>
+            <p className="text-text-muted mt-2 text-sm sm:text-base">{t("auth.signInSubtitle")}</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">

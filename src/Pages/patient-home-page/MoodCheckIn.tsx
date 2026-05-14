@@ -16,7 +16,7 @@ export const MoodCheckIn = () => {
   const [selected, setSelected] = useState<number | null>(null);
 
   return (
-    <section className="bg-card rounded-2xl p-6 shadow-card text-center" dir="ltr">
+    <section className="bg-card rounded-2xl p-4 sm:p-6 shadow-card text-center" dir="ltr">
       <h3 className="font-bold text-lg mb-1">{t("patientHome.moodCheckIn.title")}</h3>
       <p className="text-sm text-muted-foreground mb-6">
         {t("patientHome.moodCheckIn.subtitle")}

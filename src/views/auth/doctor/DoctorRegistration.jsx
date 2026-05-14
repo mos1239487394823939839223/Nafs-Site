@@ -288,19 +288,19 @@ export default function DoctorRegistration() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-8 px-4">
+    <div className="min-h-screen bg-background py-6 sm:py-8 px-3 sm:px-4">
       <div className="max-w-4xl mx-auto">
         {/* Header */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-text-heading">{t('doctorReg.title')}</h1>
-          <p className="text-text-muted mt-2">{t('doctorReg.subtitle')}</p>
+        <div className="text-center mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-text-heading">{t('doctorReg.title')}</h1>
+          <p className="text-text-muted mt-2 text-sm sm:text-base">{t('doctorReg.subtitle')}</p>
         </div>
 
         {/* Progress Stepper */}
         <ProgressStepper steps={steps} currentStep={currentStep} />
 
         {/* Form Card */}
-        <div className="bg-background-paper rounded-2xl shadow-lg p-8 mt-8 border border-border">
+        <div className="bg-background-paper rounded-2xl shadow-lg p-5 sm:p-8 mt-6 sm:mt-8 border border-border">
           <AnimatePresence mode="wait">
             {/* Step 1: Professional Details */}
             {currentStep === 1 && (

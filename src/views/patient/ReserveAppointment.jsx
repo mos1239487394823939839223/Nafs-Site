@@ -1263,26 +1263,26 @@ export default function ReserveAppointment() {
 
   return (
     <div
-      className="max-w-6xl mx-auto space-y-6 p-4 md:p-6"
+      className="max-w-6xl mx-auto space-y-4 sm:space-y-6 p-2 sm:p-4 md:p-6"
       
     >
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-text-heading">
+          <h1 className="text-2xl sm:text-3xl font-bold text-text-heading">
             {t("patient.appointments")}
           </h1>
-          <p className="text-text-muted mt-1">
+          <p className="text-text-muted mt-1 text-sm sm:text-base">
             {t("patient.manageBookSessions")}
           </p>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="inline-flex p-1 rounded-2xl border border-border bg-background-subtle mb-8 overflow-x-auto no-scrollbar scroll-smooth gap-1">
+      <div className="flex p-1 rounded-2xl border border-border bg-background-subtle mb-6 sm:mb-8 overflow-x-auto no-scrollbar scroll-smooth gap-1 w-fit max-w-full">
         <button
           onClick={() => { setMainTab("all"); setStep(1); setSelectedDoctor(null); }}
-          className={`px-5 md:px-8 py-3 font-semibold transition-all relative whitespace-nowrap rounded-xl ${
+          className={`px-4 sm:px-5 md:px-8 py-2.5 sm:py-3 text-xs sm:text-sm md:text-base font-semibold transition-all relative whitespace-nowrap rounded-xl ${
             mainTab === "all"
               ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
               : "text-text-muted hover:text-text-heading hover:bg-background-paper"
@@ -1293,7 +1293,7 @@ export default function ReserveAppointment() {
         </button>
         <button
           onClick={() => { setMainTab("available"); setStep(1); setSelectedDoctor(null); }}
-          className={`px-5 md:px-8 py-3 font-semibold transition-all relative whitespace-nowrap rounded-xl ${
+          className={`px-4 sm:px-5 md:px-8 py-2.5 sm:py-3 text-xs sm:text-sm md:text-base font-semibold transition-all relative whitespace-nowrap rounded-xl ${
             mainTab === "available"
               ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
               : "text-text-muted hover:text-text-heading hover:bg-background-paper"
@@ -1304,7 +1304,7 @@ export default function ReserveAppointment() {
         </button>
         <button
           onClick={() => setMainTab("status")}
-          className={`px-5 md:px-8 py-3 font-semibold transition-all relative whitespace-nowrap rounded-xl ${
+          className={`px-4 sm:px-5 md:px-8 py-2.5 sm:py-3 text-xs sm:text-sm md:text-base font-semibold transition-all relative whitespace-nowrap rounded-xl ${
             mainTab === "status"
               ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
               : "text-text-muted hover:text-text-heading hover:bg-background-paper"
@@ -1573,7 +1573,7 @@ export default function ReserveAppointment() {
                           </Table>
                         </div>
                       ) : (
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                           {processedDoctors.length > 0 ? (
                             processedDoctors.map((doctor) => {
                               const specialtyTheme = getDoctorSpecialtyTheme(
@@ -1585,11 +1585,11 @@ export default function ReserveAppointment() {
                                   className={`hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1 cursor-pointer rounded-2xl shadow-sm border ${specialtyTheme.surface}`}
                                   onClick={() => handleSelectDoctor(doctor.Id)}
                                 >
-                                  <CardContent className="p-5 flex flex-col h-full">
+                                  <CardContent className="p-4 sm:p-5 flex flex-col h-full">
                                     {/* Header: Image & Name */}
-                                    <div className="flex items-start gap-4 mb-3">
+                                    <div className="flex items-start gap-3 sm:gap-4 mb-3">
                                       <div
-                                        className={`w-16 h-16 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center border shadow-inner ms-0 rtl:ms-3 me-3 rtl:me-0 ${specialtyTheme.avatar}`}
+                                        className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center border shadow-inner ${specialtyTheme.avatar}`}
                                       >
                                         {doctor.Image ? (
                                           <img
@@ -1621,20 +1621,21 @@ export default function ReserveAppointment() {
                                           </span>
                                         </div>
 
-                                        {/* Next available slot */}
-                                        {doctor.NextAvailableSlot && (
-                                          <div className="inline-flex items-center gap-1.5 mt-1.5 px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs font-medium border border-emerald-200 dark:border-emerald-700">
-                                            <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-                                            <span>
-                                              {t("auto.next")}{" "}
-                                              {new Date(doctor.NextAvailableSlot).toLocaleDateString(t("auto.enus"), { weekday: "short", month: "short", day: "numeric" })}
-                                              {" · "}
-                                              {new Date(doctor.NextAvailableSlot).toLocaleTimeString(t("auto.enus"), { hour: "numeric", minute: "2-digit" })}
-                                            </span>
-                                          </div>
-                                        )}
                                       </div>
                                     </div>
+
+                                    {/* Next available slot */}
+                                    {doctor.NextAvailableSlot && (
+                                      <div className="flex items-center gap-1.5 mt-2 px-2.5 py-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs font-medium border border-emerald-200 dark:border-emerald-700">
+                                        <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                                        <span className="truncate">
+                                          {t("auto.next")}{" "}
+                                          {new Date(doctor.NextAvailableSlot).toLocaleDateString(t("auto.enus"), { weekday: "short", month: "short", day: "numeric" })}
+                                          {" · "}
+                                          {new Date(doctor.NextAvailableSlot).toLocaleTimeString(t("auto.enus"), { hour: "numeric", minute: "2-digit" })}
+                                        </span>
+                                      </div>
+                                    )}
 
                                     {/* Description */}
                                     <p
@@ -1759,9 +1760,9 @@ export default function ReserveAppointment() {
                 {/* ── Doctor Overview ── */}
                 <Card className="overflow-hidden border border-border/80">
                   <div className="h-1.5 bg-gradient-to-r from-primary via-secondary to-primary-light" />
-                  <CardContent className="p-5 md:p-6">
+                  <CardContent className="p-4 sm:p-5 md:p-6">
                     <div
-                      className={`grid grid-cols-1 lg:grid-cols-12 gap-6 ${
+                      className={`grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 ${
                         "text-start"
                       }`}
                     >
@@ -1771,7 +1772,7 @@ export default function ReserveAppointment() {
                         }`}
                       >
                         <div
-                          className={`w-24 h-24 rounded-2xl flex items-center justify-center overflow-hidden border-2 shadow-sm mx-auto sm:mx-0 ${selectedDoctorTheme.avatar}`}
+                          className={`w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center overflow-hidden border-2 shadow-sm mx-auto sm:mx-0 flex-shrink-0 ${selectedDoctorTheme.avatar}`}
                         >
                           {selectedDoctor.Image ? (
                             <img
@@ -1786,7 +1787,7 @@ export default function ReserveAppointment() {
 
                         <div className="flex-1 space-y-3">
                           <div>
-                            <h2 className="text-2xl font-bold text-text-heading leading-tight">
+                            <h2 className="text-xl sm:text-2xl font-bold text-text-heading leading-tight">
                               {t("auto.dr")} {selectedDoctor.Name}
                             </h2>
                             <div
@@ -1841,50 +1842,52 @@ export default function ReserveAppointment() {
                         </div>
                       </div>
 
-                      <div className="lg:col-span-5 grid grid-cols-2 gap-3">
-                        <div className="p-4 bg-background-subtle rounded-xl border border-border/60">
-                          <p className="text-xs text-text-muted mb-1">
-                            {t("auto.experience")}
-                          </p>
-                          <p className="font-bold text-text-heading text-base">
-                            {selectedDoctor.YearsOfExperience || "—"}{" "}
-                            {t("auto.yrs")}
-                          </p>
+                      <div className="lg:col-span-5 space-y-3">
+                        <div className="grid grid-cols-2 gap-3">
+                          <div className="p-3 sm:p-4 bg-background-subtle rounded-xl border border-border/60">
+                            <p className="text-xs text-text-muted mb-1">
+                              {t("auto.experience")}
+                            </p>
+                            <p className="font-bold text-text-heading text-sm sm:text-base">
+                              {selectedDoctor.YearsOfExperience || "—"}{" "}
+                              {t("auto.yrs")}
+                            </p>
+                          </div>
+
+                          <div className="p-3 sm:p-4 bg-background-subtle rounded-xl border border-border/60">
+                            <p className="text-xs text-text-muted mb-1">
+                              {t("auto.consultationFee")}
+                            </p>
+                            <p className="font-bold text-text-heading text-sm sm:text-base">
+                              {selectedDoctor.ConsultationFee
+                                ? `${selectedDoctor.ConsultationFee} EGP`
+                                : t("auto.notSpecified")}
+                            </p>
+                          </div>
                         </div>
 
-                        <div className="p-4 bg-background-subtle rounded-xl border border-border/60">
-                          <p className="text-xs text-text-muted mb-1">
-                            {t("auto.consultationFee")}
-                          </p>
-                          <p className="font-bold text-text-heading text-base">
-                            {selectedDoctor.ConsultationFee
-                              ? `${selectedDoctor.ConsultationFee} EGP`
-                              : t("auto.notSpecified")}
-                          </p>
-                        </div>
-
-                        <div className="col-span-2 p-4 rounded-xl border border-primary/20 bg-primary/5">
+                        <div className="p-3 sm:p-4 rounded-xl border border-primary/20 bg-primary/5">
                           <div
-                            className={`flex items-start justify-between gap-3 ${
+                            className={`flex items-center justify-between gap-3 ${
                               isRTL ? "flex-row-reverse" : ""
                             }`}
                           >
                             <div
-                              className={`flex items-start gap-3 ${
+                              className={`flex items-center gap-3 min-w-0 ${
                                 isRTL ? "flex-row-reverse" : ""
                               }`}
                             >
-                              <div className="w-10 h-10 bg-primary/15 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <BadgeIcon className="w-5 h-5 text-primary" />
+                              <div className="w-9 h-9 sm:w-10 sm:h-10 bg-primary/15 rounded-lg flex items-center justify-center flex-shrink-0">
+                                <BadgeIcon className="w-4 h-4 sm:w-5 sm:h-5 text-primary" />
                               </div>
-                              <div>
-                                <p className="text-sm font-semibold text-text-heading">
+                              <div className="min-w-0">
+                                <p className="text-xs sm:text-sm font-semibold text-text-heading truncate">
                                   {t(
                                     "doctor.docs.title",
                                     "Documents & Certificates",
                                   )}
                                 </p>
-                                <p className="text-xs text-text-muted mt-0.5">
+                                <p className="text-[10px] sm:text-xs text-text-muted mt-0.5 truncate">
                                   {t(
                                     "patient.viewDocs",
                                     "View verified certificates and licenses",
@@ -1897,6 +1900,7 @@ export default function ReserveAppointment() {
                               variant="outline"
                               size="sm"
                               onClick={() => setIsDocsModalOpen(true)}
+                              className="flex-shrink-0"
                             >
                               {t("auto.view")}
                             </Button>
@@ -1918,10 +1922,10 @@ export default function ReserveAppointment() {
                 </Modal>
 
                 {/* ── Slot Picker + Summary ── */}
-                <div className="grid xl:grid-cols-12 gap-6 items-start">
+                <div className="grid xl:grid-cols-12 gap-4 sm:gap-6 items-start">
                   <div className="xl:col-span-8 space-y-4">
                     <Card className="overflow-hidden border border-border shadow-lg rounded-2xl">
-                      <CardContent className="p-5 md:p-6 space-y-5">
+                      <CardContent className="p-3 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
                         <div
                           className={`flex items-start justify-between gap-4 ${
                             isRTL ? "flex-row-reverse" : ""
@@ -1955,7 +1959,7 @@ export default function ReserveAppointment() {
                             <button
                               key={chip.id}
                               onClick={() => setSlotPeriodFilter(chip.id)}
-                              className={`text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
+                              className={`shrink-0 min-w-fit whitespace-nowrap text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
                                 slotPeriodFilter === chip.id
                                   ? "bg-primary text-white border-primary shadow-sm"
                                   : "bg-background-paper text-text-muted border-border hover:border-primary/50 hover:text-primary"
@@ -1966,7 +1970,7 @@ export default function ReserveAppointment() {
                           ))}
                           <button
                             onClick={() => setSlotShowAvailableOnly((v) => !v)}
-                            className={`ms-auto text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
+                            className={`shrink-0 min-w-fit whitespace-nowrap ms-auto text-xs px-3 py-1.5 rounded-full border font-medium transition-all ${
                               slotShowAvailableOnly
                                 ? "bg-emerald-600 text-white border-emerald-600 shadow-sm"
                                 : "bg-background-paper text-text-muted border-border hover:border-emerald-500/50 hover:text-emerald-600"
@@ -2083,7 +2087,7 @@ export default function ReserveAppointment() {
                                 return (
                                   <div
                                     key={dateKey}
-                                    className="bg-background-subtle/50 border border-border rounded-xl p-4"
+                                    className="bg-background-subtle/50 border border-border rounded-xl p-2.5 sm:p-4"
                                   >
                                     <div
                                       className={`flex flex-wrap items-center justify-between gap-2 mb-3 ${
@@ -2113,35 +2117,35 @@ export default function ReserveAppointment() {
                                       </div>
 
                                       <div
-                                        className={`flex items-center gap-2 ${
+                                        className={`flex items-center gap-1.5 sm:gap-2 flex-wrap ${
                                           isRTL ? "flex-row-reverse" : ""
                                         }`}
                                       >
-                                        <span className="text-xs px-2.5 py-1 rounded-full bg-primary/10 border border-primary/25 text-primary">
+                                        <span className="text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-primary/10 border border-primary/25 text-primary">
                                           {totalCount}{" "}
                                           {t("auto.totalSlots")}
                                         </span>
                                         {availableCount > 0 && (
-                                          <span className="text-xs px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">
+                                          <span className="text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700">
                                             {availableCount}{" "}
                                             {t("auto.available")}
                                           </span>
                                         )}
                                         {myRequestsCount > 0 && (
-                                          <span className="text-xs px-2.5 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
+                                          <span className="text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-700">
                                             {myRequestsCount}{" "}
                                             {t("auto.myRequest")}
                                           </span>
                                         )}
                                         {bookedCount > 0 && (
-                                          <span className="text-xs px-2.5 py-1 rounded-full bg-slate-100 border border-slate-300 text-slate-700">
+                                          <span className="text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-slate-100 border border-slate-300 text-slate-700">
                                             {bookedCount}{" "}
                                             {t("auto.booked")}
                                           </span>
                                         )}
                                         {availableCount === 0 &&
                                           myRequestsCount === 0 && (
-                                            <span className="text-xs px-2.5 py-1 rounded-full bg-background-subtle border border-border text-text-muted">
+                                            <span className="text-[10px] sm:text-xs px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-background-subtle border border-border text-text-muted">
                                               {t("auto.unavailable")}
                                             </span>
                                           )}
@@ -2226,7 +2230,7 @@ export default function ReserveAppointment() {
                                           {groupedSlots.map((bucket) => (
                                             <div
                                               key={bucket.id}
-                                              className="rounded-xl border border-border/80 bg-background-paper/70 p-2.5"
+                                              className="rounded-xl border border-border/80 bg-background-paper/70 p-2 sm:p-2.5 min-w-0 overflow-hidden"
                                             >
                                               <div
                                                 className={`flex items-center justify-between gap-2 mb-2 ${
@@ -2236,24 +2240,24 @@ export default function ReserveAppointment() {
                                                 }`}
                                               >
                                                 <div
-                                                  className={`flex items-center gap-1.5 text-xs font-semibold text-text-muted ${
+                                                  className={`flex items-center gap-1.5 text-xs font-semibold text-text-muted min-w-0 ${
                                                     isRTL
                                                       ? "flex-row-reverse"
                                                       : ""
                                                   }`}
                                                 >
-                                                  <Clock className="w-3.5 h-3.5" />
-                                                  <span>{bucket.label}</span>
+                                                  <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                                                  <span className="whitespace-nowrap">{bucket.label}</span>
                                                 </div>
                                                 <span
-                                                  className={`text-[11px] px-2 py-0.5 rounded-full border font-medium ${bucket.chipClass}`}
+                                                  className={`text-[11px] px-2 py-0.5 rounded-full border font-medium whitespace-nowrap flex-shrink-0 ${bucket.chipClass}`}
                                                 >
                                                   {bucket.slots.length}{" "}
                                                   {t("auto.slots")}
                                                 </span>
                                               </div>
 
-                                              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-2.5">
+                                              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3 gap-2 sm:gap-3">
                                                 {bucket.slots.map((timeKey) => {
                                                   const slotKey = `${dateKey}-${timeKey}`;
                                                   const myBooking =
@@ -2325,7 +2329,7 @@ export default function ReserveAppointment() {
                                                           timeKey,
                                                         );
                                                       }}
-                                                      className={`w-full rounded-xl border-2 px-3 py-2.5 text-sm transition-all duration-200 ${
+                                                      className={`group w-full min-w-0 rounded-xl border-2 p-2.5 sm:p-3 text-center overflow-hidden transition-all duration-200 ${
                                                         myBooking
                                                           ? `${myBookingStatus.className} hover:opacity-95 shadow-sm`
                                                           : isBookedByOthers
@@ -2338,61 +2342,56 @@ export default function ReserveAppointment() {
                                                         !isClickableSlot
                                                       }
                                                     >
-                                                      <div
-                                                        className={`flex items-center justify-between gap-2 ${
-                                                          isRTL
-                                                            ? "flex-row-reverse"
-                                                            : ""
-                                                        }`}
-                                                      >
-                                                        <div
-                                                          className={`flex items-center gap-1.5 font-semibold ${
-                                                            isRTL
-                                                              ? "flex-row-reverse"
-                                                              : ""
-                                                          }`}
+                                                      <div className="flex items-center justify-center gap-1 font-bold">
+                                                        {isSelected && (
+                                                          <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 flex-shrink-0" />
+                                                        )}
+                                                        <span
+                                                          dir="ltr"
+                                                          className="text-sm sm:text-base truncate"
                                                         >
-                                                          {myBooking ? null : isSelected ? (
-                                                            <CheckCircle className="w-3.5 h-3.5" />
-                                                          ) : null}
-                                                          <span>
-                                                            {formatHourLabel(
-                                                              timeKey,
-                                                            )}
-                                                          </span>
-                                                        </div>
+                                                          {formatHourLabel(
+                                                            timeKey,
+                                                          )}
+                                                        </span>
+                                                      </div>
 
+                                                      <div className="mt-1.5 flex items-center justify-center">
                                                         {myBooking && (
-                                                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/20 border border-current/30">
+                                                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-black/20 border border-current/30 truncate max-w-full">
                                                             {
                                                               myBookingStatus.label
                                                             }
                                                           </span>
                                                         )}
                                                         {isBookedByOthers && (
-                                                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 border border-slate-300 text-slate-700">
+                                                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-200 border border-slate-300 text-slate-700 truncate max-w-full">
                                                             {t("auto.booked")}
                                                           </span>
                                                         )}
                                                         {!myBooking &&
                                                           !isBookedByOthers &&
                                                           !isSelected && (
-                                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100/80 border border-emerald-300/70 text-emerald-700">
+                                                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100/80 border border-emerald-300/70 text-emerald-700 truncate max-w-full">
                                                               {t("auto.available")}
                                                             </span>
                                                           )}
+                                                        {isSelected && (
+                                                          <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/25 border border-white/40 truncate max-w-full">
+                                                            {t("auto.selected")}
+                                                          </span>
+                                                        )}
                                                       </div>
 
                                                       {(detailParts.length >
                                                         0 ||
                                                         isAvailableSlot) && (
-                                                        <div
-                                                          className={`mt-1.5 text-[11px] font-medium opacity-85 flex items-center gap-1 ${
-                                                            "text-start"
-                                                          }`}
-                                                        >
-                                                          <Clock className="w-3 h-3" />
-                                                          <span>
+                                                        <div className="mt-1.5 text-[10px] sm:text-[11px] font-medium opacity-80 flex items-center justify-center gap-1 min-w-0">
+                                                          <Clock className="w-3 h-3 flex-shrink-0" />
+                                                          <span
+                                                            dir="ltr"
+                                                            className="truncate"
+                                                          >
                                                             {detailParts.join(
                                                               " • ",
                                                             ) ||
@@ -2432,7 +2431,7 @@ export default function ReserveAppointment() {
                   </div>
 
                   <div className="xl:col-span-4">
-                    <Card className="p-5 md:p-6 sticky top-4 border border-border/80">
+                    <Card className="p-4 sm:p-5 md:p-6 sticky top-4 border border-border/80">
                       <h3
                         className={`font-bold text-lg text-text-heading ${
                           isRTL ? "text-end" : ""
@@ -3168,11 +3167,11 @@ export default function ReserveAppointment() {
                       key={`${String(booking?.Id ?? "booking")}-${String(
                         booking?.SessionStartTime ?? bookingIndex,
                       )}-${bookingIndex}`}
-                      className="p-6"
+                      className="p-4 sm:p-6"
                     >
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden">
+                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
+                        <div className="flex items-center gap-3 sm:gap-4">
+                          <div className="w-10 h-10 sm:w-12 sm:h-12 bg-primary/10 rounded-full flex items-center justify-center overflow-hidden flex-shrink-0">
                             {booking.DoctorImage ? (
                               <img
                                 src={booking.DoctorImage}
@@ -3180,14 +3179,14 @@ export default function ReserveAppointment() {
                                 className="w-full h-full object-cover"
                               />
                             ) : (
-                              <User className="w-6 h-6 text-primary" />
+                              <User className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
                             )}
                           </div>
-                          <div>
-                            <h3 className="font-bold text-lg text-text-heading">
+                          <div className="min-w-0">
+                            <h3 className="font-bold text-base sm:text-lg text-text-heading truncate">
                               {booking.DoctorName || t("common.doctor")}
                             </h3>
-                            <p className="text-text-muted text-sm">
+                            <p className="text-text-muted text-xs sm:text-sm">
                               {booking.DurationMinutes
                                 ? `${booking.DurationMinutes} ${t(
                                     "patient.minSession",
@@ -3197,7 +3196,7 @@ export default function ReserveAppointment() {
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap items-center gap-6">
+                        <div className="flex flex-wrap items-center gap-3 sm:gap-6">
                           <div className="text-sm">
                             {sessionDate && (
                               <>

@@ -445,19 +445,19 @@ export default function Schedule() {
   const selectedDayEvents = selectedDay ? dateEventsMap[selectedDay] || [] : [];
 
   return (
-    <div className="p-6 max-w-7xl mx-auto">
+    <div className="p-2 sm:p-4 md:p-6 max-w-7xl mx-auto">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8"
       >
         <div>
-          <h1 className="text-3xl font-bold text-text mb-2">
+          <h1 className="text-2xl sm:text-3xl font-bold text-text mb-2">
             {t("doctor.mySchedule")}
           </h1>
-          <p className="text-text-light">{t("doctor.manageAvailability")}</p>
+          <p className="text-sm sm:text-base text-text-light">{t("doctor.manageAvailability")}</p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 w-full sm:w-auto">
           <Button onClick={() => setIsWeeklyModalOpen(true)} className="gap-2">
             <CalendarIcon className="w-4 h-4" />
             {t("doctor.setWeeklySchedule")}

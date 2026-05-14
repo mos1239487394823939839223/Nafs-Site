@@ -6,6 +6,7 @@ import { useLanguage } from '../../contexts/LanguageContext'
 import { userAPI, filesAPI, extractErrorMessage } from '../../lib/api'
 import Input from '../../components/ui/Input'
 import Button from '../../components/ui/Button'
+import ProfileHero from '../../components/shared/ProfileHero'
 import { Camera, User, Mail, Phone, Lock, Loader2, Pencil as Edit, X, Headphones as SupportAgent, CheckCircle as CheckCircle2, ShieldCheck as VerifiedUser } from 'lucide-react'
 
 export default function StaffProfile() {
@@ -139,78 +140,36 @@ export default function StaffProfile() {
     .slice(0, 2)
 
   return (
-    <div className="min-h-screen bg-background" >
-      {/* ─── Cover Hero ─── */}
-      <div className="h-56 md:h-72 w-full overflow-hidden relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/80 to-secondary" />
-        <svg className="absolute inset-0 w-full h-full opacity-10" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="staff-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="white" strokeWidth="1" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#staff-grid)" />
-        </svg>
-        <div className="absolute top-8 start-1/4 w-48 h-48 bg-white/10 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 end-1/3 w-64 h-64 bg-secondary/30 rounded-full blur-3xl" />
-      </div>
-
-      <div className="max-w-4xl mx-auto px-4 md:px-6 relative">
-        {/* Avatar anchored to cover bottom */}
-        <div className="absolute start-4 md:start-6 -top-16 z-10">
-          <div className="relative group">
-            <div className="w-32 h-32 md:w-36 md:h-36 rounded-full border-4 border-background-paper shadow-2xl flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/20">
-              {uploadingImage ? (
-                <Loader2 className="w-8 h-8 text-primary animate-spin" />
-              ) : avatar ? (
-                <img src={avatar} alt="Avatar" className="w-full h-full object-cover" />
-              ) : (
-                <span className="text-4xl font-bold text-primary">{initials}</span>
-              )}
-            </div>
-            <label className="absolute inset-0 flex items-center justify-center bg-black/50 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 cursor-pointer">
-              <Camera className="w-7 h-7 text-white" />
-              <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-            </label>
-            <div className="absolute bottom-2 end-2 w-4 h-4 bg-emerald-400 rounded-full border-2 border-background-paper shadow" />
-          </div>
-        </div>
-        <div className="pt-20 flex flex-row items-end justify-between pb-6 border-b border-border gap-4">
-          <div className="text-start">
-            <h1 className="text-2xl md:text-3xl font-bold text-text-heading">{displayName}</h1>
-            <div className="flex items-center justify-start gap-2 mt-1.5 flex-wrap">
-              <span className="inline-flex items-center gap-1.5 text-sm text-primary font-medium bg-primary/10 px-3 py-1 rounded-full">
-                <SupportAgent className="w-3.5 h-3.5" />
-                {tx('staff.staffProfile', 'Support Staff')}
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-sm text-emerald-600 font-medium bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">
-                <VerifiedUser className="w-3.5 h-3.5" />
-                {tx('common.active', 'Active')}
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-sm text-emerald-600 font-medium bg-emerald-50 dark:bg-emerald-900/20 px-3 py-1 rounded-full">
-                <span className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse" />
-                {tx('common.online', 'Online')}
-              </span>
-            </div>
-            <p className="text-sm text-text-muted mt-1.5 flex items-center justify-start gap-1.5">
-              <Mail className="w-3.5 h-3.5" />
-              {formData.email || '-'}
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 flex-shrink-0">
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <ProfileHero
+        avatar={avatar}
+        uploadingImage={uploadingImage}
+        initials={initials}
+        displayName={displayName}
+        email={formData.email || '-'}
+        onAvatarChange={handleFileChange}
+        patternId="staff-grid"
+        badges={[
+          { icon: SupportAgent, label: tx('staff.staffProfile', 'Support Staff'), tone: 'primary' },
+          { icon: VerifiedUser, label: tx('common.active', 'Active'), tone: 'emerald' },
+          { label: tx('common.online', 'Online'), tone: 'emerald', pulse: true },
+        ]}
+        actions={
+          <>
             <Button variant="outline" size="sm" onClick={() => setPasswordModalOpen(true)} className="flex items-center gap-2">
               <Lock className="w-4 h-4" />
-              {tx('settings.changePassword', 'Change Password')}
+              <span className="whitespace-nowrap">{tx('settings.changePassword', 'Change Password')}</span>
             </Button>
             <Button size="sm" onClick={() => setEditModalOpen(true)} className="flex items-center gap-2">
               <Edit className="w-4 h-4" />
-              {tx('admin.editDetails', 'Edit Details')}
+              <span className="whitespace-nowrap">{tx('admin.editDetails', 'Edit Details')}</span>
             </Button>
-          </div>
-        </div>
+          </>
+        }
+      />
 
-        <div className="grid grid-cols-3 gap-4 py-6 border-b border-border">
+      <div className="max-w-4xl mx-auto px-4 md:px-6 relative">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 py-6 border-b border-border">
           {[
             { label: tx('admin.role', 'Role'), value: tx('staff.staffProfile', 'Support Staff') },
             { label: tx('common.phoneNumber', 'Phone'), value: formData.phone || '-' },

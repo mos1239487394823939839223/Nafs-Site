@@ -91,6 +91,8 @@ export default {
     noResults: "لا توجد نتائج",
     theme: "المظهر",
     doctor: "طبيب",
+    reject: "رفض",
+    unknownPatient: "مريض غير معروف",
   },
 
   // Auth
@@ -192,7 +194,7 @@ export default {
       lastName: "حسن",
       email: "أنت@مثال.com",
       phone: "+966 XXX XXX XXXX",
-      otp: "٠٠٠٠٠٠"
+      otp: "٠٠٠٠٠٠",
     },
     intro: {
       privacy: {
@@ -202,7 +204,7 @@ export default {
         f1: "تشفير كامل لكافة المحادثات",
         f2: "عدم مشاركة البيانات مع أي طرف ثالث",
         f3: "إمكانية استخدام اسم مستعار",
-        f4: "حذف السجلات في أي وقت"
+        f4: "حذف السجلات في أي وقت",
       },
       security: {
         title: "الأمان المضمون",
@@ -211,7 +213,7 @@ export default {
         f1: "معالجون معتمدون ومرخصون",
         f2: "بروتوكولات حماية عالمية",
         f3: "تحقق دوري من جودة الخدمة",
-        f4: "دفع إلكتروني آمن 100%"
+        f4: "دفع إلكتروني آمن 100%",
       },
       followup: {
         title: "المتابعة الدورية",
@@ -220,7 +222,7 @@ export default {
         f1: "تقارير شهرية عن تقدم الحالة",
         f2: "تذكيرات بالمواعيد والجلسات",
         f3: "تتبع تطور المشاعر والسلوك",
-        f4: "أدوات تقييم ذاتي دورية"
+        f4: "أدوات تقييم ذاتي دورية",
       },
       tests: {
         title: "الاختبارات النفسية",
@@ -229,7 +231,7 @@ export default {
         f1: "اختبارات القلق والاكتئاب والتوتر",
         f2: "نتائج فورية وتحليل دقيق",
         f3: "توصيات بناءً على نتائج الاختبار",
-        f4: "محتوى تعليمي مخصص حسب احتياجك"
+        f4: "محتوى تعليمي مخصص حسب احتياجك",
       },
       emergency: {
         title: "رسائل الطوارئ",
@@ -238,7 +240,7 @@ export default {
         f1: "زر طوارئ للاتصال السريع",
         f2: "تنبيه المعالج في الحالات الحرجة",
         f3: "توجيه فوري لمراكز الدعم القريبة",
-        f4: "دليل التعامل مع الأزمات"
+        f4: "دليل التعامل مع الأزمات",
       },
       support: {
         title: "دعم 24 ساعة",
@@ -247,9 +249,9 @@ export default {
         f1: "رد سريع على الاستفسارات",
         f2: "مساعدة في حجز المواعيد",
         f3: "حل المشكلات التقنية فوراً",
-        f4: "تواصل مباشر عبر الشات"
-      }
-    }
+        f4: "تواصل مباشر عبر الشات",
+      },
+    },
   },
 
   // Doctor Registration
@@ -292,7 +294,7 @@ export default {
     placeholders: {
       experience: "مثال: 10",
       fee: "مثال: 500",
-      license: "مثال: EG-12345-2020"
+      license: "مثال: EG-12345-2020",
     },
     specialties: {
       cardiology: "طب القلب",
@@ -304,14 +306,14 @@ export default {
       psychiatry: "الطب النفسي",
       gynecology: "أمراض النساء",
       ophthalmology: "طب العيون",
-      ent: "أنف وأذن وحنجرة"
+      ent: "أنف وأذن وحنجرة",
     },
     languages: {
       arabic: "العربية",
       english: "الإنجليزية",
       french: "الفرنسية",
-      german: "الألمانية"
-    }
+      german: "الألمانية",
+    },
   },
 
   // Settings
@@ -361,10 +363,11 @@ export default {
         part1: "دعم نفسي رقمي يجمع بين ",
         tech: "التكنولوجيا",
         and: " و ",
-        humanity: "الإنسانية"
+        humanity: "الإنسانية",
       },
       heading: "خُذ نَفَس، ونحن معَك.",
-      subtitle: "منصة دعم نفسي سرية وآمنة تساعدك على فهم نفسك والتحدث مع متخصصين معتمدين متى احتجت.",
+      subtitle:
+        "منصة دعم نفسي سرية وآمنة تساعدك على فهم نفسك والتحدث مع متخصصين معتمدين متى احتجت.",
       bookNow: "احجز جلسة الآن",
       freeAssessment: "تقييم نفسي مجاني",
       startFree: "ابدأ التقييم المجاني",
@@ -378,57 +381,78 @@ export default {
       trust: {
         privacy: "خصوصية مشفّرة",
         doctors: "أطباء معتمدون",
-        flexibility: "مرونة في المواعيد"
+        flexibility: "مرونة في المواعيد",
       },
       preview: {
         title: "معاينة التطبيق",
         chat: "شات",
         video: "فيديو",
         voice: "صوت",
-        commDesc: "اختر طريقة التواصل الأنسب لك. جميع الجلسات تتم بتشفير وحفاظ كامل على السرية.",
+        commDesc:
+          "اختر طريقة التواصل الأنسب لك. جميع الجلسات تتم بتشفير وحفاظ كامل على السرية.",
         aiTitle: "تقييم ذكي لحالتك",
-        aiDesc: "أسئلة قصيرة لتقييم أولي (قلق / اكتئاب / توتر). في النهاية نقترح لك المعالج الأنسب.",
+        aiDesc:
+          "أسئلة قصيرة لتقييم أولي (قلق / اكتئاب / توتر). في النهاية نقترح لك المعالج الأنسب.",
         articlesTitle: "مقالات للصحة النفسية",
         articles: [
           "كيف أفهم نوبات القلق؟",
           "روتين بسيط لهدوء يومك",
-          "العلاقات وحدودك النفسية"
-        ]
-      }
+          "العلاقات وحدودك النفسية",
+        ],
+      },
     },
     features: {
       title: "كل ما تحتاجه في مكان واحد",
       subtitle: "نظام بيئي متكامل للصحة النفسية",
       items: {
-        0: { title: "الدفع الآمن", desc: "خيارات دفع موثوقة وفعالة محلياً — سهلة وسريعة." },
-        1: { title: "الحجز المرن", desc: "فترات زمنية متعددة لكل معالج مع تذكيرات ذكية وتكامل التقويم." },
-        2: { title: "جلسات فيديو وصوت وشات", desc: "تواصل مباشر مع معالجك بالطريقة المناسبة لك من أي مكان." },
-        3: { title: "الخصوصية الكاملة", desc: "تشفير من طرف إلى طرف وحماية صارمة لبياناتك." },
-        4: { title: "مكتبة محتوى التوعية", desc: "مقالات وأدوات موثوقة كتبها متخصصون في الصحة النفسية." },
-        5: { title: "مساعد التقييم الذكي", desc: "روبوت يطرح أسئلة قصيرة لاقتراح أنسب معالج لحالتك." }
-      }
+        0: {
+          title: "الدفع الآمن",
+          desc: "خيارات دفع موثوقة وفعالة محلياً — سهلة وسريعة.",
+        },
+        1: {
+          title: "الحجز المرن",
+          desc: "فترات زمنية متعددة لكل معالج مع تذكيرات ذكية وتكامل التقويم.",
+        },
+        2: {
+          title: "جلسات فيديو وصوت وشات",
+          desc: "تواصل مباشر مع معالجك بالطريقة المناسبة لك من أي مكان.",
+        },
+        3: {
+          title: "الخصوصية الكاملة",
+          desc: "تشفير من طرف إلى طرف وحماية صارمة لبياناتك.",
+        },
+        4: {
+          title: "مكتبة محتوى التوعية",
+          desc: "مقالات وأدوات موثوقة كتبها متخصصون في الصحة النفسية.",
+        },
+        5: {
+          title: "مساعد التقييم الذكي",
+          desc: "روبوت يطرح أسئلة قصيرة لاقتراح أنسب معالج لحالتك.",
+        },
+      },
     },
     howItWorks: {
       title: "كيف يعمل نَفَس؟",
       subtitle: "ثلاث خطوات بسيطة تفصلك عن راحتك النفسية",
       step1: {
         title: "التقييم الأولي",
-        desc: "أجب عن بعض الأسئلة ليفهم نظامنا الذكي حالتك."
+        desc: "أجب عن بعض الأسئلة ليفهم نظامنا الذكي حالتك.",
       },
       step2: {
         title: "اختر معالجك",
-        desc: "نقترح لك أفضل المتخصصين بناءً على تقييمك."
+        desc: "نقترح لك أفضل المتخصصين بناءً على تقييمك.",
       },
       step3: {
         title: "ابدأ الرحلة",
-        desc: "احجز جلستك الأولى وابدأ رحلة التعافي النفسي."
-      }
+        desc: "احجز جلستك الأولى وابدأ رحلة التعافي النفسي.",
+      },
     },
     cta: {
       title: "خذ نَفَساً عميقاً، نحن هنا",
-      subtitle: "ابدأ رحلتك نحو راحة نفسية حقيقية اليوم — التقييم الأول مجاني تماماً.",
+      subtitle:
+        "ابدأ رحلتك نحو راحة نفسية حقيقية اليوم — التقييم الأول مجاني تماماً.",
       button: "ابدأ التقييم المجاني",
-      browse: "استعرض المعالجين"
+      browse: "استعرض المعالجين",
     },
     footer: {
       rights: "© 2026 نَفَس — جميع الحقوق محفوظة",
@@ -450,24 +474,54 @@ export default {
     },
     journey: {
       title: "كيف تبدأ رحلتك؟",
-      step1: { title: "قيّم حالتك النفسية", desc: "أجب عن بعض الأسئلة البسيطة لتفهم حالتك بشكل أفضل." },
-      step2: { title: "اختر دكتورك المناسب", desc: "نرشّح لك أفضل المتخصصين بناءً على حالتك واحتياجاتك." },
-      step3: { title: "احجز جلستك وابدأ", desc: "اختر الوقت المناسب لك وابدأ رحلتك نحو حياة أفضل." },
+      step1: {
+        title: "قيّم حالتك النفسية",
+        desc: "أجب عن بعض الأسئلة البسيطة لتفهم حالتك بشكل أفضل.",
+      },
+      step2: {
+        title: "اختر دكتورك المناسب",
+        desc: "نرشّح لك أفضل المتخصصين بناءً على حالتك واحتياجاتك.",
+      },
+      step3: {
+        title: "احجز جلستك وابدأ",
+        desc: "اختر الوقت المناسب لك وابدأ رحلتك نحو حياة أفضل.",
+      },
     },
     emergency: {
       title: "محتاج مساعدة الآن؟ نحن هنا من أجلك",
-      blackmail: { title: "تعرضت للابتزاز؟", desc: "تواصل معنا بسرية تامة، سنوفر لك الدعم والحماية.", cta: "طلب الحماية" },
-      call: { title: "مكالمة طارئة", desc: "تحدث مع متخصص فوراً، بخصوصية وأمان تام.", cta: "مكالمة طارئة" },
-      danger: { title: "تشعر بالخطر؟", desc: "لا تتردد. اطلب المساعدة الآن، سلامتك أولاً.", cta: "طلب المساعدة" },
+      blackmail: {
+        title: "تعرضت للابتزاز؟",
+        desc: "تواصل معنا بسرية تامة، سنوفر لك الدعم والحماية.",
+        cta: "طلب الحماية",
+      },
+      call: {
+        title: "مكالمة طارئة",
+        desc: "تحدث مع متخصص فوراً، بخصوصية وأمان تام.",
+        cta: "مكالمة طارئة",
+      },
+      danger: {
+        title: "تشعر بالخطر؟",
+        desc: "لا تتردد. اطلب المساعدة الآن، سلامتك أولاً.",
+        cta: "طلب المساعدة",
+      },
     },
     services: {
       title: "خدماتنا",
       viewAll: "عرض جميع الخدمات",
       individual: { title: "جلسات فردية", desc: "دعم نفسي شخصي مع المتخصصين." },
-      relationships: { title: "دعم العلاقات", desc: "حسّن علاقاتك وافهم نفسك والآخرين." },
+      relationships: {
+        title: "دعم العلاقات",
+        desc: "حسّن علاقاتك وافهم نفسك والآخرين.",
+      },
       children: { title: "دعم الأطفال", desc: "جلسات للأطفال والمراهقين." },
-      family: { title: "الإرشاد الأسري", desc: "حل المشكلات الأسرية وتحسين التواصل." },
-      programs: { title: "البرامج العلاجية", desc: "برامج متخصصة لعلاج القلق والاكتئاب." },
+      family: {
+        title: "الإرشاد الأسري",
+        desc: "حل المشكلات الأسرية وتحسين التواصل.",
+      },
+      programs: {
+        title: "البرامج العلاجية",
+        desc: "برامج متخصصة لعلاج القلق والاكتئاب.",
+      },
     },
     doctors: {
       title: "اختر دكتورك المناسب",
@@ -489,9 +543,21 @@ export default {
     testimonials: {
       title: "ماذا يقول عملاؤنا",
       items: [
-        { name: "فاطمة علي", role: "عميلة", quote: "كان الدعم سريعاً والمتخصصون متفهمون جداً." },
-        { name: "أحمد محمود", role: "عميل", quote: "ساعدوني على تجاوز مرحلة صعبة باحترافية وسرية تامة." },
-        { name: "منى خالد", role: "عميلة", quote: "منصة رائعة، شعرت بتفاهم حقيقي لمشكلتي. الدكتورة كانت رائعة." },
+        {
+          name: "فاطمة علي",
+          role: "عميلة",
+          quote: "كان الدعم سريعاً والمتخصصون متفهمون جداً.",
+        },
+        {
+          name: "أحمد محمود",
+          role: "عميل",
+          quote: "ساعدوني على تجاوز مرحلة صعبة باحترافية وسرية تامة.",
+        },
+        {
+          name: "منى خالد",
+          role: "عميلة",
+          quote: "منصة رائعة، شعرت بتفاهم حقيقي لمشكلتي. الدكتورة كانت رائعة.",
+        },
       ],
     },
     finalCta: {
@@ -553,10 +619,26 @@ export default {
     },
     quickActions: {
       title: "الإجراءات السريعة",
-      sessions:   { title: "جلساتي",        desc: "عرض وإدارة جميع جلساتك",                   cta: "عرض الجلسات"  },
-      content:    { title: "مكتبة المحتوى", desc: "مقالات وفيديوهات متنوعة",                   cta: "استكشف"       },
-      programs:   { title: "برامج علاجية",  desc: "برامج علاجية مصممة لمساعدتك",               cta: "عرض البرامج"  },
-      assessment: { title: "تقييم نفسي",    desc: "اختبار سريع يساعدك على فهم حالتك",          cta: "ابدأ التقييم" },
+      sessions: {
+        title: "جلساتي",
+        desc: "عرض وإدارة جميع جلساتك",
+        cta: "عرض الجلسات",
+      },
+      content: {
+        title: "مكتبة المحتوى",
+        desc: "مقالات وفيديوهات متنوعة",
+        cta: "استكشف",
+      },
+      programs: {
+        title: "برامج علاجية",
+        desc: "برامج علاجية مصممة لمساعدتك",
+        cta: "عرض البرامج",
+      },
+      assessment: {
+        title: "تقييم نفسي",
+        desc: "اختبار سريع يساعدك على فهم حالتك",
+        cta: "ابدأ التقييم",
+      },
     },
     upcomingSession: {
       title: "جلساتك القادمة",
@@ -839,8 +921,7 @@ export default {
         greeting: "أهلاً",
         titleLine1: "ساعد المزيد من الأشخاص",
         titleLine2: "وغير حياتهم للأفضل",
-        subtitle:
-          "منصتك لممارسة عملك المهني ومتابعة مرضاك بسهولة وأمان",
+        subtitle: "منصتك لممارسة عملك المهني ومتابعة مرضاك بسهولة وأمان",
         addSession: "أضف جلسة جديدة",
         imageAlt: "طبيب يعمل على حاسوبه",
       },
@@ -996,7 +1077,8 @@ export default {
     manager: "مدير",
     managerDesc: "وصول كامل بما في ذلك إدارة الفريق والتقارير",
     bullyingSpecialist: "أخصائي مكافحة التنمر",
-    bullyingSpecialistDesc: "متخصص في التعامل مع حالات التنمر والتحرش التي يُبلّغ عنها المرضى",
+    bullyingSpecialistDesc:
+      "متخصص في التعامل مع حالات التنمر والتحرش التي يُبلّغ عنها المرضى",
     bookingsManagement: "إدارة الحجوزات",
     allBookings: "جميع الحجوزات",
     activeBookings: "الحجوزات النشطة",
@@ -1148,6 +1230,24 @@ export default {
     manageSupport: "إدارة معلومات حسابك كموظف دعم.",
     chatRooms: "غرف الدردشة",
     patientConversations: "محادثات المرضى",
+    manualPaymentDesc:
+      "راجع إثباتات التحويل بسرعة، واعتمد المدفوعات الصحيحة، وارفض الطلبات المشبوهة بأسباب واضحة.",
+    paymentConfirmed: "تم اعتماد الدفعة بنجاح",
+    paymentRejected: "تم رفض الدفعة",
+    cashWallet: "محفظة نقدية",
+    provider: "مزود",
+    requestsList: "قائمة الطلبات",
+    searchManualPayment: "ابحث بالمريض، الحجز، المرجع...",
+    loadingManualPayments: "جارٍ تحميل المدفوعات اليدوية...",
+    noManualPayments: "لا توجد طلبات دفع يدوي.",
+    referenceNumber: "المرجع",
+    sessionTime: "الجلسة",
+    submittedAt: "تاريخ الإرسال",
+    rejectionReason: "سبب الرفض",
+    noScreenshot: "لا توجد صورة",
+    rejectManualPayment: "رفض الدفعة اليدوية",
+    rejectPrompt: "أدخل سبب رفض هذا الطلب.",
+    rejectionReasonPlaceholder: "السبب (اختياري)",
   },
 
   // Documents
@@ -1197,6 +1297,7 @@ export default {
     connectionTimeout:
       "انتهت مهلة الاتصال. يرجى التحقق من اتصالك بالإنترنت أو المحاولة لاحقاً.",
     somethingWentWrong: "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
+    loadFailed: "فشل تحميل البيانات. يرجى المحاولة مرة أخرى.",
     unauthorized: "انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.",
     fillRequired: "يرجى ملء جميع الحقول المطلوبة",
     fixErrors: "يرجى إصلاح الأخطاء قبل المتابعة",
@@ -1309,7 +1410,8 @@ export default {
     ltr: "rtl",
     start3: "end-3",
     ps10Pe4: "pe-10 ps-4",
-    bgprimary5Borders4Bordersprimary: "bg-primary/5 border-e-4 border-e-primary",
+    bgprimary5Borders4Bordersprimary:
+      "bg-primary/5 border-e-4 border-e-primary",
     ms2: "-me-2",
     borders: "border-e",
     enus: "ar-EG",
@@ -1355,7 +1457,8 @@ export default {
     failedToSaveResult: "فشل حفظ النتيجة",
     resultSavedSuccessfully: "تم حفظ النتيجة بنجاح",
     availableTests: "الاختبارات المتاحة",
-    openTheExternalTestLinkThenReturnAndSubmitYourResultEachTestCanBeSubmittedOnceOnly: "افتح رابط الاختبار الخارجي ثم ارجع وأدخل نتيجتك. يمكن إدخال النتيجة مرة واحدة فقط.",
+    openTheExternalTestLinkThenReturnAndSubmitYourResultEachTestCanBeSubmittedOnceOnly:
+      "افتح رابط الاختبار الخارجي ثم ارجع وأدخل نتيجتك. يمكن إدخال النتيجة مرة واحدة فقط.",
     search: "بحث",
     searchByTestNameDescriptionOrTag: "ابحث باسم الاختبار أو الوصف أو الوسم",
     all: "الكل",
@@ -1402,13 +1505,15 @@ export default {
     patient: "مريض",
     failedToLoadPaymentData: "تعذر تحميل بيانات الدفع",
     paymentMethod: "طريقة الدفع",
-    pleaseEnterTitleAccountNumberAndProvider: "أدخل العنوان ورقم الحساب ووسيلة الدفع",
+    pleaseEnterTitleAccountNumberAndProvider:
+      "أدخل العنوان ورقم الحساب ووسيلة الدفع",
     paymentInstructionsSavedSuccessfully: "تم حفظ تعليمات الدفع بنجاح",
     failedToSavePaymentInstructions: "تعذر حفظ البيانات",
     paymentInstructionsDeletedSuccessfully: "تم حذف تعليمات الدفع بنجاح",
     failedToDeletePaymentInstructions: "تعذر حذف البيانات",
     paymentDetails: "تفاصيل الدفع",
-    manageAccountDetailsUsedForManualTransfers: "إدارة بيانات الحساب المستخدمة في التحويلات اليدوية.",
+    manageAccountDetailsUsedForManualTransfers:
+      "إدارة بيانات الحساب المستخدمة في التحويلات اليدوية.",
     transferInstructionsDetails: "تفاصيل تعليمات التحويل",
     loadingPaymentDetails: "جار تحميل البيانات...",
     paymentProvider: "وسيلة الدفع",
@@ -1420,7 +1525,8 @@ export default {
     accountNumber: "رقم الحساب:",
     enterAccountNumber: "أدخل رقم الحساب",
     transferInstructions: "تعليمات التحويل",
-    addTransferStepsThePatientShouldFollow: "أضف خطوات التحويل التي يجب على العميل اتباعها",
+    addTransferStepsThePatientShouldFollow:
+      "أضف خطوات التحويل التي يجب على العميل اتباعها",
     justifyend: "justify-start",
     discardChanges: "إلغاء التغييرات",
     deleting: "جار الحذف...",
@@ -1428,7 +1534,8 @@ export default {
     saving: "جار الحفظ...",
     saveInstructions: "حفظ التعليمات",
     confirmPaymentInstructionsDeletion: "تأكيد حذف تعليمات الدفع",
-    thePaymentInstructionsForTheSelectedProviderWillBeRemovedYouCanAddThemAgainLaterIfNeeded: "سيتم حذف تعليمات الدفع الخاصة بوسيلة الدفع المحددة. يمكنك إضافتها مرة أخرى لاحقًا إذا لزم الأمر.",
+    thePaymentInstructionsForTheSelectedProviderWillBeRemovedYouCanAddThemAgainLaterIfNeeded:
+      "سيتم حذف تعليمات الدفع الخاصة بوسيلة الدفع المحددة. يمكنك إضافتها مرة أخرى لاحقًا إذا لزم الأمر.",
     confirmDelete: "تأكيد الحذف",
     failedToLoadTags: "فشل تحميل الوسوم",
     tests: "الاختبارات",
@@ -1444,7 +1551,8 @@ export default {
     failedToCreateTest: "فشل إنشاء الاختبار",
     testAddedSuccessfully: "تمت إضافة التحليل",
     manageTests: "إدارة الاختبارات",
-    createTestsAndTagsThenMonitorAllDoctorAndPatientResultsInOnePlace: "أنشئ الاختبارات والوسوم وتابع نتائج المرضى والأطباء في مكان واحد.",
+    createTestsAndTagsThenMonitorAllDoctorAndPatientResultsInOnePlace:
+      "أنشئ الاختبارات والوسوم وتابع نتائج المرضى والأطباء في مكان واحد.",
     createTest: "إنشاء الاختبار",
     totalTests: "إجمالي الاختبارات",
     totalResults: "إجمالي النتائج",
@@ -1490,7 +1598,8 @@ export default {
     rejectedByTechnicalSupport: "مرفوض من الدعم الفني",
     refundApproved: "تمت الموافقة على الاسترداد",
     refundRejected: "تم رفض الاسترداد",
-    trackRefundRequestsCreatedFromPaidCancellationsThenApproveOrRejectEachRequestWithClearNotes: "تابع طلبات الاسترداد الناتجة عن الإلغاءات المدفوعة، ثم اعتمد أو ارفض الطلب مع ملاحظات واضحة.",
+    trackRefundRequestsCreatedFromPaidCancellationsThenApproveOrRejectEachRequestWithClearNotes:
+      "تابع طلبات الاسترداد الناتجة عن الإلغاءات المدفوعة، ثم اعتمد أو ارفض الطلب مع ملاحظات واضحة.",
     pending: "معلق",
     completed: "تم الدفع بنجاح",
     failed: "فشل الدفع",
@@ -1512,13 +1621,15 @@ export default {
     noMessagesYet: "لا توجد رسائل بعد",
     approveRefund: "موافقة على الاسترداد",
     rejectRefund: "رفض الاسترداد",
-    youCanAddAnOptionalNoteBeforeApproval: "يمكنك إضافة ملاحظة اختيارية قبل الموافقة.",
+    youCanAddAnOptionalNoteBeforeApproval:
+      "يمكنك إضافة ملاحظة اختيارية قبل الموافقة.",
     addANoteToClarifyTheRejectionReason: "أضف ملاحظة توضح سبب الرفض.",
     notes: "الملاحظات",
     confirmApproval: "تأكيد الموافقة",
     confirmRejection: "تأكيد الرفض",
     earnings: "الأرباح",
-    reviewYourEarningsSummaryAndPaymentTransactions: "راجع ملخص أرباحك وحركة المدفوعات",
+    reviewYourEarningsSummaryAndPaymentTransactions:
+      "راجع ملخص أرباحك وحركة المدفوعات",
     noPaidTransactionsYet: "لا توجد معاملات مدفوعة بعد",
     failedToLoadTestTypes: "فشل تحميل أنواع التحاليل",
     sessionOpenedSuccessfully: "تم فتح الجلسة",
@@ -1531,7 +1642,8 @@ export default {
     pleaseSelectATestType: "اختر نوع التحليل",
     failedToAddTest: "فشل إضافة التحليل",
     cancelAppointment: "إلغاء الموعد",
-    areYouSureYouWantToCancelThisAppointment: "هل أنت متأكد أنك تريد إلغاء هذا الموعد؟",
+    areYouSureYouWantToCancelThisAppointment:
+      "هل أنت متأكد أنك تريد إلغاء هذا الموعد؟",
     noKeepIt: "لا، احتفظ به",
     yesCancel: "نعم، إلغاء الموعد",
     addTestForPatient: "إضافة تحليل للمريض",
@@ -1558,7 +1670,8 @@ export default {
     minRead: "دقائق قراءة",
     fullContentComingSoon: "المحتوى الكامل سيكون متاحاً قريباً",
     healthArticles: "المقالات الصحية",
-    articlesAndGuidesFromSupportTeamDoctors: "مقالات ودلائل من فريق الدعم والأطباء",
+    articlesAndGuidesFromSupportTeamDoctors:
+      "مقالات ودلائل من فريق الدعم والأطباء",
     searchArticles: "ابحث في المقالات...",
     featured: "مميز",
     min: "دقائق",
@@ -1573,15 +1686,20 @@ export default {
     instantTransfer: "تحويل فوري",
     digitalWallet: "محفظة رقمية",
     manualTransfer: "تحويل يدوي",
-    theSelectedSlotWasCancelledByTheDoctorPleaseChooseAnotherSlot: "تم إلغاء الموعد المحدد من الدكتور. اختر موعدًا آخر.",
-    cancellationIsAllowedOnlyAtLeast48HoursBeforeTheAppointment: "يمكن الإلغاء قبل الموعد بـ 48 ساعة على الأقل",
+    theSelectedSlotWasCancelledByTheDoctorPleaseChooseAnotherSlot:
+      "تم إلغاء الموعد المحدد من الدكتور. اختر موعدًا آخر.",
+    cancellationIsAllowedOnlyAtLeast48HoursBeforeTheAppointment:
+      "يمكن الإلغاء قبل الموعد بـ 48 ساعة على الأقل",
     pleaseChooseAPaymentProviderFirst: "يرجى اختيار وسيلة دفع أولًا",
     pleaseAttachATransferScreenshot: "يرجى إرفاق صورة التحويل",
     failedToUploadTransferScreenshot: "فشل رفع صورة التحويل",
-    paymentProofSubmittedBookingWillStayPendingUntilTechnicalSupportReviewsIt: "تم إرسال إثبات الدفع. سيظل الحجز قيد المراجعة حتى يراجعه الدعم الفني.",
+    paymentProofSubmittedBookingWillStayPendingUntilTechnicalSupportReviewsIt:
+      "تم إرسال إثبات الدفع. سيظل الحجز قيد المراجعة حتى يراجعه الدعم الفني.",
     failedToSubmitPaymentProof: "فشل إرسال إثبات الدفع",
-    thisSlotIsNoLongerAvailablePleaseChooseAnotherSlot: "هذا الموعد لم يعد متاحًا. اختر موعدًا آخر.",
-    bookingAndPaymentRequestSubmittedSuccessfullyAndIsNowPendingReview: "تم إرسال طلب الحجز والدفع بنجاح وهو الآن قيد المراجعة.",
+    thisSlotIsNoLongerAvailablePleaseChooseAnotherSlot:
+      "هذا الموعد لم يعد متاحًا. اختر موعدًا آخر.",
+    bookingAndPaymentRequestSubmittedSuccessfullyAndIsNowPendingReview:
+      "تم إرسال طلب الحجز والدفع بنجاح وهو الآن قيد المراجعة.",
     next: "أقرب موعد:",
     dr: "د.",
     "24Reviews": "(٢٤ مراجعة)",
@@ -1611,7 +1729,8 @@ export default {
     noPaymentProvidersAvailableRightNow: "لا توجد وسائل دفع متاحة حاليًا",
     paymentInstructions: "تعليمات الدفع",
     loadingPaymentInstructions: "جاري تحميل تعليمات الدفع...",
-    noInstructionsAreCurrentlyAvailableForThisProvider: "لا توجد تعليمات متاحة لهذه الوسيلة حاليًا.",
+    noInstructionsAreCurrentlyAvailableForThisProvider:
+      "لا توجد تعليمات متاحة لهذه الوسيلة حاليًا.",
     sessionFee: "رسوم الجلسة:",
     transferFees: "رسوم التحويل:",
     totalPrice: "الإجمالي",
@@ -1634,10 +1753,12 @@ export default {
     submit: "إرسال",
     noReviewsYet: "لا توجد تقييمات حتى الآن",
     requestSubmitted: "تم استلام طلبك",
-    yourBookingIsCurrentlyPendingUntilTechnicalSupportReviewsYourTransferProof: "حجزك الآن في حالة Pending حتى يقوم فريق الدعم الفني بمراجعة إثبات التحويل.",
+    yourBookingIsCurrentlyPendingUntilTechnicalSupportReviewsYourTransferProof:
+      "حجزك الآن في حالة Pending حتى يقوم فريق الدعم الفني بمراجعة إثبات التحويل.",
     payment: "الدفع: ",
     cancelAppointmentRefund: "إلغاء الموعد واسترداد المبلغ",
-    areYouSureYouWantToCancelThisAppointmentARefundRequestWillBeSentToTechnicalSupportBecausePaymentIsConfirmed: "هل أنت متأكد أنك تريد إلغاء هذا الموعد؟ سيتم إرسال طلب استرداد للدعم الفني لأن الدفع تم تأكيده.",
+    areYouSureYouWantToCancelThisAppointmentARefundRequestWillBeSentToTechnicalSupportBecausePaymentIsConfirmed:
+      "هل أنت متأكد أنك تريد إلغاء هذا الموعد؟ سيتم إرسال طلب استرداد للدعم الفني لأن الدفع تم تأكيده.",
     yesCancelRefund: "نعم، إلغاء واسترداد",
     hidePassword: "إخفاء كلمة المرور",
     showPassword: "إظهار كلمة المرور",
@@ -1655,6 +1776,6 @@ export default {
     order2: "order-1",
     failedToSendMessage: "تعذر إرسال الرسالة",
     unableToResolvePatientId: "تعذر تحديد معرف المريض",
-    failedToOpenSupportChat: "تعذر فتح محادثة الدعم الفني"
-  }
+    failedToOpenSupportChat: "تعذر فتح محادثة الدعم الفني",
+  },
 };

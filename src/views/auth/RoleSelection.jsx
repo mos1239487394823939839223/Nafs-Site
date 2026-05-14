@@ -27,18 +27,18 @@ export default function RoleSelection() {
   ]
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+    <div className="min-h-screen bg-background flex items-center justify-center p-3 sm:p-4 py-8">
       <div className="w-full max-w-6xl">
         {/* Header */}
         <motion.div
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-12"
+          className="text-center mb-8 sm:mb-12"
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-text-heading mb-4">
+          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-text-heading mb-3 sm:mb-4">
             {t('auth.roleSelection').split(' ')[0]} <span className="text-primary">{t('auth.platformName')}</span>
           </h1>
-          <p className="text-xl text-text-muted max-w-2xl mx-auto">
+          <p className="text-base sm:text-xl text-text-muted max-w-2xl mx-auto px-2">
             {t('auth.roleSelectionSubtitle')}
           </p>
         </motion.div>
@@ -54,25 +54,25 @@ export default function RoleSelection() {
             >
               <div className="bg-background-paper rounded-2xl shadow-xl overflow-hidden hover:shadow-2xl transition-shadow duration-300 h-full flex flex-col border border-border w-full max-w-md">
                 {/* Header with Gradient */}
-                <div className={`bg-gradient-to-r ${role.color} p-8 text-white relative overflow-hidden`}>
+                <div className={`bg-gradient-to-r ${role.color} p-5 sm:p-8 text-white relative overflow-hidden`}>
                   <div className="absolute inset-0 bg-black/10"></div>
-                  <div className="flex items-center gap-4 mb-4 relative z-10">
-                    <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                      <role.icon className="w-8 h-8 text-white" />
+                  <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4 relative z-10">
+                    <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm flex-shrink-0">
+                      <role.icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold text-white">{role.title}</h2>
+                      <h2 className="text-xl sm:text-2xl font-bold text-white">{role.title}</h2>
                     </div>
                   </div>
-                  <p className="text-white/90 relative z-10">{role.description}</p>
+                  <p className="text-white/90 relative z-10 text-sm sm:text-base">{role.description}</p>
                 </div>
 
                 {/* Features */}
-                <div className="p-8 flex-1">
-                  <h3 className="font-semibold text-text-heading mb-4">{t('auth.whatYouGet')}</h3>
-                  <ul className="space-y-3">
+                <div className="p-5 sm:p-8 flex-1">
+                  <h3 className="font-semibold text-text-heading mb-3 sm:mb-4">{t('auth.whatYouGet')}</h3>
+                  <ul className="space-y-2 sm:space-y-3">
                     {role.features.map((feature, idx) => (
-                      <li key={idx} className="flex items-center gap-3 text-text-muted">
+                      <li key={idx} className="flex items-center gap-3 text-text-muted text-sm sm:text-base">
                         <div className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                           <div className="w-2 h-2 bg-primary rounded-full" />
                         </div>
@@ -83,7 +83,7 @@ export default function RoleSelection() {
                 </div>
 
                 {/* Action Button */}
-                <div className="p-8 pt-0">
+                <div className="p-5 sm:p-8 pt-0">
                   <Button
                     onClick={() => navigate(role.route)}
                     className="w-full group"

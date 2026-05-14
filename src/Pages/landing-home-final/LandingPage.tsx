@@ -10,10 +10,14 @@ import { Testimonials } from "./components/Testimonials";
 import { FinalCTA } from "./components/FinalCTA";
 import { Footer } from "./components/Footer";
 import { ChatBubble } from "./components/ChatBubble";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 const LandingPage = () => {
+  const { language } = useLanguage();
+  const isAr = language === "ar";
+
   return (
-    <div className="min-h-screen bg-background">
+    <div dir={isAr ? "rtl" : "ltr"} className="min-h-screen bg-background">
       <Navbar />
       <Hero />
       <main className="mx-auto max-w-screen-xl">

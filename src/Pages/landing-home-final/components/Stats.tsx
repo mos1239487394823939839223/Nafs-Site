@@ -13,18 +13,20 @@ export const Stats = () => {
   ];
 
   return (
-  <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-12">
-    <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
-      {stats.map(({ icon: Icon, valueKey, labelKey }) => (
-        <div key={labelKey} className="flex items-center justify-center gap-3">
-          <Icon className="h-7 w-7 text-brand" strokeWidth={1.8} />
-          <div className="text-end">
-            <p className="text-2xl font-bold text-brand">{t(valueKey)}</p>
-            <p className="text-xs text-muted-foreground">{t(labelKey)}</p>
+    <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-10">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {stats.map(({ icon: Icon, valueKey, labelKey }) => (
+          <div key={labelKey} className="flex flex-col items-center gap-3 rounded-2xl bg-card border border-border shadow-[var(--shadow-card)] px-4 py-6">
+            <span className="grid h-12 w-12 place-items-center rounded-full bg-brand/10 text-brand">
+              <Icon className="h-6 w-6" strokeWidth={1.75} />
+            </span>
+            <div className="text-center">
+              <p className="text-xl font-bold text-brand leading-tight">{t(valueKey)}</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">{t(labelKey)}</p>
+            </div>
           </div>
-        </div>
-      ))}
-    </div>
-  </section>
+        ))}
+      </div>
+    </section>
   );
 };

@@ -1,6 +1,11 @@
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider, useAuth, Roles, RoleDashboards } from "./contexts/AuthContext";
+import {
+  AuthProvider,
+  useAuth,
+  Roles,
+  RoleDashboards,
+} from "./contexts/AuthContext";
 import { ToastProvider } from "./components/ui/Toast";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
@@ -37,13 +42,11 @@ import BlogDetail from "./views/admin/BlogDetail";
 import AdminTests from "./views/admin/Tests";
 import AdminPaymentDetails from "./views/admin/PaymentDetails";
 import DoctorFinance from "./views/admin/DoctorFinance";
-import LinksManagement from "./views/admin/LinksManagement";
 import PatientBlogs from "./views/patient/Blogs";
 import MessagesPage from "./views/shared/MessagesPage";
 import DocumentViewer from "./views/shared/DocumentViewer";
 import LandingPage from "./Pages/landing-home-final/LandingPage";
 import MainDoctorDashboard from "./Pages/land-new-page/main-doctor-dashboard";
-import LinksPage from "./Pages/links-page/LinksPage";
 
 function RootRedirect() {
   const { isAuthenticated, role, loading } = useAuth();
@@ -67,7 +70,6 @@ function AppRoutes() {
       <Routes>
         {/* Landing Page */}
         <Route path="/" element={<RootRedirect />} />
-        <Route path="/l/:username" element={<LinksPage />} />
 
         {/* Public Routes */}
         <Route path="/auth/login" element={<Login />} />
@@ -408,17 +410,6 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-        <Route
-          path="/admin/links"
-          element={
-            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
-              <Layout>
-                <LinksManagement />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-
         {/* Legacy redirect */}
         <Route
           path="/dashboard"
@@ -444,7 +435,6 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
-
       </Routes>
     </div>
   );
