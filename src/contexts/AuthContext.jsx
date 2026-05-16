@@ -94,21 +94,9 @@ export const AuthProvider = ({ children }) => {
   // Logout function
   const logout = async () => {
     try {
-      // Call logout API
       await authAPI.logout();
-      
-      // Delete FCM token
-      const fcmToken = localStorage.getItem('fcm_token');
-      if (fcmToken) {
-         const apiModule = await import('../lib/api');
-         if (apiModule.notificationAPI) {
-           await apiModule.notificationAPI.deleteDeviceToken(fcmToken).catch(() => {});
-         }
-         localStorage.removeItem('fcm_token');
-      }
     } catch (error) {
       console.error("Logout API error:", error);
-      // Continue with local logout even if API fails
     }
 
     setUser(null);

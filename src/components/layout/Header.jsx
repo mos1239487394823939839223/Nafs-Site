@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -46,8 +46,25 @@ export default function Header({ onMenuClick }) {
   const [showTheme, setShowTheme] = useState(false)
 
   const [notifications, setNotifications] = useState([])
-  
-  useFirebaseMessaging(!!user, (payload) => {
+
+  const fetchNotifications = useCallback(() => {
+    notificationAPI.getNotifications(1, 20)
+      .then(res => {
+        const items = res?.Data?.Items || [];
+        if (Array.isArray(items)) {
+          setNotifications(items.map(n => ({
+            id: n.Id || n.id,
+            title: n.Title || n.title,
+            body: n.Body || n.body || n.Message || n.message,
+            isRead: n.IsRead || n.isRead || false,
+            date: n.CreatedAt || n.createdAt || new Date()
+          })));
+        }
+      })
+      .catch(err => console.error("Failed to load notifications", err));
+  }, []);
+
+  const onNewNotification = useCallback((payload) => {
     setNotifications(prev => [{
       id: Date.now(),
       title: payload.notification?.title || 'New Notification',
@@ -55,27 +72,17 @@ export default function Header({ onMenuClick }) {
       isRead: false,
       date: new Date()
     }, ...prev])
-  })
+  }, []);
+
+  useFirebaseMessaging(!!user, onNewNotification, fetchNotifications)
 
   useEffect(() => {
     if (user) {
-      notificationAPI.getNotifications(1, 20)
-        .then(res => {
-          // Attempt to extract the list depending on the backend response structure
-          const items = res.Data?.Data || res.Data || res.data || res.items || [];
-          if (Array.isArray(items)) {
-            setNotifications(items.map(n => ({
-              id: n.Id || n.id,
-              title: n.Title || n.title,
-              body: n.Body || n.body || n.Message || n.message,
-              isRead: n.IsRead || n.isRead || false,
-              date: n.CreatedAt || n.createdAt || new Date()
-            })));
-          }
-        })
-        .catch(err => console.error("Failed to load notifications", err));
+      fetchNotifications();
+    } else {
+      setNotifications([]);
     }
-  }, [user]);
+  }, [user, fetchNotifications]);
 
   const handleReadNotification = async (n) => {
     if (n.isRead) return;
