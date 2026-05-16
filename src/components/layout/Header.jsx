@@ -18,7 +18,7 @@ function DropdownMenu({ open, onClose, children }) {
   }, [open, onClose])
   if (!open) return null
   return (
-    <div ref={ref} className="absolute top-full mt-2 ltr:end-0 rtl:start-0 z-50 min-w-[150px] bg-background-paper border border-border rounded-xl shadow-lg py-1 animate-fade-in">
+    <div ref={ref} className="absolute top-full mt-2 end-0 z-50 min-w-[150px] bg-background-paper border border-border rounded-xl shadow-lg py-1 animate-fade-in">
       {children}
     </div>
   )
