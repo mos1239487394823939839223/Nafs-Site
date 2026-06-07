@@ -1,12 +1,12 @@
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../contexts/AuthContext'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useLanguage } from '../../contexts/LanguageContext'
-import { Bell, Search, User, Menu, Moon, Sun, Monitor, Globe, Check } from 'lucide-react'
-import Badge from '../ui/Badge'
+import { Bell, Menu, Moon, Sun, Monitor, Globe, Check, CheckCheck, ArrowRight } from 'lucide-react'
 import RoleBadge from '../ui/RoleBadge'
-import { useFirebaseMessaging } from '../../hooks/useFirebaseMessaging'
-import { notificationAPI } from '../../lib/api'
+import NotificationItem from '../notifications/NotificationItem'
+import { useNotifications } from '../../contexts/NotificationContext'
 
 function DropdownMenu({ open, onClose, children }) {
   const ref = useRef(null)
@@ -38,61 +38,21 @@ function DropdownItem({ onClick, active, icon: Icon, label }) {
 }
 
 export default function Header({ onMenuClick }) {
-  const { role, user } = useAuth()
+  const { role } = useAuth()
+  const navigate = useNavigate()
   const { theme, setTheme } = useTheme()
   const { language, setLanguage, t, isRTL } = useLanguage()
   const [showNotifications, setShowNotifications] = useState(false)
   const [showLang, setShowLang] = useState(false)
   const [showTheme, setShowTheme] = useState(false)
 
-  const [notifications, setNotifications] = useState([])
+  const { notifications, unreadCount, markAsRead, markAllAsRead } = useNotifications()
 
-  const fetchNotifications = useCallback(() => {
-    notificationAPI.getNotifications(1, 20)
-      .then(res => {
-        const items = res?.Data?.Items || [];
-        if (Array.isArray(items)) {
-          setNotifications(items.map(n => ({
-            id: n.Id || n.id,
-            title: n.Title || n.title,
-            body: n.Body || n.body || n.Message || n.message,
-            isRead: n.IsRead || n.isRead || false,
-            date: n.CreatedAt || n.createdAt || new Date()
-          })));
-        }
-      })
-      .catch(err => console.error("Failed to load notifications", err));
-  }, []);
-
-  const onNewNotification = useCallback((payload) => {
-    setNotifications(prev => [{
-      id: Date.now(),
-      title: payload.notification?.title || 'New Notification',
-      body: payload.notification?.body,
-      isRead: false,
-      date: new Date()
-    }, ...prev])
-  }, []);
-
-  useFirebaseMessaging(!!user, onNewNotification, fetchNotifications)
-
-  useEffect(() => {
-    if (user) {
-      fetchNotifications();
-    } else {
-      setNotifications([]);
-    }
-  }, [user, fetchNotifications]);
-
-  const handleReadNotification = async (n) => {
-    if (n.isRead) return;
-    try {
-      await notificationAPI.markAsRead(n.id);
-      setNotifications(prev => prev.map(item => item.id === n.id ? { ...item, isRead: true } : item));
-    } catch (err) {
-      console.error("Failed to mark as read", err);
-    }
-  };
+  const handleReadNotification = async (notification) => {
+    await markAsRead(notification.id)
+    setShowNotifications(false)
+    if (notification.actionUrl) navigate(notification.actionUrl)
+  }
 
   const roleLabels = {
     patient: t('nav.patientPortal'),
@@ -133,30 +93,37 @@ export default function Header({ onMenuClick }) {
               className="p-2 hover:bg-background-subtle rounded-xl transition-colors text-text relative"
             >
               <Bell className="w-5 h-5 md:w-6 md:h-6" />
-              {notifications.filter(n => !n.isRead).length > 0 && (
-                <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-background-paper" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -end-1 min-w-5 h-5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full border-2 border-background-paper flex items-center justify-center">
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </span>
               )}
             </button>
             <DropdownMenu open={showNotifications} onClose={() => setShowNotifications(false)}>
-              <div className="w-[calc(100vw-2rem)] max-w-[20rem] sm:w-80 p-2 max-h-80 overflow-y-auto">
+              <div className="w-[calc(100vw-2rem)] max-w-[23rem] sm:w-96 p-2">
                 <div className="flex justify-between items-center mb-2 px-2 pb-2 border-b border-border">
                   <span className="font-bold text-sm">{t('common.notifications') || 'Notifications'}</span>
-                  <button onClick={() => setNotifications(prev => prev.map(n => ({...n, isRead: true})))} className="text-xs text-primary hover:underline">{t('common.markAllRead') || 'Mark all read'}</button>
+                  <button onClick={markAllAsRead} disabled={unreadCount === 0} className="text-xs text-primary hover:underline disabled:opacity-40 inline-flex items-center gap-1">
+                    <CheckCheck className="w-3.5 h-3.5" />
+                    {t('common.markAllRead') || 'Mark all read'}
+                  </button>
                 </div>
                 {notifications.length === 0 ? (
                   <p className="text-center text-sm text-text-muted py-4">{t('common.noAlerts') || 'No new notifications'}</p>
                 ) : (
-                  notifications.map(n => (
-                    <div 
-                      key={n.id} 
-                      onClick={() => handleReadNotification(n)}
-                      className={`p-2 mb-1 rounded-lg cursor-pointer transition-colors ${n.isRead ? 'bg-background-paper hover:bg-background-subtle' : 'bg-background-subtle border border-primary/20'}`}
-                    >
-                      <p className="text-sm font-semibold text-text-heading">{n.title}</p>
-                      <p className="text-xs text-text-muted">{n.body}</p>
-                    </div>
-                  ))
+                  <div className="space-y-2 max-h-80 overflow-y-auto">
+                    {notifications.slice(0, 8).map(n => (
+                      <NotificationItem key={n.id} notification={n} onClick={handleReadNotification} compact />
+                    ))}
+                  </div>
                 )}
+                <button
+                  onClick={() => { setShowNotifications(false); navigate('/notifications') }}
+                  className="w-full mt-2 pt-3 border-t border-border text-sm font-semibold text-primary flex items-center justify-center gap-2 hover:underline"
+                >
+                  {t('notifications.viewAll', 'View all notifications')}
+                  <ArrowRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
+                </button>
               </div>
             </DropdownMenu>
           </div>

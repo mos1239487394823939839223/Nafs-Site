@@ -63,11 +63,11 @@ export default function ProfileHero({
 
             {/* ─── Info bar ─── */}
             <div className="max-w-4xl mx-auto px-4 md:px-6 relative">
-                <div className="flex flex-col md:block">
+                <div className="flex flex-col">
                     {/* Avatar:
                           mobile  → centered, overlaps cover by -mt-16
                           desktop → absolute, anchored to cover bottom-start */}
-                    <div className="flex justify-center md:block md:absolute md:start-6 md:-top-16 md:z-10 -mt-16 md:mt-0">
+                    <div className="flex justify-center md:justify-start -mt-16">
                         <div className="relative group">
                             <div className="w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36 rounded-full border-4 border-background-paper shadow-2xl flex items-center justify-center overflow-hidden bg-gradient-to-br from-primary/20 to-secondary/20">
                                 {uploadingImage ? (
@@ -102,14 +102,14 @@ export default function ProfileHero({
                     </div>
 
                     {/* Name + badges + email + actions */}
-                    <div className="pt-4 md:pt-20 flex flex-col md:flex-row items-center md:items-end justify-between pb-6 border-b border-border gap-4">
-                        <div className="text-center md:text-start min-w-0 w-full md:w-auto md:flex-1">
+                    <div className="pt-4 flex flex-col md:flex-row items-center md:items-end justify-between pb-6 border-b border-border gap-5">
+                        <div className="text-center md:text-start md:ms-3 min-w-0 w-full md:max-w-sm">
                             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-text-heading break-words">
                                 {displayName}
                             </h1>
 
                             {badges.length > 0 && (
-                                <div className="flex items-center justify-center md:justify-start gap-1.5 sm:gap-2 mt-1.5 flex-wrap">
+                                <div className="flex items-center justify-center md:justify-start gap-1.5 sm:gap-2 mt-2 flex-wrap">
                                     {badges.map((b, i) => {
                                         const Icon = b.icon
                                         const tone = b.tone === 'primary'
@@ -141,7 +141,7 @@ export default function ProfileHero({
                         </div>
 
                         {actions && (
-                            <div className="flex items-center justify-center md:justify-end gap-2 sm:gap-3 flex-wrap w-full md:w-auto">
+                            <div className="flex items-center justify-center md:justify-end gap-2 sm:gap-3 flex-wrap w-full md:w-auto md:pb-1">
                                 {actions}
                             </div>
                         )}

@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import DynamicSidebar from './DynamicSidebar'
 import Header from './Header'
-import { Menu, X } from 'lucide-react'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { useAuth, Roles } from '../../contexts/AuthContext'
+import { EmergencyAction } from '../../Pages/patient-home-page/EmergencyAction'
 
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { t, isRTL } = useLanguage()
+  const { role } = useAuth()
 
   return (
     <div className="flex h-screen overflow-hidden bg-background" >
@@ -25,6 +27,8 @@ export default function Layout({ children }) {
           </div>
         </main>
       </div>
+
+      {role === Roles.PATIENT && <EmergencyAction />}
     </div>
   )
 }

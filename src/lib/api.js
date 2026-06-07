@@ -416,6 +416,17 @@ export const patientAPI = {
 };
 
 // ─── Doctor API Functions ────────────────────────────────────────────────────
+// Direct Meeting API Functions
+export const meetingAPI = {
+  startBookingMeeting: async (bookingId) => {
+    const response = await api.post(`/Patient/Booking/${bookingId}/StartMeeting`, {
+      BookingId: bookingId,
+      StartedAt: new Date().toISOString(),
+    });
+    return response.data;
+  },
+};
+
 export const doctorAPI = {
   // Get doctor bookings with pagination and optional status filter
   getBookings: async (pageIndex = 1, pageSize = 20, status = null) => {
@@ -657,7 +668,7 @@ export const chatAPI = {
   },
 
   // Open patient technical support chat room
-  openPatientSupportChat: async (patientId, chatType) => {
+  openPatientSupportChat: async (patientId, chatType, caseType = null, priority = null, extraPayload = {}) => {
     const parsedPatientId = Number(patientId);
     const patientIdValue =
       Number.isFinite(parsedPatientId) && String(patientId).trim() !== ""
@@ -666,12 +677,18 @@ export const chatAPI = {
 
     const chatTypeValue =
       chatType != null && Number.isFinite(Number(chatType)) ? Number(chatType) : 2;
+    const supportPayload = {
+      ChatType: chatTypeValue,
+      ...(caseType ? { CaseType: caseType, SupportCaseType: caseType } : {}),
+      ...(priority ? { Priority: priority, SupportPriority: priority, IsHighPriority: priority === "high" } : {}),
+      ...extraPayload,
+    };
 
     try {
       const response = await api.post("/CustomerSupport/Chat", {
         patientId: patientIdValue,
         PatientId: patientIdValue,
-        ChatType: chatTypeValue,
+        ...supportPayload,
       });
       const payload = response.data;
       const message = String(payload?.Message || payload?.message || "");
@@ -687,14 +704,14 @@ export const chatAPI = {
         return payload;
       }
 
-      const fallback = await api.post("/Patient/Support/Chat", { ChatType: chatTypeValue });
+      const fallback = await api.post("/Patient/Support/Chat", supportPayload);
       return fallback.data;
     } catch (error) {
       // Some deployments restrict this endpoint to support roles only.
       // For patient tokens, fallback to the dedicated patient endpoint.
       const status = error?.response?.status;
       if (status === 401 || status === 403) {
-        const fallback = await api.post("/Patient/Support/Chat", { ChatType: chatTypeValue });
+        const fallback = await api.post("/Patient/Support/Chat", supportPayload);
         return fallback.data;
       }
       throw error;
@@ -704,6 +721,26 @@ export const chatAPI = {
   // Backward-compatible alias for existing callers
   createOrGetPatientSupportRoom: async (patientId) => {
     return chatAPI.openPatientSupportChat(patientId);
+  },
+
+  openBlackmailSupportChat: async (patientId, dedicatedSupportUserId = null) => {
+    return chatAPI.openPatientSupportChat(patientId, 4, "blackmail_abuse", "high", {
+      DedicatedSupportUserId: dedicatedSupportUserId || undefined,
+      AssignedSupportUserId: dedicatedSupportUserId || undefined,
+      IsPrivate: true,
+      CreatedAt: new Date().toISOString(),
+    });
+  },
+
+  startDirectChat: async ({ targetUserId, targetRole = null }) => {
+    const response = await api.post("/CustomerSupport/DirectChat", {
+      TargetUserId: targetUserId,
+      RecipientUserId: targetUserId,
+      ParticipantUserId: targetUserId,
+      TargetRole: targetRole,
+      CreatedAt: new Date().toISOString(),
+    });
+    return response.data;
   },
 
   // Get messages for a specific room (paginated)

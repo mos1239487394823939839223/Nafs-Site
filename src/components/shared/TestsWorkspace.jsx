@@ -7,7 +7,7 @@ import { useToast } from '../ui/Toast'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { extractErrorMessage, medicalAPI, userAPI } from '../../lib/api'
-import { Beaker as Science, ExternalLink as OpenInNew, ClipboardCheck as AssignmentTurnedIn, Loader2, Eye } from 'lucide-react'
+import { Beaker as Science, ExternalLink as OpenInNew, ClipboardCheck as AssignmentTurnedIn, Loader2, Eye, ArrowRight } from 'lucide-react'
 import TestDetailModal from './TestDetailModal'
 
 function UserResultCard({
@@ -24,7 +24,19 @@ function UserResultCard({
   const { t } = useLanguage()
 
   return (
-    <Card className="h-full hover:border-primary/40 transition-colors cursor-pointer" onClick={onViewDetails}>
+    <Card
+      className="h-full hover:border-primary/50 hover:shadow-md transition-all cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+      onClick={onViewDetails}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.target !== event.currentTarget) return
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onViewDetails()
+        }
+      }}
+    >
       <CardContent className="h-full flex flex-col gap-3">
         <div className="flex items-start justify-between gap-3">
           <h2 className="text-lg font-semibold text-text-heading">{test.name}</h2>
@@ -85,6 +97,11 @@ function UserResultCard({
             </Button>
           </div>
         )}
+
+        <div className="mt-auto pt-2 border-t border-border/60 flex items-center justify-between gap-3 text-sm font-semibold text-primary">
+          <span>{t('auto.viewTestDetails', 'View test details')}</span>
+          <ArrowRight className={`w-4 h-4 ${isRTL ? 'rotate-180' : ''}`} />
+        </div>
       </CardContent>
     </Card>
   )
@@ -157,6 +174,10 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
                 id: String(recordId),
                 name: testName || (t("auto.medicalTest")),
                 description,
+                purpose: String(item?.Purpose ?? item?.purpose ?? item?.Goal ?? item?.goal ?? '').trim(),
+                duration: String(item?.Duration ?? item?.duration ?? item?.EstimatedDuration ?? item?.estimatedDuration ?? '').trim(),
+                price: item?.Price ?? item?.price ?? item?.Cost ?? item?.cost ?? null,
+                steps: item?.Steps ?? item?.steps ?? item?.Instructions ?? item?.instructions ?? '',
                 url: scanUrl,
                 tagName: doctorName || (testDate ? new Date(testDate).toLocaleDateString() : ''),
                 resultText: String(item?.Result ?? item?.result ?? '').trim(),
@@ -261,6 +282,10 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
               id: String(id),
               name,
               description: String(item?.Description ?? item?.description ?? '').trim(),
+              purpose: String(item?.Purpose ?? item?.purpose ?? item?.Goal ?? item?.goal ?? item?.Objective ?? item?.objective ?? '').trim(),
+              duration: String(item?.Duration ?? item?.duration ?? item?.DurationMinutes ?? item?.durationMinutes ?? item?.EstimatedDuration ?? item?.estimatedDuration ?? '').trim(),
+              price: item?.Price ?? item?.price ?? item?.TestPrice ?? item?.testPrice ?? item?.Cost ?? item?.cost ?? null,
+              steps: item?.Steps ?? item?.steps ?? item?.Instructions ?? item?.instructions ?? item?.BookingSteps ?? item?.bookingSteps ?? '',
               url: String(item?.Url ?? item?.url ?? '').trim(),
               tagName: resolvedTagNames.join(', '),
             }

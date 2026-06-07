@@ -1,8 +1,10 @@
 import { useEffect, useState } from "react";
-import { ExternalLink, Beaker, Tag, Loader2, ClipboardCheck } from "lucide-react";
+import { ExternalLink, Beaker, Tag, Loader2, ClipboardCheck, Target, Clock3, WalletCards, ListChecks } from "lucide-react";
 import { medicalAPI } from "../../lib/api";
+import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function TestDetailModal({ open, onOpenChange, test, result, isRTL }) {
+  const { t } = useLanguage();
   const [diseases, setDiseases] = useState([]);
   const [loadingDiseases, setLoadingDiseases] = useState(false);
 
@@ -50,6 +52,13 @@ export default function TestDetailModal({ open, onOpenChange, test, result, isRT
     : test.tagName
     ? [test.tagName]
     : [];
+  const steps = Array.isArray(test.steps)
+    ? test.steps
+    : String(test.steps || "")
+        .split(/\r?\n|,/)
+        .map((step) => step.trim())
+        .filter(Boolean);
+  const hasPrice = test.price !== null && test.price !== undefined && String(test.price).trim() !== "";
 
   return (
     <div
@@ -97,18 +106,50 @@ export default function TestDetailModal({ open, onOpenChange, test, result, isRT
             </div>
           )}
 
-          {/* External link */}
-          {test.url && (
-            <a
-              href={test.url}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center gap-2 text-primary text-sm font-medium hover:underline bg-primary/5 px-4 py-2.5 rounded-xl border border-primary/20 transition-colors hover:bg-primary/10"
-            >
-              <ExternalLink className="w-4 h-4" />
-              {t("auto.openTest")}
-            </a>
-          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="rounded-xl border border-border bg-background-subtle/60 p-3">
+              <div className="flex items-center gap-2 text-xs font-semibold text-text-muted mb-1">
+                <Target className="w-4 h-4 text-primary" />
+                {t("auto.testPurpose", "Test purpose")}
+              </div>
+              <p className="text-sm text-text-heading">{test.purpose || t("auto.testPurposeFallback", "Understand your current needs and support the next step.")}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-background-subtle/60 p-3">
+              <div className="flex items-center gap-2 text-xs font-semibold text-text-muted mb-1">
+                <Clock3 className="w-4 h-4 text-primary" />
+                {t("auto.testDuration", "Duration")}
+              </div>
+              <p className="text-sm text-text-heading">{test.duration || t("auto.durationVaries", "Varies by test")}</p>
+            </div>
+            {hasPrice && (
+              <div className="rounded-xl border border-border bg-background-subtle/60 p-3 sm:col-span-2">
+                <div className="flex items-center gap-2 text-xs font-semibold text-text-muted mb-1">
+                  <WalletCards className="w-4 h-4 text-primary" />
+                  {t("auto.price", "Price")}
+                </div>
+                <p className="text-sm text-text-heading">{test.price}</p>
+              </div>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-primary/20 bg-primary/5 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <ListChecks className="w-4 h-4 text-primary" />
+              <h3 className="text-sm font-semibold text-text-heading">{t("auto.howToStart", "How to start")}</h3>
+            </div>
+            <ol className="space-y-2 text-sm text-text-muted">
+              {(steps.length > 0 ? steps : [
+                t("auto.reviewTestDetails", "Review the test details."),
+                t("auto.openAndCompleteTest", "Open and complete the test."),
+                t("auto.returnAndSubmitResult", "Return and submit your result."),
+              ]).map((step, index) => (
+                <li key={index} className="flex items-start gap-2">
+                  <span className="w-5 h-5 rounded-full bg-primary text-white text-xs flex items-center justify-center flex-shrink-0">{index + 1}</span>
+                  <span>{typeof step === "string" ? step : String(step?.Name ?? step?.name ?? "")}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
 
           {/* Associated conditions */}
           <div>
@@ -169,6 +210,18 @@ export default function TestDetailModal({ open, onOpenChange, test, result, isRT
               </p>
             )}
           </div>
+
+          {test.url && (
+            <a
+              href={test.url}
+              target="_blank"
+              rel="noreferrer"
+              className="w-full inline-flex items-center justify-center gap-2 text-white text-sm font-semibold bg-primary px-4 py-3 rounded-xl transition-colors hover:bg-primary-dark"
+            >
+              <ExternalLink className="w-4 h-4" />
+              {t("auto.startTest", "Start test")}
+            </a>
+          )}
         </div>
       </div>
     </div>

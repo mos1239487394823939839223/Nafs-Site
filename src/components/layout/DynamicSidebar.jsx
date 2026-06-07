@@ -1,10 +1,13 @@
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth, Roles } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { chatAPI, userAPI } from "../../lib/api";
+import { getConfiguredBlackmailSupportUserId } from "../../lib/supportRouting";
 import { EmergencyCallCard } from "../sidebar-cards/EmergencyCallCard";
 import { BlackmailProtectionCard } from "../sidebar-cards/BlackmailProtectionCard";
 import RoleBadge from "../ui/RoleBadge";
 import { UserAvatar } from "../ui/Avatar";
+import { useToast } from "../ui/Toast";
 import {
   Home,
   Calendar,
@@ -32,6 +35,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
   const { role, user, logout } = useAuth();
   const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
+  const toast = useToast();
 
   const handleEmergencyClick = () => {
     if (onClose && window.innerWidth < 1024) onClose();
@@ -40,11 +44,34 @@ export default function DynamicSidebar({ isOpen, onClose }) {
     );
   };
 
-  const handleProtectionClick = () => {
+  const handleProtectionClick = async () => {
     if (onClose && window.innerWidth < 1024) onClose();
-    navigate(
-      "/dashboard/patient/messages?type=support&caseType=billing&support=1",
-    );
+    const patientId = userAPI.resolveUserId(user);
+    const dedicatedSupportUserId = getConfiguredBlackmailSupportUserId();
+
+    if (!patientId) {
+      navigate("/dashboard/patient/messages?type=support&caseType=blackmail_abuse&support=1");
+      return;
+    }
+
+    try {
+      const response = await chatAPI.openBlackmailSupportChat(patientId, dedicatedSupportUserId);
+      const data = response?.Data ?? response?.data ?? response;
+      const roomId =
+        data?.RoomId ||
+        data?.roomId ||
+        data?.Id ||
+        data?.id ||
+        data?.ChatRoomId ||
+        data?.chatRoomId;
+      navigate(
+        `/dashboard/patient/messages?type=support&caseType=blackmail_abuse&support=1${roomId ? `&room=${roomId}` : ""}`,
+      );
+    } catch (error) {
+      console.error("Failed to open blackmail support chat:", error);
+      toast.error(t("errors.somethingWentWrong", "Could not open the private support chat now."));
+      navigate("/dashboard/patient/messages?type=support&caseType=blackmail_abuse&support=1");
+    }
   };
 
   // Navigation items for each role

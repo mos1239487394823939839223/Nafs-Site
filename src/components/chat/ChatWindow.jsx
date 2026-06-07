@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Paperclip, Smile, ArrowLeft, X, Download, File as FileIcon } from 'lucide-react'
+import { Send, Paperclip, Smile, ArrowLeft, X, File as FileIcon, MessageSquare, LockKeyhole } from 'lucide-react'
 import EmojiPicker from 'emoji-picker-react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import MessageBubble from './MessageBubble'
+import SupportCaseTag from '../support/SupportCaseTag'
 
-export default function ChatWindow({ conversation, onSendMessage, onBack, isTyping: isOtherTyping = false, onTyping, onStopTyping }) {
+export default function ChatWindow({ conversation, onSendMessage, onBack, isTyping: isOtherTyping = false, onTyping, onStopTyping, composerDisabled = false, composerDisabledReason = '' }) {
   const { theme } = useTheme()
   const { t, isRTL } = useLanguage()
   const [messageInput, setMessageInput] = useState('')
@@ -84,6 +85,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
   }
 
   const handleSend = () => {
+    if (composerDisabled) return
     if (messageInput.trim() || attachments.length > 0) {
       onSendMessage({ content: messageInput, attachments })
       setMessageInput('')
@@ -166,7 +168,12 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
 
           {/* Name + status */}
           <div className={`flex-1 min-w-0 text-start`}>
-            <h3 className="font-semibold text-text-heading text-sm truncate">{conversation.participant.name}</h3>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h3 className="font-semibold text-text-heading text-sm truncate">{conversation.participant.name}</h3>
+              {conversation.caseTypeMeta && (
+                <SupportCaseTag type={conversation.caseTypeMeta.key} isRTL={isRTL} />
+              )}
+            </div>
             <p className="text-xs text-emerald-500 font-medium">
               {conversation.participant.online ? t('common.online', 'Online') : t('common.offline', 'Offline')}
             </p>
@@ -189,6 +196,16 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
             <span className="text-xs text-text-muted bg-background-subtle/80 backdrop-blur-sm px-3 py-1 rounded-full border border-border/40">
               {new Date(conversation.messages[0].timestamp).toLocaleDateString(undefined, { weekday: 'long', month: 'short', day: 'numeric' })}
             </span>
+          </div>
+        )}
+
+        {conversation.messages.length === 0 && (
+          <div className="h-full min-h-[260px] flex flex-col items-center justify-center text-center px-6">
+            <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+              <MessageSquare className="w-7 h-7 text-primary" />
+            </div>
+            <h4 className="text-base font-bold text-text-heading mb-1">{t('chat.startConversation', 'Start the conversation')}</h4>
+            <p className="text-sm text-text-muted max-w-sm">{t('chat.startConversationDesc', 'Send your first message and the team will reply here.')}</p>
           </div>
         )}
 
@@ -267,11 +284,18 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
 
       {/* ── Input Area ── */}
       <div className="px-4 md:px-5 py-3.5 border-t border-border/60 bg-background-paper">
+        {composerDisabled && (
+          <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-amber-800">
+            <LockKeyhole className="w-4 h-4 mt-0.5 flex-shrink-0" />
+            <p className="text-xs font-medium">{composerDisabledReason}</p>
+          </div>
+        )}
         <div className={`flex items-end gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
 
           {/* Attach */}
           <button
             onClick={() => fileInputRef.current?.click()}
+            disabled={composerDisabled}
             className="p-2.5 hover:bg-background-subtle rounded-xl transition-colors flex-shrink-0 text-text-muted hover:text-primary"
             title="Attach file"
           >
@@ -285,7 +309,8 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
               value={messageInput}
               onChange={(e) => { setMessageInput(e.target.value); handleTyping() }}
               onKeyPress={handleKeyPress}
-              placeholder={t('chat.typeMessage', 'Type a message...')}
+              disabled={composerDisabled}
+              placeholder={composerDisabled ? composerDisabledReason : t('chat.typeMessage', 'Type a message...')}
               rows="1"
               className={`w-full py-2.5 border border-border/70 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 resize-none max-h-32 bg-background-subtle text-text text-sm transition-all placeholder:text-text-muted px-4 pe-10`}
             />
@@ -307,7 +332,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
           {/* Send Button */}
           <button
             onClick={handleSend}
-            disabled={!messageInput.trim() && attachments.length === 0}
+            disabled={composerDisabled || (!messageInput.trim() && attachments.length === 0)}
             className="p-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 shadow-sm shadow-primary/20"
           >
             <Send className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />

@@ -21,6 +21,7 @@ import Pagination from '../../components/ui/Pagination'
 import { useToast } from '../../components/ui/Toast'
 import { Users, UserPlus, Search, Mail, Stethoscope, User, RefreshCw, Phone, Lock, FileText, ToggleLeft, ToggleRight, ShieldCheck, ShieldAlert, Shield, Activity, X, Camera, Eye, EyeOff, Headphones, CheckCircle } from 'lucide-react'
 import { adminAPI, userAPI, documentsAPI, authAPI, extractErrorMessage } from '../../lib/api'
+import { getConfiguredBlackmailSupportUserId, setConfiguredBlackmailSupportUserId } from '../../lib/supportRouting'
 import { motion, AnimatePresence } from 'framer-motion'
 import { validateEmail } from '../../lib/validation'
 import { useLanguage } from '../../contexts/LanguageContext'
@@ -388,7 +389,7 @@ export default function UserManagement() {
     const { t, isRTL } = useLanguage()
     const [modalOpen, setModalOpen] = useState(false)
     const [staffModalOpen, setStaffModalOpen] = useState(false)
-    const [activeTab, setActiveTab] = useState('support')
+    const [activeTab, setActiveTab] = useState('doctors')
     const [searchTerm, setSearchTerm] = useState('')
     const [loading, setLoading] = useState(false)
     const [submitting, setSubmitting] = useState(false)
@@ -410,6 +411,7 @@ export default function UserManagement() {
     const [supportStaff, setSupportStaff] = useState([])
     const [supportPage, setSupportPage] = useState(1)
     const [supportTotalPages, setSupportTotalPages] = useState(1)
+    const [blackmailSupportUserId, setBlackmailSupportUserId] = useState(() => getConfiguredBlackmailSupportUserId())
 
     // Add Doctor Form
     const [formData, setFormData] = useState({
@@ -466,14 +468,9 @@ export default function UserManagement() {
     const fetchSupportStaff = useCallback(async () => {
         setLoading(true)
         try {
-            // Fetch both staff (role 4) and admins (role 1) in parallel
-            const [staffRes, adminRes] = await Promise.all([
-                userAPI.getUsers({ pageIndex: 1, pageSize: 100, role: 4 }),
-                userAPI.getUsers({ pageIndex: 1, pageSize: 100, role: 1 }),
-            ])
+            const staffRes = await userAPI.getUsers({ pageIndex: 1, pageSize: 100, role: 4 })
             const staffItems = staffRes?.Data?.Items || (Array.isArray(staffRes) ? staffRes : [])
-            const adminItems = adminRes?.Data?.Items || (Array.isArray(adminRes) ? adminRes : [])
-            setSupportStaff([...staffItems, ...adminItems])
+            setSupportStaff(staffItems)
             setSupportTotalPages(1)
         } catch (error) {
             console.error('Failed to fetch support staff:', error)
@@ -636,6 +633,11 @@ export default function UserManagement() {
         })
     }
 
+    const handleSaveBlackmailSupport = () => {
+        setConfiguredBlackmailSupportUserId(blackmailSupportUserId)
+        toast.success(t('success.saved', 'Saved successfully'))
+    }
+
     const filteredDoctors = useMemo(() =>
         doctors.filter(d => {
             const name = (d.Name || d.name || '').toLowerCase()
@@ -710,23 +712,20 @@ export default function UserManagement() {
                 {/* KPI Cards */}
                 <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
                     <div className="rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-white p-5 shadow-sm">
-                        <p className="text-sm text-white/80">{t('admin.doctors')}</p>
+                        <p className="text-sm text-white/80">{t('admin.doctors', 'Therapists')}</p>
                         <p className="text-3xl font-bold mt-1">{doctors.length}</p>
                     </div>
                     <div className="rounded-2xl bg-gradient-to-br from-secondary to-secondary-dark text-white p-5 shadow-sm">
-                        <p className="text-sm text-white/80">{t('common.active')}</p>
-                        <p className="text-3xl font-bold mt-1">{doctorsStats.active}</p>
+                        <p className="text-sm text-white/80">{t('admin.customerSupport', 'Customer Support')}</p>
+                        <p className="text-3xl font-bold mt-1">{supportStaff.length}</p>
                     </div>
                     <div className="rounded-2xl bg-gradient-to-br from-accent to-accent-dark text-white p-5 shadow-sm">
-                        <p className="text-sm text-white/80">{t('common.inactive')}</p>
-                        <p className="text-3xl font-bold mt-1">{doctorsStats.inactive}</p>
+                        <p className="text-sm text-white/80">{t('admin.patients', 'Patients')}</p>
+                        <p className="text-3xl font-bold mt-1">{patients.length}</p>
                     </div>
                     <div className="rounded-2xl bg-gradient-to-br from-primary-dark to-secondary text-white p-5 shadow-sm">
-                        <p className="text-sm text-white/80">{t('admin.users')}</p>
-                        <p className="text-3xl font-bold mt-1">{patients.length}</p>
-                        <p className="text-xs text-white/70 mt-1">
-                            {t('common.active')}: {patientsStats.active}
-                        </p>
+                        <p className="text-sm text-white/80">{t('common.total', 'Total')}</p>
+                        <p className="text-3xl font-bold mt-1">{doctors.length + supportStaff.length + patients.length}</p>
                     </div>
                 </div>
 
@@ -735,18 +734,18 @@ export default function UserManagement() {
                     <CardContent className="space-y-5">
                         <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSearchTerm('') }}>
                             <TabsList className="w-full sm:w-auto bg-background-subtle rounded-xl p-1">
-                        <TabsTrigger value="support">
-                            <Headphones className="w-4 h-4" />
-                            {t('admin.staff', 'Staff')}
-                            <span className="ms-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
-                                {supportStaff.length}
-                            </span>
-                        </TabsTrigger>
                         <TabsTrigger value="doctors">
                             <Stethoscope className="w-4 h-4" />
                             {t('admin.doctors')}
                             <span className="ms-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
                                 {doctors.length}
+                            </span>
+                        </TabsTrigger>
+                        <TabsTrigger value="support">
+                            <Headphones className="w-4 h-4" />
+                            {t('admin.customerSupport', 'Customer Support')}
+                            <span className="ms-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                                {supportStaff.length}
                             </span>
                         </TabsTrigger>
                         <TabsTrigger value="patients">
@@ -763,7 +762,13 @@ export default function UserManagement() {
                         <Search className={`absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light`} />
                         <input
                             type="text"
-                            placeholder={`${t('common.search')} ${activeTab === 'doctors' ? t('admin.doctors') : t('admin.users')}...`}
+                            placeholder={`${t('common.search')} ${
+                                activeTab === 'doctors'
+                                    ? t('admin.doctors')
+                                    : activeTab === 'support'
+                                        ? t('admin.customerSupport', 'Customer Support')
+                                        : t('admin.patients', 'Patients')
+                            }...`}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             className={`w-full sm:max-w-sm h-10 ${t("auto.ps10Pe10")} rounded-xl border border-border-light bg-background-subtle/50 text-sm text-text placeholder:text-text-light/50 hover:bg-background-subtle hover:border-border-dark focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-background transition-all`}
@@ -1047,6 +1052,45 @@ export default function UserManagement() {
                         ) : (
                             <>
                                 {/* ── Mobile cards ── */}
+                                <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50/70 p-4">
+                                    <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                                        <div className="flex items-start gap-3">
+                                            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-rose-100 text-rose-700">
+                                                <ShieldAlert className="h-5 w-5" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-bold text-rose-950">
+                                                    {t('admin.blackmailSupportRouting', 'Blackmail / Abuse Case Routing')}
+                                                </h3>
+                                                <p className="mt-1 text-xs text-rose-800/80">
+                                                    {t('admin.blackmailSupportRoutingDesc', 'Choose the dedicated support account that should receive sensitive high-priority reports.')}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                                            <select
+                                                value={blackmailSupportUserId}
+                                                onChange={(event) => setBlackmailSupportUserId(event.target.value)}
+                                                className="min-w-[240px] rounded-xl border border-rose-200 bg-background-paper px-3 py-2 text-sm text-text outline-none focus:border-rose-400 focus:ring-2 focus:ring-rose-200"
+                                            >
+                                                <option value="">{t('common.select', 'Select')}</option>
+                                                {supportStaff.map((staff) => {
+                                                    const staffId = staff.Id || staff.ID || staff.id
+                                                    const name = staff.Name || staff.name || staff.Email || staff.email || staffId
+                                                    return (
+                                                        <option key={staffId} value={staffId}>
+                                                            {name}
+                                                        </option>
+                                                    )
+                                                })}
+                                            </select>
+                                            <Button size="sm" variant="danger" onClick={handleSaveBlackmailSupport}>
+                                                {t('common.save', 'Save')}
+                                            </Button>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="flex flex-col gap-3 md:hidden">
                                     {filteredSupportStaff.length === 0 ? (
                                         <div className="flex flex-col items-center gap-3 py-12 text-center">

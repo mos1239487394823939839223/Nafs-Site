@@ -1,5 +1,37 @@
-import { X } from "lucide-react";
-import Button from "../ui/Button";
+import {
+  ArrowDownUp,
+  CalendarDays,
+  RotateCcw,
+  SlidersHorizontal,
+  Sparkles,
+  Stethoscope,
+  Users,
+  WalletCards,
+} from "lucide-react";
+
+const chipClass = (active) =>
+  `rounded-full border px-3.5 py-2 text-xs font-semibold transition-all duration-200 ${
+    active
+      ? "border-primary bg-primary text-white shadow-sm shadow-primary/20"
+      : "border-border bg-background-paper text-text-muted hover:-translate-y-0.5 hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+  }`;
+
+const FilterSection = ({ icon: Icon, title, hint, children, className = "" }) => (
+  <section
+    className={`rounded-2xl border border-border/70 bg-background-paper/80 p-4 shadow-sm ${className}`}
+  >
+    <div className="mb-3 flex items-center gap-2.5">
+      <span className="grid h-9 w-9 flex-shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+        <Icon className="h-4.5 w-4.5" />
+      </span>
+      <div>
+        <h4 className="text-sm font-bold text-text-heading">{title}</h4>
+        {hint && <p className="mt-0.5 text-[11px] text-text-muted">{hint}</p>}
+      </div>
+    </div>
+    {children}
+  </section>
+);
 
 export default function DoctorFilterPanel({
   specialties,
@@ -18,164 +50,175 @@ export default function DoctorFilterPanel({
   onClearFilters,
   hasActiveFilters,
   t,
-  isRTL,
 }) {
-  const toggleSpecialty = (spec) => {
-    if (filterSpecialties.includes(spec)) {
-      onSpecialtiesChange(filterSpecialties.filter((s) => s !== spec));
-    } else {
-      onSpecialtiesChange([...filterSpecialties, spec]);
-    }
+  const toggleSpecialty = (specialty) => {
+    onSpecialtiesChange(
+      filterSpecialties.includes(specialty)
+        ? filterSpecialties.filter((item) => item !== specialty)
+        : [...filterSpecialties, specialty],
+    );
   };
 
+  const activeCount =
+    filterSpecialties.length +
+    (filterGender !== null ? 1 : 0) +
+    (filterPriceMin !== "" || filterPriceMax !== "" ? 1 : 0) +
+    (filterAvailability !== "all" ? 1 : 0) +
+    (sortBy !== "default" ? 1 : 0);
+
+  const sortOptions = [
+    { value: "default", label: t("patient.sortDefault", "Default") },
+    { value: "availability", label: t("patient.sortAvailability", "Nearest Available") },
+    { value: "rating", label: t("patient.sortRating", "Highest Rating") },
+    { value: "priceAsc", label: t("patient.sortPriceAsc", "Price: Low to High") },
+    { value: "priceDesc", label: t("patient.sortPriceDesc", "Price: High to Low") },
+  ];
+
   return (
-    <div
-      className="bg-background-paper border border-border rounded-2xl p-4 md:p-5 space-y-5 shadow-sm"
-      
-    >
-      <div className="flex items-center justify-between">
-        <h3 className="font-semibold text-text-heading text-sm">
-          {t("patient.filterDoctors", "Filter & Sort")}
-        </h3>
+    <div className="overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-b from-primary/[0.07] to-background-paper shadow-[0_18px_50px_rgba(51,104,87,0.10)]">
+      <div className="flex flex-col gap-4 border-b border-primary/10 px-5 py-5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-3">
+          <span className="relative grid h-12 w-12 place-items-center rounded-2xl bg-primary text-white shadow-md shadow-primary/25">
+            <SlidersHorizontal className="h-5 w-5" />
+            <Sparkles className="absolute -end-1 -top-1 h-4 w-4 text-amber-400" />
+          </span>
+          <div>
+            <div className="flex items-center gap-2">
+              <h3 className="font-bold text-text-heading">
+                {t("patient.filterDoctors", "Filter Therapists")}
+              </h3>
+              {activeCount > 0 && (
+                <span className="rounded-full bg-primary px-2 py-0.5 text-[10px] font-bold text-white">
+                  {activeCount}
+                </span>
+              )}
+            </div>
+            <p className="mt-1 text-xs text-text-muted">
+              {t("patient.filterPanelHint", "Choose what matters most to find the right therapist")}
+            </p>
+          </div>
+        </div>
+
         {hasActiveFilters && (
           <button
             onClick={onClearFilters}
-            className="text-xs text-primary hover:text-primary/70 flex items-center gap-1 transition-colors"
+            className="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-primary/20 bg-background-paper px-3 py-2 text-xs font-semibold text-primary transition hover:bg-primary hover:text-white sm:self-auto"
           >
-            <X className="w-3.5 h-3.5" />
-            {t("patient.clearFilters", "Clear All")}
+            <RotateCcw className="h-3.5 w-3.5" />
+            {t("patient.clearFilters", "Clear Filters")}
           </button>
         )}
       </div>
 
-      {/* Sort */}
-      <div>
-        <label className="text-xs font-medium text-text-muted mb-2 block uppercase tracking-wide">
-          {t("patient.sortBy", "Sort by")}
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {[
-            { value: "default", label: t("patient.sortDefault", "Default") },
-            { value: "rating", label: t("patient.sortRating", "Highest Rating") },
-            { value: "price", label: t("patient.sortPrice", "Lowest Price") },
-            { value: "availability", label: t("patient.sortAvailability", "Nearest Available") },
-          ].map((opt) => (
-            <button
-              key={opt.value}
-              onClick={() => onSortChange(opt.value)}
-              className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors ${
-                sortBy === opt.value
-                  ? "bg-primary text-white border-primary shadow-sm"
-                  : "bg-background-subtle border-border text-text-muted hover:text-text-heading hover:border-primary/30"
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* Specialty Multi-select */}
-      {specialties.length > 0 && (
-        <div>
-          <label className="text-xs font-medium text-text-muted mb-2 block uppercase tracking-wide">
-            {t("patient.filterSpecialty", "Specialty")}
-          </label>
+      <div className="grid gap-4 p-4 sm:p-5 lg:grid-cols-2">
+        <FilterSection
+          icon={ArrowDownUp}
+          title={t("patient.sortBy", "Sort By")}
+          hint={t("patient.sortHint", "Arrange results your way")}
+          className="lg:col-span-2"
+        >
           <div className="flex flex-wrap gap-2">
-            {specialties.map((spec) => (
+            {sortOptions.map((option) => (
               <button
-                key={spec}
-                onClick={() => toggleSpecialty(spec)}
-                className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors ${
-                  filterSpecialties.includes(spec)
-                    ? "bg-primary/10 text-primary border-primary/40"
-                    : "bg-background-subtle border-border text-text-muted hover:text-text-heading hover:border-primary/30"
-                }`}
+                key={option.value}
+                onClick={() => onSortChange(option.value)}
+                className={chipClass(sortBy === option.value)}
               >
-                {spec}
+                {option.label}
               </button>
             ))}
           </div>
-        </div>
-      )}
+        </FilterSection>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-        {/* Gender */}
-        <div>
-          <label className="text-xs font-medium text-text-muted mb-2 block uppercase tracking-wide">
-            {t("patient.filterGender", "Gender")}
-          </label>
-          <div className="flex gap-2">
-            {[
-              { value: null, label: t("common.all", "All") },
-              { value: 1, label: t("common.male", "Male") },
-              { value: 0, label: t("common.female", "Female") },
-            ].map((opt) => (
-              <button
-                key={String(opt.value)}
-                onClick={() => onGenderChange(filterGender === opt.value ? (opt.value === null ? null : null) : opt.value)}
-                className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors flex-1 ${
-                  filterGender === opt.value
-                    ? "bg-primary text-white border-primary shadow-sm"
-                    : "bg-background-subtle border-border text-text-muted hover:text-text-heading hover:border-primary/30"
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Price Range */}
-        <div>
-          <label className="text-xs font-medium text-text-muted mb-2 block uppercase tracking-wide">
-            {t("patient.filterPriceRange", "Price Range (EGP)")}
-          </label>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              placeholder={t("common.min", "Min")}
-              value={filterPriceMin}
-              onChange={(e) => onPriceChange(e.target.value, filterPriceMax)}
-              className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-border bg-background-subtle text-text-heading placeholder:text-text-muted focus:outline-none focus:border-primary"
-            />
-            <span className="text-text-muted text-xs">—</span>
-            <input
-              type="number"
-              placeholder={t("common.max", "Max")}
-              value={filterPriceMax}
-              onChange={(e) => onPriceChange(filterPriceMin, e.target.value)}
-              className="flex-1 text-xs px-2.5 py-1.5 rounded-lg border border-border bg-background-subtle text-text-heading placeholder:text-text-muted focus:outline-none focus:border-primary"
-            />
-          </div>
-        </div>
-
-        {/* Availability (only on All Doctors tab) */}
-        {showAvailabilityFilter && (
-          <div>
-            <label className="text-xs font-medium text-text-muted mb-2 block uppercase tracking-wide">
-              {t("patient.filterAvailability", "Availability")}
-            </label>
-            <div className="flex gap-2">
-              {[
-                { value: "all", label: t("common.all", "All") },
-                { value: "today", label: t("patient.availabilityToday", "Today") },
-                { value: "week", label: t("patient.availabilityThisWeek", "This Week") },
-              ].map((opt) => (
+        {specialties.length > 0 && (
+          <FilterSection
+            icon={Stethoscope}
+            title={t("patient.filterSpecialty", "Specialty")}
+            hint={t("patient.specialtyHint", "You can select more than one specialty")}
+            className="lg:col-span-2"
+          >
+            <div className="flex max-h-32 flex-wrap gap-2 overflow-y-auto pe-1">
+              {specialties.map((specialty) => (
                 <button
-                  key={opt.value}
-                  onClick={() => onAvailabilityChange(opt.value)}
-                  className={`text-xs px-3 py-1.5 rounded-lg border font-medium transition-colors flex-1 ${
-                    filterAvailability === opt.value
-                      ? "bg-primary text-white border-primary shadow-sm"
-                      : "bg-background-subtle border-border text-text-muted hover:text-text-heading hover:border-primary/30"
-                  }`}
+                  key={specialty}
+                  onClick={() => toggleSpecialty(specialty)}
+                  className={chipClass(filterSpecialties.includes(specialty))}
                 >
-                  {opt.label}
+                  {specialty}
                 </button>
               ))}
             </div>
+          </FilterSection>
+        )}
+
+        <FilterSection icon={Users} title={t("patient.filterGender", "Gender")}>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { value: null, label: t("common.all", "All") },
+              { value: 1, label: t("common.male", "Male") },
+              { value: 2, label: t("common.female", "Female") },
+            ].map((option) => (
+              <button
+                key={String(option.value)}
+                onClick={() => onGenderChange(option.value)}
+                className={chipClass(filterGender === option.value)}
+              >
+                {option.label}
+              </button>
+            ))}
           </div>
+        </FilterSection>
+
+        <FilterSection icon={WalletCards} title={t("patient.filterPriceRange", "Price Range")}>
+          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
+            <div className="relative">
+              <input
+                type="number"
+                min="0"
+                placeholder={t("common.min", "Min")}
+                value={filterPriceMin}
+                onChange={(event) => onPriceChange(event.target.value, filterPriceMax)}
+                className="w-full rounded-xl border border-border bg-background-subtle px-3 py-2.5 text-sm text-text-heading outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+              />
+              <span className="absolute end-3 top-1/2 -translate-y-1/2 text-[10px] text-text-muted">EGP</span>
+            </div>
+            <span className="text-text-muted">-</span>
+            <div className="relative">
+              <input
+                type="number"
+                min="0"
+                placeholder={t("common.max", "Max")}
+                value={filterPriceMax}
+                onChange={(event) => onPriceChange(filterPriceMin, event.target.value)}
+                className="w-full rounded-xl border border-border bg-background-subtle px-3 py-2.5 text-sm text-text-heading outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
+              />
+              <span className="absolute end-3 top-1/2 -translate-y-1/2 text-[10px] text-text-muted">EGP</span>
+            </div>
+          </div>
+        </FilterSection>
+
+        {showAvailabilityFilter && (
+          <FilterSection
+            icon={CalendarDays}
+            title={t("patient.filterAvailability", "Availability")}
+            className="lg:col-span-2"
+          >
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+              {[
+                { value: "all", label: t("patient.allAvailableAppointments", "All Available Appointments") },
+                { value: "today", label: t("patient.availabilityToday", "Today") },
+                { value: "week", label: t("patient.availabilityThisWeek", "This Week") },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  onClick={() => onAvailabilityChange(option.value)}
+                  className={chipClass(filterAvailability === option.value)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          </FilterSection>
         )}
       </div>
     </div>

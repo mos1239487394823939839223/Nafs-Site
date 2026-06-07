@@ -7,6 +7,7 @@ import {
   RoleDashboards,
 } from "./contexts/AuthContext";
 import { ToastProvider } from "./components/ui/Toast";
+import { NotificationProvider } from "./contexts/NotificationContext";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -17,6 +18,7 @@ import { PatientHomePage } from "./Pages/patient-home-page";
 import PatientSettings from "./views/patient/Settings";
 import PatientProfile from "./views/patient/Profile";
 import ReserveAppointment from "./views/patient/ReserveAppointment";
+import MeetingRoom from "./views/patient/MeetingRoom";
 import PatientTests from "./views/patient/Tests";
 import PatientArticles from "./views/patient/Articles";
 import Schedule from "./views/doctor/Schedule";
@@ -45,6 +47,7 @@ import DoctorFinance from "./views/admin/DoctorFinance";
 import PatientBlogs from "./views/patient/Blogs";
 import MessagesPage from "./views/shared/MessagesPage";
 import DocumentViewer from "./views/shared/DocumentViewer";
+import NotificationsPage from "./views/shared/NotificationsPage";
 import LandingPage from "./Pages/landing-home-final/LandingPage";
 import MainDoctorDashboard from "./Pages/land-new-page/main-doctor-dashboard";
 
@@ -117,6 +120,16 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
               <Layout>
                 <MessagesPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/patient/meeting/:bookingId"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
+              <Layout>
+                <MeetingRoom />
               </Layout>
             </ProtectedRoute>
           }
@@ -435,6 +448,16 @@ function AppRoutes() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.PATIENT, Roles.DOCTOR, Roles.ADMIN, Roles.STAFF]}>
+              <Layout>
+                <NotificationsPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </div>
   );
@@ -447,7 +470,9 @@ function App() {
         <LanguageProvider>
           <ThemeProvider>
             <ToastProvider>
-              <AppRoutes />
+              <NotificationProvider>
+                <AppRoutes />
+              </NotificationProvider>
             </ToastProvider>
           </ThemeProvider>
         </LanguageProvider>

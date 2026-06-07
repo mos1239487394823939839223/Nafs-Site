@@ -4,12 +4,15 @@ import { motion } from 'framer-motion'
 import { useAuth, Roles } from '../../contexts/AuthContext'
 import { chatAPI, filesAPI, MessageType, userAPI } from '../../lib/api'
 import ChatWindow from '../../components/chat/ChatWindow'
+import StartDirectMessageDialog from '../../components/chat/StartDirectMessageDialog'
 import SelectDropdown from '../../components/ui/SelectDropdown'
-import { Search, MessageSquare, Loader2, RefreshCw, Stethoscope, Headphones, FileEdit as EditNoteIcon, Wrench, HeartPulse, ShieldAlert, AlertTriangle } from 'lucide-react'
+import { Search, MessageSquare, Loader2, RefreshCw, Stethoscope, Headphones, FileEdit as EditNoteIcon, Wrench, HeartPulse, AlertTriangle, CreditCard, CalendarClock, UserCog, CircleHelp, ShieldAlert } from 'lucide-react'
 const SupportAgent = Headphones
 import { useToast } from '../../components/ui/Toast'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { startChatConnection } from '../../lib/signalr'
+import { getRoomCaseTypeMeta } from '../../lib/supportCaseTypes'
+import SupportCaseTag from '../../components/support/SupportCaseTag'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -126,8 +129,12 @@ const ROOM_CASE_KEY = 'nafs_room_case_types'
 const CASE_TYPE_CHAT_TYPE_MAP = {
   technical: 2,
   medical: 2,
-  billing: 4,
+  billing: 2,
   emergency: 3,
+  appointment: 2,
+  account: 2,
+  other: 2,
+  blackmail_abuse: 4,
 }
 
 const SUPPORT_CASE_TYPES = [
@@ -136,44 +143,88 @@ const SUPPORT_CASE_TYPES = [
     labelEn: 'Technical Issue',
     labelAr: 'مشكلة تقنية',
     descEn: 'Platform issues, login problems, and bugs.',
-    descAr: 'مشاكل المنصة، تسجيل الدخول، والأخطاء.',
+    descAr: 'مشاكل المنصة أو تسجيل الدخول أو الأعطال التقنية.',
     icon: Wrench,
-    color: 'bg-blue-50 text-blue-700 border-blue-200',
-    activeColor: 'bg-blue-600 text-white border-blue-600',
-    badgeColor: 'bg-blue-100 text-blue-700 border-blue-200',
+    color: 'bg-orange-50 text-orange-700 border-orange-200',
+    activeColor: 'bg-orange-600 text-white border-orange-600',
+    badgeColor: 'bg-orange-100 text-orange-700 border-orange-300',
   },
   {
     key: 'medical',
     labelEn: 'Medical Inquiry',
-    labelAr: 'استفسار طبي',
+    labelAr: 'استفسار علاجي',
     descEn: 'Questions about symptoms, sessions, or treatment guidance.',
     descAr: 'أسئلة عن الأعراض أو الجلسات أو الإرشاد العلاجي.',
     icon: HeartPulse,
-    color: 'bg-green-50 text-green-700 border-green-200',
-    activeColor: 'bg-green-600 text-white border-green-600',
-    badgeColor: 'bg-green-100 text-green-700 border-green-200',
+    color: 'bg-blue-50 text-blue-700 border-blue-200',
+    activeColor: 'bg-blue-600 text-white border-blue-600',
+    badgeColor: 'bg-blue-100 text-blue-700 border-blue-300',
   },
   {
     key: 'billing',
-    labelEn: 'Bullying',
-    labelAr: 'التنمر',
-    descEn: 'Reporting bullying or harassment incidents.',
-    descAr: 'الإبلاغ عن حوادث التنمر أو التحرش.',
-    icon: ShieldAlert,
-    color: 'bg-orange-50 text-orange-700 border-orange-200',
-    activeColor: 'bg-orange-600 text-white border-orange-600',
-    badgeColor: 'bg-orange-100 text-orange-700 border-orange-200',
+    labelEn: 'Billing Issue',
+    labelAr: 'مشكلة في الدفع',
+    descEn: 'Payments, invoices, refunds, and billing questions.',
+    descAr: 'المدفوعات والفواتير والاسترداد وأي استفسار مالي.',
+    icon: CreditCard,
+    color: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+    activeColor: 'bg-emerald-600 text-white border-emerald-600',
+    badgeColor: 'bg-emerald-100 text-emerald-700 border-emerald-300',
+  },
+  {
+    key: 'appointment',
+    labelEn: 'Appointment Issue',
+    labelAr: 'مشكلة في الموعد',
+    descEn: 'Booking, rescheduling, cancellation, or session access.',
+    descAr: 'الحجز أو تغيير الموعد أو الإلغاء أو الدخول إلى الجلسة.',
+    icon: CalendarClock,
+    color: 'bg-violet-50 text-violet-700 border-violet-200',
+    activeColor: 'bg-violet-600 text-white border-violet-600',
+    badgeColor: 'bg-violet-100 text-violet-700 border-violet-200',
+  },
+  {
+    key: 'account',
+    labelEn: 'Account Issue',
+    labelAr: 'مشكلة في الحساب',
+    descEn: 'Profile, login, privacy, or account settings.',
+    descAr: 'الملف الشخصي أو الدخول أو الخصوصية أو إعدادات الحساب.',
+    icon: UserCog,
+    color: 'bg-sky-50 text-sky-700 border-sky-200',
+    activeColor: 'bg-sky-600 text-white border-sky-600',
+    badgeColor: 'bg-sky-100 text-sky-700 border-sky-200',
+  },
+  {
+    key: 'other',
+    labelEn: 'Other',
+    labelAr: 'أخرى',
+    descEn: 'Any request that does not match the listed categories.',
+    descAr: 'أي طلب لا يندرج تحت التصنيفات السابقة.',
+    icon: CircleHelp,
+    color: 'bg-slate-50 text-slate-700 border-slate-200',
+    activeColor: 'bg-slate-600 text-white border-slate-600',
+    badgeColor: 'bg-slate-100 text-slate-700 border-slate-200',
   },
   {
     key: 'emergency',
     labelEn: 'Emergency',
-    labelAr: 'طارئ',
+    labelAr: 'حالة طارئة',
     descEn: 'Urgent request that needs immediate support attention.',
-    descAr: 'طلب عاجل يحتاج تدخل سريع من فريق الدعم.',
+    descAr: 'طلب عاجل يحتاج إلى تدخل سريع من فريق الدعم.',
     icon: AlertTriangle,
     color: 'bg-red-50 text-red-700 border-red-200',
     activeColor: 'bg-red-600 text-white border-red-600',
     badgeColor: 'bg-red-100 text-red-700 border-red-200',
+  },
+  {
+    key: 'blackmail_abuse',
+    labelEn: 'Blackmail / Abuse Case',
+    labelAr: 'ابتزاز / عنف',
+    descEn: 'Private high-priority routing to the dedicated sensitive-cases support account.',
+    descAr: 'توجيه سري عالي الأولوية لحساب الدعم المختص بالحالات الحساسة.',
+    icon: ShieldAlert,
+    color: 'bg-rose-50 text-rose-800 border-rose-200',
+    activeColor: 'bg-rose-800 text-white border-rose-800',
+    badgeColor: 'bg-rose-100 text-rose-800 border-rose-300',
   },
 ]
 
@@ -265,6 +316,7 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState([])
   const [loading, setLoading] = useState(false)
   const [supportRoomLoading, setSupportRoomLoading] = useState(false)
+  const [directMessageOpen, setDirectMessageOpen] = useState(false)
   const [messagesLoading, setMessagesLoading] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [contactType, setContactType] = useState(() => {
@@ -323,6 +375,7 @@ export default function MessagesPage() {
           room?.otherParticipantName ||
           supportMeta.name ||
           t('chat.technicalTeam', 'Technical Support'),
+        SupportCaseType: room?.SupportCaseType || room?.supportCaseType || supportMeta.caseType,
       }
     })
 
@@ -355,6 +408,7 @@ export default function MessagesPage() {
   useEffect(() => { activeRoomRef.current = activeRoom }, [activeRoom])
 
   const isPatient = role === Roles.PATIENT
+  const isSupportOperator = role === Roles.STAFF
 
   const isSupportRoom = useCallback((room) => {
     const roomId = String(room?.Id || room?.id || '')
@@ -772,6 +826,11 @@ export default function MessagesPage() {
   const handleSendMessage = async (msgData) => {
     const roomId = activeRoom?.Id || activeRoom?.id
     if (!roomId) return
+    const savedCaseType = localRoomCaseTypes[String(roomId)]
+    if (isPatient && isSupportRoom(activeRoom) && !supportCaseType && !savedCaseType) {
+      toast.warning(t('chat.caseTypeRequired', 'Select a support case type before sending your first message.'))
+      return
+    }
 
     // Optimistic message — show immediately in UI
     const optimisticId = `optimistic-${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -839,6 +898,9 @@ export default function MessagesPage() {
         role: participant.role,
         online: true,
       },
+      caseTypeMeta: (role === Roles.STAFF || isSupportRoom(room))
+        ? getRoomCaseTypeMeta(room, isRTL, localRoomCaseTypes)
+        : null,
       messages: messages.map((msg, idx) => ({
         id: `${getMessageUniqueKey(msg)}:${idx}`,
         sender: isCurrentUserMessage(msg) ? 'current-user' : 'other',
@@ -881,10 +943,80 @@ export default function MessagesPage() {
 
   const unreadTotal = rooms.reduce((acc, r) => acc + (r.UnreadCount || 0), 0)
 
+  const handleSelectRoom = (room) => {
+    if (isPatient && isSupportRoom(room)) {
+      const savedCaseType = localRoomCaseTypes[String(room?.Id || room?.id || '')]
+      if (!supportCaseType && !savedCaseType) {
+        setContactType('support')
+        toast.warning(t('chat.caseTypeRequired', 'Select a support case type before opening the conversation.'))
+        return
+      }
+      if (!supportCaseType && savedCaseType) setSupportCaseType(savedCaseType)
+    }
+    setActiveRoom(room)
+  }
+
+  const handleDirectMessageStarted = useCallback(async (response, targetUser) => {
+    const data = response?.Data ?? response?.data ?? response
+    const roomId = String(
+      data?.RoomId ||
+      data?.roomId ||
+      data?.Id ||
+      data?.id ||
+      data?.ChatRoomId ||
+      data?.chatRoomId ||
+      ''
+    )
+    const targetName =
+      targetUser?.Name ||
+      targetUser?.name ||
+      targetUser?.UserName ||
+      targetUser?.Email ||
+      t('chat.newConversation', 'New conversation')
+
+    try {
+      const roomsResponse = await chatAPI.getRooms()
+      const roomList = Array.isArray(roomsResponse?.Data)
+        ? roomsResponse.Data
+        : Array.isArray(roomsResponse?.Data?.Items)
+          ? roomsResponse.Data.Items
+          : Array.isArray(roomsResponse)
+            ? roomsResponse
+            : []
+      const normalizedRooms = enrichRoomsWithSupportMeta(roomList)
+      setRooms(normalizedRooms)
+      const matchedRoom = normalizedRooms.find((room) => String(room?.Id || room?.id || '') === roomId)
+      if (matchedRoom) {
+        setActiveRoom(matchedRoom)
+        return
+      }
+    } catch (error) {
+      console.error('Failed to refresh rooms after starting direct chat:', error)
+    }
+
+    if (roomId) {
+      const syntheticRoom = {
+        Id: roomId,
+        OtherParticipantName: targetName,
+        OtherParticipantImage: targetUser?.Image || targetUser?.image || null,
+        OtherParticipantRole: targetUser?.RoleName || targetUser?.roleName || 'user',
+        LastMessage: '',
+        LastMessageAt: new Date().toISOString(),
+        UnreadCount: 0,
+      }
+      setRooms((prev) => [syntheticRoom, ...prev.filter((room) => String(room?.Id || room?.id || '') !== roomId)])
+      setActiveRoom(syntheticRoom)
+    }
+  }, [enrichRoomsWithSupportMeta, t])
+
   const openSupportChat = useCallback(async () => {
     if (!isPatient) return
     if (!currentUserId) {
       toast.error(t("auto.unableToResolvePatientId"))
+      return
+    }
+    if (!supportCaseType) {
+      toast.warning(t('chat.caseTypeRequired', 'Select a support case type before starting a support conversation.'))
       return
     }
 
@@ -894,7 +1026,8 @@ export default function MessagesPage() {
     try {
       logSupportDebug('openSupportChat:start')
       const chatType = CASE_TYPE_CHAT_TYPE_MAP[supportCaseType] ?? 2
-      const supportResponse = await chatAPI.openPatientSupportChat(currentUserId, chatType)
+      const priority = supportCaseType === 'emergency' || supportCaseType === 'blackmail_abuse' ? 'high' : null
+      const supportResponse = await chatAPI.openPatientSupportChat(currentUserId, chatType, supportCaseType, priority)
       logSupportDebug('openSupportChat:response', supportResponse)
       const supportSuccess = supportResponse?.IsSuccess ?? supportResponse?.isSuccess
       if (supportSuccess === false) {
@@ -922,6 +1055,7 @@ export default function MessagesPage() {
         supportRoomMetaRef.current[supportRoomId] = {
           role: 'support',
           name: supportAgentName,
+          caseType: supportCaseType,
         }
       }
 
@@ -979,6 +1113,7 @@ export default function MessagesPage() {
           Id: supportRoomId,
           OtherParticipantName: supportAgentName,
           OtherParticipantRole: 'support',
+          SupportCaseType: supportCaseType,
           LastMessage: '',
           LastMessageAt: new Date().toISOString(),
           UnreadCount: 0,
@@ -1020,10 +1155,11 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (!isPatient || contactType !== 'support') return
+    if (!supportCaseType) return
     if (supportRoomLoading || loading) return
     if (rooms.some((room) => isSupportRoom(room))) return
     openSupportChat()
-  }, [contactType, isPatient, isSupportRoom, loading, openSupportChat, rooms, supportRoomLoading])
+  }, [contactType, isPatient, isSupportRoom, loading, openSupportChat, rooms, supportCaseType, supportRoomLoading])
 
   useEffect(() => {
     if (!supportCaseType || !activeRoom || !isSupportRoom(activeRoom)) return
@@ -1032,14 +1168,16 @@ export default function MessagesPage() {
 
   useEffect(() => {
     if (!isPatient || !shouldAutoOpenSupport) return
+    if (!supportCaseType) return
     if (supportAutoOpenHandledRef.current) return
 
     supportAutoOpenHandledRef.current = true
     openSupportChat()
-  }, [isPatient, openSupportChat, shouldAutoOpenSupport])
+  }, [isPatient, openSupportChat, shouldAutoOpenSupport, supportCaseType])
 
   // ── Render ──────────────────────────────────────────────────────────────────
   return (
+    <>
     <div
       className="flex min-h-[calc(100vh-6rem)] h-[calc(100vh-4.25rem)] overflow-hidden rounded-2xl border border-border/60 shadow-sm bg-background-paper"
       
@@ -1068,6 +1206,15 @@ export default function MessagesPage() {
             </div>
 
             <div className="flex items-center gap-1">
+              {isSupportOperator && (
+                <button
+                  onClick={() => setDirectMessageOpen(true)}
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  {t('chat.startMessage', 'Start Message')}
+                </button>
+              )}
               <button
                 onClick={fetchRooms}
                 disabled={loading}
@@ -1080,10 +1227,10 @@ export default function MessagesPage() {
 
           {isPatient && (
             <div className="mb-3 space-y-3">
-              <div className="inline-flex p-1 rounded-2xl border border-border bg-background-subtle gap-1">
+              <div className="grid grid-cols-2 p-1 rounded-2xl border border-border bg-background-subtle gap-1 w-full">
                 <button
                   onClick={() => setContactType('doctors')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                  className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
                     contactType === 'doctors'
                       ? 'bg-primary text-white shadow-sm'
                       : 'text-text-muted hover:text-text-heading hover:bg-background-paper'
@@ -1097,7 +1244,7 @@ export default function MessagesPage() {
 
                 <button
                   onClick={() => setContactType('support')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-colors ${
+                  className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
                     contactType === 'support'
                       ? 'bg-primary text-white shadow-sm'
                       : 'text-text-muted hover:text-text-heading hover:bg-background-paper'
@@ -1115,9 +1262,10 @@ export default function MessagesPage() {
               </div>
 
               {contactType === 'support' && (
-                <div className="space-y-1">
-                  <label className="text-xs font-medium text-text-muted">
-                    {t('chat.selectCaseType', 'Select Case Type')}
+                <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-3">
+                  <label className="text-xs font-semibold text-text-heading flex items-center justify-between gap-2">
+                    <span>{t('chat.selectCaseType', 'Select Case Type')}</span>
+                    <span className="text-[10px] text-red-600">{t('chat.required', 'Required')}</span>
                   </label>
                   <SelectDropdown
                     size="sm"
@@ -1189,7 +1337,7 @@ export default function MessagesPage() {
                 return (
                   <button
                     key={room.Id || room.id}
-                    onClick={() => setActiveRoom(room)}
+                    onClick={() => handleSelectRoom(room)}
                     className={`
                       w-full px-4 py-3.5 transition-all text-start relative
                       ${isActive
@@ -1219,19 +1367,11 @@ export default function MessagesPage() {
                             {name}
                           </h4>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
-                            {isPatient && isSupportRoom(room) && localRoomCaseTypes[String(room.Id || room.id)] && (
-                              <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${
-                                (() => {
-                                  const type = SUPPORT_CASE_TYPES.find((option) => option.key === localRoomCaseTypes[String(room.Id || room.id)])
-                                  return type?.badgeColor ?? 'bg-secondary/10 text-secondary border-secondary/20'
-                                })()
-                              }`}>
-                                {(() => {
-                                  const type = SUPPORT_CASE_TYPES.find((option) => option.key === localRoomCaseTypes[String(room.Id || room.id)])
-                                  return type ? (isRTL ? type.labelAr : type.labelEn) : ''
-                                })()}
-                              </span>
-                            )}
+                            {(role === Roles.STAFF || (isPatient && isSupportRoom(room))) && (() => {
+                              return (
+                                <SupportCaseTag room={room} isRTL={isRTL} localMap={localRoomCaseTypes} />
+                              )
+                            })()}
                             {lastTime && (
                               <span className="text-[10px] text-text-muted whitespace-nowrap">{lastTime}</span>
                             )}
@@ -1273,6 +1413,8 @@ export default function MessagesPage() {
               conversation={safeConversation}
               onSendMessage={handleSendMessage}
               onBack={() => { setActiveRoom(null); setMessages([]) }}
+              composerDisabled={isPatient && isSupportRoom(activeRoom) && !supportCaseType && !localRoomCaseTypes[String(activeRoom?.Id || activeRoom?.id || '')]}
+              composerDisabledReason={t('chat.caseTypeRequired', 'Select a support case type before sending your first message.')}
             />
           )
         ) : (
@@ -1303,5 +1445,11 @@ export default function MessagesPage() {
         )}
       </div>
     </div>
+    <StartDirectMessageDialog
+      open={directMessageOpen}
+      onOpenChange={setDirectMessageOpen}
+      onStarted={handleDirectMessageStarted}
+    />
+    </>
   )
 }

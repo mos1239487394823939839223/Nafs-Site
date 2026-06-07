@@ -115,9 +115,65 @@ export default function ReserveAppointment() {
   const [bookingPendingReview, setBookingPendingReview] = useState(false);
 
   const getNumericFee = (doctor) => {
-    const rawFee = doctor?.ConsultationFee ?? doctor?.price ?? 0;
+    const rawFee =
+      doctor?.SessionPrice ??
+      doctor?.ConsultationFee ??
+      doctor?.Price ??
+      doctor?.price ??
+      0;
     const parsed = Number(rawFee);
     return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+  };
+
+  const getDoctorRating = (doctor) => {
+    const parsed = Number(doctor?.Rate ?? doctor?.Rating ?? doctor?.rating);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+  };
+
+  const getDoctorExperience = (doctor) => {
+    const parsed = Number(
+      doctor?.YearsOfExperience ?? doctor?.ExperienceYears ?? doctor?.yearsOfExperience,
+    );
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+  };
+
+  const getNextAvailableSlot = (doctor) => {
+    const raw = doctor?.NextAvailableSlot ?? doctor?.nextAvailableSlot;
+    if (raw) {
+      const slot = new Date(raw);
+      if (!Number.isNaN(slot.getTime())) return slot;
+    }
+
+    const now = new Date();
+    const scheduleSlots = Array.isArray(doctor?.DoctoreSchualings)
+      ? doctor.DoctoreSchualings
+          .filter((slot) => slot?.Aviable !== false && slot?.Date)
+          .map((slot) => new Date(slot.Date))
+          .filter((slot) => !Number.isNaN(slot.getTime()) && slot > now)
+          .sort((a, b) => a - b)
+      : [];
+    return scheduleSlots[0] || null;
+  };
+
+  const formatNearestAvailability = (doctor) => {
+    const slot = getNextAvailableSlot(doctor);
+    if (!slot) return t("patient.noAvailableAppointments");
+
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const slotDay = new Date(slot.getFullYear(), slot.getMonth(), slot.getDate());
+    const dayDiff = Math.round((slotDay.getTime() - today.getTime()) / 86400000);
+    const dayLabel =
+      dayDiff === 0
+        ? t("patient.availabilityToday")
+        : dayDiff === 1
+          ? t("patient.availabilityTomorrow")
+          : slot.toLocaleDateString(t("auto.enus"), { weekday: "long" });
+    const timeLabel = slot.toLocaleTimeString(t("auto.enus"), {
+      hour: "numeric",
+      minute: "2-digit",
+    });
+    return `${dayLabel} - ${timeLabel}`;
   };
 
   const getTransferFeeAmount = (baseFee, provider) => {
@@ -172,13 +228,44 @@ export default function ReserveAppointment() {
     };
   };
 
+  const enrichDoctorsWithDetails = async (items = []) => {
+    const enriched = [];
+    const batchSize = 10;
+
+    for (let index = 0; index < items.length; index += batchSize) {
+      const batch = items.slice(index, index + batchSize);
+      const batchResults = await Promise.all(
+        batch.map(async (doctor) => {
+        const alreadyHasPrice = getNumericFee(doctor) > 0;
+        const alreadyHasDetails =
+          alreadyHasPrice &&
+          (getDoctorExperience(doctor) !== null || doctor.Gender !== undefined);
+        if (alreadyHasDetails) return doctor;
+
+        try {
+          const response = await patientAPI.getDoctorById(String(doctor.Id));
+          const details = response?.Data;
+          return details ? { ...doctor, ...details, NextAvailableSlot: doctor.NextAvailableSlot } : doctor;
+        } catch {
+          return doctor;
+        }
+        }),
+      );
+      enriched.push(...batchResults);
+    }
+
+    return enriched;
+  };
+
   // Fetch Doctors (all, large page to support client-side filtering)
   const fetchDoctors = async (page = 1) => {
     setLoading(true);
     try {
       const response = await patientAPI.getAllDoctors(page, 200);
       if (response.IsSuccess) {
-        setDoctors(response.Data.Items || []);
+        const items = response.Data.Items || [];
+        setDoctors(items);
+        enrichDoctorsWithDetails(items).then(setDoctors);
         setPagination({
           pageIndex: response.Data.PageIndex,
           pageSize: response.Data.PageSize,
@@ -202,7 +289,9 @@ export default function ReserveAppointment() {
     try {
       const response = await patientAPI.getAllDoctors(1, 200, true);
       if (response.IsSuccess) {
-        setAvailableDoctors(response.Data.Items || []);
+        const items = response.Data.Items || [];
+        setAvailableDoctors(items);
+        enrichDoctorsWithDetails(items).then(setAvailableDoctors);
       } else {
         toast.error(response.Message || t("errors.loadDoctorsFailed"));
       }
@@ -1166,27 +1255,30 @@ export default function ReserveAppointment() {
     }
 
     if (filterGender !== null) {
-      src = src.filter((d) => Number(d.Gender) === filterGender);
+      src = src.filter((d) => {
+        const gender = Number(d.Gender ?? d.gender);
+        return filterGender === 2 ? gender === 2 || gender === 0 : gender === filterGender;
+      });
     }
 
     if (filterPriceMin !== "") {
       src = src.filter(
-        (d) => Number(d.SessionPrice ?? 0) >= Number(filterPriceMin),
+        (d) => getNumericFee(d) >= Number(filterPriceMin),
       );
     }
     if (filterPriceMax !== "") {
       src = src.filter(
-        (d) => Number(d.SessionPrice ?? 0) <= Number(filterPriceMax),
+        (d) => getNumericFee(d) <= Number(filterPriceMax),
       );
     }
 
-    if (mainTab === "all" && filterAvailability !== "all") {
+    if (filterAvailability !== "all") {
       const today = new Date();
       const weekEnd = new Date();
       weekEnd.setDate(weekEnd.getDate() + 7);
       src = src.filter((d) => {
-        if (!d.NextAvailableSlot) return false;
-        const slot = new Date(d.NextAvailableSlot);
+        const slot = getNextAvailableSlot(d);
+        if (!slot) return false;
         return filterAvailability === "today"
           ? slot.toDateString() === today.toDateString()
           : slot <= weekEnd;
@@ -1194,16 +1286,19 @@ export default function ReserveAppointment() {
     }
 
     const sorted = [...src];
-    if (sortBy === "rating") sorted.sort((a, b) => (b.Rate ?? 0) - (a.Rate ?? 0));
-    else if (sortBy === "price")
-      sorted.sort(
-        (a, b) => Number(a.SessionPrice ?? 0) - Number(b.SessionPrice ?? 0),
-      );
+    if (sortBy === "rating")
+      sorted.sort((a, b) => (getDoctorRating(b) ?? -1) - (getDoctorRating(a) ?? -1));
+    else if (sortBy === "priceAsc")
+      sorted.sort((a, b) => getNumericFee(a) - getNumericFee(b));
+    else if (sortBy === "priceDesc")
+      sorted.sort((a, b) => getNumericFee(b) - getNumericFee(a));
     else if (sortBy === "availability")
       sorted.sort((a, b) => {
-        if (!a.NextAvailableSlot) return 1;
-        if (!b.NextAvailableSlot) return -1;
-        return new Date(a.NextAvailableSlot) - new Date(b.NextAvailableSlot);
+        const aSlot = getNextAvailableSlot(a);
+        const bSlot = getNextAvailableSlot(b);
+        if (!aSlot) return 1;
+        if (!bSlot) return -1;
+        return aSlot - bSlot;
       });
 
     return sorted;
@@ -1411,7 +1506,7 @@ export default function ReserveAppointment() {
                     onPriceChange={(min, max) => { setFilterPriceMin(min); setFilterPriceMax(max); }}
                     filterAvailability={filterAvailability}
                     onAvailabilityChange={setFilterAvailability}
-                    showAvailabilityFilter={mainTab === "all"}
+                    showAvailabilityFilter
                     sortBy={sortBy}
                     onSortChange={setSortBy}
                     onClearFilters={clearFilters}
@@ -1429,6 +1524,9 @@ export default function ReserveAppointment() {
                     </div>
                   ) : (
                     <>
+                      <p className="text-sm text-text-muted mb-3">
+                        {processedDoctors.length} {t("patient.therapistsFound")}
+                      </p>
                       {viewMode === "list" ? (
                         <div className="bg-background-paper rounded-xl border border-border overflow-hidden shadow-sm">
                           <Table>
@@ -1441,7 +1539,7 @@ export default function ReserveAppointment() {
                                   {t("common.specialty")}
                                 </TableHead>
                                 <TableHead className="w-[35%]">
-                                  {t("patient.experienceBio")}
+                                  {t("patient.bookingDetails")}
                                 </TableHead>
                                 <TableHead
                                   className={`w-[15%] ${
@@ -1482,14 +1580,14 @@ export default function ReserveAppointment() {
                                               <p className="font-bold text-text-heading text-base">
                                                 {doctor.Name}
                                               </p>
-                                              {doctor.NextAvailableSlot && (
-                                                <span className="inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-[11px] font-medium border border-emerald-200 dark:border-emerald-700">
-                                                  <Clock className="w-3 h-3 flex-shrink-0" />
-                                                  {new Date(doctor.NextAvailableSlot).toLocaleDateString(t("auto.enus"), { month: "short", day: "numeric" })}
-                                                  {" · "}
-                                                  {new Date(doctor.NextAvailableSlot).toLocaleTimeString(t("auto.enus"), { hour: "numeric", minute: "2-digit" })}
-                                                </span>
-                                              )}
+                                              <span className={`inline-flex items-center gap-1 mt-1 px-2 py-0.5 rounded-full text-[11px] font-medium border ${
+                                                getNextAvailableSlot(doctor)
+                                                  ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700"
+                                                  : "bg-slate-100 text-slate-500 border-slate-200"
+                                              }`}>
+                                                <Clock className="w-3 h-3 flex-shrink-0" />
+                                                {formatNearestAvailability(doctor)}
+                                              </span>
                                               <p className="text-xs text-text-muted">
                                                 {t("common.doctor")}
                                               </p>
@@ -1527,13 +1625,22 @@ export default function ReserveAppointment() {
                                       )}
                                     </TableCell>
                                     <TableCell className="py-4">
-                                      <p
-                                        className="max-w-xs line-clamp-2 text-text-muted text-sm leading-relaxed"
-                                        title={doctor.Description}
-                                      >
-                                        {doctor.Description ||
-                                          t("common.noDescription")}
-                                      </p>
+                                      <div className="space-y-1 text-sm text-text-muted">
+                                        {getDoctorExperience(doctor) !== null && (
+                                          <p>{getDoctorExperience(doctor)} {t("patient.yearsExperience")}</p>
+                                        )}
+                                        {getDoctorRating(doctor) !== null && (
+                                          <p className="flex items-center gap-1">
+                                            <Star className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
+                                            {getDoctorRating(doctor).toFixed(1)}
+                                          </p>
+                                        )}
+                                        <p className="font-semibold text-text-heading">
+                                          {getNumericFee(doctor) > 0
+                                            ? formatCurrency(getNumericFee(doctor))
+                                            : t("patient.priceNotAvailable")}
+                                        </p>
+                                      </div>
                                     </TableCell>
                                     <TableCell
                                       className={`py-4 ${
@@ -1541,16 +1648,19 @@ export default function ReserveAppointment() {
                                       }`}
                                     >
                                       <Button
-                                        variant="outline"
+                                        variant="primary"
                                         size="sm"
                                         onClick={() =>
                                           handleSelectDoctor(doctor.Id)
                                         }
-                                        className="gap-2 text-primary border-primary/30 hover:bg-primary hover:text-white transition-all"
+                                        disabled={!getNextAvailableSlot(doctor)}
+                                        className="gap-2 transition-all"
                                       >
-                                        <Eye className="w-4 h-4" />
+                                        <Calendar className="w-4 h-4" />
                                         <span className="hidden sm:inline">
-                                          {t("common.view")}
+                                          {getNextAvailableSlot(doctor)
+                                            ? t("patient.bookAppointment")
+                                            : t("patient.unavailable")}
                                         </span>
                                       </Button>
                                     </TableCell>
@@ -1582,12 +1692,12 @@ export default function ReserveAppointment() {
                               return (
                                 <Card
                                   key={doctor.Id}
-                                  className={`hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1 cursor-pointer rounded-2xl shadow-sm border ${specialtyTheme.surface}`}
-                                  onClick={() => handleSelectDoctor(doctor.Id)}
+                                  dir={isRTL ? "rtl" : "ltr"}
+                                  className={`hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1 rounded-2xl shadow-sm border ${specialtyTheme.surface}`}
                                 >
                                   <CardContent className="p-4 sm:p-5 flex flex-col h-full">
                                     {/* Header: Image & Name */}
-                                    <div className="flex items-start gap-3 sm:gap-4 mb-3">
+                                    <div className="flex items-start gap-3 sm:gap-4 mb-3 min-h-[88px]">
                                       <div
                                         className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center border shadow-inner ${specialtyTheme.avatar}`}
                                       >
@@ -1601,7 +1711,7 @@ export default function ReserveAppointment() {
                                           <User className="w-8 h-8 text-primary" />
                                         )}
                                       </div>
-                                      <div className="flex-1 min-w-0 flex flex-col justify-center text-start rtl:text-end mt-1">
+                                      <div className="flex-1 min-w-0 flex flex-col justify-center text-start mt-1">
                                         <h3 className="font-bold text-text-heading text-base sm:text-lg truncate leading-tight mb-1">
                                           {doctor.Name}
                                         </h3>
@@ -1609,37 +1719,39 @@ export default function ReserveAppointment() {
                                           {t("common.doctor")}
                                         </p>
 
-                                        {/* Rating */}
-                                        <div className="flex items-center gap-1.5 justify-start rtl:flex-row-reverse mb-1">
-                                          <div className="flex text-[#4ade80] rtl:flex-row-reverse">
-                                            {[1,2,3,4,5].map((s) => (
-                                              <Star key={s} className={`w-[14px] h-[14px] ${s <= Math.round(doctor.Rate ?? 4.8) ? "text-amber-400" : "text-border"}`} />
-                                            ))}
+                                        {getDoctorRating(doctor) !== null && (
+                                          <div className="flex items-center gap-1.5 justify-start mb-1">
+                                            <Star className="w-[14px] h-[14px] text-amber-400 fill-amber-400" />
+                                            <span className="text-[13px] font-semibold text-text">
+                                              {getDoctorRating(doctor).toFixed(1)}
+                                            </span>
                                           </div>
-                                          <span className="text-[13px] font-semibold text-text mt-[1px]">
-                                            {doctor.Rate ? Number(doctor.Rate).toFixed(1) : "4.8"}
-                                          </span>
-                                        </div>
+                                        )}
 
                                       </div>
                                     </div>
 
                                     {/* Next available slot */}
-                                    {doctor.NextAvailableSlot && (
-                                      <div className="flex items-center gap-1.5 mt-2 px-2.5 py-1.5 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs font-medium border border-emerald-200 dark:border-emerald-700">
-                                        <Clock className="w-3.5 h-3.5 flex-shrink-0" />
-                                        <span className="truncate">
-                                          {t("auto.next")}{" "}
-                                          {new Date(doctor.NextAvailableSlot).toLocaleDateString(t("auto.enus"), { weekday: "short", month: "short", day: "numeric" })}
-                                          {" · "}
-                                          {new Date(doctor.NextAvailableSlot).toLocaleTimeString(t("auto.enus"), { hour: "numeric", minute: "2-digit" })}
-                                        </span>
-                                      </div>
+                                    <div className={`flex items-center gap-1.5 mt-2 px-2.5 py-1.5 rounded-lg text-xs font-medium border ${
+                                      getNextAvailableSlot(doctor)
+                                        ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-700"
+                                        : "bg-slate-100 text-slate-500 border-slate-200"
+                                    }`}>
+                                      <Clock className="w-3.5 h-3.5 flex-shrink-0" />
+                                      <span className="truncate">
+                                        {t("patient.nextAvailableSlot")}: {formatNearestAvailability(doctor)}
+                                      </span>
+                                    </div>
+
+                                    {getDoctorExperience(doctor) !== null && (
+                                      <p className="text-xs text-text-muted mt-2">
+                                        {getDoctorExperience(doctor)} {t("patient.yearsExperience")}
+                                      </p>
                                     )}
 
                                     {/* Description */}
                                     <p
-                                      className="text-xs sm:text-[13px] text-text-muted leading-relaxed line-clamp-3 mb-5 mt-2 flex-grow text-start rtl:text-end"
+                                      className="text-xs sm:text-[13px] text-text-muted leading-relaxed line-clamp-3 mb-5 mt-2 min-h-[60px] text-start"
                                       title={doctor.Description}
                                     >
                                       {doctor.Description ||
@@ -1647,10 +1759,10 @@ export default function ReserveAppointment() {
                                     </p>
 
                                     {/* Badges footer */}
-                                    <div className="flex flex-wrap gap-2 mt-auto justify-end rtl:justify-start">
-                                      {doctor.SessionPrice > 0 && (
+                                    <div className="flex flex-wrap content-start gap-2 mt-auto pt-5 min-h-[57px] justify-start">
+                                      {getNumericFee(doctor) > 0 && (
                                         <span className="text-[10px] sm:text-xs px-2.5 py-1 font-medium rounded-md border bg-emerald-50 text-emerald-700 border-emerald-200">
-                                          {Number(doctor.SessionPrice).toLocaleString()} EGP
+                                          {formatCurrency(getNumericFee(doctor))}
                                         </span>
                                       )}
                                       {doctor.Specialist &&
@@ -1677,6 +1789,16 @@ export default function ReserveAppointment() {
                                         </span>
                                       )}
                                     </div>
+                                    <Button
+                                      className="w-full !mt-8 gap-2"
+                                      onClick={() => handleSelectDoctor(doctor.Id)}
+                                      disabled={!getNextAvailableSlot(doctor)}
+                                    >
+                                      <Calendar className="w-4 h-4" />
+                                      {getNextAvailableSlot(doctor)
+                                        ? t("patient.bookAppointment")
+                                        : t("patient.unavailable")}
+                                    </Button>
                                   </CardContent>
                                 </Card>
                               );

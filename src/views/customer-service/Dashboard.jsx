@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import Card, {
   CardHeader,
   CardTitle,
@@ -30,9 +31,12 @@ import {
   getPaymentStatusMeta,
   normalizePaymentStatus,
 } from "../../lib/paymentStatus";
+import { getRoomCaseTypeMeta, readLocalRoomCaseTypes } from "../../lib/supportCaseTypes";
+import SupportCaseTag from "../../components/support/SupportCaseTag";
 
 export default function CustomerServiceDashboard() {
   const { t, isRTL } = useLanguage();
+  const navigate = useNavigate();
   const toast = useToast();
   const [activeModule, setActiveModule] = useState("manual-payments");
 
@@ -265,28 +269,8 @@ export default function CustomerServiceDashboard() {
   }, [refunds]);
 
   const getCaseTypeMeta = (room) => {
-    const type = Number(
-      room?.RoomType ?? room?.ChatRoomType ?? room?.Type ?? 2,
-    );
-    const map = {
-      1: {
-        label: t("auto.booking"),
-        cls: "bg-blue-50 text-blue-700 border-blue-200",
-      },
-      2: {
-        label: t("auto.generalSupport"),
-        cls: "bg-gray-50 text-gray-700 border-gray-200",
-      },
-      3: {
-        label: t("auto.emergency"),
-        cls: "bg-red-50 text-red-700 border-red-200",
-      },
-      4: {
-        label: t("auto.bullying"),
-        cls: "bg-orange-50 text-orange-700 border-orange-200",
-      },
-    };
-    return map[type] || map[2];
+    const meta = getRoomCaseTypeMeta(room, isRTL, readLocalRoomCaseTypes());
+    return { ...meta, cls: meta.className };
   };
 
   const moduleTabs = [
@@ -1034,7 +1018,20 @@ export default function CustomerServiceDashboard() {
                   return (
                     <div
                       key={room.Id || room.id}
-                      className="p-4 bg-background-subtle border border-border rounded-xl flex items-center gap-4"
+                      onClick={() => navigate(`/dashboard/staff/messages?room=${room.Id || room.id}`)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          navigate(`/dashboard/staff/messages?room=${room.Id || room.id}`);
+                        }
+                      }}
+                      className={`p-4 rounded-xl flex items-center gap-4 border transition-all ${
+                        meta.priority
+                          ? "bg-red-50 border-red-300 shadow-sm shadow-red-100"
+                          : "bg-background-subtle border-border"
+                      } cursor-pointer hover:border-primary/40`}
                     >
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Person className="w-5 h-5 text-primary" />
@@ -1046,11 +1043,12 @@ export default function CustomerServiceDashboard() {
                               room.Name ||
                               t("auto.unknown")}
                           </h4>
-                          <span
-                            className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${meta.cls}`}
-                          >
-                            {meta.label}
-                          </span>
+                          <SupportCaseTag room={room} isRTL={isRTL} localMap={readLocalRoomCaseTypes()} size="md" />
+                          {meta.priority && (
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-600 text-white font-bold animate-pulse">
+                              {t("auto.priority", "Priority")}
+                            </span>
+                          )}
                           {Number(room.UnreadCount) > 0 && (
                             <span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full">
                               {room.UnreadCount}
