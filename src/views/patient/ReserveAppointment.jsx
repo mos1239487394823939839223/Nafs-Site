@@ -1877,20 +1877,20 @@ export default function ReserveAppointment() {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="space-y-8"
+                className="mx-auto w-full max-w-5xl space-y-8"
               >
                 {/* ── Doctor Overview ── */}
                 <Card className="overflow-hidden border border-border/80">
                   <div className="h-1.5 bg-gradient-to-r from-primary via-secondary to-primary-light" />
                   <CardContent className="p-4 sm:p-5 md:p-6">
                     <div
-                      className={`grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 ${
+                      className={`grid grid-cols-1 lg:grid-cols-12 items-center gap-4 sm:gap-6 ${
                         "text-start"
                       }`}
                     >
                       <div
-                        className={`lg:col-span-7 flex flex-col sm:flex-row gap-4 ${
-                          isRTL ? "sm:flex-row-reverse" : ""
+                        className={`lg:col-span-7 flex flex-col sm:flex-row items-center gap-4 ${
+                          isRTL ? "sm:flex-row-reverse text-end" : ""
                         }`}
                       >
                         <div
@@ -1907,7 +1907,7 @@ export default function ReserveAppointment() {
                           )}
                         </div>
 
-                        <div className="flex-1 space-y-3">
+                        <div className={`flex-1 space-y-3 ${isRTL ? "text-end" : "text-start"}`}>
                           <div>
                             <h2 className="text-xl sm:text-2xl font-bold text-text-heading leading-tight">
                               {t("auto.dr")} {selectedDoctor.Name}
@@ -1964,7 +1964,7 @@ export default function ReserveAppointment() {
                         </div>
                       </div>
 
-                      <div className="lg:col-span-5 space-y-3">
+                      <div className="lg:col-span-5 w-full space-y-3">
                         <div className="grid grid-cols-2 gap-3">
                           <div className="p-3 sm:p-4 bg-background-subtle rounded-xl border border-border/60">
                             <p className="text-xs text-text-muted mb-1">
@@ -2044,7 +2044,7 @@ export default function ReserveAppointment() {
                 </Modal>
 
                 {/* ── Slot Picker + Summary ── */}
-                <div className="grid xl:grid-cols-12 gap-4 sm:gap-6 items-start">
+                <div className="mx-auto grid w-full xl:grid-cols-12 gap-4 sm:gap-6 items-start">
                   <div className="xl:col-span-8 space-y-4">
                     <Card className="overflow-hidden border border-border shadow-lg rounded-2xl">
                       <CardContent className="p-3 sm:p-5 md:p-6 space-y-4 sm:space-y-5">
@@ -2054,7 +2054,11 @@ export default function ReserveAppointment() {
                           }`}
                         >
                           <div className={isRTL ? "text-end" : ""}>
-                            <h3 className="text-lg md:text-xl font-bold text-text-heading flex items-center gap-2">
+                            <h3
+                              className={`text-lg md:text-xl font-bold text-text-heading flex items-center gap-2 ${
+                                isRTL ? "flex-row-reverse justify-end" : ""
+                              }`}
+                            >
                               <Calendar className="w-5 h-5 text-primary" />
                               {t("patient.selectTimeSlot")}
                             </h3>
