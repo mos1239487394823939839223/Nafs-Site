@@ -263,7 +263,7 @@ export default function Settings() {
   };
 
   const displayName =
-    formData.name || user?.name || user?.Name || t("common.doctor", "Doctor");
+    formData.name || user?.name || user?.Name || t("common.doctor", "Therapist");
   const initials = displayName
     .split(" ")
     .map((n) => n[0])
@@ -282,7 +282,7 @@ export default function Settings() {
         onAvatarChange={handleFileChange}
         patternId="doctor-grid"
         badges={[
-          { icon: Stethoscope, label: t("common.doctor", "Doctor"), tone: "primary" },
+          { icon: Stethoscope, label: t("common.doctor", "Therapist"), tone: "primary" },
           { icon: CheckCircle2, label: t("common.active", "Active"), tone: "emerald" },
           { label: t("common.online", "Online"), tone: "emerald", pulse: true },
         ]}
@@ -305,7 +305,7 @@ export default function Settings() {
           {[
             {
               label: t("admin.role", "Role"),
-              value: t("common.doctor", "Doctor"),
+              value: t("common.doctor", "Therapist"),
             },
             {
               label: t("common.phoneNumber", "Phone"),

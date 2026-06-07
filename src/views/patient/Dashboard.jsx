@@ -97,8 +97,8 @@ export default function PatientDashboard() {
       return {
         id: booking.Id,
         doctor: booking.DoctorName
-          ? `${t("common.dr", "Dr.")} ${booking.DoctorName}`
-          : t("common.doctor", "Doctor"),
+          ? `${t("common.dr", "Therapist")} ${booking.DoctorName}`
+          : t("common.doctor", "Therapist"),
         specialty: t("patient.consultation", "Consultation"),
         date:
           sessionDate?.toLocaleDateString(t("auto.enus"), {

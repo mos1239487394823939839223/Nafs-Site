@@ -220,7 +220,7 @@ const resolveParticipant = (room, currentUserId) => {
   // If current user is the patient → other participant is the doctor
   if (uid && uid === patientId) {
     return {
-      name: room.DoctorName || room.doctorName || 'Doctor',
+      name: room.DoctorName || room.doctorName || 'Therapist',
       image: room.DoctorImage || room.doctorImage || null,
       role: 'doctor',
     }
@@ -228,7 +228,7 @@ const resolveParticipant = (room, currentUserId) => {
   // Fallback: prefer doctor info if available, else patient
   if (room.DoctorName || room.doctorName) {
     return {
-      name: room.DoctorName || room.doctorName || 'Doctor',
+      name: room.DoctorName || room.doctorName || 'Therapist',
       image: room.DoctorImage || room.doctorImage || null,
       role: 'doctor',
     }
@@ -1091,7 +1091,7 @@ export default function MessagesPage() {
                 >
                   <span className="inline-flex items-center gap-1.5">
                     <Stethoscope className="w-3.5 h-3.5" />
-                    {t('chat.talkToDoctors', 'Talk to Doctors')}
+                    {t('chat.talkToDoctors', 'Talk to Therapists')}
                   </span>
                 </button>
 

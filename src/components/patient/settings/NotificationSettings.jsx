@@ -68,8 +68,8 @@ export default function NotificationSettings({ onSave }) {
           onChange={() => toggle('push', 'reminders')}
         />
         <ToggleRow
-          label="Doctor Messages"
-          desc="Get alerts when your doctor sends you a message."
+          label="Therapist Messages"
+          desc="Get alerts when your therapist sends you a message."
           checked={settings.push.messages}
           onChange={() => toggle('push', 'messages')}
         />

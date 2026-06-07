@@ -12,7 +12,7 @@ export const Roles = {
 // Role display names
 export const RoleNames = {
   [Roles.PATIENT]: "Patient",
-  [Roles.DOCTOR]: "Doctor",
+  [Roles.DOCTOR]: "Therapist",
   [Roles.ADMIN]: "Admin",
   [Roles.STAFF]: "Customer Service",
 };

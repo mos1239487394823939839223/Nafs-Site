@@ -166,7 +166,7 @@ export default function BookingModal({ isOpen, onClose }) {
                 1
               </div>
               <span className="text-sm font-medium">
-                {t("patient.selectDoctor", "Select Doctor")}
+                {t("patient.selectDoctor", "Select Therapist")}
               </span>
             </div>
             <div className="w-12 h-0.5 bg-border/50"></div>
@@ -221,7 +221,7 @@ export default function BookingModal({ isOpen, onClose }) {
               <div className="text-center py-12">
                 <Stethoscope className="w-12 h-12 text-text-muted mx-auto mb-3 opacity-30" />
                 <p className="text-text-muted">
-                  {t("patient.noDoctorsFound", "No doctors available")}
+                  {t("patient.noDoctorsFound", "No therapists available")}
                 </p>
               </div>
             ) : (
@@ -252,7 +252,7 @@ export default function BookingModal({ isOpen, onClose }) {
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <h4 className="font-semibold text-text-heading">
-                            {t("common.dr", "Dr.")} {doctorName}
+                            {t("common.dr", "Therapist")} {doctorName}
                           </h4>
                           <span
                             className={`inline-flex mt-1 text-xs px-2.5 py-1 rounded-full border ${specialtyTheme.badge}`}
@@ -365,7 +365,7 @@ export default function BookingModal({ isOpen, onClose }) {
                 <div className="flex justify-between">
                   <span className="text-text-muted">{t("common.doctor")}:</span>
                   <span className="font-medium text-text-heading">
-                    {t("common.dr", "Dr.")}{" "}
+                    {t("common.dr", "Therapist")}{" "}
                     {selectedDoctor?.Name || selectedDoctor?.name}
                   </span>
                 </div>

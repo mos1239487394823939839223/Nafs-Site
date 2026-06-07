@@ -20,6 +20,8 @@ export default function RoleSelection() {
         t('auth.accessMedicalRecords'),
         t('auth.aiHealthAssistant'),
         t('auth.trackHealthMetrics'),
+        t('auth.emergencySupport'),
+        t('auth.violenceBlackmailSupport'),
       ],
       route: '/auth/register/patient',
     },

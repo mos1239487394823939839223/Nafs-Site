@@ -518,7 +518,7 @@ export default function PatientMessages() {
                 }`}
               >
                 <Stethoscope className="w-4 h-4" />
-                {t('chat.talkToDoctors', 'Talk to Doctors')}
+                {t('chat.talkToDoctors', 'Talk to Therapists')}
               </button>
               <button
                 onClick={() => { setContactType('support'); setMode('rooms'); setActiveRoom(null); }}

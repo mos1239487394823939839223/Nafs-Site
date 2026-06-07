@@ -282,7 +282,7 @@ export default function AdminDashboard() {
                             {booking.PatientName || "Patient"}
                           </p>
                           <p className="text-xs text-text-muted truncate">
-                            Dr. {booking.DoctorName || "Doctor"}
+                            Therapist {booking.DoctorName || "Therapist"}
                             {sessionDate &&
                               ` • ${sessionDate.toLocaleDateString("en-US", {
                                 month: "short",

@@ -380,11 +380,11 @@ export default function PatientProfile() {
                                                                     ? 'bg-blue-100 text-blue-700'
                                                                     : 'bg-emerald-100 text-emerald-700'
                                                             }`}>
-                                                                {item.Type === 1 ? t('patient.medicalTest', 'Medical Test') : t('patient.doctorNote', 'Doctor Note')}
+                                                                {item.Type === 1 ? t('patient.medicalTest', 'Medical Test') : t('patient.doctorNote', 'Therapist Note')}
                                                             </span>
                                                         </div>
                                                         <p className="text-sm font-medium text-text-heading">
-                                                            {t('patient.doctor', 'Doctor')}: {item.DoctorName}
+                                                            {t('patient.doctor', 'Therapist')}: {item.DoctorName}
                                                         </p>
                                                     </div>
                                                     <span className="text-xs text-text-muted whitespace-nowrap">
@@ -417,7 +417,7 @@ export default function PatientProfile() {
 
                                                 {item.Type === 2 && item.DoctorNote && (
                                                     <div className="mb-3 border-t border-border/30 pt-3">
-                                                        <p className="text-xs text-text-muted mb-1.5">{t('patient.doctorNotes', 'Doctor Notes')}</p>
+                                                        <p className="text-xs text-text-muted mb-1.5">{t('patient.doctorNotes', 'Therapist Notes')}</p>
                                                         <div className="bg-yellow-50 dark:bg-yellow-900/20 text-yellow-900 dark:text-yellow-200 rounded-lg p-3 text-sm border border-yellow-200 dark:border-yellow-800">
                                                             {item.DoctorNote}
                                                         </div>

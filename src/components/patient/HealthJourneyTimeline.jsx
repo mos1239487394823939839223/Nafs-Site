@@ -75,7 +75,7 @@ export default function HealthJourneyTimeline() {
           type: "appointment",
           title: `${t("patient.sessionWith", "Session with")} ${t(
             "common.dr",
-            "Dr.",
+            "Therapist",
           )} ${booking.DoctorName || t("common.unknown")}`,
           status: booking.Status !== undefined ? booking.Status : null, // keep the numeric or map later
           details: `${booking.DurationMinutes || 30} ${t(
@@ -84,7 +84,7 @@ export default function HealthJourneyTimeline() {
           )}${
             booking.DoctorSpecialist ? ` - ${booking.DoctorSpecialist}` : ""
           }`,
-          doctor: `${t("common.dr", "Dr.")} ${
+          doctor: `${t("common.dr", "Therapist")} ${
             booking.DoctorName || t("common.unknown")
           }`,
           duration: `${booking.DurationMinutes || 30} ${t(

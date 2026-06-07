@@ -120,7 +120,7 @@ export default function DoctorFinance() {
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-text-heading">
-            {t('admin.doctorFinanceTitle', 'Doctor Finance Overview')}
+            {t('admin.doctorFinanceTitle', 'Therapist Finance Overview')}
           </h2>
           <p className="text-sm text-text-muted mt-1">{doctorName}</p>
         </div>

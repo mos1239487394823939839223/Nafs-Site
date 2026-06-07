@@ -165,7 +165,7 @@ export default function DoctorDocumentsViewer({ doctorId }) {
           </div>
           <div>
             <h3 className="font-bold text-text-heading">
-              {label('patient.doctorCredentials', 'Doctor Credentials')}
+              {label('patient.doctorCredentials', 'Therapist Credentials')}
             </h3>
             <p className="text-sm text-text-muted mt-0.5">
               {label('patient.verifiedDocs', 'Verified certificates and licenses')}

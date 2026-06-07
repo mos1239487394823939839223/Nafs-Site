@@ -9,10 +9,10 @@ export const Services = () => {
   const isAr = language === "ar";
 
   const services = [
-    { icon: User, titleKey: "landing.services.individual.title", descKey: "landing.services.individual.desc" },
-    { icon: Heart, titleKey: "landing.services.relationships.title", descKey: "landing.services.relationships.desc" },
-    { icon: Baby, titleKey: "landing.services.children.title", descKey: "landing.services.children.desc" },
     { icon: Users, titleKey: "landing.services.family.title", descKey: "landing.services.family.desc" },
+    { icon: Heart, titleKey: "landing.services.relationships.title", descKey: "landing.services.relationships.desc" },
+    { icon: User, titleKey: "landing.services.individual.title", descKey: "landing.services.individual.desc" },
+    { icon: Baby, titleKey: "landing.services.children.title", descKey: "landing.services.children.desc" },
     { icon: Brain, titleKey: "landing.services.programs.title", descKey: "landing.services.programs.desc" },
   ];
 

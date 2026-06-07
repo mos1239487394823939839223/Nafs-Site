@@ -531,7 +531,7 @@ export default function UserManagement() {
                         await userAPI.updateImage(newDoctorId, base64)
                     } catch (err) {
                         console.error('Failed to upload doctor image:', err)
-                        toast.error(t('errors.imageUploadFailed', 'Doctor created, but image upload failed'))
+                        toast.error(t('errors.imageUploadFailed', 'Therapist created, but image upload failed'))
                     }
                 }
 
@@ -1234,7 +1234,7 @@ export default function UserManagement() {
                                             name="name"
                                             value={formData.name}
                                             onChange={handleInputChange}
-                                            placeholder="e.g. Dr. Ahmed Hassan"
+                                            placeholder="e.g. Therapist Ahmed Hassan"
                                             required
                                             icon={User}
                                         />

@@ -229,7 +229,7 @@ export default function AdminBookings() {
           <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
           <input
             type="text"
-            placeholder={t("admin.searchPatientsDocs", "Search by patient or doctor name...")}
+            placeholder={t("admin.searchPatientsDocs", "Search by patient or therapist name...")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full ps-10 pe-4 py-2.5 border border-border bg-background rounded-xl focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none text-sm text-text transition-all"

@@ -9,7 +9,7 @@ import { useLanguage } from "../../../contexts/LanguageContext";
 const links = [
   { href: "#home",     ar: "الرئيسية", en: "Home" },
   { href: "#services", ar: "الخدمات",  en: "Services" },
-  { href: "#doctors",  ar: "الدكاترة", en: "Doctors" },
+  { href: "#doctors",  ar: "المعالجون", en: "Therapists" },
   { href: "#about",    ar: "عن نفس",   en: "About" },
   { href: "#pricing",  ar: "الأسعار",  en: "Pricing" },
 ];

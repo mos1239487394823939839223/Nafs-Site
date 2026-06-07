@@ -96,6 +96,7 @@ export default function PatientRegistration() {
       subtitle: t("auth.intro.emergency.subtitle"),
       description: t("auth.intro.emergency.description"),
       icon: Emergency,
+      isSpecial: true,
       features: [
         t("auth.intro.emergency.f1"),
         t("auth.intro.emergency.f2"),
@@ -461,14 +462,32 @@ export default function PatientRegistration() {
               exit={{ opacity: 0, x: -20 }}
               className="flex justify-center"
             >
-              <div className="bg-background-paper rounded-3xl shadow-2xl overflow-hidden flex flex-col border border-border w-full max-w-md">
+              <div
+                className={`bg-background-paper rounded-3xl shadow-2xl overflow-hidden flex flex-col border w-full max-w-md ${
+                  introCards[introStep].isSpecial
+                    ? "border-[#b86b75]/50 shadow-[0_24px_60px_rgba(111,47,57,0.22)] ring-4 ring-[#b86b75]/10"
+                    : "border-border"
+                }`}
+              >
                 {/* Header with Gradient */}
                 {(() => {
                   const card = introCards[introStep];
                   return (
                     <>
-                      <div className="bg-gradient-to-r from-primary to-primary-dark p-5 sm:p-8 text-white relative overflow-hidden">
+                      <div
+                        className={`bg-gradient-to-r p-5 sm:p-8 text-white relative overflow-hidden ${
+                          card.isSpecial
+                            ? "from-[#8f3f4a] to-[#672b34]"
+                            : "from-primary to-primary-dark"
+                        }`}
+                      >
                         <div className="absolute inset-0 bg-black/10"></div>
+                        {card.isSpecial && (
+                          <>
+                            <div className="absolute -top-16 -end-12 w-40 h-40 rounded-full bg-white/10" />
+                            <div className="absolute -bottom-20 -start-14 w-48 h-48 rounded-full bg-[#dca1a8]/10" />
+                          </>
+                        )}
                         <div className="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4 relative z-10">
                           <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm flex-shrink-0">
                             <card.icon className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
@@ -488,7 +507,13 @@ export default function PatientRegistration() {
                       </div>
 
                       {/* Features */}
-                      <div className="p-5 sm:p-8 flex-1 bg-background-paper">
+                      <div
+                        className={`p-5 sm:p-8 flex-1 ${
+                          card.isSpecial
+                            ? "bg-gradient-to-b from-[#fffafb] to-background-paper"
+                            : "bg-background-paper"
+                        }`}
+                      >
                         <h3 className="font-semibold text-text-heading mb-4">
                           {t("auth.whatYouGet")}
                         </h3>
@@ -498,8 +523,20 @@ export default function PatientRegistration() {
                               key={idx}
                               className="flex items-center gap-3 text-text-muted"
                             >
-                              <div className="w-5 h-5 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
-                                <div className="w-2 h-2 bg-primary rounded-full" />
+                              <div
+                                className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                  card.isSpecial
+                                    ? "bg-[#8f3f4a]/10"
+                                    : "bg-primary/10"
+                                }`}
+                              >
+                                <div
+                                  className={`w-2 h-2 rounded-full ${
+                                    card.isSpecial
+                                      ? "bg-[#8f3f4a]"
+                                      : "bg-primary"
+                                  }`}
+                                />
                               </div>
                               <span className="text-sm">{feature}</span>
                             </li>
@@ -518,6 +555,14 @@ export default function PatientRegistration() {
                             }
                           }}
                           className="flex-1 group"
+                          sx={
+                            card.isSpecial
+                              ? {
+                                  backgroundColor: "#8f3f4a",
+                                  "&:hover": { backgroundColor: "#672b34" },
+                                }
+                              : undefined
+                          }
                         >
                           {introStep === introCards.length - 1 ? (
                             <>

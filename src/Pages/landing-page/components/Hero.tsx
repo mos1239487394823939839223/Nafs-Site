@@ -3,7 +3,7 @@ import { ShieldCheck, UserCheck, CalendarClock, Phone, Video, MessageSquare, Spa
 
 const trust = [
   { icon: ShieldCheck, label: "خصوصية مشفّرة" },
-  { icon: UserCheck, label: "أطباء معتمدون" },
+  { icon: UserCheck, label: "معالجون معتمدون" },
   { icon: CalendarClock, label: "مرونة في المواعيد" },
 ];
 

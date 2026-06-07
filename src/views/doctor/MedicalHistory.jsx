@@ -43,7 +43,7 @@ export default function MedicalHistory() {
             const mapped = records.map((record) => ({
                 id: String(record.RecordID),
                 date: record.TestDate ? new Date(record.TestDate).toISOString().split('T')[0] : '',
-                doctorName: record.DoctorName || user?.name || user?.Name || 'Doctor',
+                doctorName: record.DoctorName || user?.name || user?.Name || 'Therapist',
                 testTypeName: record.TestTypeName || 'Test',
                 examNotes: record.ExamNotes || '',
                 result: record.Result || '',

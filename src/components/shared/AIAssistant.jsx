@@ -24,7 +24,7 @@ export default function AIAssistant({ isOpen, onClose }) {
       const botMessage = {
         id: Date.now() + 1,
         type: 'bot',
-        text: t('patient.aiSimulateRec', "I understand your concern. Based on your symptoms, I recommend scheduling a consultation with a doctor. Would you like me to help you book an appointment?")
+        text: t('patient.aiSimulateRec', "I understand your concern. Based on your symptoms, I recommend scheduling a consultation with a therapist. Would you like me to help you book an appointment?")
       }
       setMessages(prev => [...prev, botMessage])
     }, 1000)

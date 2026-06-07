@@ -1289,7 +1289,7 @@ export default function ReserveAppointment() {
           }`}
           aria-pressed={mainTab === "all"}
         >
-          {t("patient.allDoctors", "All Doctors")}
+          {t("patient.allDoctors", "All Therapists")}
         </button>
         <button
           onClick={() => { setMainTab("available"); setStep(1); setSelectedDoctor(null); }}
@@ -1300,7 +1300,7 @@ export default function ReserveAppointment() {
           }`}
           aria-pressed={mainTab === "available"}
         >
-          {t("patient.availableDoctors", "Available Doctors")}
+          {t("patient.availableDoctors", "Available Therapists")}
         </button>
         <button
           onClick={() => setMainTab("status")}

@@ -81,7 +81,7 @@ export default function ProfileSettings({ user, onSave, onImageUpload }) {
         <div className={`text-center space-y-2 ${t("auto.mdtextstart")}`}>
           <h3 className="text-lg font-semibold text-text">{t('settings.profilePhoto', 'Profile Photo')}</h3>
           <p className="text-sm text-text-light max-w-xs">
-            {t('settings.uploadClearPhoto', 'Upload a clear photo to help your doctor identify you.')}
+            {t('settings.uploadClearPhoto', 'Upload a clear photo to help your therapist identify you.')}
           </p>
           <div className={`flex gap-2 justify-center ${t("auto.mdjustifystart")}`}>
             <Button size="sm" variant="outline" onClick={() => setAvatar(null)}>{t('common.remove', 'Remove')}</Button>
