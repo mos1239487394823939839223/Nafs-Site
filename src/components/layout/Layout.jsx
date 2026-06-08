@@ -7,10 +7,11 @@ export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { role } = useAuth()
   const isPatient = role === Roles.PATIENT
-  const sidebarOffset = isPatient ? 'lg:ps-[280px]' : 'lg:ps-64'
+  const isDoctor = role === Roles.DOCTOR
+  const sidebarOffset = isPatient ? 'lg:ps-[280px]' : isDoctor ? 'lg:ps-[292px]' : 'lg:ps-64'
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#F8FAF8]" >
+    <div className="flex h-screen overflow-hidden bg-[#F7FAF8]" >
       {/* Dynamic Sidebar */}
       <DynamicSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
@@ -20,8 +21,8 @@ export default function Layout({ children }) {
         <Header onMenuClick={() => setSidebarOpen(true)} />
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-[#F8FAF8] p-3 sm:p-4 md:p-6">
-          <div className={`${isPatient ? 'w-full' : 'max-w-7xl'} mx-auto`}>
+        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-[#F7FAF8] p-3 sm:p-4 md:p-6">
+          <div className={`${isPatient ? 'w-full' : isDoctor ? 'max-w-[1260px]' : 'max-w-7xl'} mx-auto`}>
             {children}
           </div>
         </main>

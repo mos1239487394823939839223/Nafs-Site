@@ -50,21 +50,21 @@ export const RecentPatients = ({ patients = [], loading = false }: RecentPatient
   const { t, isRTL } = useLanguage();
 
   return (
-    <section className="rounded-3xl bg-card border border-border shadow-card p-4 sm:p-6 md:p-7">
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-lg font-bold text-foreground">
+    <section className="rounded-[26px] border border-[#DCE8E2] bg-white p-5 shadow-[0_14px_40px_-30px_rgba(15,76,58,0.4)] sm:p-7">
+      <div className="mb-6 flex items-center justify-between">
+        <h2 className="text-xl font-extrabold text-[#1F2D2A]">
           {t("doctor.dashboardHome.recentPatients.title")}
         </h2>
         <Link
           to="/dashboard/doctor/history"
-          className="text-sm font-semibold text-primary hover:text-primary/80"
+          className="rounded-xl bg-[#EAF5F0] px-3 py-2 text-xs font-bold text-[#2D7A61] hover:bg-[#DCEFE5]"
         >
           {t("doctor.dashboardHome.recentPatients.viewAll")}
         </Link>
       </div>
 
       {loading && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2.5">
           {[1, 2, 3].map((n) => (
             <div key={n} className="flex items-center gap-3 p-3 rounded-2xl animate-pulse">
               <div className="size-10 rounded-full bg-muted shrink-0" />
@@ -97,32 +97,32 @@ export const RecentPatients = ({ patients = [], loading = false }: RecentPatient
             return (
               <div
                 key={p.BookingId ?? i}
-                className="flex flex-wrap items-center gap-3 p-3 rounded-2xl hover:bg-muted/40 transition-colors"
+                className="flex flex-wrap items-center gap-4 rounded-[20px] border border-transparent bg-[#FBFDFC] p-4 transition-all hover:border-[#DCE8E2] hover:bg-[#F1F8F4] sm:p-5"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <img
                     src={avatar}
                     alt={p.PatientName as string ?? ""}
-                    className="size-10 rounded-full object-cover shrink-0"
+                    className="size-12 shrink-0 rounded-2xl object-cover ring-4 ring-white sm:size-14"
                   />
                   <div className="min-w-0">
-                    <p className="font-semibold text-foreground truncate">
+                    <p className="truncate font-extrabold text-[#1F2D2A]">
                       {p.PatientName as string ?? ""}
                     </p>
-                    <p className="text-xs text-muted-foreground truncate">
+                    <p className="mt-1 truncate text-xs font-medium text-[#71857C]">
                       {`${t("doctor.dashboardHome.recentPatients.lastSession")} ${date}`}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3 ms-auto sm:ms-0">
-                  <span dir="ltr" className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap hidden sm:inline">{date}</span>
+                  <span dir="ltr" className="hidden whitespace-nowrap text-xs font-semibold text-[#71857C] sm:inline sm:text-sm">{date}</span>
 
                   <span
-                    className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                    className={`rounded-full px-3 py-1.5 text-xs font-bold ${
                       variant === "active"
-                        ? "bg-primary/15 text-primary"
-                        : "bg-muted text-foreground"
+                        ? "bg-[#E4F5EC] text-[#237253]"
+                        : "bg-[#FFF4DA] text-[#9A6A14]"
                     }`}
                   >
                     {t(sKey)}
@@ -130,7 +130,7 @@ export const RecentPatients = ({ patients = [], loading = false }: RecentPatient
 
                   <Link
                     to="/dashboard/doctor/history"
-                    className="text-xs sm:text-sm font-semibold text-primary hover:text-primary/80 whitespace-nowrap"
+                    className="whitespace-nowrap rounded-xl border border-[#CFE0D8] bg-white px-3 py-2 text-xs font-bold text-[#0F4C3A] hover:bg-[#EAF5F0] sm:text-sm"
                   >
                     {t("doctor.dashboardHome.recentPatients.viewFile")}
                   </Link>

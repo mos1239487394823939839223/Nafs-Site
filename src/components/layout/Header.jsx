@@ -180,6 +180,93 @@ export default function Header({ onMenuClick }) {
     )
   }
 
+  if (role === Roles.DOCTOR) {
+    return (
+      <header className="bg-[#F7FAF8] px-3 py-4 sm:px-5 md:px-7 md:py-5">
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
+            <button
+              onClick={onMenuClick}
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-[#DCE8E2] bg-white text-[#0F4C3A] shadow-sm lg:hidden"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+            <UserAvatar name={displayName} src={avatarSrc} size="lg" />
+            <div className="min-w-0 text-start">
+              <p className="truncate text-base font-extrabold text-[#1F2D2A] sm:text-lg">
+                {isRTL ? `أهلاً د. ${firstName}` : `Welcome, Dr. ${firstName}`}
+              </p>
+              <p className="mt-0.5 truncate text-xs font-medium text-[#6B8278] sm:text-sm">
+                {isRTL ? "كيف يبدو يومك؟" : "Here is how your day is looking."}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <div className="relative">
+              <button
+                onClick={() => { setShowNotifications(v => !v); setShowLang(false); setShowTheme(false) }}
+                className="relative grid h-11 w-11 place-items-center rounded-2xl border border-[#DCE8E2] bg-white text-[#0F4C3A] shadow-sm hover:bg-[#EAF5F0]"
+              >
+                <Bell className="h-5 w-5" />
+                {unreadCount > 0 && (
+                  <span className="absolute -end-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full border-2 border-white bg-red-500 px-1 text-[10px] font-bold text-white">
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                  </span>
+                )}
+              </button>
+              <DropdownMenu open={showNotifications} onClose={() => setShowNotifications(false)}>
+                <div className="w-[calc(100vw-2rem)] max-w-[23rem] p-2 sm:w-96">
+                  <div className="mb-2 flex items-center justify-between border-b border-border px-2 pb-2">
+                    <span className="text-sm font-bold">{t('common.notifications') || 'Notifications'}</span>
+                    <button onClick={markAllAsRead} disabled={unreadCount === 0} className="inline-flex items-center gap-1 text-xs text-primary hover:underline disabled:opacity-40">
+                      <CheckCheck className="h-3.5 w-3.5" />
+                      {t('common.markAllRead') || 'Mark all read'}
+                    </button>
+                  </div>
+                  {notifications.length === 0 ? (
+                    <p className="py-4 text-center text-sm text-text-muted">{t('common.noAlerts') || 'No new notifications'}</p>
+                  ) : (
+                    <div className="max-h-80 space-y-2 overflow-y-auto">
+                      {notifications.slice(0, 8).map(n => (
+                        <NotificationItem key={n.id} notification={n} onClick={handleReadNotification} compact />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </DropdownMenu>
+            </div>
+            <div className="relative hidden sm:block">
+              <button
+                onClick={() => { setShowLang(v => !v); setShowTheme(false); setShowNotifications(false) }}
+                className="grid h-11 w-11 place-items-center rounded-2xl border border-[#DCE8E2] bg-white text-[#0F4C3A] shadow-sm hover:bg-[#EAF5F0]"
+              >
+                <Globe className="h-5 w-5" />
+              </button>
+              <DropdownMenu open={showLang} onClose={() => setShowLang(false)}>
+                <DropdownItem onClick={() => { setLanguage('en'); setShowLang(false) }} active={language === 'en'} label="English" />
+                <DropdownItem onClick={() => { setLanguage('ar'); setShowLang(false) }} active={language === 'ar'} label="العربية" />
+              </DropdownMenu>
+            </div>
+            <div className="relative hidden sm:block">
+              <button
+                onClick={() => { setShowTheme(v => !v); setShowLang(false); setShowNotifications(false) }}
+                className="grid h-11 w-11 place-items-center rounded-2xl border border-[#DCE8E2] bg-white text-[#0F4C3A] shadow-sm hover:bg-[#EAF5F0]"
+              >
+                <ThemeIcon className="h-5 w-5" />
+              </button>
+              <DropdownMenu open={showTheme} onClose={() => setShowTheme(false)}>
+                <DropdownItem onClick={() => { setTheme('light'); setShowTheme(false) }} active={theme === 'light'} icon={Sun} label={t('common.lightMode') || 'Light'} />
+                <DropdownItem onClick={() => { setTheme('dark'); setShowTheme(false) }} active={theme === 'dark'} icon={Moon} label={t('common.darkMode') || 'Dark'} />
+              </DropdownMenu>
+            </div>
+          </div>
+        </div>
+      </header>
+    )
+  }
+
   return (
     <header className="bg-background-paper border-b border-border px-3 sm:px-4 md:px-6 py-3 md:py-4 transition-colors duration-300">
       <div className="flex items-center justify-between gap-2">

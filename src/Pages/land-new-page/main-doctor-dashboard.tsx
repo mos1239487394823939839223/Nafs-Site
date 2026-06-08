@@ -16,8 +16,8 @@ const MainDoctorDashboard = () => {
   const doctorName = user?.Name ?? user?.name ?? "";
 
   return (
-    <div dir={isRTL ? "rtl" : "ltr"} className="min-h-screen bg-background">
-      <main className="p-3 sm:p-5 md:p-8 max-w-[1100px] mx-auto w-full">
+    <div dir={isRTL ? "rtl" : "ltr"} className="min-h-screen bg-[#F7FAF8]">
+      <main className="mx-auto w-full max-w-[1180px] pb-8">
         <HeroCard doctorName={doctorName} />
         <StatTiles todayCount={todayBookings.length} />
         <TodaySchedule bookings={todayBookings} loading={loading} />

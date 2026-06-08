@@ -235,6 +235,95 @@ export default function DynamicSidebar({ isOpen, onClose }) {
   };
   const navItems = navigationConfig[role] || [];
 
+  if (role === Roles.DOCTOR) {
+    return (
+      <>
+        {isOpen && (
+          <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onClose} />
+        )}
+        <aside
+          className={`fixed start-0 top-0 z-50 h-full w-[88vw] max-w-[292px] border-e border-white/10 bg-gradient-to-b from-[#0F4C3A] via-[#0D5A43] to-[#0A3F32] text-white shadow-2xl shadow-[#0A3F32]/25 transform transition-transform duration-300 ease-in-out ${
+            isOpen
+              ? "translate-x-0"
+              : isRTL
+                ? "translate-x-full lg:translate-x-0"
+                : "-translate-x-full lg:translate-x-0"
+          }`}
+        >
+          <div className="flex h-full flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-5 pb-5 pt-7">
+              <div className="flex items-center gap-3">
+                <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-[#75D59A] to-[#2D9A68] shadow-lg shadow-black/15">
+                  <HeartHandshake className="h-6 w-6 text-white" />
+                </span>
+                <div>
+                  <p className="text-2xl font-black leading-none tracking-tight">nafas</p>
+                  <p className="mt-1 text-[10px] font-semibold tracking-[0.18em] text-white/55">
+                    CARE PLATFORM
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 text-white/85 hover:bg-white/15"
+                aria-label="Menu"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+            </div>
+
+            <nav className="doctor-sidebar-scroll flex-1 overflow-y-auto px-4 pb-5">
+              <ul className="space-y-1.5">
+                {navItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <li key={item.path}>
+                      <NavLink
+                        to={item.path}
+                        end
+                        onClick={closeOnMobile}
+                        className={({ isActive }) =>
+                          `flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold transition-all ${
+                            isActive
+                              ? "bg-[#2D7A61] text-white shadow-lg shadow-black/15 ring-1 ring-white/10"
+                              : "text-white/75 hover:bg-white/10 hover:text-white"
+                          }`
+                        }
+                      >
+                        <Icon className="h-5 w-5 shrink-0" />
+                        <span>{item.name}</span>
+                      </NavLink>
+                    </li>
+                  );
+                })}
+              </ul>
+
+              <div className="my-5 h-px bg-white/15" />
+              <button
+                onClick={handleLogout}
+                className="flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-white/75 hover:bg-white/10 hover:text-white"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>{t("auth.logout")}</span>
+              </button>
+            </nav>
+
+            <div className="m-4 mt-0 rounded-[24px] border border-white/15 bg-white/[0.08] p-5 text-center shadow-inner shadow-white/5">
+              <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-white/10">
+                <ShieldCheck className="h-6 w-6 text-emerald-100" />
+              </span>
+              <h4 className="mb-2 text-sm font-extrabold">{t("sidebar.privacy.title")}</h4>
+              <p className="text-[11px] font-medium leading-5 text-white/65">
+                {t("sidebar.privacy.desc")}
+              </p>
+            </div>
+          </div>
+        </aside>
+      </>
+    );
+  }
+
   return (
     <>
       {isOpen && (

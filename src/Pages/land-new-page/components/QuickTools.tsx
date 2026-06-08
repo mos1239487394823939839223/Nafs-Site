@@ -10,11 +10,11 @@ export const QuickTools = () => {
   const { t, isRTL } = useLanguage();
 
   return (
-    <section className="rounded-3xl bg-card border border-border shadow-card p-4 sm:p-6 md:p-7 mb-6">
-      <h2 className="text-lg font-bold text-foreground text-center mb-4 sm:mb-6">
+    <section className="mb-7 rounded-[26px] border border-[#DCE8E2] bg-white p-5 shadow-[0_14px_40px_-30px_rgba(15,76,58,0.4)] sm:p-7">
+      <h2 className="mb-6 text-start text-xl font-extrabold text-[#1F2D2A]">
         {t("doctor.dashboardHome.quickTools.title")}
       </h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 sm:gap-4">
         {quickTools.map((tool) => {
           const Icon = iconMap[tool.icon as keyof typeof iconMap];
           return (
@@ -22,14 +22,16 @@ export const QuickTools = () => {
               key={tool.titleKey}
               type="button"
               onClick={() => navigate(tool.href)}
-              className={`flex items-center gap-3 p-4 rounded-2xl border border-border hover:border-primary/40 hover:bg-muted/40 transition-colors ${
+              className={`group flex min-h-[104px] items-center gap-4 rounded-[20px] border border-[#E1ECE7] bg-[#FBFDFC] p-4 transition-all hover:-translate-y-0.5 hover:border-[#BFDCCD] hover:bg-[#F1F8F4] hover:shadow-md ${
                 "text-start"
               }`}
             >
-              <Icon className="size-5 text-primary shrink-0" />
+              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-[#EAF5F0] text-[#0F4C3A] group-hover:bg-[#0F4C3A] group-hover:text-white">
+                <Icon className="size-5" />
+              </span>
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-foreground text-sm">{t(tool.titleKey)}</p>
-                <p className="text-xs text-muted-foreground truncate">{t(tool.descKey)}</p>
+                <p className="text-sm font-extrabold text-[#1F2D2A]">{t(tool.titleKey)}</p>
+                <p className="mt-1 truncate text-xs font-medium text-[#71857C]">{t(tool.descKey)}</p>
               </div>
             </button>
           );
