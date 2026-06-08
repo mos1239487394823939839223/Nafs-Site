@@ -1,6 +1,7 @@
 import { MessageCircle, NotebookPen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
+import doctorAvatar from "./assets/doctor-1.jpg";
 
 export const JourneyUpdate = ({
   update,
@@ -17,25 +18,30 @@ export const JourneyUpdate = ({
   if (!hasCompletedSession) return null;
 
   return (
-    <section className="bg-card rounded-2xl p-5 sm:p-6 shadow-card mb-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <div className="w-11 h-11 rounded-xl bg-primary-soft flex items-center justify-center flex-shrink-0">
-            <NotebookPen className="w-5 h-5 text-primary" />
-          </div>
+    <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_14px_40px_rgba(15,81,50,0.06)]">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center justify-end gap-4 text-end">
           <div>
-            <h3 className="font-bold">{t("patientHome.journeyUpdate.title")}</h3>
-            <p className="text-sm text-muted-foreground mt-1">
+            <div className="mb-1 inline-flex items-center gap-2 rounded-full bg-[#EAF5EE] px-3 py-1 text-xs font-bold text-[#2F855A]">
+              <NotebookPen className="h-3.5 w-3.5" />
+              Latest Update
+            </div>
+            <h3 className="text-lg font-black text-[#12372A]">{t("patientHome.journeyUpdate.title")}</h3>
+            <p className="mt-1 text-sm leading-6 text-[#60766C]">
               {update || t("patientHome.journeyUpdate.awaiting")}
             </p>
-            {therapistName && <p className="text-xs text-primary mt-2">{therapistName}</p>}
+            <p className="mt-2 text-xs font-bold text-[#2F855A]">
+              {therapistName || "hazem doctor"} · منذ قليل
+            </p>
           </div>
+          <img src={doctorAvatar} alt="" className="h-14 w-14 rounded-full object-cover ring-4 ring-[#EAF5EE]" />
         </div>
+
         <button
           onClick={() => navigate("/dashboard/patient/messages")}
-          className="inline-flex items-center justify-center gap-2 bg-primary text-primary-foreground rounded-xl px-5 py-2.5 text-sm font-semibold hover:opacity-90"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-2xl bg-[#2F855A] px-5 text-sm font-extrabold text-white transition-colors hover:bg-[#0F5132]"
         >
-          <MessageCircle className="w-4 h-4" />
+          <MessageCircle className="h-4 w-4" />
           {t("patientHome.journeyUpdate.messageTherapist")}
         </button>
       </div>

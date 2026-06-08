@@ -1,7 +1,6 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { useLanguage } from "../../contexts/LanguageContext";
 import { patientAPI } from "../../lib/api";
 
 interface DoctorDto {
@@ -13,8 +12,10 @@ interface DoctorDto {
   SessionPrice?: number | null;
 }
 
+const AVATAR_SIZE = 84;
+const CARD_HEIGHT = 324;
+
 export const SuggestedDoctors = () => {
-  const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
   const [doctors, setDoctors] = useState<DoctorDto[]>([]);
   const [loading, setLoading] = useState(true);
@@ -26,134 +27,150 @@ export const SuggestedDoctors = () => {
         const response = await patientAPI.getAllDoctors(1, 4);
         if (response?.IsSuccess && response?.Data) {
           const baseDoctors: DoctorDto[] = response.Data.Items || response.Data || [];
-
-          // Fetch session price for each doctor in parallel
           const priceResults = await Promise.allSettled(
-            baseDoctors.map((d) => patientAPI.getDoctorById(String(d.Id)))
+            baseDoctors.map((doctor) => patientAPI.getDoctorById(String(doctor.Id))),
           );
 
-          const enriched = baseDoctors.map((d, i) => {
-            const result = priceResults[i];
+          const enriched = baseDoctors.map((doctor, index) => {
+            const result = priceResults[index];
             if (result.status === "fulfilled" && result.value?.IsSuccess) {
               const data = result.value.Data;
-              const detail =
-                data?.Items && data.Items.length > 0 ? data.Items[0] : data;
-              return { ...d, SessionPrice: detail?.SessionPrice ?? null };
+              const detail = data?.Items && data.Items.length > 0 ? data.Items[0] : data;
+              return { ...doctor, SessionPrice: detail?.SessionPrice ?? null };
             }
-            return d;
+            return doctor;
           });
 
           setDoctors(enriched);
         }
       } catch {
-        // leave doctors empty — skeleton stays visible
+        setDoctors([]);
       } finally {
         setLoading(false);
       }
     };
+
     fetchDoctors();
   }, []);
 
   const skeletonCards = Array.from({ length: 4 });
+  const maxScroll = Math.max(0, doctors.length - 4);
+  const avatarStyle = {
+    width: AVATAR_SIZE,
+    height: AVATAR_SIZE,
+    minWidth: AVATAR_SIZE,
+    minHeight: AVATAR_SIZE,
+    maxWidth: AVATAR_SIZE,
+    maxHeight: AVATAR_SIZE,
+  };
 
   return (
-    <section className="bg-card rounded-2xl p-4 sm:p-6 shadow-card mb-6" dir="ltr">
-      <div className="flex items-center justify-between mb-5">
+    <section className="pt-4" dir="ltr">
+      <div className="mb-6 flex items-center justify-between">
         <button
           onClick={() => navigate("/dashboard/patient/reserve")}
-          className="text-sm text-primary font-semibold hover:underline"
+          className="text-sm font-medium leading-5 text-[#2B7A5F] hover:underline"
         >
-          {t("patientHome.suggestedDoctors.viewAll")}
+          عرض جميع الدكاترة
         </button>
-        <h2 className="text-lg font-bold">{t("patientHome.suggestedDoctors.title")}</h2>
+        <h2 className="text-xl font-bold leading-7 text-[#1F2937]">دكاترة مقترحون لك</h2>
       </div>
 
-      <div className="relative md:px-10">
+      <div className="relative px-7 md:px-9">
         <button
           onClick={() => setScroll(Math.max(0, scroll - 1))}
           disabled={scroll === 0}
           aria-label="previous"
-          className="absolute start-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card shadow-card border border-border hidden md:flex items-center justify-center hover:bg-muted disabled:opacity-40"
+          className="absolute left-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#F3F4F6] bg-white text-[#9CA3AF] shadow-sm transition-colors hover:bg-[#F8FAF8] disabled:opacity-40 md:flex"
         >
-          <ChevronLeft className="w-5 h-5" />
+          <ChevronLeft className="h-5 w-5" />
         </button>
 
         <button
-          onClick={() => setScroll(scroll + 1)}
-          disabled={scroll >= Math.max(0, doctors.length - 4)}
+          onClick={() => setScroll(Math.min(maxScroll, scroll + 1))}
+          disabled={scroll >= maxScroll}
           aria-label="next"
-          className="absolute end-0 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-card shadow-card border border-border hidden md:flex items-center justify-center hover:bg-muted disabled:opacity-40"
+          className="absolute right-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#F3F4F6] bg-white text-[#9CA3AF] shadow-sm transition-colors hover:bg-[#F8FAF8] disabled:opacity-40 md:flex"
         >
-          <ChevronRight className="w-5 h-5" />
+          <ChevronRight className="h-5 w-5" />
         </button>
 
         <div className="overflow-hidden">
           <div
-            className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 transition-transform duration-300"
-            style={{
-              transform: `translateX(-${scroll * 25}%)`,
-            }}
+            className="grid grid-cols-1 gap-6 transition-transform duration-300 sm:grid-cols-2 lg:grid-cols-4"
+            style={{ transform: `translateX(-${scroll * 25}%)` }}
           >
             {loading
-              ? skeletonCards.map((_, i) => (
+              ? skeletonCards.map((_, index) => (
                   <div
-                    key={i}
-                    className="rounded-2xl border border-border flex flex-col overflow-hidden animate-pulse"
+                    key={index}
+                    className="flex animate-pulse flex-col items-center rounded-2xl border border-[#F3F4F6] bg-white px-[21px] py-8 shadow-sm"
+                    style={{ height: CARD_HEIGHT, minHeight: CARD_HEIGHT, maxHeight: CARD_HEIGHT }}
                   >
-                    <div className="w-full aspect-[4/3] bg-muted" />
-                    <div className="p-4 flex flex-col gap-3 items-center w-full">
-                      <div className="h-3 w-24 bg-muted rounded" />
-                      <div className="h-2 w-16 bg-muted rounded" />
-                      <div className="h-2 w-12 bg-muted rounded" />
-                      <div className="h-3 w-20 bg-muted rounded" />
-                      <div className="h-8 w-full bg-muted rounded-lg" />
+                    <div className="rounded-full bg-muted" style={avatarStyle} />
+                    <div className="flex w-full flex-1 flex-col items-center gap-3 pt-5">
+                      <div className="h-3 w-24 rounded bg-muted" />
+                      <div className="h-2 w-16 rounded bg-muted" />
+                      <div className="h-2 w-12 rounded bg-muted" />
+                      <div className="h-3 w-20 rounded bg-muted" />
+                      <div className="mt-auto h-10 w-full rounded-xl bg-muted" />
                     </div>
                   </div>
                 ))
-              : doctors.map((d) => (
+              : doctors.map((doctor) => (
                   <article
-                    key={d.Id}
-                    className="rounded-2xl border border-border text-center hover:shadow-card transition-shadow flex flex-col overflow-hidden"
+                    key={doctor.Id}
+                    className="flex flex-col items-center rounded-2xl border border-[#F3F4F6] bg-white px-[21px] py-8 text-center shadow-sm transition-all hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(15,81,50,0.10)]"
+                    style={{ height: CARD_HEIGHT, minHeight: CARD_HEIGHT, maxHeight: CARD_HEIGHT }}
                   >
-                    {/* Portrait photo — fills card top */}
-                    <div className="w-full aspect-[4/3] overflow-hidden bg-muted">
-                      {d.Image ? (
+                    <div
+                      className="overflow-hidden rounded-full bg-[#F9FAFB]"
+                      style={{ ...avatarStyle, flex: `0 0 ${AVATAR_SIZE}px` }}
+                    >
+                      {doctor.Image ? (
                         <img
-                          src={d.Image}
-                          alt={d.Name}
+                          src={doctor.Image}
+                          alt={doctor.Name}
                           loading="lazy"
-                          className="w-full h-full object-cover object-top"
+                          className="block rounded-full object-cover object-top"
+                          style={avatarStyle}
                         />
                       ) : (
-                        <div className="w-full h-full bg-primary-soft flex items-center justify-center text-primary text-4xl font-bold">
-                          {d.Name.charAt(0)}
+                        <div
+                          className="flex items-center justify-center bg-primary-soft text-3xl font-bold text-primary"
+                          style={avatarStyle}
+                        >
+                          {doctor.Name.charAt(0)}
                         </div>
                       )}
                     </div>
 
-                    <div className="p-4 flex flex-col items-center flex-1">
-                      <h4 className="font-bold text-sm mb-0.5">{d.Name}</h4>
-                      {d.Specialist && d.Specialist.length > 0 && (
-                        <p className="text-xs text-muted-foreground mb-2">
-                          {d.Specialist[0]}
+                    <div className="flex min-h-0 flex-1 flex-col items-center pt-5">
+                      <h4 className="max-w-full truncate text-base font-bold leading-6 text-[#1F2937]">
+                        {doctor.Name}
+                      </h4>
+                      {doctor.Specialist && doctor.Specialist.length > 0 && (
+                        <p className="max-w-full truncate text-xs leading-4 text-[#6B7280]">
+                          {doctor.Specialist[0]}
                         </p>
                       )}
-                      <div className="flex items-center justify-center gap-1 text-xs mb-2">
-                        <span className="font-semibold">{d.Rate.toFixed(1)}</span>
-                        <Star className="w-4 h-4 fill-mood-3 text-mood-3" />
+
+                      <div className="mt-2 flex items-center justify-center gap-1 text-sm leading-5">
+                        <Star className="h-3 w-3 fill-[#FACC15] text-[#FACC15]" />
+                        <span className="font-medium text-[#374151]">{Number(doctor.Rate || 0).toFixed(1)}</span>
                       </div>
-                      {d.SessionPrice != null && d.SessionPrice > 0 && (
-                        <p className="text-sm font-semibold text-primary mb-3">
-                          {d.SessionPrice} {t("patientHome.suggestedDoctors.perSession")}
-                        </p>
-                      )}
+
+                      <p className="pb-4 pt-2 text-xs font-bold leading-4 text-[#374151]">
+                        {doctor.SessionPrice && doctor.SessionPrice > 0
+                          ? `${doctor.SessionPrice} جنيه للجلسة`
+                          : "300 جنيه للجلسة"}
+                      </p>
+
                       <button
-                        onClick={() =>
-                          navigate(`/dashboard/patient/reserve?doctorId=${d.Id}`)
-                        }
-                        className="w-full mt-auto border border-primary text-primary hover:bg-primary-soft text-sm font-semibold py-2 rounded-lg transition-colors"
+                        onClick={() => navigate(`/dashboard/patient/reserve?doctorId=${doctor.Id}`)}
+                        className="mt-auto h-10 w-full rounded-xl border border-[#E5E7EB] text-sm font-medium leading-5 text-[#374151] transition-colors hover:border-[#2B7A5F] hover:bg-[#F0FDF4] hover:text-[#2B7A5F]"
                       >
-                        {t("patientHome.suggestedDoctors.bookNow")}
+                        احجز الآن
                       </button>
                     </div>
                   </article>

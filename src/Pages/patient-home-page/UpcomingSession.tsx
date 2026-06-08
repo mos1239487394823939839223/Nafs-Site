@@ -32,7 +32,7 @@ export const UpcomingSession = ({
   const [meetingLoading, setMeetingLoading] = useState(false);
 
   const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString(t("auto.enus"), {
+    new Date(iso).toLocaleDateString("ar-EG", {
       weekday: "long",
       day: "numeric",
       month: "long",
@@ -40,7 +40,7 @@ export const UpcomingSession = ({
     });
 
   const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString(t("auto.enus"), {
+    new Date(iso).toLocaleTimeString("ar-EG", {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -100,7 +100,7 @@ export const UpcomingSession = ({
   );
 
   const handleStartMeeting = async () => {
-    if (!session || !bookingId || meetingLoading) return;
+    if (!session || !bookingId || meetingLoading || !canStartMeeting) return;
     setMeetingLoading(true);
     try {
       const response = await meetingAPI.startBookingMeeting(bookingId);
@@ -130,82 +130,83 @@ export const UpcomingSession = ({
   };
 
   return (
-    <section className="bg-card rounded-2xl p-4 sm:p-6 shadow-card mb-6">
-      <div className="flex items-center justify-between mb-5">
+    <section className="pt-4">
+      <div className="mb-4 flex items-center justify-between">
         <button
           onClick={() => navigate("/dashboard/patient/reserve")}
-          className="text-sm text-primary font-semibold hover:underline"
+          className="text-sm font-medium leading-5 text-[#2B7A5F] hover:underline"
         >
-          {t("patientHome.upcomingSession.viewAll")}
+          عرض جميع الجلسات
         </button>
-        <h2 className="text-lg font-bold">{t("patientHome.upcomingSession.title")}</h2>
+        <h2 className="text-xl font-bold leading-7 text-[#1F2937]">جلساتك القادمة</h2>
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground text-center py-4">
-          {t("patientHome.upcomingSession.loading")}
-        </p>
+        <div className="rounded-2xl border border-[#F3F4F6] bg-white p-[25px] text-center shadow-sm">
+          <p className="text-sm text-[#6B7280]">{t("patientHome.upcomingSession.loading")}</p>
+        </div>
       ) : !session ? (
-        <div className="rounded-2xl border border-dashed border-primary/40 bg-primary-soft/40 p-6 text-center">
-          <Sparkles className="w-8 h-8 text-primary mx-auto mb-3" />
-          <h3 className="font-bold text-lg">{t("patientHome.upcomingSession.startNow")}</h3>
-          <p className="text-sm text-muted-foreground mt-1 mb-4">
-            {t("patientHome.upcomingSession.startNowDesc")}
-          </p>
+        <div className="rounded-2xl border border-dashed border-[#2F855A]/40 bg-white p-[25px] text-center shadow-sm">
+          <Sparkles className="mx-auto mb-3 h-8 w-8 text-[#2F855A]" />
+          <h3 className="text-lg font-black text-[#12372A]">{t("patientHome.upcomingSession.startNow")}</h3>
+          <p className="mb-5 mt-2 text-sm text-[#60766C]">{t("patientHome.upcomingSession.startNowDesc")}</p>
           <button
             onClick={() => navigate("/dashboard/patient/reserve")}
-            className="bg-primary text-primary-foreground rounded-xl px-6 py-2.5 text-sm font-semibold hover:opacity-90"
+            className="rounded-xl bg-[#2F6955] px-6 py-3 text-sm font-bold text-white"
           >
             {t("patientHome.upcomingSession.bookFirst")}
           </button>
         </div>
       ) : (
-        <div className="flex flex-col md:flex-row md:items-center gap-5 md:gap-8">
-          <div className="flex items-center gap-3 md:min-w-[240px]">
-            <img
-              src={session.DoctorImage || fallbackDoc}
-              alt={session.DoctorName}
-              width={56}
-              height={56}
-              loading="lazy"
-              className="w-14 h-14 rounded-full object-cover flex-shrink-0"
-            />
-            <div className="text-start">
-              <p className="font-bold">{session.DoctorName}</p>
-              <span className="inline-block mt-1 text-[11px] bg-primary-soft text-primary px-2 py-0.5 rounded-full">
-                {t("patientHome.upcomingSession.sessionType")}
-              </span>
+        <div className="rounded-2xl border border-[#F3F4F6] bg-white p-[25px] shadow-sm" dir="ltr">
+          <div className="grid items-center gap-6 lg:grid-cols-[192px_1fr_auto]">
+            <div className="order-3 flex items-center justify-end gap-4 lg:order-3">
+              <div className="text-right">
+                <p className="text-lg font-bold leading-7 text-[#1F2937]">{session.DoctorName}</p>
+                <p className="pb-1 text-sm leading-5 text-[#6B7280]">
+                  {session.Specialist || session.DoctorSpecialty || "معالج"}
+                </p>
+                <span className="inline-block rounded-full bg-[#F0FDF4] px-3 py-1 text-xs leading-4 text-[#2B7A5F]">
+                  {t("patientHome.upcomingSession.sessionType")}
+                </span>
+              </div>
+              <img
+                src={session.DoctorImage || fallbackDoc}
+                alt={session.DoctorName}
+                width={65}
+                height={73}
+                loading="lazy"
+                className="h-[73px] w-[65px] flex-shrink-0 rounded-full bg-[#F3F4F6] object-cover"
+              />
             </div>
-          </div>
 
-          <div className="flex-1 flex flex-col gap-2 text-sm text-muted-foreground md:items-center">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-primary flex-shrink-0" />
-              <span>{formatDate(session.SessionStartTime)}</span>
+            <div className="order-2 flex flex-col items-center justify-center gap-3 text-base leading-6 text-[#4B5563] sm:flex-row sm:gap-8 lg:order-2">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 flex-shrink-0 text-[#9CA3AF]" />
+                <span dir="rtl">{formatDate(session.SessionStartTime)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 flex-shrink-0 text-[#9CA3AF]" />
+                <span dir="rtl">{formatTime(session.SessionStartTime)}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-primary flex-shrink-0" />
-              <span>{formatTime(session.SessionStartTime)}</span>
-            </div>
-          </div>
 
-          <div className="flex flex-col gap-2 md:min-w-[180px]">
-            {canStartMeeting && (
+            <div className="order-1 flex w-full flex-col gap-3 lg:order-1 lg:w-48">
               <button
                 onClick={handleStartMeeting}
-                disabled={meetingLoading}
-                className="inline-flex items-center justify-center gap-2 bg-primary hover:opacity-90 disabled:opacity-60 text-primary-foreground font-semibold py-2.5 px-5 rounded-xl text-sm transition-opacity"
+                disabled={!canStartMeeting || meetingLoading}
+                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2F6955] px-5 text-base font-medium leading-6 text-white transition-colors hover:bg-[#255845] disabled:cursor-not-allowed disabled:bg-[#D8DED9] disabled:text-[#9AA69E]"
               >
-                {meetingLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
-                {t("patientHome.upcomingSession.startMeeting", "ابدأ الجلسة")}
+                {meetingLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
+                الدخول للجلسة
               </button>
-            )}
-            <button
-              onClick={() => navigate("/dashboard/patient/reserve")}
-              className="border border-border text-foreground hover:bg-muted font-semibold py-2.5 px-5 rounded-xl text-sm transition-colors"
-            >
-              {t("patientHome.upcomingSession.sessionDetails")}
-            </button>
+              <button
+                onClick={() => navigate("/dashboard/patient/reserve")}
+                className="h-11 rounded-xl border border-[#E5E7EB] bg-white px-5 text-base font-medium leading-6 text-[#4B5563] transition-colors hover:bg-[#F8FAF8]"
+              >
+                تفاصيل الجلسة
+              </button>
+            </div>
           </div>
         </div>
       )}

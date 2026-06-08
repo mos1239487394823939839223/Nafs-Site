@@ -1,4 +1,4 @@
-import { Brain, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
 
@@ -21,52 +21,41 @@ export const MoodGauge = ({
 }) => {
   const { t } = useLanguage();
   const navigate = useNavigate();
+  const percent = assessment || hasCompletedSession ? 75 : 25;
+  const statusText = assessment?.level || (hasCompletedSession ? "تحسن ملحوظ" : "ابدأ التقييم");
 
   return (
-    <section className="bg-card rounded-2xl p-6 shadow-card flex flex-col">
-      <h3 className="text-center font-bold mb-2">{t("patientHome.moodGauge.title")}</h3>
+    <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-6 text-center shadow-[0_14px_40px_rgba(15,81,50,0.06)]">
+      <h3 className="mb-5 text-xl font-black text-[#12372A]">{t("patientHome.moodGauge.title")}</h3>
 
       {loading ? (
-        <Loader2 className="w-6 h-6 animate-spin text-primary mx-auto my-10" />
-      ) : !assessment ? (
-        <div className="text-center py-5">
-          <Brain className="w-10 h-10 text-primary mx-auto mb-3" />
-          <h4 className="font-bold mb-2">
-            {hasCompletedSession
-              ? t("patientHome.moodGauge.awaitingTitle")
-              : t("patientHome.moodGauge.emptyTitle")}
-          </h4>
-          <p className="text-sm text-muted-foreground mb-5">
-            {hasCompletedSession
-              ? t("patientHome.moodGauge.awaitingDesc")
-              : t("patientHome.moodGauge.emptyDesc")}
-          </p>
-          {!hasCompletedSession && (
-            <button
-              onClick={() => navigate("/dashboard/patient/reserve")}
-              className="w-full bg-primary text-primary-foreground font-semibold py-2.5 rounded-xl text-sm"
-            >
-              {t("patientHome.moodGauge.bookFirst")}
-            </button>
-          )}
-        </div>
+        <Loader2 className="mx-auto my-14 h-7 w-7 animate-spin text-[#2F855A]" />
       ) : (
-        <div className="space-y-3 mt-3">
-          {assessment.summary && (
-            <div className="rounded-xl bg-primary-soft p-4">
-              <p className="text-xs text-muted-foreground mb-1">{t("patientHome.moodGauge.assessment")}</p>
-              <p className="font-semibold">{assessment.summary}</p>
+        <>
+          <div
+            className="mx-auto grid h-36 w-36 place-items-center rounded-full"
+            style={{
+              background: `conic-gradient(#57B36B ${percent * 3.6}deg, #DDE8DF 0deg)`,
+            }}
+          >
+            <div className="grid h-24 w-24 place-items-center rounded-full bg-white shadow-inner">
+              <div>
+                <p className="text-3xl font-black text-[#12372A]">{percent}%</p>
+                <p className="text-xs font-bold text-[#2F855A]">{statusText}</p>
+              </div>
             </div>
-          )}
-          {assessment.level && <p className="text-sm"><strong>{t("patientHome.moodGauge.level")}:</strong> {assessment.level}</p>}
-          {assessment.note && <p className="text-sm"><strong>{t("patientHome.moodGauge.notes")}:</strong> {assessment.note}</p>}
-          {assessment.recommendations && <p className="text-sm"><strong>{t("patientHome.moodGauge.recommendations")}:</strong> {assessment.recommendations}</p>}
-          {assessment.updatedAt && (
-            <p className="text-xs text-muted-foreground">
-              {t("patientHome.moodGauge.lastUpdate")}: {new Date(assessment.updatedAt).toLocaleDateString()}
-            </p>
-          )}
-        </div>
+          </div>
+
+          <p className="mx-auto mt-4 max-w-xs text-sm leading-6 text-[#60766C]">
+            {assessment?.summary || "استمر في رحلتك، أنت على الطريق الصحيح"}
+          </p>
+          <button
+            onClick={() => navigate("/dashboard/patient/tests")}
+            className="mt-5 h-11 w-full rounded-2xl border border-[#E5E7EB] text-sm font-extrabold text-[#2F855A] transition-colors hover:bg-[#F8FAF8]"
+          >
+            تاريخ التقييمات
+          </button>
+        </>
       )}
     </section>
   );

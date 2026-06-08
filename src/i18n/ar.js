@@ -596,6 +596,12 @@ export default {
     adminDashboard: "لوحة تحكم المسؤول",
     customerService: "خدمة العملاء",
     home: "الرئيسية",
+    mySessions: "جلساتي",
+    doctors: "الدكاترة",
+    psychologicalAssessment: "تقييم نفسي",
+    treatmentPrograms: "برامج علاجية",
+    contentLibrary: "مكتبة المحتوى",
+    supportAndHelp: "الدعم والمساعدة",
   },
 
   // Sidebar Cards
@@ -610,10 +616,18 @@ export default {
       desc: "نحن هنا لحمايتك. يمكنك طلب المساعدة بسرية تامة.",
       cta: "طلب حماية",
     },
+    privacy: {
+      title: "خصوصيتك تهمنا",
+      desc: "جميع محادثاتك وجلساتك مشفرة 100% وسرية تماماً",
+    },
   },
 
   // Patient Home Page
   patientHome: {
+    header: {
+      welcome: "أهلاً بك",
+      feelingToday: "كيف تشعر اليوم؟",
+    },
     hero: {
       title: "رحلتك نحو حياة نفسية أفضل",
       subtitle: "أنا هنا لدعمك في كل خطوة على الطريق",
@@ -649,6 +663,7 @@ export default {
       title: "جلساتك القادمة",
       viewAll: "عرض جميع الجلسات",
       sessionType: "جلسة فردية",
+      therapist: "معالج",
       enterSession: "الدخول للجلسة",
       sessionDetails: "تفاصيل الجلسة",
       noUpcoming: "لا توجد جلسات قادمة",
@@ -666,6 +681,7 @@ export default {
     moodGauge: {
       title: "حالتك النفسية اليوم",
       improvement: "تحسن ملحوظ",
+      startAssessment: "ابدأ التقييم",
       encouragement: "استمر في رحلتك، أنت على الطريق الصحيح",
       history: "تاريخ التقييمات",
       emptyTitle: "ابدأ جلستك الأولى لتقييم ومتابعة حالتك النفسية",
@@ -682,9 +698,11 @@ export default {
     treatmentProgram: {
       label: "البرنامج العلاجي",
       title: "برنامج إدارة القلق",
+      defaultTitle: "برنامج إدارة القلق",
       session: "جلسة",
       of: "من",
       continue: "متابعة البرنامج",
+      continueDesc: "تابع خطوات برنامجك العلاجي",
       emptyTitle: "ابدأ جلستك الأولى لتحديد البرنامج المناسب",
       emptyDesc: "بعد الجلسة الأولى يحدد المعالج البرنامج العلاجي الأنسب بناءً على تقييم حالتك.",
       awaitingTitle: "بانتظار اعتماد البرنامج العلاجي",
@@ -693,6 +711,8 @@ export default {
     },
     journeyUpdate: {
       title: "آخر تحديثات المعالج",
+      latestBadge: "آخر تحديث",
+      justNow: "منذ قليل",
       awaiting: "بانتظار إضافة الملاحظات والتوصيات من المعالج.",
       messageTherapist: "تواصل مع المعالج",
     },

@@ -355,6 +355,12 @@ export default {
     adminDashboard: "Admin Dashboard",
     customerService: "Customer Service",
     home: "Home",
+    mySessions: "My Sessions",
+    doctors: "Doctors",
+    psychologicalAssessment: "Psychological Assessment",
+    treatmentPrograms: "Treatment Programs",
+    contentLibrary: "Content Library",
+    supportAndHelp: "Support & Help",
   },
 
   // Sidebar Cards
@@ -369,10 +375,18 @@ export default {
       desc: "We're here to protect you. You can request help in complete confidentiality.",
       cta: "Request Protection",
     },
+    privacy: {
+      title: "Your privacy matters",
+      desc: "All your conversations and sessions are 100% encrypted and fully confidential.",
+    },
   },
 
   // Patient Home Page
   patientHome: {
+    header: {
+      welcome: "Welcome",
+      feelingToday: "How are you feeling today?",
+    },
     hero: {
       title: "Your Journey Towards a Better Mental Life",
       subtitle: "I'm here to support you every step of the way",
@@ -408,6 +422,7 @@ export default {
       title: "Your Upcoming Sessions",
       viewAll: "View All Sessions",
       sessionType: "Individual Session",
+      therapist: "Therapist",
       enterSession: "Enter Session",
       sessionDetails: "Session Details",
       noUpcoming: "No upcoming sessions",
@@ -425,6 +440,7 @@ export default {
     moodGauge: {
       title: "Your Psychological State Today",
       improvement: "Notable Improvement",
+      startAssessment: "Start Assessment",
       encouragement: "Keep going, you're on the right track",
       history: "Assessment History",
       emptyTitle: "Start your first session to assess and track your mental wellbeing",
@@ -441,9 +457,11 @@ export default {
     treatmentProgram: {
       label: "Treatment Program",
       title: "Anxiety Management Program",
+      defaultTitle: "Anxiety Management Program",
       session: "Session",
       of: "of",
       continue: "Continue Program",
+      continueDesc: "Continue your treatment program steps",
       emptyTitle: "Start your first session to identify the right program",
       emptyDesc: "After the first session, your therapist will select the most suitable treatment program based on your assessment.",
       awaitingTitle: "Awaiting Treatment Program Approval",
@@ -452,6 +470,8 @@ export default {
     },
     journeyUpdate: {
       title: "Latest Therapist Updates",
+      latestBadge: "Latest Update",
+      justNow: "Just now",
       awaiting: "Waiting for your therapist to add notes and recommendations.",
       messageTherapist: "Message Therapist",
     },
