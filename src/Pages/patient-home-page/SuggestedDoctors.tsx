@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { patientAPI } from "../../lib/api";
+import { useLanguage } from "../../contexts/LanguageContext";
+import { SectionHeading } from "./SectionHeading";
 
 interface DoctorDto {
   Id: number;
@@ -17,6 +19,7 @@ const CARD_HEIGHT = 324;
 
 export const SuggestedDoctors = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [doctors, setDoctors] = useState<DoctorDto[]>([]);
   const [loading, setLoading] = useState(true);
   const [scroll, setScroll] = useState(0);
@@ -65,37 +68,33 @@ export const SuggestedDoctors = () => {
   };
 
   return (
-    <section className="pt-4" dir="ltr">
-      <div className="mb-6 flex items-center justify-between">
-        <button
-          onClick={() => navigate("/dashboard/patient/reserve")}
-          className="text-sm font-medium leading-5 text-[#2B7A5F] hover:underline"
-        >
-          عرض جميع الدكاترة
-        </button>
-        <h2 className="text-xl font-bold leading-7 text-[#1F2937]">دكاترة مقترحون لك</h2>
-      </div>
+    <section className="pt-4">
+      <SectionHeading
+        title={t("patientHome.suggestedDoctors.title")}
+        actionLabel={t("patientHome.suggestedDoctors.viewAll")}
+        onAction={() => navigate("/dashboard/patient/reserve")}
+      />
 
       <div className="relative px-7 md:px-9">
         <button
           onClick={() => setScroll(Math.max(0, scroll - 1))}
           disabled={scroll === 0}
           aria-label="previous"
-          className="absolute left-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#F3F4F6] bg-white text-[#9CA3AF] shadow-sm transition-colors hover:bg-[#F8FAF8] disabled:opacity-40 md:flex"
+          className="absolute start-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#F3F4F6] bg-white text-[#9CA3AF] shadow-sm transition-colors hover:bg-[#F8FAF8] disabled:opacity-40 md:flex"
         >
-          <ChevronLeft className="h-5 w-5" />
+          <ChevronLeft className="h-5 w-5 rtl:rotate-180" />
         </button>
 
         <button
           onClick={() => setScroll(Math.min(maxScroll, scroll + 1))}
           disabled={scroll >= maxScroll}
           aria-label="next"
-          className="absolute right-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#F3F4F6] bg-white text-[#9CA3AF] shadow-sm transition-colors hover:bg-[#F8FAF8] disabled:opacity-40 md:flex"
+          className="absolute end-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#F3F4F6] bg-white text-[#9CA3AF] shadow-sm transition-colors hover:bg-[#F8FAF8] disabled:opacity-40 md:flex"
         >
-          <ChevronRight className="h-5 w-5" />
+          <ChevronRight className="h-5 w-5 rtl:rotate-180" />
         </button>
 
-        <div className="overflow-hidden">
+        <div className="overflow-hidden" dir="ltr">
           <div
             className="grid grid-cols-1 gap-6 transition-transform duration-300 sm:grid-cols-2 lg:grid-cols-4"
             style={{ transform: `translateX(-${scroll * 25}%)` }}
@@ -146,11 +145,14 @@ export const SuggestedDoctors = () => {
                     </div>
 
                     <div className="flex min-h-0 flex-1 flex-col items-center pt-5">
-                      <h4 className="max-w-full truncate text-base font-bold leading-6 text-[#1F2937]">
+                      <h4
+                        className="w-full truncate text-center text-base font-bold leading-6 text-[#1F2937]"
+                        dir="auto"
+                      >
                         {doctor.Name}
                       </h4>
                       {doctor.Specialist && doctor.Specialist.length > 0 && (
-                        <p className="max-w-full truncate text-xs leading-4 text-[#6B7280]">
+                        <p className="w-full truncate text-center text-xs leading-4 text-[#6B7280]" dir="auto">
                           {doctor.Specialist[0]}
                         </p>
                       )}
@@ -162,15 +164,15 @@ export const SuggestedDoctors = () => {
 
                       <p className="pb-4 pt-2 text-xs font-bold leading-4 text-[#374151]">
                         {doctor.SessionPrice && doctor.SessionPrice > 0
-                          ? `${doctor.SessionPrice} جنيه للجلسة`
-                          : "300 جنيه للجلسة"}
+                          ? `${doctor.SessionPrice} ${t("patientHome.suggestedDoctors.perSession")}`
+                          : `300 ${t("patientHome.suggestedDoctors.perSession")}`}
                       </p>
 
                       <button
                         onClick={() => navigate(`/dashboard/patient/reserve?doctorId=${doctor.Id}`)}
                         className="mt-auto h-10 w-full rounded-xl border border-[#E5E7EB] text-sm font-medium leading-5 text-[#374151] transition-colors hover:border-[#2B7A5F] hover:bg-[#F0FDF4] hover:text-[#2B7A5F]"
                       >
-                        احجز الآن
+                        {t("patientHome.suggestedDoctors.bookNow")}
                       </button>
                     </div>
                   </article>

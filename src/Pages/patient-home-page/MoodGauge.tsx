@@ -22,7 +22,11 @@ export const MoodGauge = ({
   const { t } = useLanguage();
   const navigate = useNavigate();
   const percent = assessment || hasCompletedSession ? 75 : 25;
-  const statusText = assessment?.level || (hasCompletedSession ? "تحسن ملحوظ" : "ابدأ التقييم");
+  const statusText =
+    assessment?.level ||
+    (hasCompletedSession
+      ? t("patientHome.moodGauge.improvement")
+      : t("patientHome.moodGauge.startAssessment"));
 
   return (
     <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-6 text-center shadow-[0_14px_40px_rgba(15,81,50,0.06)]">
@@ -47,13 +51,13 @@ export const MoodGauge = ({
           </div>
 
           <p className="mx-auto mt-4 max-w-xs text-sm leading-6 text-[#60766C]">
-            {assessment?.summary || "استمر في رحلتك، أنت على الطريق الصحيح"}
+            {assessment?.summary || t("patientHome.moodGauge.encouragement")}
           </p>
           <button
             onClick={() => navigate("/dashboard/patient/tests")}
             className="mt-5 h-11 w-full rounded-2xl border border-[#E5E7EB] text-sm font-extrabold text-[#2F855A] transition-colors hover:bg-[#F8FAF8]"
           >
-            تاريخ التقييمات
+            {t("patientHome.moodGauge.history")}
           </button>
         </>
       )}

@@ -125,7 +125,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
           <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onClose} />
         )}
         <aside
-          className={`fixed start-0 top-0 z-50 h-full w-[86vw] max-w-[310px] border-e border-white/10 bg-gradient-to-b from-[#0F5132] via-[#104733] to-[#083625] text-white shadow-2xl shadow-black/25 transform transition-transform duration-300 ease-in-out ${
+          className={`fixed start-0 top-0 z-50 h-full w-[86vw] max-w-[280px] border-e border-white/10 bg-gradient-to-b from-[#0F5132] via-[#104733] to-[#083625] text-white shadow-2xl shadow-black/25 transform transition-transform duration-300 ease-in-out ${
             isOpen
               ? "translate-x-0"
               : isRTL
@@ -135,20 +135,41 @@ export default function DynamicSidebar({ isOpen, onClose }) {
         >
           <div className="flex h-full flex-col overflow-hidden">
             <div className="flex items-center justify-between px-5 py-6">
-              <button
-                type="button"
-                onClick={onClose}
-                className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 text-white/85 transition-colors hover:bg-white/15"
-                aria-label="Menu"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
-              <div className="flex items-center gap-2">
-                <span className="text-3xl font-black tracking-tight">nafas</span>
-                <span className="grid h-9 w-9 place-items-center rounded-2xl bg-gradient-to-br from-[#7ACB88] to-[#2F855A]">
-                  <HeartHandshake className="h-5 w-5 text-white" />
-                </span>
-              </div>
+              {isRTL ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl font-black tracking-tight">nafas</span>
+                    <span className="grid h-9 w-9 place-items-center rounded-2xl bg-gradient-to-br from-[#7ACB88] to-[#2F855A]">
+                      <HeartHandshake className="h-5 w-5 text-white" />
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 text-white/85 transition-colors hover:bg-white/15"
+                    aria-label="Menu"
+                  >
+                    <Menu className="h-5 w-5" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 text-white/85 transition-colors hover:bg-white/15"
+                    aria-label="Menu"
+                  >
+                    <Menu className="h-5 w-5" />
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <span className="text-3xl font-black tracking-tight">nafas</span>
+                    <span className="grid h-9 w-9 place-items-center rounded-2xl bg-gradient-to-br from-[#7ACB88] to-[#2F855A]">
+                      <HeartHandshake className="h-5 w-5 text-white" />
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
 
             <nav className="flex-1 overflow-y-auto px-4 pb-5">

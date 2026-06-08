@@ -7,6 +7,7 @@ export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const { role } = useAuth()
   const isPatient = role === Roles.PATIENT
+  const sidebarOffset = isPatient ? 'lg:ps-[280px]' : 'lg:ps-64'
 
   return (
     <div className="flex h-screen overflow-hidden bg-[#F8FAF8]" >
@@ -14,7 +15,7 @@ export default function Layout({ children }) {
       <DynamicSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
       {/* Main Content */}
-      <div className={`flex-1 flex flex-col overflow-hidden min-w-0 w-full ${isPatient ? 'lg:ms-[310px]' : 'lg:ms-64'}`}>
+      <div className={`flex-1 flex flex-col overflow-hidden min-w-0 w-full ${sidebarOffset}`}>
         {/* Header */}
         <Header onMenuClick={() => setSidebarOpen(true)} />
 

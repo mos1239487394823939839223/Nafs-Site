@@ -6,6 +6,7 @@ import { useToast } from "../../components/ui/Toast";
 import { extractErrorMessage, meetingAPI } from "../../lib/api";
 import { getAppointmentStatusKey } from "../../lib/appointmentStatus";
 import fallbackDoc from "./assets/doctor-2.jpg";
+import { SectionHeading } from "./SectionHeading";
 
 interface BookingDto {
   [key: string]: any;
@@ -26,13 +27,14 @@ export const UpcomingSession = ({
   session: BookingDto | null;
   loading: boolean;
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const dateLocale = language === "ar" ? "ar-EG" : "en-US";
   const navigate = useNavigate();
   const toast = useToast();
   const [meetingLoading, setMeetingLoading] = useState(false);
 
   const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString("ar-EG", {
+    new Date(iso).toLocaleDateString(dateLocale, {
       weekday: "long",
       day: "numeric",
       month: "long",
@@ -40,7 +42,7 @@ export const UpcomingSession = ({
     });
 
   const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString("ar-EG", {
+    new Date(iso).toLocaleTimeString(dateLocale, {
       hour: "2-digit",
       minute: "2-digit",
     });
@@ -131,15 +133,11 @@ export const UpcomingSession = ({
 
   return (
     <section className="pt-4">
-      <div className="mb-4 flex items-center justify-between">
-        <button
-          onClick={() => navigate("/dashboard/patient/reserve")}
-          className="text-sm font-medium leading-5 text-[#2B7A5F] hover:underline"
-        >
-          عرض جميع الجلسات
-        </button>
-        <h2 className="text-xl font-bold leading-7 text-[#1F2937]">جلساتك القادمة</h2>
-      </div>
+      <SectionHeading
+        title={t("patientHome.upcomingSession.title")}
+        actionLabel={t("patientHome.upcomingSession.viewAll")}
+        onAction={() => navigate("/dashboard/patient/reserve")}
+      />
 
       {loading ? (
         <div className="rounded-2xl border border-[#F3F4F6] bg-white p-[25px] text-center shadow-sm">
@@ -158,53 +156,55 @@ export const UpcomingSession = ({
           </button>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[#F3F4F6] bg-white p-[25px] shadow-sm" dir="ltr">
-          <div className="grid items-center gap-6 lg:grid-cols-[192px_1fr_auto]">
-            <div className="order-3 flex items-center justify-end gap-4 lg:order-3">
-              <div className="text-right">
-                <p className="text-lg font-bold leading-7 text-[#1F2937]">{session.DoctorName}</p>
-                <p className="pb-1 text-sm leading-5 text-[#6B7280]">
-                  {session.Specialist || session.DoctorSpecialty || "معالج"}
-                </p>
-                <span className="inline-block rounded-full bg-[#F0FDF4] px-3 py-1 text-xs leading-4 text-[#2B7A5F]">
-                  {t("patientHome.upcomingSession.sessionType")}
-                </span>
-              </div>
+        <div className="rounded-2xl border border-[#F3F4F6] bg-white p-[25px] shadow-sm">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-w-0 items-center gap-4">
               <img
                 src={session.DoctorImage || fallbackDoc}
                 alt={session.DoctorName}
                 width={65}
                 height={73}
                 loading="lazy"
-                className="h-[73px] w-[65px] flex-shrink-0 rounded-full bg-[#F3F4F6] object-cover"
+                className="h-[73px] w-[65px] shrink-0 rounded-full bg-[#F3F4F6] object-cover"
               />
+              <div className="min-w-0 text-start">
+                <p className="truncate text-lg font-bold leading-7 text-[#1F2937]" dir="auto">
+                  {session.DoctorName}
+                </p>
+                <p className="pb-1 text-sm leading-5 text-[#6B7280]" dir="auto">
+                  {session.Specialist || session.DoctorSpecialty || t("patientHome.upcomingSession.therapist")}
+                </p>
+                <span className="inline-block rounded-full bg-[#F0FDF4] px-3 py-1 text-xs leading-4 text-[#2B7A5F]">
+                  {t("patientHome.upcomingSession.sessionType")}
+                </span>
+              </div>
             </div>
 
-            <div className="order-2 flex flex-col items-center justify-center gap-3 text-base leading-6 text-[#4B5563] sm:flex-row sm:gap-8 lg:order-2">
+            <div className="flex flex-col items-start justify-center gap-3 text-base leading-6 text-[#4B5563] sm:flex-row sm:flex-wrap sm:items-center sm:gap-8 lg:justify-center">
               <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 flex-shrink-0 text-[#9CA3AF]" />
-                <span dir="rtl">{formatDate(session.SessionStartTime)}</span>
+                <Calendar className="h-5 w-5 shrink-0 text-[#9CA3AF]" />
+                <span>{formatDate(session.SessionStartTime)}</span>
               </div>
               <div className="flex items-center gap-2">
-                <Clock className="h-5 w-5 flex-shrink-0 text-[#9CA3AF]" />
-                <span dir="rtl">{formatTime(session.SessionStartTime)}</span>
+                <Clock className="h-5 w-5 shrink-0 text-[#9CA3AF]" />
+                <span>{formatTime(session.SessionStartTime)}</span>
               </div>
             </div>
 
-            <div className="order-1 flex w-full flex-col gap-3 lg:order-1 lg:w-48">
+            <div className="flex w-full shrink-0 flex-col gap-3 lg:w-48">
               <button
                 onClick={handleStartMeeting}
                 disabled={!canStartMeeting || meetingLoading}
                 className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2F6955] px-5 text-base font-medium leading-6 text-white transition-colors hover:bg-[#255845] disabled:cursor-not-allowed disabled:bg-[#D8DED9] disabled:text-[#9AA69E]"
               >
                 {meetingLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
-                الدخول للجلسة
+                {t("patientHome.upcomingSession.enterSession")}
               </button>
               <button
                 onClick={() => navigate("/dashboard/patient/reserve")}
                 className="h-11 rounded-xl border border-[#E5E7EB] bg-white px-5 text-base font-medium leading-6 text-[#4B5563] transition-colors hover:bg-[#F8FAF8]"
               >
-                تفاصيل الجلسة
+                {t("patientHome.upcomingSession.sessionDetails")}
               </button>
             </div>
           </div>

@@ -3,18 +3,18 @@ import { useLanguage } from "../../contexts/LanguageContext";
 
 type MoodKey = "terrible" | "bad" | "okay" | "good" | "great";
 
-const moods: Array<{
+const moodMeta: Array<{
   key: MoodKey;
-  label: string;
+  labelKey: string;
   emoji: string;
   color: string;
   ring: string;
 }> = [
-  { key: "terrible", label: "سيئ جداً", emoji: "😣", color: "bg-[#EF4444]", ring: "ring-[#FCA5A5]" },
-  { key: "bad", label: "سيئ", emoji: "🙁", color: "bg-[#F97316]", ring: "ring-[#FDBA74]" },
-  { key: "okay", label: "متوسط", emoji: "😐", color: "bg-[#FACC15]", ring: "ring-[#FDE68A]" },
-  { key: "good", label: "جيد", emoji: "🙂", color: "bg-[#FBBF24]", ring: "ring-[#FDE68A]" },
-  { key: "great", label: "رائع", emoji: "😊", color: "bg-[#79C267]", ring: "ring-[#BBF7D0]" },
+  { key: "terrible", labelKey: "patientHome.moodCheckIn.terrible", emoji: "😣", color: "bg-[#EF4444]", ring: "ring-[#FCA5A5]" },
+  { key: "bad", labelKey: "patientHome.moodCheckIn.bad", emoji: "🙁", color: "bg-[#F97316]", ring: "ring-[#FDBA74]" },
+  { key: "okay", labelKey: "patientHome.moodCheckIn.okay", emoji: "😐", color: "bg-[#FACC15]", ring: "ring-[#FDE68A]" },
+  { key: "good", labelKey: "patientHome.moodCheckIn.good", emoji: "🙂", color: "bg-[#FBBF24]", ring: "ring-[#FDE68A]" },
+  { key: "great", labelKey: "patientHome.moodCheckIn.great", emoji: "😊", color: "bg-[#79C267]", ring: "ring-[#BBF7D0]" },
 ];
 
 export const MoodCheckIn = () => {
@@ -30,8 +30,8 @@ export const MoodCheckIn = () => {
         {t("patientHome.moodCheckIn.subtitle", "شاركنا مشاعرك لمساعدتك بشكل أفضل")}
       </p>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5" dir="ltr">
-        {moods.map((mood) => {
+      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
+        {moodMeta.map((mood) => {
           const isSelected = selected === mood.key;
 
           return (
@@ -51,8 +51,8 @@ export const MoodCheckIn = () => {
               >
                 {mood.emoji}
               </span>
-              <span className="mt-3 block text-sm font-bold text-[#12372A]" dir="rtl">
-                {mood.label}
+              <span className="mt-3 block text-sm font-bold text-[#12372A]">
+                {t(mood.labelKey)}
               </span>
             </button>
           );

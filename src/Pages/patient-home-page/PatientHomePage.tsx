@@ -12,7 +12,7 @@ export const PatientHomePage = () => {
   const journey = usePatientJourney();
 
   return (
-    <main className="flex-1 min-w-0 w-full space-y-6 pb-8">
+    <main className="mx-auto w-full max-w-[920px] min-w-0 space-y-6 pb-8">
       <HeroCard isNewPatient={journey.isNewPatient} />
       <QuickActions />
       <UpcomingSession session={journey.upcomingSession} loading={journey.loading} />
