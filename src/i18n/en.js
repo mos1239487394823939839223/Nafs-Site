@@ -1914,4 +1914,29 @@ export default {
     unableToResolvePatientId: "Unable to resolve patient id",
     failedToOpenSupportChat: "Failed to open support chat",
   },
+
+  // Admin Profile
+  admin: {
+    editDetails: "Edit Details",
+    updateYourInfo: "Update your personal information",
+    role: "Role",
+    roleName: "Administrator",
+    accountStatus: "Account Status",
+    accountInfo: "Account Information",
+    adminAccount: "Admin Account",
+    adminDashboard: "Admin Dashboard",
+    verified: "Verified",
+  },
+
+  // Profile
+  profile: {
+    completionLabel: "Profile Completion",
+    completionTitle: "Profile Completion",
+    complete: "Complete",
+    profilePhoto: "Profile Photo",
+    changePhoto: "Change",
+    quickActions: "Quick Actions",
+    viewPublicProfile: "View Public Profile",
+    accountType: "Account Type",
+  },
 };

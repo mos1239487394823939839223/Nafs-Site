@@ -33,11 +33,12 @@ import {
 
 import { authAPI, extractErrorMessage, toUserFacingError } from "../../../lib/api";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import { Home, Globe } from "lucide-react";
 
 export default function PatientRegistration() {
   const navigate = useNavigate();
   const toast = useToast();
-  const { t } = useLanguage();
+  const { t, language, toggleLanguage } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
   const [introStep, setIntroStep] = useState(0);
@@ -433,21 +434,6 @@ export default function PatientRegistration() {
       console.error("OTP verification failed:", error);
       setLoading(false);
       toast.error(extractErrorMessage(error, t("errors.failedVerifyOtp")));
-    }
-  };
-
-  const handleFieldChange = (field, value) => {
-    updateFormData({ [field]: value });
-    clearFieldError(field);
-  };
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background-paper to-background py-6 sm:py-12 px-3 sm:px-4 flex items-center justify-center">
-      <div className="w-full max-w-4xl">
-        <AnimatePresence mode="wait">
-          {showIntro ? (
-            <motion.div
-              key={`intro-${introStep}`}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -20 }}

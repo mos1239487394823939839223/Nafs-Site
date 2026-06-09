@@ -1873,4 +1873,29 @@ export default {
     unableToResolvePatientId: "تعذر تحديد معرف المريض",
     failedToOpenSupportChat: "تعذر فتح محادثة الدعم الفني",
   },
+
+  // Admin Profile
+  admin: {
+    editDetails: "تعديل البيانات",
+    updateYourInfo: "تحديث معلوماتك الشخصية",
+    role: "الدور",
+    roleName: "مسؤول النظام",
+    accountStatus: "حالة الحساب",
+    accountInfo: "معلومات الحساب",
+    adminAccount: "حساب المسؤول",
+    adminDashboard: "لوحة التحكم",
+    verified: "موثق",
+  },
+
+  // Profile
+  profile: {
+    completionLabel: "اكتمال الملف الشخصي",
+    completionTitle: "اكتمال الملف",
+    complete: "مكتمل",
+    profilePhoto: "الصورة الشخصية",
+    changePhoto: "تغيير",
+    quickActions: "إجراءات سريعة",
+    viewPublicProfile: "عرض الملف العام",
+    accountType: "نوع الحساب",
+  },
 };

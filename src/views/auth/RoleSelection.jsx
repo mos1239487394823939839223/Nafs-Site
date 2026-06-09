@@ -1,12 +1,12 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { User, ArrowRight, Video, Headphones, MessageCircle } from 'lucide-react'
+import { User, ArrowRight, Video, Headphones, MessageCircle, Home, Globe } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function RoleSelection() {
   const navigate = useNavigate()
-  const { t, language } = useLanguage()
+  const { t, language, toggleLanguage } = useLanguage()
   const isAr = language === "ar"
   const consultationTypes = [
     { icon: Video, title: isAr ? "استشارات الفيديو" : "Video consultations", desc: isAr ? "جلسة مرئية مباشرة مع المعالج." : "A direct video session with your therapist." },
@@ -36,6 +36,23 @@ export default function RoleSelection() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-3 sm:p-4 py-8">
+      {/* ── Floating Top Bar ── */}
+      <div className="fixed top-4 inset-x-4 z-50 flex items-center justify-between pointer-events-none">
+        <button
+          onClick={() => navigate('/')}
+          className="pointer-events-auto flex items-center gap-2 bg-background-paper/90 backdrop-blur-md border border-border shadow-lg rounded-full px-4 py-2 text-sm font-semibold text-text-heading hover:text-primary hover:border-primary/40 transition-all duration-200"
+        >
+          <Home className="w-4 h-4" />
+          <span className="hidden sm:inline">{t('auth.backToHome', 'Home')}</span>
+        </button>
+        <button
+          onClick={toggleLanguage}
+          className="pointer-events-auto flex items-center gap-2 bg-background-paper/90 backdrop-blur-md border border-border shadow-lg rounded-full px-4 py-2 text-sm font-semibold text-text-heading hover:text-primary hover:border-primary/40 transition-all duration-200"
+        >
+          <Globe className="w-4 h-4" />
+          <span>{language === 'ar' ? 'English' : 'العربية'}</span>
+        </button>
+      </div>
       <div className="w-full max-w-6xl">
         {/* Header */}
         <motion.div

@@ -111,14 +111,17 @@ export default function DynamicSidebar({ isOpen, onClose }) {
           <NavLink
             to={item.path}
             onClick={closeOnMobile}
-            className={`flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold transition-all ${
+            className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all relative ${
               isActive
-                ? "bg-white/14 text-white shadow-lg shadow-black/10"
-                : "text-white/78 hover:bg-white/10 hover:text-white"
+                ? "bg-white/15 text-white shadow-sm ring-1 ring-white/10 font-bold"
+                : "text-white/75 hover:bg-white/8 hover:text-white"
             }`}
           >
+            {isActive && (
+              <span className={`absolute ${isRTL ? 'right-1.5' : 'left-1.5'} top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-emerald-400`} />
+            )}
             <Icon className="h-5 w-5 flex-shrink-0" />
-            <span>{item.name}</span>
+            <span className={isActive ? (isRTL ? 'pr-1.5' : 'pl-1.5') : ''}>{item.name}</span>
             {item.badge > 0 && (
               <span className={`ms-auto grid min-w-6 place-items-center rounded-full px-1.5 py-0.5 text-[10px] font-black ${item.emergency ? "bg-red-500 text-white" : "bg-white/15 text-white"}`}>
                 {item.badge > 99 ? "99+" : item.badge}
@@ -190,7 +193,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                 <li>
                   <button
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-white/78 transition-all hover:bg-white/10 hover:text-white"
+                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/75 transition-all hover:bg-white/8 hover:text-white"
                   >
                     <LogOut className="h-5 w-5" />
                     <span>{t("auth.logout")}</span>
@@ -203,12 +206,16 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                 <BlackmailProtectionCard onClick={handleProtectionClick} />
               </div>
 
-              <div className="mt-7 rounded-3xl p-4 text-center text-white">
-                <ShieldCheck className="mx-auto mb-3 h-7 w-7 text-emerald-200" />
-                <h4 className="mb-2 text-base font-extrabold">{t("sidebar.privacy.title")}</h4>
-                <p className="text-xs leading-6 text-white/75">
-                  {t("sidebar.privacy.desc")}
-                </p>
+              <div className="mt-6 mx-2 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-start flex items-start gap-3">
+                <div className="p-2 rounded-xl bg-white/10 text-emerald-200 shrink-0">
+                  <ShieldCheck className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="text-xs font-bold text-white mb-0.5">{t("sidebar.privacy.title")}</h4>
+                  <p className="text-[10px] leading-relaxed text-white/60">
+                    {t("sidebar.privacy.desc")}
+                  </p>
+                </div>
               </div>
             </nav>
           </div>
@@ -298,19 +305,26 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                         end
                         onClick={closeOnMobile}
                         className={({ isActive }) =>
-                          `flex items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold transition-all ${
+                          `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all relative ${
                             isActive
-                              ? "bg-[#2D7A61] text-white shadow-lg shadow-black/15 ring-1 ring-white/10"
-                              : "text-white/75 hover:bg-white/10 hover:text-white"
+                              ? "bg-[#2D7A61] text-white shadow-sm ring-1 ring-white/10 font-bold"
+                              : "text-white/75 hover:bg-white/8 hover:text-white"
                           }`
                         }
                       >
-                        <Icon className="h-5 w-5 shrink-0" />
-                        <span>{item.name}</span>
-                        {item.badge > 0 && (
-                          <span className={`ms-auto rounded-full px-2 py-0.5 text-[10px] font-black ${item.emergency ? "bg-red-500 text-white" : "bg-white/15 text-white"}`}>
-                            {item.badge > 99 ? "99+" : item.badge}
-                          </span>
+                        {({ isActive }) => (
+                          <>
+                            {isActive && (
+                              <span className={`absolute ${isRTL ? 'right-1.5' : 'left-1.5'} top-1/2 -translate-y-1/2 w-1 h-5 rounded-full bg-emerald-300`} />
+                            )}
+                            <Icon className="h-5 w-5 shrink-0" />
+                            <span className={isActive ? (isRTL ? 'pr-1.5' : 'pl-1.5') : ''}>{item.name}</span>
+                            {item.badge > 0 && (
+                              <span className={`ms-auto rounded-full px-2 py-0.5 text-[10px] font-black ${item.emergency ? "bg-red-500 text-white" : "bg-white/15 text-white"}`}>
+                                {item.badge > 99 ? "99+" : item.badge}
+                              </span>
+                            )}
+                          </>
                         )}
                       </NavLink>
                     </li>
@@ -321,21 +335,23 @@ export default function DynamicSidebar({ isOpen, onClose }) {
               <div className="my-5 h-px bg-white/15" />
               <button
                 onClick={handleLogout}
-                className="flex w-full items-center gap-3 rounded-2xl px-4 py-3.5 text-sm font-bold text-white/75 hover:bg-white/10 hover:text-white"
+                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/75 hover:bg-white/8 hover:text-white"
               >
                 <LogOut className="h-5 w-5" />
                 <span>{t("auth.logout")}</span>
               </button>
             </nav>
 
-            <div className="m-4 mt-0 rounded-[24px] border border-white/15 bg-white/[0.08] p-5 text-center shadow-inner shadow-white/5">
-              <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-2xl bg-white/10">
-                <ShieldCheck className="h-6 w-6 text-emerald-100" />
-              </span>
-              <h4 className="mb-2 text-sm font-extrabold">{t("sidebar.privacy.title")}</h4>
-              <p className="text-[11px] font-medium leading-5 text-white/65">
-                {t("sidebar.privacy.desc")}
-              </p>
+            <div className="m-4 mt-0 rounded-2xl border border-white/10 bg-white/[0.04] p-3.5 text-start flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-white/10 text-emerald-200 shrink-0">
+                <ShieldCheck className="h-5 w-5" />
+              </div>
+              <div>
+                <h4 className="text-xs font-bold text-white mb-0.5">{t("sidebar.privacy.title")}</h4>
+                <p className="text-[10px] leading-relaxed text-white/60">
+                  {t("sidebar.privacy.desc")}
+                </p>
+              </div>
             </div>
           </div>
         </aside>
@@ -385,10 +401,10 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                       end
                       onClick={closeOnMobile}
                       className={({ isActive }) =>
-                        `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
+                        `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative ${
                           isActive
-                            ? "bg-primary/10 text-primary border-s-4 border-primary"
-                            : "text-text hover:bg-background-gray hover:text-primary"
+                            ? "bg-primary/10 text-primary border-s-4 border-primary font-bold shadow-sm"
+                            : "text-text hover:bg-background-subtle hover:text-primary"
                         }`
                       }
                     >

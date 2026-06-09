@@ -14,6 +14,9 @@ import {
   Filter,
   Image as ImageIcon,
   CloudUpload,
+  ShieldCheck,
+  AlertCircle,
+  Clock,
 } from "lucide-react";
 import Button from "../../components/ui/Button";
 import Modal from "../../components/ui/Modal";
@@ -25,7 +28,15 @@ import { useAuth, Roles } from "../../contexts/AuthContext";
 import { blogAPI, extractErrorMessage, filesAPI } from "../../lib/api";
 import RichTextEditor from "../../components/ui/RichTextEditor";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// ─── Helpers for Color Coding/Thematic Gradients ──────────────────────────────
+
+const getGradientClass = (_title = '') => {
+  return 'from-primary/20 via-primary/5 to-background'
+}
+
+const getAccentColor = (_title = '') => {
+  return 'text-primary bg-primary/10 border-primary/20'
+}
 
 function pickData(payload) {
   return payload?.Data ?? payload?.data ?? null;
@@ -98,7 +109,6 @@ function ArticleFormModal({
 
   const handleAddTag = () => {
     if (!selectedTagId) return;
-    // Ensure we are using the exact ID from the tag object
     const tag = allTags.find(
       (t) => (t.TagID ?? t.tagID ?? t.id) == selectedTagId,
     );
@@ -163,12 +173,12 @@ function ArticleFormModal({
       <div className="space-y-5">
         {/* Title */}
         <div>
-          <label className="block text-sm font-semibold text-text-heading mb-1.5">
+          <label className="block text-sm font-semibold text-text-heading mb-1.5 text-start">
             {t("blogs.articleTitle")}{" "}
             <span className="text-red-500">{t("blogs.required")}</span>
           </label>
           <input
-            className={`w-full px-4 py-3 rounded-xl border bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all text-sm ${errors.title ? "border-red-400" : "border-border focus:border-primary"}`}
+            className={`w-full px-4 py-3 rounded-xl border bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all text-sm ${errors.title ? "border-red-400" : "border-border focus:border-primary"} ${isRTL ? "text-right" : "text-left"}`}
             placeholder={t("blogs.titlePlaceholder")}
             value={form.title}
             onChange={(e) => {
@@ -177,13 +187,13 @@ function ArticleFormModal({
             }}
           />
           {errors.title && (
-            <p className="text-xs text-red-500 mt-1">{errors.title}</p>
+            <p className="text-xs text-red-500 mt-1 text-start">{errors.title}</p>
           )}
         </div>
 
         {/* Body */}
         <div>
-          <label className="block text-sm font-semibold text-text-heading mb-1.5">
+          <label className="block text-sm font-semibold text-text-heading mb-1.5 text-start">
             {t("blogs.content")}{" "}
             <span className="text-red-500">{t("blogs.required")}</span>
           </label>
@@ -198,13 +208,13 @@ function ArticleFormModal({
             isRTL={isRTL}
           />
           {errors.body && (
-            <p className="text-xs text-red-500 mt-1">{errors.body}</p>
+            <p className="text-xs text-red-500 mt-1 text-start">{errors.body}</p>
           )}
         </div>
 
         {/* Image Upload */}
         <div>
-          <label className="block text-sm font-semibold text-text-heading mb-1.5">
+          <label className="block text-sm font-semibold text-text-heading mb-1.5 text-start">
             {t("auto.articleImageOptional")}
           </label>
 
@@ -260,7 +270,7 @@ function ArticleFormModal({
 
         {/* Tags Dropdown */}
         <div>
-          <label className="block text-sm font-semibold text-text-heading mb-1.5">
+          <label className="block text-sm font-semibold text-text-heading mb-1.5 text-start">
             {t("blogs.tagsLabel")}{" "}
             <span className="text-red-500">{t("blogs.required")}</span>
           </label>
@@ -317,7 +327,7 @@ function ArticleFormModal({
             </div>
           )}
           {errors.tags && (
-            <p className="text-xs text-red-500 mt-1">{errors.tags}</p>
+            <p className="text-xs text-red-500 mt-1 text-start">{errors.tags}</p>
           )}
         </div>
 
@@ -372,7 +382,7 @@ function CreateTagModal({ isOpen, onClose, onSave, isCreating }) {
     >
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-semibold text-text-heading mb-1.5">
+          <label className="block text-sm font-semibold text-text-heading mb-1.5 text-start">
             {t("auto.tagName")} <span className="text-red-500">*</span>
           </label>
           <input
@@ -386,9 +396,9 @@ function CreateTagModal({ isOpen, onClose, onSave, isCreating }) {
               if (e.key === "Enter") handleSave();
             }}
             placeholder={t("auto.egMentalHealth")}
-            className={`w-full px-4 py-3 rounded-xl border bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all text-sm ${error ? "border-red-400" : "border-border focus:border-primary"}`}
+            className={`w-full px-4 py-3 rounded-xl border bg-background text-text focus:outline-none focus:ring-2 focus:ring-primary/30 transition-all text-sm ${error ? "border-red-400" : "border-border focus:border-primary"} ${isRTL ? "text-right" : "text-left"}`}
           />
-          {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+          {error && <p className="text-xs text-red-500 mt-1 text-start">{error}</p>}
         </div>
 
         <div className="flex gap-3 pt-2 border-t border-border">
@@ -418,9 +428,9 @@ function BlogCard({ blog, onEdit, onDelete, isAdmin, detailsPathPrefix }) {
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const formatDate = (iso) =>
-    new Date(iso).toLocaleDateString(t("auto.enus"), {
+    new Date(iso).toLocaleDateString(isRTL ? "ar-EG" : "en-US", {
       year: "numeric",
-      month: "long",
+      month: "short",
       day: "numeric",
     });
 
@@ -430,13 +440,23 @@ function BlogCard({ blog, onEdit, onDelete, isAdmin, detailsPathPrefix }) {
 
   const thumbnail = blog.Images?.[0] || blog.images?.[0];
 
+  const readTime = useMemo(() => {
+    const textLength = blog.description?.length || 150;
+    return Math.max(1, Math.ceil(textLength / 350)) + 1;
+  }, [blog.description]);
+
+  const gradientClass = useMemo(() => getGradientClass(blog.title), [blog.title]);
+  const accentColorClass = useMemo(() => getAccentColor(blog.title), [blog.title]);
+
   return (
     <motion.div
       layout
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
-      className="bg-background-paper border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group flex flex-col cursor-pointer"
+      whileHover={{ y: -6, scale: 1.005 }}
+      transition={{ duration: 0.3, ease: "easeOut" }}
+      className="bg-background-paper border border-border rounded-[20px] overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 group flex flex-col justify-between h-full cursor-pointer relative"
       onClick={handleOpenDetails}
       role="button"
       tabIndex={0}
@@ -447,115 +467,125 @@ function BlogCard({ blog, onEdit, onDelete, isAdmin, detailsPathPrefix }) {
         }
       }}
     >
-      {thumbnail && (
-        <div className="aspect-video overflow-hidden relative border-b border-border">
-          <img
-            src={thumbnail}
-            alt={blog.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none" />
+      <div>
+        {/* Cover Graphic / Image block */}
+        <div className="relative aspect-video overflow-hidden border-b border-border/50 bg-background-subtle shrink-0">
+          {thumbnail ? (
+            <img
+              src={thumbnail}
+              alt={blog.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          ) : (
+            <div className={`w-full h-full bg-gradient-to-br ${gradientClass} flex items-center justify-center relative`}>
+              <div className="absolute inset-0 opacity-20 mix-blend-overlay bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white to-transparent" />
+              <div className={`p-3.5 rounded-2xl bg-background-paper/60 backdrop-blur-md border border-white/20 shadow-md ${accentColorClass.split(' ')[0]} transform group-hover:scale-110 transition-transform duration-300`}>
+                <ArticleIcon className="w-6 h-6" />
+              </div>
+            </div>
+          )}
+          {/* Status Badge */}
+          <span className={`absolute top-3 ${isRTL ? 'right-3' : 'left-3'} text-[10px] font-bold px-2.5 py-1 bg-emerald-600 text-white rounded-full shadow-sm`}>
+            {t("blogs.statusPublished", "Published")}
+          </span>
         </div>
-      )}
-      {!thumbnail && (
-        <div className="h-1.5 bg-gradient-to-r from-primary via-secondary to-primary/40" />
-      )}
 
-      <div className="p-5 space-y-3 flex-1 flex flex-col">
-        <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0">
-            <h3 className="font-bold text-text-heading text-base leading-snug line-clamp-2 group-hover:text-primary transition-colors">
-              {blog.title}
-            </h3>
-          </div>
-        </div>
+        <div className="p-5 space-y-3 flex-1 flex flex-col">
+          {/* Title */}
+          <h3 className={`font-bold text-text-heading text-base leading-snug line-clamp-2 group-hover:text-primary transition-colors ${isRTL ? "text-right" : "text-left"}`}>
+            {blog.title}
+          </h3>
 
-        <p
-          className={`text-sm text-text-muted line-clamp-2 leading-relaxed text-start`}
-        >
-          {blog.description}
-        </p>
+          {/* Description */}
+          {blog.description && (
+            <p className={`text-sm text-text-muted line-clamp-2 leading-relaxed ${isRTL ? "text-right" : "text-left"}`}>
+              {blog.description}
+            </p>
+          )}
 
-        <button
-          onClick={(event) => {
-            event.stopPropagation();
-            handleOpenDetails();
-          }}
-          className="text-xs font-semibold text-primary hover:text-primary/80 hover:underline transition-all cursor-pointer w-fit"
-        >
-          {t("auto.readMore")}
-        </button>
-
-        <div className="mt-auto pt-4 flex flex-col gap-3">
-          <div className={`flex flex-wrap gap-1.5 ${t("auto.justifystart")}`}>
+          {/* Tags */}
+          <div className={`flex flex-wrap gap-1.5 ${isRTL ? 'justify-start' : 'justify-start'}`}>
             {blog.tags.slice(0, 3).map((tag) => (
               <span
                 key={tag}
-                className="text-[10px] px-2 py-0.5 bg-primary/8 border border-primary/15 text-primary rounded-full font-medium flex items-center gap-1"
+                className="text-[10px] px-2.5 py-1 bg-primary/5 border border-primary/10 text-primary rounded-full font-semibold flex items-center gap-1 transition-colors"
               >
                 <TagIcon style={{ width: 10, height: 10 }} />
                 {tag}
               </span>
             ))}
+            {blog.tags.length > 3 && (
+              <span className="text-[10px] px-2.5 py-1 bg-background-subtle border border-border rounded-full text-text-muted">
+                +{blog.tags.length - 3}
+              </span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer / Action triggers */}
+      <div className="p-5 pt-0">
+        <div className="pt-4 border-t border-border/60 flex items-center justify-between">
+          <div className="flex flex-col gap-0.5 text-[10px] text-text-muted">
+            <span className="flex items-center gap-1">
+              <Calendar style={{ width: 11, height: 11 }} className="text-primary" />
+              {formatDate(blog.createdAt)}
+            </span>
+            <span className="flex items-center gap-1 mt-0.5">
+              <Clock style={{ width: 11, height: 11 }} className="text-primary" />
+              {readTime} {t("auto.minRead", "mins read")}
+            </span>
           </div>
 
-          <div className="pt-3 border-t border-border flex items-center justify-between">
-            <div className="flex items-center gap-3 text-[10px] text-text-muted">
-              <span className="flex items-center gap-1">
-                <Calendar style={{ width: 10, height: 10 }} />
-                {formatDate(blog.createdAt)}
-              </span>
-            </div>
-
-            {isAdmin && (
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    onEdit(blog);
-                  }}
-                  className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/8 rounded-lg transition-all"
-                  title={t("common.edit")}
-                >
-                  <Pencil style={{ width: 14, height: 14 }} />
-                </button>
-                {confirmDelete ? (
-                  <div className="flex items-center gap-1">
-                    <button
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        onDelete(blog.id);
-                        setConfirmDelete(false);
-                      }}
-                      className="px-2 py-0.5 text-[10px] bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium"
-                    >
-                      {t("blogs.confirmDelete")}
-                    </button>
-                    <button
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        setConfirmDelete(false);
-                      }}
-                      className="px-2 py-0.5 text-[10px] bg-background-subtle text-text-muted rounded-lg hover:bg-border transition-colors"
-                    >
-                      {t("blogs.confirmNo")}
-                    </button>
-                  </div>
-                ) : (
+          {isAdmin && (
+            <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+              <button
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onEdit(blog);
+                }}
+                className="p-1.5 text-text-muted hover:text-primary hover:bg-primary/8 rounded-lg transition-all"
+                title={t("common.edit")}
+              >
+                <Pencil style={{ width: 14, height: 14 }} />
+              </button>
+              
+              {confirmDelete ? (
+                <div className="flex items-center gap-1 bg-background-subtle p-0.5 rounded-lg border border-border shadow-sm">
                   <button
                     onClick={(event) => {
                       event.stopPropagation();
-                      setConfirmDelete(true);
+                      onDelete(blog.id);
+                      setConfirmDelete(false);
                     }}
-                    className="p-1.5 text-text-muted hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
-                    title={t("common.delete")}
+                    className="px-2 py-1 text-[9px] bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors font-semibold"
                   >
-                    <Trash2 style={{ width: 14, height: 14 }} />
+                    {t("blogs.confirmDelete")}
                   </button>
-                )}
-              </div>
-            )}
-          </div>
+                  <button
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setConfirmDelete(false);
+                    }}
+                    className="px-2 py-1 text-[9px] bg-background text-text-muted rounded-md hover:bg-border transition-colors"
+                  >
+                    {t("blogs.confirmNo")}
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setConfirmDelete(true);
+                  }}
+                  className="p-1.5 text-text-muted hover:text-red-500 hover:bg-red-50 rounded-lg transition-all"
+                  title={t("common.delete")}
+                >
+                  <Trash2 style={{ width: 14, height: 14 }} />
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </motion.div>
@@ -564,12 +594,12 @@ function BlogCard({ blog, onEdit, onDelete, isAdmin, detailsPathPrefix }) {
 
 // ─── Tag Card ─────────────────────────────────────────────────────────────────
 
-function TagCard({ tag, isRTL, articleCount }) {
+function TagCard({ tag, isRTL }) {
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
-      className="bg-background-paper border border-border rounded-xl p-4 flex items-center justify-between hover:shadow-sm transition-shadow"
+      className="bg-background-paper border border-border rounded-xl p-4 flex items-center justify-between hover:shadow-md transition-all duration-300"
     >
       <div
         className={`flex items-center gap-3 ${isRTL ? "flex-row-reverse" : ""}`}
@@ -608,12 +638,21 @@ export default function AdminBlogs() {
   // Tab state
   const [activeTab, setActiveTab] = useState("articles");
 
-  // Articles state
+  // Articles filters and paginations
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingBlog, setEditingBlog] = useState(null);
   const [search, setSearch] = useState("");
   const [filterTagId, setFilterTagId] = useState("");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [sortBy, setSortBy] = useState("newest");
   const [isSaving, setIsSaving] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 6;
+
+  // Reset page number on filter/search modifications
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, filterTagId, filterStatus, sortBy]);
 
   // Tags state
   const [allTags, setAllTags] = useState([]);
@@ -634,7 +673,6 @@ export default function AdminBlogs() {
       const response = await blogAPI.getTags();
       const items = pickItems(response);
       const data = pickData(response);
-      // handle both array and paginated response
       if (Array.isArray(items) && items.length > 0) {
         setAllTags(items);
       } else if (Array.isArray(data)) {
@@ -662,14 +700,12 @@ export default function AdminBlogs() {
 
   const handleEdit = async (blog) => {
     try {
-      // Fetch full blog details (list API doesn't return Body)
       const response = await blogAPI.getBlogById(blog.id);
       const data = pickData(response);
       const fullBlog = data || response;
 
       setEditingBlog({
         ...blog,
-        // Override with the full data from the detail endpoint
         Body: fullBlog?.Body || fullBlog?.body || "",
         Title: fullBlog?.Title || fullBlog?.title || blog.title,
         Tags: fullBlog?.Tags || fullBlog?.tags || [],
@@ -682,7 +718,6 @@ export default function AdminBlogs() {
       });
       setIsModalOpen(true);
     } catch {
-      // Fallback to the store data if API fails
       setEditingBlog(blog);
       setIsModalOpen(true);
     }
@@ -704,7 +739,6 @@ export default function AdminBlogs() {
         });
         toast.success(t("success.blogUpdated"));
       } else {
-        // Direct API call for proper TagIDs
         const createResponse = await blogAPI.createBlog(payload);
         if (createResponse?.IsSuccess === false) {
           toast.error(
@@ -713,7 +747,6 @@ export default function AdminBlogs() {
           return;
         }
         toast.success(t("success.blogAdded"));
-        // Reload page data
         window.location.reload();
       }
       setIsModalOpen(false);
@@ -756,15 +789,17 @@ export default function AdminBlogs() {
     }
   };
 
-  // ─── Filtered Articles ────────────────────────────────────────────────
+  // ─── Filtered and Sorted Articles ─────────────────────────────────────
 
   const filtered = useMemo(() => {
     return blogs.filter((b) => {
+      // Search logic
       const matchSearch =
         !search ||
         b.title.toLowerCase().includes(search.toLowerCase()) ||
         b.tags.some((tag) => tag.toLowerCase().includes(search.toLowerCase()));
 
+      // Tag filter logic
       let matchTag = true;
       if (filterTagId) {
         const filterTag = allTags.find(
@@ -780,9 +815,35 @@ export default function AdminBlogs() {
         }
       }
 
-      return matchSearch && matchTag;
+      // Status filter logic (all, published, draft)
+      let matchStatus = true;
+      if (filterStatus === "draft") {
+        matchStatus = false; // Mock statuses - all loaded blogs from server are published
+      }
+
+      return matchSearch && matchTag && matchStatus;
     });
-  }, [blogs, search, filterTagId, allTags]);
+  }, [blogs, search, filterTagId, filterStatus, allTags]);
+
+  const sorted = useMemo(() => {
+    const result = [...filtered];
+    if (sortBy === "oldest") {
+      result.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    } else if (sortBy === "alphabetical") {
+      result.sort((a, b) => a.title.localeCompare(b.title));
+    } else {
+      result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+    return result;
+  }, [filtered, sortBy]);
+
+  // Client Side Pagination Slice
+  const paginatedBlogs = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return sorted.slice(startIndex, startIndex + pageSize);
+  }, [sorted, currentPage, pageSize]);
+
+  const totalPages = Math.ceil(sorted.length / pageSize);
 
   // ─── Tab Definitions ──────────────────────────────────────────────────
 
@@ -801,12 +862,42 @@ export default function AdminBlogs() {
     },
   ].filter(Boolean);
 
+  // Statistics summaries top widget config
+  const summaryStats = useMemo(() => {
+    return [
+      {
+        label: t("blogs.totalArticles", "Total Articles"),
+        value: blogs.length,
+        icon: ArticleIcon,
+        color: "text-primary bg-primary/10 border-primary/10",
+      },
+      {
+        label: t("blogs.publishedArticles", "Published Articles"),
+        value: blogs.length,
+        icon: ShieldCheck,
+        color: "text-primary bg-primary/10 border-primary/10",
+      },
+      {
+        label: t("blogs.pendingArticles", "Pending Articles"),
+        value: 0,
+        icon: AlertCircle,
+        color: "text-primary bg-primary/10 border-primary/10",
+      },
+      {
+        label: t("blogs.categories", "Categories/Tags"),
+        value: allTags.length,
+        icon: TagIcon,
+        color: "text-primary bg-primary/10 border-primary/10",
+      },
+    ];
+  }, [blogs.length, allTags.length, t]);
+
   return (
-    <div dir={isRTL ? "rtl" : "ltr"} className="space-y-6">
-      {/* ─── Header ──────────────────────────────────────────────────── */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div dir={isRTL ? "rtl" : "ltr"} className="space-y-8 max-w-[1600px] mx-auto p-1 sm:p-2">
+      {/* ─── Header area ──────────────────────────────────────────────────── */}
+      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/40 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
         <div>
-          <h1 className="text-2xl font-bold text-text-heading flex items-center gap-3">
+          <h1 className="text-3xl font-black text-text-heading flex items-center gap-3">
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
               <ArticleIcon
                 className="text-primary"
@@ -815,18 +906,18 @@ export default function AdminBlogs() {
             </div>
             {t("blogs.adminTitle")}
           </h1>
-          <p className="text-text-muted mt-1 text-sm">
+          <p className="text-text-muted mt-1.5 text-sm">
             {t("blogs.adminSubtitle")}
           </p>
         </div>
 
-        {/* CTA Button - changes based on active tab */}
+        {/* CTA Button */}
         {isAdmin && (
-          <>
+          <div className="shrink-0">
             {activeTab === "articles" ? (
               <Button
                 onClick={handleOpenAdd}
-                className="gap-2 shadow-lg shadow-primary/20"
+                className="gap-2 shadow-lg shadow-primary/25 rounded-xl font-bold py-3.5 px-5"
               >
                 <Plus style={{ width: 18, height: 18 }} />
                 {t("blogs.addNew")}
@@ -834,23 +925,44 @@ export default function AdminBlogs() {
             ) : (
               <Button
                 onClick={() => setIsCreateTagOpen(true)}
-                className="gap-2 shadow-lg shadow-primary/20"
+                className="gap-2 shadow-lg shadow-primary/25 rounded-xl font-bold py-3.5 px-5"
               >
                 <Plus style={{ width: 18, height: 18 }} />
                 {t("auto.createTag")}
               </Button>
             )}
-          </>
+          </div>
         )}
       </div>
 
-      {/* ─── Tabs ────────────────────────────────────────────────────── */}
-      <div className="flex border-b border-border gap-1">
+      {/* ─── Metric Summary Statistics Grid ─────────────────────────────── */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {summaryStats.map((stat, idx) => {
+          const Icon = stat.icon;
+          return (
+            <div
+              key={idx}
+              className="bg-background-paper border border-border/70 rounded-2xl p-5 flex items-center justify-between shadow-sm hover:shadow-md transition-all duration-300"
+            >
+              <div className="space-y-1.5 text-start">
+                <p className="text-xs font-bold text-text-muted tracking-wide">{stat.label}</p>
+                <h3 className="text-2xl font-extrabold text-text-heading leading-none">{stat.value}</h3>
+              </div>
+              <div className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 border ${stat.color.split(' ').slice(0, 3).join(' ')}`}>
+                <Icon className="w-5.5 h-5.5" />
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* ─── Nav Tabs ────────────────────────────────────────────────────── */}
+      <div className="flex border-b border-border gap-1 overflow-x-auto no-scrollbar">
         {tabs.map((tab) => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            className={`flex items-center gap-2 px-5 py-3 font-semibold text-sm transition-all relative whitespace-nowrap rounded-t-xl ${
+            className={`flex items-center gap-2.5 px-6 py-3.5 font-bold text-sm transition-all relative whitespace-nowrap rounded-t-xl ${
               activeTab === tab.key
                 ? "text-primary bg-primary/5 border-b-2 border-primary -mb-[2px]"
                 : "text-text-muted hover:text-text-heading hover:bg-background-subtle"
@@ -859,10 +971,10 @@ export default function AdminBlogs() {
             {tab.icon}
             {tab.label}
             <span
-              className={`text-xs px-2 py-0.5 rounded-full font-bold ${
+              className={`text-xs px-2.5 py-0.5 rounded-full font-black ${
                 activeTab === tab.key
                   ? "bg-primary text-white"
-                  : "bg-background-subtle text-text-muted"
+                  : "bg-background-subtle text-text-muted border border-border/50"
               }`}
             >
               {tab.count}
@@ -878,99 +990,162 @@ export default function AdminBlogs() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.2 }}
-          className="space-y-5"
+          className="space-y-6"
         >
-          {/* Search + Filter Row */}
-          <div
-            className={`flex flex-col sm:flex-row gap-3 ${isRTL ? "sm:flex-row-reverse" : ""}`}
-          >
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search
-                className={`absolute ${t("auto.start4")} top-1/2 -translate-y-1/2 text-text-muted`}
-                style={{ width: 18, height: 18 }}
-              />
-              <input
-                type="text"
-                placeholder={t("blogs.searchPlaceholder")}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className={`w-full ${t("auto.ps11Pe4")} py-3 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text transition-all`}
-              />
-            </div>
+          {/* CMS Search & Filter Toolbar */}
+          <div className="bg-background-paper border border-border p-4.5 rounded-2xl shadow-sm space-y-4">
+            <div className={`flex flex-col lg:flex-row gap-4 items-stretch lg:items-center ${isRTL ? 'lg:flex-row-reverse' : ''}`}>
+              {/* Search Field */}
+              <div className="relative flex-1">
+                <Search
+                  className={`absolute ${t("auto.start4")} top-1/2 -translate-y-1/2 text-text-muted h-5 w-5`}
+                />
+                <input
+                  type="text"
+                  placeholder={t("blogs.searchPlaceholder")}
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className={`w-full ${isRTL ? "pr-12 pl-4" : "pl-12 pr-4"} py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text transition-all`}
+                />
+              </div>
 
-            {/* Tag Filter */}
-            <div
-              className={`flex items-center gap-2 ${isRTL ? "flex-row-reverse" : ""}`}
-            >
-              <Filter
-                className="text-text-muted"
-                style={{ width: 18, height: 18 }}
-              />
-              <select
-                value={filterTagId}
-                onChange={(e) => setFilterTagId(e.target.value)}
-                className="px-4 py-3 bg-background-paper border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text min-w-[180px]"
-              >
-                <option value="">{t("auto.allTags")}</option>
-                {allTags.map((tag) => (
-                  <option
-                    key={tag.TagID ?? tag.tagID ?? tag.id}
-                    value={tag.TagID ?? tag.tagID ?? tag.id}
+              {/* Toolbar Dropdown Actions */}
+              <div className={`grid grid-cols-1 sm:grid-cols-3 gap-3 w-full lg:w-auto ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+                {/* Tag Selector */}
+                <div className="relative min-w-[160px]">
+                  <select
+                    value={filterTagId}
+                    onChange={(e) => setFilterTagId(e.target.value)}
+                    className={`w-full ${isRTL ? "pr-4 pl-9" : "pl-4 pr-9"} py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text appearance-none cursor-pointer font-semibold`}
                   >
-                    {tag.Name ?? tag.name}
-                  </option>
-                ))}
-              </select>
+                    <option value="">{t("auto.allTags")}</option>
+                    {allTags.map((tag) => (
+                      <option
+                        key={tag.TagID ?? tag.tagID ?? tag.id}
+                        value={tag.TagID ?? tag.tagID ?? tag.id}
+                      >
+                        {tag.Name ?? tag.name}
+                      </option>
+                    ))}
+                  </select>
+                  <Filter className={`absolute ${isRTL ? "left-3.5" : "right-3.5"} top-1/2 -translate-y-1/2 text-text-muted h-4 w-4 pointer-events-none`} />
+                </div>
+
+                {/* Status Selector */}
+                <div className="relative min-w-[160px]">
+                  <select
+                    value={filterStatus}
+                    onChange={(e) => setFilterStatus(e.target.value)}
+                    className={`w-full ${isRTL ? "pr-4 pl-9" : "pl-4 pr-9"} py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text appearance-none cursor-pointer font-semibold`}
+                  >
+                    <option value="all">{t("blogs.allStatuses", "All Statuses")}</option>
+                    <option value="published">{t("blogs.statusPublished", "Published")}</option>
+                    <option value="draft">{t("blogs.statusDraft", "Draft / Pending")}</option>
+                  </select>
+                  <ShieldCheck className={`absolute ${isRTL ? "left-3.5" : "right-3.5"} top-1/2 -translate-y-1/2 text-text-muted h-4 w-4 pointer-events-none`} />
+                </div>
+
+                {/* Sort Order Selector */}
+                <div className="relative min-w-[160px]">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className={`w-full ${isRTL ? "pr-4 pl-9" : "pl-4 pr-9"} py-3 bg-background border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary text-sm text-text appearance-none cursor-pointer font-semibold`}
+                  >
+                    <option value="newest">{t("blogs.sortNewest", "Newest First")}</option>
+                    <option value="oldest">{t("blogs.sortOldest", "Oldest First")}</option>
+                    <option value="alphabetical">{t("blogs.sortAlpha", "Alphabetical")}</option>
+                  </select>
+                  <Calendar className={`absolute ${isRTL ? "left-3.5" : "right-3.5"} top-1/2 -translate-y-1/2 text-text-muted h-4 w-4 pointer-events-none`} />
+                </div>
+              </div>
             </div>
           </div>
 
-          {/* Articles Grid */}
-          {filtered.length === 0 ? (
+          {/* Grid list / Empty state */}
+          {sorted.length === 0 ? (
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/30 rounded-2xl border-2 border-dashed border-border"
+              className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/20 rounded-3xl border-2 border-dashed border-border p-6"
             >
               <ArticleIcon
-                className="text-text-muted opacity-20 mb-4"
+                className="text-text-muted opacity-25 mb-4 animate-pulse"
                 style={{ width: 64, height: 64 }}
               />
               <h3 className="text-xl font-bold text-text-heading mb-2">
-                {search || filterTagId
+                {search || filterTagId || filterStatus !== "all"
                   ? t("blogs.noResults")
                   : t("blogs.noArticles")}
               </h3>
-              <p className="text-text-muted text-sm mb-6">
-                {search || filterTagId
+              <p className="text-text-muted text-sm mb-6 max-w-md leading-relaxed">
+                {search || filterTagId || filterStatus !== "all"
                   ? t("blogs.noResultsDesc")
                   : t("blogs.noArticlesDesc")}
               </p>
-              {isAdmin && !search && !filterTagId && (
-                <Button onClick={handleOpenAdd} className="gap-2">
+              {isAdmin && !search && !filterTagId && filterStatus === "all" && (
+                <Button onClick={handleOpenAdd} className="gap-2 px-5 py-3 rounded-xl font-bold shadow-md shadow-primary/25">
                   <Plus style={{ width: 16, height: 16 }} />
                   {t("blogs.addNew")}
                 </Button>
               )}
             </motion.div>
           ) : (
-            <motion.div
-              layout
-              className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"
-            >
-              <AnimatePresence>
-                {filtered.map((blog) => (
-                  <BlogCard
-                    key={blog.id}
-                    blog={blog}
-                    isAdmin={isAdmin}
-                    onEdit={handleEdit}
-                    onDelete={handleDelete}
-                    detailsPathPrefix={detailsPathPrefix}
-                  />
-                ))}
-              </AnimatePresence>
-            </motion.div>
+            <div className="space-y-8">
+              {/* Responsive Cards Grid */}
+              <motion.div
+                layout
+                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+              >
+                <AnimatePresence>
+                  {paginatedBlogs.map((blog) => (
+                    <BlogCard
+                      key={blog.id}
+                      blog={blog}
+                      isAdmin={isAdmin}
+                      onEdit={handleEdit}
+                      onDelete={handleDelete}
+                      detailsPathPrefix={detailsPathPrefix}
+                    />
+                  ))}
+                </AnimatePresence>
+              </motion.div>
+
+              {/* Client-Side Pagination controls */}
+              {totalPages > 1 && (
+                <div className={`flex justify-center items-center gap-2 mt-8 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                  <button
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                    disabled={currentPage === 1}
+                    className="p-2.5 rounded-xl border border-border bg-background-paper text-text hover:bg-background-subtle hover:text-primary transition-all disabled:opacity-40 disabled:pointer-events-none"
+                  >
+                    {isRTL ? "→" : "←"}
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-10 h-10 rounded-xl font-bold text-sm transition-all border ${
+                        currentPage === page
+                          ? "bg-primary text-white border-primary shadow-md shadow-primary/20"
+                          : "bg-background-paper text-text border-border hover:bg-background-subtle hover:text-primary"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                    disabled={currentPage === totalPages}
+                    className="p-2.5 rounded-xl border border-border bg-background-paper text-text hover:bg-background-subtle hover:text-primary transition-all disabled:opacity-40 disabled:pointer-events-none"
+                  >
+                    {isRTL ? "←" : "→"}
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </motion.div>
       )}
@@ -996,7 +1171,7 @@ export default function AdminBlogs() {
               className="flex flex-col items-center justify-center py-24 text-center bg-background-subtle/30 rounded-2xl border-2 border-dashed border-border"
             >
               <TagIcon
-                className="text-text-muted opacity-20 mb-4"
+                className="text-text-muted opacity-25 mb-4 animate-pulse"
                 style={{ width: 64, height: 64 }}
               />
               <h3 className="text-xl font-bold text-text-heading mb-2">
@@ -1008,7 +1183,7 @@ export default function AdminBlogs() {
               {isAdmin && (
                 <Button
                   onClick={() => setIsCreateTagOpen(true)}
-                  className="gap-2"
+                  className="gap-2 px-5 py-3 rounded-xl font-bold shadow-md shadow-primary/25"
                 >
                   <Plus style={{ width: 16, height: 16 }} />
                   {t("auto.createTag")}

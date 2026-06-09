@@ -8,7 +8,7 @@ import Button from '../../../components/ui/Button'
 import Input, { Textarea } from '../../../components/ui/Input'
 import SelectDropdown from '../../../components/ui/SelectDropdown'
 import { validateRequired, validateFileSize, validateFileType } from '../../../lib/validation'
-import { ArrowLeft, ArrowRight, Stethoscope, Upload, Calendar, FileText, X, CheckCircle, Clock } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Stethoscope, Upload, Calendar, FileText, X, CheckCircle, Clock, Home, Globe } from 'lucide-react'
 
 import { useAuth } from '../../../contexts/AuthContext'
 import { api, authAPI, extractErrorMessage, toUserFacingError } from '../../../lib/api'
@@ -17,7 +17,7 @@ import { useLanguage } from '../../../contexts/LanguageContext'
 export default function DoctorRegistration() {
   const navigate = useNavigate()
   const toast = useToast()
-  const { t } = useLanguage()
+  const { t, language, toggleLanguage } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState({
     license: null,
@@ -219,11 +219,11 @@ export default function DoctorRegistration() {
     clearFieldError(field)
   }
 
-  const toggleLanguage = (language) => {
+  const toggleLang = (lang) => {
     const current = formData.languages || []
-    const updated = current.includes(language)
-      ? current.filter(l => l !== language)
-      : [...current, language]
+    const updated = current.includes(lang)
+      ? current.filter(l => l !== lang)
+      : [...current, lang]
     handleFieldChange('languages', updated)
   }
 
@@ -289,7 +289,25 @@ export default function DoctorRegistration() {
 
   return (
     <div className="min-h-screen bg-background py-6 sm:py-8 px-3 sm:px-4">
-      <div className="max-w-4xl mx-auto">
+      {/* ── Floating Top Bar ── */}
+      <div className="fixed top-4 inset-x-4 z-50 flex items-center justify-between pointer-events-none">
+        <button
+          onClick={() => navigate('/')}
+          className="pointer-events-auto flex items-center gap-2 bg-background-paper/90 backdrop-blur-md border border-border shadow-lg rounded-full px-4 py-2 text-sm font-semibold text-text-heading hover:text-primary hover:border-primary/40 transition-all duration-200"
+        >
+          <Home className="w-4 h-4" />
+          <span className="hidden sm:inline">{t('auth.backToHome', 'Home')}</span>
+        </button>
+        <button
+          onClick={toggleLanguage}
+          className="pointer-events-auto flex items-center gap-2 bg-background-paper/90 backdrop-blur-md border border-border shadow-lg rounded-full px-4 py-2 text-sm font-semibold text-text-heading hover:text-primary hover:border-primary/40 transition-all duration-200"
+        >
+          <Globe className="w-4 h-4" />
+          <span>{language === 'ar' ? 'English' : 'العربية'}</span>
+        </button>
+      </div>
+
+      <div className="max-w-4xl mx-auto pt-12">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl font-bold text-text-heading">{t('doctorReg.title')}</h1>
@@ -356,15 +374,15 @@ export default function DoctorRegistration() {
                     {t('doctorReg.languagesSpoken')}
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    {languagesAvailable.map((language) => (
-                      <label key={language.value} className="flex items-center gap-2 p-3 border border-border rounded-lg cursor-pointer hover:bg-background-subtle transition-colors">
+                    {languagesAvailable.map((lang) => (
+                      <label key={lang.value} className="flex items-center gap-2 p-3 border border-border rounded-lg cursor-pointer hover:bg-background-subtle transition-colors">
                         <input
                           type="checkbox"
-                          checked={(formData.languages || []).includes(language.value)}
-                          onChange={() => toggleLanguage(language.value)}
+                          checked={(formData.languages || []).includes(lang.value)}
+                          onChange={() => toggleLang(lang.value)}
                           className="w-4 h-4 text-primary border-border rounded focus:ring-primary"
                         />
-                        <span className="text-sm text-text-heading">{language.label}</span>
+                        <span className="text-sm text-text-heading">{lang.label}</span>
                       </label>
                     ))}
                   </div>
