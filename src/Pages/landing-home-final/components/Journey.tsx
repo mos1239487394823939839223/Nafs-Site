@@ -1,54 +1,26 @@
-import { ClipboardCheck, UserPlus, CalendarCheck } from "lucide-react";
+import { CalendarCheck, ClipboardCheck, UserPlus } from "lucide-react";
 import { useLanguage } from "../../../contexts/LanguageContext";
 
 export const Journey = () => {
   const { t, language } = useLanguage();
   const isAr = language === "ar";
-
   const steps = [
-    { number: 1, icon: ClipboardCheck, titleKey: "landing.journey.step1.title", descKey: "landing.journey.step1.desc" },
-    { number: 2, icon: UserPlus, titleKey: "landing.journey.step2.title", descKey: "landing.journey.step2.desc" },
-    { number: 3, icon: CalendarCheck, titleKey: "landing.journey.step3.title", descKey: "landing.journey.step3.desc" },
+    { icon: ClipboardCheck, titleKey: "landing.journey.step1.title", descKey: "landing.journey.step1.desc", tone: "bg-[#E8F4EE] text-[#17614D]" },
+    { icon: UserPlus, titleKey: "landing.journey.step2.title", descKey: "landing.journey.step2.desc", tone: "bg-[#FFF2DA] text-[#A36B12]" },
+    { icon: CalendarCheck, titleKey: "landing.journey.step3.title", descKey: "landing.journey.step3.desc", tone: "bg-[#E9EEF9] text-[#4267A9]" },
   ];
-
   return (
-    <section id="about" dir={isAr ? "rtl" : "ltr"} className="bg-background py-20 md:py-24">
-      <div className="container mx-auto px-4">
-        <h2 className="text-center text-2xl md:text-3xl font-bold text-foreground mb-12">
-          {t("landing.journey.title")}
-        </h2>
-
-        <div className="relative max-w-5xl mx-auto">
-          {/* Dotted connector line (desktop only) */}
-          <div
-            aria-hidden
-            className="hidden md:block absolute top-1/2 end-[12%] start-[12%] -translate-y-1/2 border-t-2 border-dashed border-brand/40 z-0"
-          />
-          {/* Connector dots */}
-          <div
-            aria-hidden
-            className="hidden md:block absolute top-1/2 end-[33%] -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-brand z-0"
-          />
-          <div
-            aria-hidden
-            className="hidden md:block absolute top-1/2 start-[33%] -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-brand z-0"
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-            {steps.map(({ number, icon: Icon, titleKey, descKey }) => (
-              <div
-                key={number}
-                className="relative bg-card border border-border rounded-[24px] p-7 pt-7 mt-4 shadow-[var(--shadow-card)] text-start"
-              >
-                <span className="absolute -top-4 start-4 w-8 h-8 rounded-full bg-brand text-primary-foreground text-sm font-bold flex items-center justify-center">
-                  {number}
-                </span>
-                <Icon className="w-10 h-10 text-brand mb-4" strokeWidth={1.75} />
-                <h3 className="text-lg font-bold text-foreground mb-2">{t(titleKey)}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{t(descKey)}</p>
-              </div>
-            ))}
-          </div>
+    <section id="about" dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-16 md:py-20">
+      <div className="mb-10 text-center"><p className="text-xs font-black uppercase tracking-[.18em] text-[#2D7A61]">{isAr ? "بداية بسيطة" : "A simple start"}</p><h2 className="landing-section-title mt-3 text-3xl md:text-4xl">{t("landing.journey.title")}</h2></div>
+      <div className="relative mx-auto max-w-6xl">
+        <div className="absolute start-[12%] end-[12%] top-12 hidden h-px bg-gradient-to-r from-transparent via-[#2D7A61]/35 to-transparent md:block" />
+        <div className="relative grid gap-4 md:grid-cols-3">
+          {steps.map(({ icon: Icon, titleKey, descKey, tone }, index) => (
+            <article key={titleKey} className="landing-card group relative rounded-[26px] p-6 text-start transition-all duration-300 md:p-7">
+              <div className="mb-6 flex items-center justify-between"><span className={`grid h-16 w-16 place-items-center rounded-2xl transition-transform group-hover:scale-110 ${tone}`}><Icon className="h-7 w-7" /></span><span className="text-5xl font-black text-[#0F4C3A]/[.07]">0{index + 1}</span></div>
+              <h3 className="text-lg font-black text-[#183C32]">{t(titleKey)}</h3><p className="mt-3 text-sm font-medium leading-7 text-[#6A8178]">{t(descKey)}</p>
+            </article>
+          ))}
         </div>
       </div>
     </section>

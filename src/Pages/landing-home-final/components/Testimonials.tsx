@@ -50,10 +50,11 @@ export const Testimonials = () => {
   const photos = [t1, t2, t3];
 
   return (
-    <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-20 md:py-24">
+    <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-16 md:py-20">
       <div className="mb-9 flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-black text-foreground md:text-3xl">{t("landing.testimonials.title")}</h2>
+          <p className="text-xs font-black uppercase tracking-[.18em] text-[#2D7A61]">{isAr ? "قصص حقيقية" : "Real stories"}</p>
+          <h2 className="landing-section-title mt-3 text-3xl md:text-4xl">{t("landing.testimonials.title")}</h2>
           <p className="mt-2 text-sm text-muted-foreground">
             {isAr ? "تجارب حقيقية من مستخدمين بدأوا رحلتهم مع نفس." : "Real experiences from users who started their journey with Nafas."}
           </p>
@@ -74,12 +75,12 @@ export const Testimonials = () => {
         onTouchEnd={(event) => handleTouchEnd(event.changedTouches[0].clientX)}
       >
         {visible.map((item, idx) => (
-          <article key={`${active}-${idx}`} className={`rounded-[24px] border bg-card p-6 shadow-[var(--shadow-card)] transition ${idx > 0 ? "hidden md:block" : ""} ${idx === 0 ? "border-brand/30 md:-translate-y-2 md:shadow-[var(--shadow-soft)]" : "border-border/60"}`}>
+          <article key={`${active}-${idx}`} className={`relative overflow-hidden rounded-[28px] border bg-white p-7 shadow-[0_25px_55px_-42px_rgba(15,76,58,.55)] transition duration-300 hover:-translate-y-2 ${idx > 0 ? "hidden md:block" : ""} ${idx === 0 ? "border-[#2D7A61]/30 md:-translate-y-2 md:shadow-xl md:shadow-[#0F4C3A]/10" : "border-[#0F4C3A]/10"}`}>
             <div className="flex items-center justify-between">
               <Quote className="h-7 w-7 text-brand/45" />
               <div className="flex gap-0.5 text-amber-400">{Array.from({ length: 5 }).map((_, i) => <Star key={i} className="h-3.5 w-3.5 fill-current" />)}</div>
             </div>
-            <p className="mt-5 min-h-[92px] text-sm leading-7 text-foreground/80">{item.quote}</p>
+            <p className="mt-5 min-h-[112px] text-base font-medium leading-8 text-[#3C594F]">{item.quote}</p>
             <div className="mt-6 flex items-center gap-3 border-t border-border/60 pt-4">
               <img src={photos[idx]} alt={item.name} className="h-12 w-12 rounded-2xl object-cover" />
               <div>

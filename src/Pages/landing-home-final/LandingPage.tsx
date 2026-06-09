@@ -17,7 +17,7 @@ const LandingPage = () => {
   const isAr = language === "ar";
 
   return (
-    <div dir={isAr ? "rtl" : "ltr"} className="min-h-screen bg-background">
+    <div dir={isAr ? "rtl" : "ltr"} className="landing-shell min-h-screen overflow-hidden bg-background">
       <Navbar />
       <Hero />
       <main>

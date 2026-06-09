@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { ArrowUpLeft, HeartHandshake, ShieldCheck, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../../contexts/LanguageContext";
 
@@ -6,43 +7,5 @@ export const FinalCTA = () => {
   const navigate = useNavigate();
   const { t, language } = useLanguage();
   const isAr = language === "ar";
-
-  return (
-  <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-20 md:py-24">
-    <div className="relative overflow-hidden rounded-[32px] bg-brand px-6 py-12 shadow-[0_24px_60px_-32px_rgba(15,76,58,0.7)] md:px-10 md:py-14 text-center">
-      {/* Decorative leaves */}
-      <div aria-hidden className="pointer-events-none absolute inset-y-0 end-0 w-1/3 opacity-20">
-        <svg viewBox="0 0 200 200" className="h-full w-full" fill="none">
-          <path d="M40 180 C40 100 100 40 180 40" stroke="currentColor" strokeWidth="2" className="text-brand-foreground" />
-          <ellipse cx="60" cy="160" rx="14" ry="6" transform="rotate(-40 60 160)" fill="currentColor" className="text-brand-foreground" />
-          <ellipse cx="90" cy="120" rx="16" ry="7" transform="rotate(-40 90 120)" fill="currentColor" className="text-brand-foreground" />
-          <ellipse cx="130" cy="80" rx="16" ry="7" transform="rotate(-40 130 80)" fill="currentColor" className="text-brand-foreground" />
-        </svg>
-      </div>
-      <div aria-hidden className="pointer-events-none absolute inset-y-0 start-0 w-1/3 opacity-20 scale-x-[-1]">
-        <svg viewBox="0 0 200 200" className="h-full w-full" fill="none">
-          <path d="M40 180 C40 100 100 40 180 40" stroke="currentColor" strokeWidth="2" className="text-brand-foreground" />
-          <ellipse cx="60" cy="160" rx="14" ry="6" transform="rotate(-40 60 160)" fill="currentColor" className="text-brand-foreground" />
-          <ellipse cx="90" cy="120" rx="16" ry="7" transform="rotate(-40 90 120)" fill="currentColor" className="text-brand-foreground" />
-          <ellipse cx="130" cy="80" rx="16" ry="7" transform="rotate(-40 130 80)" fill="currentColor" className="text-brand-foreground" />
-        </svg>
-      </div>
-
-      <div className="relative z-10">
-        <h2 className="text-2xl md:text-3xl font-bold text-brand-foreground">
-          {t("landing.finalCta.title")}
-        </h2>
-        <p className="mt-3 text-brand-foreground/85 text-sm md:text-base">
-          {t("landing.finalCta.desc")}
-        </p>
-        <Button
-          onClick={() => navigate("/auth/login")}
-          className="mt-6 bg-brand-foreground px-8 text-brand hover:bg-brand-foreground/90"
-        >
-          {t("landing.finalCta.button")}
-        </Button>
-      </div>
-    </div>
-  </section>
-  );
+  return <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-16 md:py-20"><div className="relative overflow-hidden rounded-[38px] bg-[linear-gradient(120deg,#0A3F32,#0F5A46_55%,#347D62)] px-6 py-14 text-center text-white shadow-[0_35px_80px_-40px_rgba(15,76,58,.8)] md:px-12 md:py-20"><div className="absolute -start-24 -top-24 h-72 w-72 rounded-full border-[50px] border-white/5" /><div className="absolute -bottom-32 -end-20 h-80 w-80 rounded-full bg-[#8ED0AC]/15 blur-2xl" /><span className="relative mx-auto grid h-16 w-16 place-items-center rounded-2xl bg-white/10"><HeartHandshake className="h-8 w-8" /></span><h2 className="relative mx-auto mt-6 max-w-3xl text-3xl font-black leading-tight md:text-5xl">{t("landing.finalCta.title")}</h2><p className="relative mx-auto mt-4 max-w-xl text-sm font-medium leading-7 text-white/75 md:text-base">{t("landing.finalCta.desc")}</p><Button onClick={() => navigate("/auth/role-selection")} className="relative mt-8 h-14 rounded-2xl bg-white px-8 text-base font-black text-[#0F4C3A] shadow-xl hover:-translate-y-1 hover:bg-[#F2F9F5]">{t("landing.finalCta.button")}<ArrowUpLeft className={`ms-2 h-5 w-5 ${isAr ? "" : "-rotate-90"}`} /></Button><div className="relative mt-6 flex flex-wrap justify-center gap-4 text-[11px] font-bold text-white/70"><span className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4" />{isAr ? "آمن وخاص" : "Secure and private"}</span><span className="flex items-center gap-1.5"><Sparkles className="h-4 w-4" />{isAr ? "ابدأ في دقائق" : "Start in minutes"}</span></div></div></section>;
 };

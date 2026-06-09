@@ -41,12 +41,12 @@ export const Footer = () => {
   ];
 
   return (
-  <footer dir={isAr ? "rtl" : "ltr"} className="bg-cream-deep">
-    <div className="container mx-auto grid gap-8 sm:gap-10 px-4 py-10 sm:py-12 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
+  <footer dir={isAr ? "rtl" : "ltr"} className="border-t border-white/10 bg-[#092F26] text-white">
+    <div className="container mx-auto grid gap-8 px-4 py-14 sm:grid-cols-2 md:grid-cols-[1fr_1fr_1fr_1.35fr] md:py-16">
       {/* Contact */}
       <div className="text-start sm:text-end">
-        <h4 className="mb-3 sm:mb-4 text-base font-bold text-foreground">{t("landing.footer.contact")}</h4>
-        <ul className="space-y-2 sm:space-y-3 text-sm text-muted-foreground">
+        <h4 className="mb-4 text-base font-black text-white">{t("landing.footer.contact")}</h4>
+        <ul className="space-y-3 text-sm text-white/60">
           <li className="flex items-center sm:justify-end gap-2">
             <Phone className="h-4 w-4 text-brand sm:hidden" />
             <span>{t("landing.footer.phone")}</span>
@@ -66,38 +66,38 @@ export const Footer = () => {
       </div>
       {/* Support */}
       <div className="text-start sm:text-end">
-        <h4 className="mb-3 sm:mb-4 text-base font-bold text-foreground">{t("landing.footer.supportHelp")}</h4>
-        <ul className="space-y-2 text-sm text-muted-foreground">
+        <h4 className="mb-4 text-base font-black text-white">{t("landing.footer.supportHelp")}</h4>
+        <ul className="space-y-3 text-sm text-white/60">
           {supportLinks.map(({ key, href }) => (
-            <li key={key}><a href={href} className="hover:text-brand">{t(key)}</a></li>
+            <li key={key}><a href={href} className="transition hover:text-emerald-200">{t(key)}</a></li>
           ))}
         </ul>
       </div>
       {/* Quick links */}
       <div className="text-start sm:text-end">
-        <h4 className="mb-3 sm:mb-4 text-base font-bold text-foreground">{t("landing.footer.quickLinks")}</h4>
-        <ul className="space-y-2 text-sm text-muted-foreground">
+        <h4 className="mb-4 text-base font-black text-white">{t("landing.footer.quickLinks")}</h4>
+        <ul className="space-y-3 text-sm text-white/60">
           {quickLinks.map(({ key, href }) => (
-            <li key={key}><a href={href} className="hover:text-brand">{t(key)}</a></li>
+            <li key={key}><a href={href} className="transition hover:text-emerald-200">{t(key)}</a></li>
           ))}
         </ul>
       </div>
       {/* Brand */}
       <div className="text-start sm:text-end">
         <Logo />
-        <p className="mt-3 sm:mt-4 text-sm leading-relaxed text-muted-foreground">
+        <p className="mt-4 text-sm font-medium leading-7 text-white/60">
           {t("landing.footer.tagline")}
         </p>
         <div className="mt-4 flex items-center gap-3 justify-start sm:justify-end">
-          <a href="#" aria-label="Instagram" className="text-muted-foreground hover:text-brand"><IconInstagram /></a>
-          <a href="#" aria-label="Twitter" className="text-muted-foreground hover:text-brand"><IconTwitterX /></a>
-          <a href="#" aria-label="Facebook" className="text-muted-foreground hover:text-brand"><IconFacebook /></a>
-          <a href="#" aria-label="LinkedIn" className="text-muted-foreground hover:text-brand"><IconLinkedin /></a>
+          <a href="#" aria-label="Instagram" className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-white/70 hover:-translate-y-1 hover:bg-white hover:text-[#0F4C3A]"><IconInstagram /></a>
+          <a href="#" aria-label="Twitter" className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-white/70 hover:-translate-y-1 hover:bg-white hover:text-[#0F4C3A]"><IconTwitterX /></a>
+          <a href="#" aria-label="Facebook" className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-white/70 hover:-translate-y-1 hover:bg-white hover:text-[#0F4C3A]"><IconFacebook /></a>
+          <a href="#" aria-label="LinkedIn" className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-white/70 hover:-translate-y-1 hover:bg-white hover:text-[#0F4C3A]"><IconLinkedin /></a>
         </div>
       </div>
     </div>
-    <div className="border-t border-border/60">
-      <p className="container mx-auto px-4 py-4 text-center text-xs text-muted-foreground">
+    <div className="border-t border-white/10">
+      <p className="container mx-auto px-4 py-5 text-center text-xs text-white/45">
         {t("landing.footer.rights")}
       </p>
     </div>

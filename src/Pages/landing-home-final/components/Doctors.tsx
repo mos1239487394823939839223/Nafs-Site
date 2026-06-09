@@ -1,6 +1,6 @@
 import { useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, ChevronLeft, ChevronRight, CalendarClock } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import { patientAPI } from "../../../lib/api";
@@ -59,10 +59,12 @@ export const Doctors = () => {
   }, []);
 
   return (
-  <section id="doctors" dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-20 md:py-24">
+  <section id="doctors" dir={isAr ? "rtl" : "ltr"} className="bg-[#F1F8F4] py-16 md:py-20">
+    <div className="container mx-auto px-4">
     <div className="mb-9 flex items-end justify-between gap-4">
       <div>
-      <h2 className="text-2xl font-black text-foreground md:text-3xl">{t("landing.doctors.title")}</h2>
+      <p className="text-xs font-black uppercase tracking-[.18em] text-[#2D7A61]">{isAr ? "خبراء موثوقون" : "Trusted experts"}</p>
+      <h2 className="landing-section-title mt-3 text-3xl md:text-4xl">{t("landing.doctors.title")}</h2>
       <p className="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">
         {isAr ? "تعرّف على متخصصين معتمدين واختر الأنسب لاحتياجاتك وطريقة التواصل التي تفضلها." : "Meet certified specialists and choose the right therapist for your needs and preferred communication style."}
       </p>
@@ -94,9 +96,9 @@ export const Doctors = () => {
           : visibleDoctors.map((doc) => (
           <article
             key={doc.Id}
-            className="group min-w-[86%] snap-start rounded-[24px] border border-border/60 bg-card p-5 text-center shadow-[var(--shadow-card)] transition hover:-translate-y-1 hover:border-brand/25 hover:shadow-[var(--shadow-soft)] sm:min-w-[calc(50%_-_10px)] lg:min-w-[calc(25%_-_15px)]"
+            className="group min-w-[88%] snap-start rounded-[28px] border border-[#0F4C3A]/10 bg-white p-4 text-start shadow-[0_25px_55px_-42px_rgba(15,76,58,.55)] transition duration-300 hover:-translate-y-2 hover:shadow-xl hover:shadow-[#0F4C3A]/10 sm:min-w-[calc(50%_-_10px)] lg:min-w-[calc(25%_-_15px)]"
           >
-            <div className="mx-auto h-32 w-full overflow-hidden rounded-[18px] bg-muted">
+            <div className="mx-auto h-48 w-full overflow-hidden rounded-[22px] bg-muted">
               {doc.Image ? (
                 <img
                   src={doc.Image}
@@ -117,7 +119,7 @@ export const Doctors = () => {
               {Array.isArray(doc.Specialist) ? doc.Specialist.join(" | ") : doc.Specialist ?? ""}
             </p>
             {doc.Rate != null && (
-              <div className="mt-3 flex items-center justify-center gap-1 text-sm">
+              <div className="mt-3 flex items-center gap-1 text-sm">
                 <span className="font-bold text-foreground">{doc.Rate.toFixed(1)}</span>
                 <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
               </div>
@@ -130,15 +132,17 @@ export const Doctors = () => {
                 {doc.SessionPrice} {t("landing.doctors.perSession")}
               </p>
             )}
+            <p className="mt-3 flex items-center gap-2 rounded-xl bg-[#F5FAF7] p-2.5 text-[10px] font-bold text-[#2D7A61]"><CalendarClock className="h-4 w-4" />{isAr ? "أقرب موعد متاح اليوم" : "Next available today"}</p>
             <Button
               onClick={() => navigate("/auth/login")}
-              className="mt-5 w-full bg-brand text-brand-foreground hover:bg-brand/90"
+              className="mt-4 h-11 w-full rounded-xl bg-[#0F4C3A] font-black text-white hover:bg-[#0A3F32]"
             >
               {t("landing.doctors.bookNow")}
             </Button>
           </article>
         ))}
       </div>
+    </div>
     </div>
   </section>
   );
