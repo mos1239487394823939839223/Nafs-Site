@@ -163,7 +163,7 @@ export default function Header({ onMenuClick }) {
 
     return (
       <header className="bg-[#F8FAF8] px-4 py-5">
-        <div className="mx-auto flex w-full max-w-[920px] items-center justify-between gap-4">
+        <div className="mx-auto flex w-full max-w-[1240px] items-center justify-between gap-4">
           {isRTL ? (
             <>
               {patientProfile}

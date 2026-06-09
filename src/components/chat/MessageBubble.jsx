@@ -29,7 +29,7 @@ export default function MessageBubble({ message, isSent, showAvatar = true, part
   const hasAttachments = message.attachments && message.attachments.length > 0
 
   return (
-    <div className={`flex items-end gap-2 mb-1 ${isSent ? 'flex-row-reverse' : ''}`}>
+    <div className={`flex items-end gap-2 mb-2 ${isSent ? 'flex-row-reverse' : ''}`}>
 
       {/* Avatar — only for received messages */}
       {!isSent && (
@@ -45,13 +45,13 @@ export default function MessageBubble({ message, isSent, showAvatar = true, part
       )}
 
       {/* Bubble */}
-      <div className={`max-w-[68%] flex flex-col ${isSent ? 'items-end' : 'items-start'}`}>
+      <div className={`max-w-[84%] sm:max-w-[72%] flex flex-col ${isSent ? 'items-end' : 'items-start'}`}>
         <div
           className={`
-            px-3.5 py-2.5 shadow-sm
+            px-4 py-3 shadow-sm transition-shadow hover:shadow-md
             ${isSent
-              ? 'bg-primary text-white rounded-2xl rounded-ee-sm'
-              : 'bg-background-subtle border border-border/50 text-text rounded-2xl rounded-es-sm'
+              ? 'bg-primary text-white rounded-[20px] rounded-ee-sm'
+              : 'bg-background-paper border border-border/70 text-text rounded-[20px] rounded-es-sm'
             }
           `}
         >

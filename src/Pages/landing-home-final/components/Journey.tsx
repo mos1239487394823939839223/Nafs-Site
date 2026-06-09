@@ -12,7 +12,7 @@ export const Journey = () => {
   ];
 
   return (
-    <section id="about" dir={isAr ? "rtl" : "ltr"} className="py-16 md:py-20 bg-background">
+    <section id="about" dir={isAr ? "rtl" : "ltr"} className="bg-background py-20 md:py-24">
       <div className="container mx-auto px-4">
         <h2 className="text-center text-2xl md:text-3xl font-bold text-foreground mb-12">
           {t("landing.journey.title")}
@@ -38,7 +38,7 @@ export const Journey = () => {
             {steps.map(({ number, icon: Icon, titleKey, descKey }) => (
               <div
                 key={number}
-                className="relative bg-card border border-border rounded-2xl p-6 pt-6 mt-4 shadow-[var(--shadow-card)] text-start"
+                className="relative bg-card border border-border rounded-[24px] p-7 pt-7 mt-4 shadow-[var(--shadow-card)] text-start"
               >
                 <span className="absolute -top-4 start-4 w-8 h-8 rounded-full bg-brand text-primary-foreground text-sm font-bold flex items-center justify-center">
                   {number}

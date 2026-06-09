@@ -31,8 +31,9 @@ import {
   getPaymentStatusMeta,
   normalizePaymentStatus,
 } from "../../lib/paymentStatus";
-import { getRoomCaseTypeMeta, readLocalRoomCaseTypes } from "../../lib/supportCaseTypes";
+import { getRoomCaseTypeMeta, getSupportRoomTimestamp, readLocalRoomCaseTypes, sortSupportRooms } from "../../lib/supportCaseTypes";
 import SupportCaseTag from "../../components/support/SupportCaseTag";
+import SupportPriorityTag from "../../components/support/SupportPriorityTag";
 
 export default function CustomerServiceDashboard() {
   const { t, isRTL } = useLanguage();
@@ -63,6 +64,8 @@ export default function CustomerServiceDashboard() {
   // Chat rooms state
   const [chatRooms, setChatRooms] = useState([]);
   const [chatRoomsLoading, setChatRoomsLoading] = useState(false);
+  const [chatRoomsSearch, setChatRoomsSearch] = useState("");
+  const [chatRoomsTypeFilter, setChatRoomsTypeFilter] = useState("all");
 
   const tx = (key, fallback) => {
     const value = t(key);
@@ -272,6 +275,23 @@ export default function CustomerServiceDashboard() {
     const meta = getRoomCaseTypeMeta(room, isRTL, readLocalRoomCaseTypes());
     return { ...meta, cls: meta.className };
   };
+
+  const visibleChatRooms = useMemo(() => {
+    const localMap = readLocalRoomCaseTypes();
+    const query = chatRoomsSearch.trim().toLowerCase();
+    return sortSupportRooms(
+      chatRooms.filter((room) => {
+        const meta = getRoomCaseTypeMeta(room, isRTL, localMap);
+        const matchesType = chatRoomsTypeFilter === "all" || meta.key === chatRoomsTypeFilter;
+        const matchesSearch =
+          !query ||
+          String(room.OtherParticipantName || room.Name || "").toLowerCase().includes(query) ||
+          String(room.LastMessage || "").toLowerCase().includes(query);
+        return matchesType && matchesSearch;
+      }),
+      localMap,
+    );
+  }, [chatRooms, chatRoomsSearch, chatRoomsTypeFilter, isRTL]);
 
   const moduleTabs = [
     {
@@ -987,7 +1007,10 @@ export default function CustomerServiceDashboard() {
       {activeModule === "chat-rooms" && (
         <Card className="border border-border/80 shadow-sm">
           <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-border pb-4">
-            <CardTitle className="text-xl">{t("auto.chatRooms")}</CardTitle>
+            <div>
+              <CardTitle className="text-xl">{t("auto.chatRooms")}</CardTitle>
+              <p className="mt-1 text-xs text-text-muted">{t("auto.patientConversations")}</p>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -1002,19 +1025,53 @@ export default function CustomerServiceDashboard() {
             </Button>
           </CardHeader>
           <CardContent className="pt-4">
+            <div className="mb-5 grid gap-3 lg:grid-cols-[1fr_auto]">
+              <div className="relative">
+                <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                <input
+                  value={chatRoomsSearch}
+                  onChange={(event) => setChatRoomsSearch(event.target.value)}
+                  placeholder={t("chat.searchConversations", "Search conversations...")}
+                  className="h-12 w-full rounded-xl border border-border bg-background ps-10 pe-4 text-sm text-text outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+                />
+              </div>
+              <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                {[
+                  ["all", t("common.all", "All")],
+                  ["emergency", t("support.emergency", "Emergency")],
+                  ["technical", t("staff.technical")],
+                  ["medical", t("support.medicalInquiry", "Medical")],
+                  ["billing", t("staff.payment")],
+                  ["appointment", t("staff.appointment")],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => setChatRoomsTypeFilter(value)}
+                    className={`h-11 whitespace-nowrap rounded-xl border px-3 text-xs font-bold ${
+                      chatRoomsTypeFilter === value
+                        ? "border-primary bg-primary text-white"
+                        : "border-border bg-background-paper text-text-muted"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
             {chatRoomsLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
               </div>
-            ) : chatRooms.length === 0 ? (
+            ) : visibleChatRooms.length === 0 ? (
               <div className="text-center py-12 text-text-muted">
                 <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30" />
                 <p>{t("auto.noChatRoomsYet")}</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {chatRooms.map((room) => {
+                {visibleChatRooms.map((room) => {
                   const meta = getCaseTypeMeta(room);
+                  const updatedAt = getSupportRoomTimestamp(room);
                   return (
                     <div
                       key={room.Id || room.id}
@@ -1027,11 +1084,11 @@ export default function CustomerServiceDashboard() {
                           navigate(`/dashboard/staff/messages?room=${room.Id || room.id}`);
                         }
                       }}
-                      className={`p-4 rounded-xl flex items-center gap-4 border transition-all ${
+                      className={`p-4 rounded-[20px] flex items-center gap-4 border transition-all ${
                         meta.priority
-                          ? "bg-red-50 border-red-300 shadow-sm shadow-red-100"
-                          : "bg-background-subtle border-border"
-                      } cursor-pointer hover:border-primary/40`}
+                          ? "bg-red-50 border-red-300 shadow-md shadow-red-100"
+                          : "bg-background-paper border-border shadow-[var(--ds-shadow-card)]"
+                      } cursor-pointer hover:-translate-y-0.5 hover:border-primary/40`}
                     >
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Person className="w-5 h-5 text-primary" />
@@ -1044,11 +1101,20 @@ export default function CustomerServiceDashboard() {
                               t("auto.unknown")}
                           </h4>
                           <SupportCaseTag room={room} isRTL={isRTL} localMap={readLocalRoomCaseTypes()} size="md" />
-                          {meta.priority && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-600 text-white font-bold animate-pulse">
-                              {t("auto.priority", "Priority")}
-                            </span>
-                          )}
+                          <SupportPriorityTag room={room} isRTL={isRTL} />
+                          <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold ${
+                            Number(room.UnreadCount) > 0
+                              ? "border-amber-200 bg-amber-50 text-amber-700"
+                              : room.IsActive === false
+                                ? "border-slate-200 bg-slate-50 text-slate-600"
+                                : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          }`}>
+                            {Number(room.UnreadCount) > 0
+                              ? t("support.waitingReply", "Waiting reply")
+                              : room.IsActive === false
+                                ? t("staff.resolved")
+                                : t("staff.inProgress")}
+                          </span>
                           {Number(room.UnreadCount) > 0 && (
                             <span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full">
                               {room.UnreadCount}
@@ -1058,6 +1124,10 @@ export default function CustomerServiceDashboard() {
                         <p className="text-sm text-text-muted truncate mt-0.5">
                           {room.LastMessage || t("auto.noMessagesYet")}
                         </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-text-muted">
+                          <span>{t("support.createdAt", "Created")}: {new Date(room.CreatedAt || room.createdAt || updatedAt).toLocaleString()}</span>
+                          <span>{t("support.lastUpdated", "Last updated")}: {new Date(updatedAt).toLocaleString()}</span>
+                        </div>
                       </div>
                     </div>
                   );

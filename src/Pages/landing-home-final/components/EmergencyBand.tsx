@@ -15,35 +15,45 @@ export const EmergencyBand = () => {
   ];
 
   return (
-  <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-10">
-    <div className="rounded-[2rem] bg-cream-deep p-6 md:p-10">
-      <h2 className="text-center text-2xl font-bold text-foreground md:text-3xl">
-        {t("landing.emergency.title")}
-      </h2>
-      <div className="mt-8 grid gap-4 md:grid-cols-3">
+  <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-16 md:py-20">
+    <div className="relative overflow-hidden rounded-[32px] border border-[#DCCFC0] bg-[linear-gradient(135deg,#FFF8EB_0%,#F7EFE4_48%,#EDF6F1_100%)] p-6 shadow-[0_28px_70px_-38px_rgba(91,58,35,0.5)] md:p-10">
+      <div className="absolute -end-20 -top-24 h-64 w-64 rounded-full bg-[#E7B8A8]/20 blur-3xl" />
+      <div className="absolute -bottom-24 -start-16 h-56 w-56 rounded-full bg-brand/10 blur-3xl" />
+      <div className="relative mx-auto mb-8 max-w-xl text-center">
+        <span className="mx-auto mb-4 grid h-16 w-16 place-items-center rounded-[22px] bg-[#8F3F4A] text-white shadow-lg shadow-[#8F3F4A]/25">
+          <ShieldAlert className="h-8 w-8" />
+        </span>
+        <h2 className="text-center text-2xl font-black text-foreground md:text-3xl">
+          {t("landing.emergency.title")}
+        </h2>
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">
+          {isAr ? "اختر نوع المساعدة المناسبة وسيوصلك فريقنا للخطوة الأكثر أمانًا بسرعة وخصوصية." : "Choose the support you need and our team will guide you to the safest next step quickly and privately."}
+        </p>
+      </div>
+      <div className="relative grid gap-5 md:grid-cols-3">
         {items.map(({ icon: Icon, titleKey, descKey, ctaKey, highlight }) => (
           <div
             key={titleKey}
-            className={`flex flex-col items-center rounded-2xl p-6 text-center transition ${
+            className={`flex min-h-[280px] flex-col items-center rounded-[24px] border p-6 text-center transition duration-300 hover:-translate-y-1 ${
               highlight
-                ? "bg-brand-soft ring-2 ring-brand/30"
-                : "bg-card shadow-[var(--shadow-card)]"
+                ? "border-[#B86B75]/30 bg-[#8F3F4A] text-white shadow-xl shadow-[#8F3F4A]/20"
+                : "border-white/80 bg-white/80 shadow-[var(--shadow-card)] backdrop-blur"
             }`}
           >
             <span
               className={`mb-3 grid h-12 w-12 place-items-center rounded-full ${
-                highlight ? "bg-brand text-brand-foreground" : "bg-brand-soft text-brand"
+                highlight ? "bg-white/15 text-white" : "bg-brand-soft text-brand"
               }`}
             >
               <Icon className="h-6 w-6" />
             </span>
-            <h3 className="text-lg font-bold text-foreground">{t(titleKey)}</h3>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{t(descKey)}</p>
+            <h3 className={`text-lg font-bold ${highlight ? "text-white" : "text-foreground"}`}>{t(titleKey)}</h3>
+            <p className={`mt-3 text-sm leading-7 ${highlight ? "text-white/80" : "text-muted-foreground"}`}>{t(descKey)}</p>
             <Button
               onClick={() => navigate("/auth/login")}
-              className={`mt-5 rounded-full px-6 ${
+              className={`mt-auto w-full ${
                 highlight
-                  ? "bg-brand text-brand-foreground hover:bg-brand/90"
+                  ? "bg-white text-[#8F3F4A] hover:bg-white/90"
                   : "bg-card border border-border text-foreground hover:bg-secondary"
               }`}
             >

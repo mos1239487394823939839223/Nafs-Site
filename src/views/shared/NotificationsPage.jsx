@@ -17,6 +17,15 @@ export default function NotificationsPage() {
     () => category === "all" ? notifications : notifications.filter((item) => item.category === category),
     [category, notifications],
   );
+  const categoryCounts = useMemo(
+    () => NOTIFICATION_CATEGORIES.reduce((counts, item) => ({
+      ...counts,
+      [item]: item === "all"
+        ? notifications.length
+        : notifications.filter((notification) => notification.category === item).length,
+    }), {}),
+    [notifications],
+  );
 
   const openNotification = async (item) => {
     await markAsRead(item.id);
@@ -24,7 +33,7 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div dir={isRTL ? "rtl" : "ltr"} className="space-y-5 max-w-4xl mx-auto">
+    <div dir={isRTL ? "rtl" : "ltr"} className="space-y-6 max-w-5xl mx-auto">
       <div className="rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/15 via-background-paper to-secondary/10 p-5 sm:p-7">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -48,11 +57,14 @@ export default function NotificationsPage() {
           <button
             key={item}
             onClick={() => setCategory(item)}
-            className={`px-4 py-2 rounded-full border text-sm font-medium whitespace-nowrap transition-colors ${
-              category === item ? "bg-primary text-white border-primary" : "bg-background-paper text-text-muted border-border hover:border-primary/40"
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold whitespace-nowrap transition-all ${
+              category === item ? "bg-primary text-white border-primary shadow-lg shadow-primary/15" : "bg-background-paper text-text-muted border-border hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary"
             }`}
           >
             {t(`notifications.categories.${item}`, item)}
+            <span className={`rounded-full px-2 py-0.5 text-[10px] ${category === item ? "bg-white/15 text-white" : "bg-primary/10 text-primary"}`}>
+              {categoryCounts[item]}
+            </span>
           </button>
         ))}
       </div>
@@ -72,4 +84,3 @@ export default function NotificationsPage() {
     </div>
   );
 }
-

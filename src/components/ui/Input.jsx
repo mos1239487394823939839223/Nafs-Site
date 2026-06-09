@@ -40,9 +40,10 @@ const Input = React.forwardRef(
         }}
         sx={{
           '& .MuiOutlinedInput-root': {
-            borderRadius: '12px',
+            minHeight: 48,
+            borderRadius: 'var(--ds-radius-control)',
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-              boxShadow: (theme) => `0 0 0 4px ${theme.palette.primary.main}1F`,
+              boxShadow: '0 0 0 4px rgba(45,122,97,0.16)',
             },
           },
           '& .MuiOutlinedInput-input': {
@@ -94,7 +95,8 @@ export function Select({ label, error, className, children, value, onChange, nam
         required={required}
         disabled={disabled}
         sx={{
-          borderRadius: '12px',
+          minHeight: 48,
+          borderRadius: 'var(--ds-radius-control)',
           ...sx,
         }}
         {...props}
@@ -124,7 +126,7 @@ export function Textarea({ label, error, className, rows = 3, value, onChange, n
       className={className}
       sx={{
         '& .MuiOutlinedInput-root': {
-          borderRadius: '12px',
+          borderRadius: 'var(--ds-radius-control)',
         },
         ...sx,
       }}

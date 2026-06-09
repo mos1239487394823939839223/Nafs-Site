@@ -12,17 +12,17 @@ export const PatientHomePage = () => {
   const journey = usePatientJourney();
 
   return (
-    <main className="mx-auto w-full max-w-[920px] min-w-0 space-y-6 pb-8">
+    <main className="mx-auto w-full max-w-[1240px] min-w-0 space-y-8 pb-10">
       <HeroCard isNewPatient={journey.isNewPatient} />
-      <QuickActions />
+      <MoodCheckIn />
       <UpcomingSession session={journey.upcomingSession} loading={journey.loading} />
-      <SuggestedDoctors />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
         <MoodGauge assessment={journey.assessment} hasCompletedSession={journey.hasCompletedSession} loading={journey.loading} />
         <TreatmentProgram program={journey.program} hasCompletedSession={journey.hasCompletedSession} completedCount={journey.completedCount} loading={journey.loading} />
       </div>
       <JourneyUpdate update={journey.latestTherapistUpdate} therapistName={journey.latestTherapistName} hasCompletedSession={journey.hasJourneyStarted} />
-      <MoodCheckIn />
+      <QuickActions />
+      <SuggestedDoctors />
     </main>
   );
 };

@@ -41,8 +41,23 @@ const getAuthToken = () => {
 api.interceptors.request.use(
   (config) => {
     const token = getAuthToken();
-    if (token) {
+    const requestUrl = String(config.url || "").toLowerCase();
+    const publicAuthPaths = [
+      "/auth/login",
+      "/auth/register",
+      "/auth/resendotp",
+      "/auth/verifyotp",
+      "/auth/forgotpassword",
+      "/auth/confirmotpforchangepassword",
+      "/auth/changepasswordbytoken",
+    ];
+    const isPublicAuthRequest = publicAuthPaths.some((path) => requestUrl.includes(path));
+
+    // Public auth endpoints must not receive a stale session token.
+    if (token && !isPublicAuthRequest) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else if (isPublicAuthRequest && config.headers?.Authorization) {
+      delete config.headers.Authorization;
     }
 
     if (
@@ -97,6 +112,19 @@ api.interceptors.response.use(
  * @param {string} fallback - Fallback message if nothing found
  * @returns {string}
  */
+export const toUserFacingError = (
+  message,
+  fallback = "Something went wrong",
+) => {
+  if (typeof message !== "string" || !message.trim()) return fallback;
+  const normalized = message.trim();
+  const technicalPattern =
+    /authorization failed|unauthorized|forbidden|exception|stack trace|axios|network error|request failed|status code|null reference|object reference|internal server error/i;
+  return technicalPattern.test(normalized) || normalized.length > 220
+    ? fallback
+    : normalized;
+};
+
 export const extractErrorMessage = (
   error,
   fallback = "Something went wrong",
@@ -105,17 +133,19 @@ export const extractErrorMessage = (
   const data = error?.response?.data;
   if (data) {
     // Most common: { Message: "..." } or { message: "..." }
-    if (data.Message && typeof data.Message === "string") return data.Message;
-    if (data.message && typeof data.message === "string") return data.message;
+    if (data.Message && typeof data.Message === "string") return toUserFacingError(data.Message, fallback);
+    if (data.message && typeof data.message === "string") return toUserFacingError(data.message, fallback);
     // Validation errors array: { errors: ["...", "..."] }
     if (Array.isArray(data.errors) && data.errors.length) return data.errors[0];
+    if (data.errors && typeof data.errors === "object") {
+      const firstValidationError = Object.values(data.errors).flat().find(Boolean);
+      if (typeof firstValidationError === "string") return toUserFacingError(firstValidationError, fallback);
+    }
     if (Array.isArray(data.Messages) && data.Messages.length)
-      return data.Messages[0];
+      return toUserFacingError(data.Messages[0], fallback);
     // Plain string body
-    if (typeof data === "string" && data.length < 300) return data;
+    if (typeof data === "string") return toUserFacingError(data, fallback);
   }
-  // 2. Network / timeout error
-  if (error?.message) return error.message;
   return fallback;
 };
 

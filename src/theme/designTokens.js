@@ -1,0 +1,36 @@
+export const designTokens = {
+  colors: {
+    primary: "#0F4C3A",
+    primaryLight: "#2D7A61",
+    primaryHover: "#0A3F32",
+    secondary: "#2D7A61",
+    success: "#16835F",
+    warning: "#D79A16",
+    error: "#C83D4D",
+    info: "#3977C3",
+    background: "#F7FAF8",
+    surface: "#FFFFFF",
+    text: "#1F2D2A",
+    mutedText: "#6B8278",
+    border: "#DCE8E2",
+  },
+  radius: {
+    control: 12,
+    card: 20,
+    panel: 26,
+    pill: 999,
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 12,
+    lg: 16,
+    xl: 24,
+    section: 32,
+  },
+  shadows: {
+    card: "0 12px 35px -28px rgba(15,76,58,0.45)",
+    elevated: "0 18px 50px -30px rgba(15,76,58,0.38)",
+    focus: "0 0 0 4px rgba(45,122,97,0.16)",
+  },
+};

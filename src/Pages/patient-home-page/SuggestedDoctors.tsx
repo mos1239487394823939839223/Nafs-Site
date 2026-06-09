@@ -68,7 +68,7 @@ export const SuggestedDoctors = () => {
   };
 
   return (
-    <section className="pt-4">
+    <section>
       <SectionHeading
         title={t("patientHome.suggestedDoctors.title")}
         actionLabel={t("patientHome.suggestedDoctors.viewAll")}
@@ -119,7 +119,7 @@ export const SuggestedDoctors = () => {
               : doctors.map((doctor) => (
                   <article
                     key={doctor.Id}
-                    className="flex flex-col items-center rounded-2xl border border-[#F3F4F6] bg-white px-[21px] py-8 text-center shadow-sm transition-all hover:-translate-y-1 hover:shadow-[0_12px_28px_rgba(15,81,50,0.10)]"
+                    className="flex flex-col items-center rounded-[24px] border border-[#DCE8E2] bg-white px-[21px] py-8 text-center shadow-[0_16px_42px_-28px_rgba(15,76,58,0.4)] transition-all hover:-translate-y-1 hover:border-[#2D7A61]/40 hover:shadow-[0_22px_55px_-28px_rgba(15,76,58,0.5)]"
                     style={{ height: CARD_HEIGHT, minHeight: CARD_HEIGHT, maxHeight: CARD_HEIGHT }}
                   >
                     <div

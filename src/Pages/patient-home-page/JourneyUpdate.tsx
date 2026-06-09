@@ -18,7 +18,7 @@ export const JourneyUpdate = ({
   if (!hasCompletedSession) return null;
 
   return (
-    <section className="rounded-[24px] border border-[#E5E7EB] bg-white p-5 shadow-[0_14px_40px_rgba(15,81,50,0.06)]">
+    <section className="rounded-[24px] border border-[#DCE8E2] bg-white p-6 shadow-[0_16px_42px_-28px_rgba(15,76,58,0.4)]">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-4">
           <img src={doctorAvatar} alt="" className="h-14 w-14 shrink-0 rounded-full object-cover ring-4 ring-[#EAF5EE]" />
@@ -43,7 +43,7 @@ export const JourneyUpdate = ({
 
         <button
           onClick={() => navigate("/dashboard/patient/messages")}
-          className="inline-flex h-12 shrink-0 items-center justify-center gap-2 self-stretch rounded-2xl bg-[#2F855A] px-5 text-sm font-extrabold text-white transition-colors hover:bg-[#0F5132] sm:self-center"
+          className="inline-flex h-12 shrink-0 items-center justify-center gap-2 self-stretch rounded-2xl bg-[#0F4C3A] px-5 text-sm font-extrabold text-white transition-colors hover:bg-[#0A3F32] sm:self-center"
         >
           <MessageCircle className="h-4 w-4" />
           {t("patientHome.journeyUpdate.messageTherapist")}

@@ -1,12 +1,18 @@
 import { useNavigate } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { User, ArrowRight } from 'lucide-react'
+import { User, ArrowRight, Video, Headphones, MessageCircle } from 'lucide-react'
 import Button from '../../components/ui/Button'
 import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function RoleSelection() {
   const navigate = useNavigate()
-  const { t } = useLanguage()
+  const { t, language } = useLanguage()
+  const isAr = language === "ar"
+  const consultationTypes = [
+    { icon: Video, title: isAr ? "استشارات الفيديو" : "Video consultations", desc: isAr ? "جلسة مرئية مباشرة مع المعالج." : "A direct video session with your therapist." },
+    { icon: Headphones, title: isAr ? "الاستشارات الصوتية" : "Audio consultations", desc: isAr ? "تحدث براحتك عبر مكالمة صوتية." : "Talk comfortably through an audio call." },
+    { icon: MessageCircle, title: isAr ? "الاستشارات الكتابية" : "Written consultations", desc: isAr ? "استشارة مرنة عبر الكتابة والشات." : "Flexible consultation through chat and writing." },
+  ]
 
   const roles = [
     {
@@ -82,6 +88,22 @@ export default function RoleSelection() {
                       </li>
                     ))}
                   </ul>
+                  <div className="mt-7 border-t border-border pt-6">
+                    <h3 className="mb-4 font-bold text-text-heading">{isAr ? "اختر طريقة الاستشارة المناسبة لك" : "Choose your preferred consultation type"}</h3>
+                    <div className="grid gap-3">
+                      {consultationTypes.map(({ icon: Icon, title, desc }) => (
+                        <div key={title} className="flex items-center gap-3 rounded-2xl border border-border bg-background-subtle/60 p-3 text-start">
+                          <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                            <Icon className="h-5 w-5" />
+                          </span>
+                          <div>
+                            <p className="text-sm font-bold text-text-heading">{title}</p>
+                            <p className="mt-0.5 text-xs text-text-muted">{desc}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
 
                 {/* Action Button */}

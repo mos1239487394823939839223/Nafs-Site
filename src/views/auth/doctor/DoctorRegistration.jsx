@@ -11,7 +11,7 @@ import { validateRequired, validateFileSize, validateFileType } from '../../../l
 import { ArrowLeft, ArrowRight, Stethoscope, Upload, Calendar, FileText, X, CheckCircle, Clock } from 'lucide-react'
 
 import { useAuth } from '../../../contexts/AuthContext'
-import { api, authAPI, extractErrorMessage } from '../../../lib/api'
+import { api, authAPI, extractErrorMessage, toUserFacingError } from '../../../lib/api'
 import { useLanguage } from '../../../contexts/LanguageContext'
 
 export default function DoctorRegistration() {
@@ -204,7 +204,7 @@ export default function DoctorRegistration() {
         toast.success(t('auth.registrationSubmitted'))
         navigate('/auth/pending-approval')
       } else {
-        toast.error(response.data?.Message || t('errors.somethingWentWrong'))
+        toast.error(toUserFacingError(response.data?.Message, t('errors.somethingWentWrong')))
       }
     } catch (error) {
       console.error('Doctor registration error:', error)

@@ -123,6 +123,7 @@ export const usePatientJourney = () => {
           name: programName,
           currentSession: completedBookings.length,
           totalSessions: Number.isFinite(programTotal) && programTotal > 0 ? programTotal : null,
+          updatedAt: latestRecord?.Date || latestRecord?.RecordedAt || "",
         }
       : null;
     const assessment =

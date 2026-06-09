@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Calendar, Clock, Loader2, Sparkles, Video } from "lucide-react";
+import { Calendar, Clock, FileText, Loader2, RefreshCw, Sparkles, Video } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useToast } from "../../components/ui/Toast";
@@ -132,7 +132,7 @@ export const UpcomingSession = ({
   };
 
   return (
-    <section className="pt-4">
+    <section>
       <SectionHeading
         title={t("patientHome.upcomingSession.title")}
         actionLabel={t("patientHome.upcomingSession.viewAll")}
@@ -140,23 +140,26 @@ export const UpcomingSession = ({
       />
 
       {loading ? (
-        <div className="rounded-2xl border border-[#F3F4F6] bg-white p-[25px] text-center shadow-sm">
+        <div className="rounded-[24px] border border-[#DCE8E2] bg-white p-7 text-center shadow-[0_16px_42px_-28px_rgba(15,76,58,0.4)]">
           <p className="text-sm text-[#6B7280]">{t("patientHome.upcomingSession.loading")}</p>
         </div>
       ) : !session ? (
-        <div className="rounded-2xl border border-dashed border-[#2F855A]/40 bg-white p-[25px] text-center shadow-sm">
-          <Sparkles className="mx-auto mb-3 h-8 w-8 text-[#2F855A]" />
-          <h3 className="text-lg font-black text-[#12372A]">{t("patientHome.upcomingSession.startNow")}</h3>
+        <div className="rounded-[24px] border border-dashed border-[#2D7A61]/45 bg-[linear-gradient(135deg,#FFFFFF_0%,#F1F8F4_100%)] p-8 text-center shadow-[0_16px_42px_-28px_rgba(15,76,58,0.4)]">
+          <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-[#EAF5F0] text-[#0F4C3A]">
+            <Sparkles className="h-7 w-7" />
+          </span>
+          <h3 className="text-xl font-black text-[#1F2D2A]">{t("patientHome.upcomingSession.startNow")}</h3>
           <p className="mb-5 mt-2 text-sm text-[#60766C]">{t("patientHome.upcomingSession.startNowDesc")}</p>
           <button
             onClick={() => navigate("/dashboard/patient/reserve")}
-            className="rounded-xl bg-[#2F6955] px-6 py-3 text-sm font-bold text-white"
+            className="h-12 rounded-xl bg-[#0F4C3A] px-7 text-sm font-bold text-white shadow-lg shadow-[#0F4C3A]/15 transition-colors hover:bg-[#0A3F32]"
           >
             {t("patientHome.upcomingSession.bookFirst")}
           </button>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[#F3F4F6] bg-white p-[25px] shadow-sm">
+        <div className="relative overflow-hidden rounded-[24px] border border-[#DCE8E2] bg-white p-6 shadow-[0_16px_42px_-28px_rgba(15,76,58,0.4)] md:p-7">
+          <div className="absolute inset-y-0 start-0 w-1 bg-gradient-to-b from-[#2D7A61] to-[#0F4C3A]" />
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="flex min-w-0 items-center gap-4">
               <img
@@ -165,7 +168,7 @@ export const UpcomingSession = ({
                 width={65}
                 height={73}
                 loading="lazy"
-                className="h-[73px] w-[65px] shrink-0 rounded-full bg-[#F3F4F6] object-cover"
+                className="h-[76px] w-[76px] shrink-0 rounded-2xl bg-[#F3F4F6] object-cover ring-4 ring-[#EAF5F0]"
               />
               <div className="min-w-0 text-start">
                 <p className="truncate text-lg font-bold leading-7 text-[#1F2937]" dir="auto">
@@ -174,7 +177,7 @@ export const UpcomingSession = ({
                 <p className="pb-1 text-sm leading-5 text-[#6B7280]" dir="auto">
                   {session.Specialist || session.DoctorSpecialty || t("patientHome.upcomingSession.therapist")}
                 </p>
-                <span className="inline-block rounded-full bg-[#F0FDF4] px-3 py-1 text-xs leading-4 text-[#2B7A5F]">
+                <span className="inline-block rounded-full bg-[#EAF5F0] px-3 py-1 text-xs font-bold leading-4 text-[#0F4C3A]">
                   {t("patientHome.upcomingSession.sessionType")}
                 </span>
               </div>
@@ -195,16 +198,24 @@ export const UpcomingSession = ({
               <button
                 onClick={handleStartMeeting}
                 disabled={!canStartMeeting || meetingLoading}
-                className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-[#2F6955] px-5 text-base font-medium leading-6 text-white transition-colors hover:bg-[#255845] disabled:cursor-not-allowed disabled:bg-[#D8DED9] disabled:text-[#9AA69E]"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-[#0F4C3A] px-5 text-sm font-bold leading-6 text-white transition-colors hover:bg-[#0A3F32] disabled:cursor-not-allowed disabled:bg-[#D8DED9] disabled:text-[#9AA69E]"
               >
                 {meetingLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
                 {t("patientHome.upcomingSession.enterSession")}
               </button>
               <button
                 onClick={() => navigate("/dashboard/patient/reserve")}
-                className="h-11 rounded-xl border border-[#E5E7EB] bg-white px-5 text-base font-medium leading-6 text-[#4B5563] transition-colors hover:bg-[#F8FAF8]"
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-[#DCE8E2] bg-white px-5 text-sm font-bold leading-6 text-[#4B5563] transition-colors hover:bg-[#EAF5F0]"
               >
+                <FileText className="h-4 w-4" />
                 {t("patientHome.upcomingSession.sessionDetails")}
+              </button>
+              <button
+                onClick={() => navigate("/dashboard/patient/reserve?tab=status")}
+                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl text-sm font-bold text-[#2D7A61] transition-colors hover:bg-[#EAF5F0]"
+              >
+                <RefreshCw className="h-4 w-4" />
+                {language === "ar" ? "إعادة الجدولة" : "Reschedule"}
               </button>
             </div>
           </div>

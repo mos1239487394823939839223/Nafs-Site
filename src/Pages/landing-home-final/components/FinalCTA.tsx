@@ -8,8 +8,8 @@ export const FinalCTA = () => {
   const isAr = language === "ar";
 
   return (
-  <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-10">
-    <div className="relative overflow-hidden rounded-[2rem] bg-brand px-6 py-12 md:px-10 md:py-14 text-center">
+  <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-20 md:py-24">
+    <div className="relative overflow-hidden rounded-[32px] bg-brand px-6 py-12 shadow-[0_24px_60px_-32px_rgba(15,76,58,0.7)] md:px-10 md:py-14 text-center">
       {/* Decorative leaves */}
       <div aria-hidden className="pointer-events-none absolute inset-y-0 end-0 w-1/3 opacity-20">
         <svg viewBox="0 0 200 200" className="h-full w-full" fill="none">
@@ -37,7 +37,7 @@ export const FinalCTA = () => {
         </p>
         <Button
           onClick={() => navigate("/auth/login")}
-          className="mt-6 rounded-full bg-brand-foreground text-brand hover:bg-brand-foreground/90 px-8 h-11 font-bold"
+          className="mt-6 bg-brand-foreground px-8 text-brand hover:bg-brand-foreground/90"
         >
           {t("landing.finalCta.button")}
         </Button>

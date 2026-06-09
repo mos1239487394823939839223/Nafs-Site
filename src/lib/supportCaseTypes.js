@@ -84,3 +84,24 @@ export function getSupportCaseTypeMeta(key, isRTL = false) {
     ...meta,
   };
 }
+
+export function getSupportRoomTimestamp(room = {}) {
+  return new Date(
+    room.LastMessageAt ??
+      room.lastMessageAt ??
+      room.UpdatedAt ??
+      room.updatedAt ??
+      room.CreatedAt ??
+      room.createdAt ??
+      0,
+  ).getTime() || 0;
+}
+
+export function sortSupportRooms(rooms = [], localMap = {}) {
+  return [...rooms].sort((a, b) => {
+    const aEmergency = getRoomCaseTypeMeta(a, false, localMap).priority ? 1 : 0;
+    const bEmergency = getRoomCaseTypeMeta(b, false, localMap).priority ? 1 : 0;
+    if (aEmergency !== bEmergency) return bEmergency - aEmergency;
+    return getSupportRoomTimestamp(b) - getSupportRoomTimestamp(a);
+  });
+}

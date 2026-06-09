@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../../contexts/LanguageContext";
-import illus from "../assets/assessment-illustration.jpg";
+import { assessmentIllustration as illus } from "../assets";
 
 export const Assessment = () => {
   const navigate = useNavigate();
@@ -9,8 +9,8 @@ export const Assessment = () => {
   const isAr = language === "ar";
 
   return (
-  <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-10">
-    <div className="grid items-center gap-6 overflow-hidden rounded-[2rem] bg-brand-soft/70 p-6 md:grid-cols-2 md:p-10">
+  <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-20 md:py-24">
+    <div className="grid items-center gap-8 overflow-hidden rounded-[32px] border border-brand/10 bg-brand-soft/70 p-6 shadow-[var(--shadow-card)] md:grid-cols-2 md:p-10">
       <div className="order-2 md:order-1">
         <img
           src={illus}
@@ -30,7 +30,7 @@ export const Assessment = () => {
         </p>
         <Button
           onClick={() => navigate("/auth/login")}
-          className="mt-6 rounded-full bg-brand px-7 py-6 text-base text-brand-foreground hover:bg-brand/90"
+          className="mt-6 bg-brand text-base text-brand-foreground shadow-[0_12px_28px_rgba(15,76,58,0.16)] hover:bg-brand/90"
         >
           {t("landing.assessment.cta")}
         </Button>

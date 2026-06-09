@@ -2,6 +2,7 @@ import { useState } from 'react'
 import DynamicSidebar from './DynamicSidebar'
 import Header from './Header'
 import { useAuth, Roles } from '../../contexts/AuthContext'
+import { EmergencyAction } from '../../Pages/patient-home-page/EmergencyAction'
 
 export default function Layout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
@@ -26,6 +27,7 @@ export default function Layout({ children }) {
             {children}
           </div>
         </main>
+        {isPatient && <EmergencyAction />}
       </div>
     </div>
   )

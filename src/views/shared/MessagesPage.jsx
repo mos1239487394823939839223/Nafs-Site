@@ -6,13 +6,14 @@ import { chatAPI, filesAPI, MessageType, userAPI } from '../../lib/api'
 import ChatWindow from '../../components/chat/ChatWindow'
 import StartDirectMessageDialog from '../../components/chat/StartDirectMessageDialog'
 import SelectDropdown from '../../components/ui/SelectDropdown'
-import { Search, MessageSquare, Loader2, RefreshCw, Stethoscope, Headphones, FileEdit as EditNoteIcon, Wrench, HeartPulse, AlertTriangle, CreditCard, CalendarClock, UserCog, CircleHelp, ShieldAlert } from 'lucide-react'
+import { Search, MessageSquare, Loader2, RefreshCw, Stethoscope, Headphones, FileEdit as EditNoteIcon, Wrench, HeartPulse, AlertTriangle, CreditCard, CalendarClock, UserCog, CircleHelp, ShieldAlert, FileText, LockKeyhole, Paperclip, X } from 'lucide-react'
 const SupportAgent = Headphones
 import { useToast } from '../../components/ui/Toast'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { startChatConnection } from '../../lib/signalr'
-import { getRoomCaseTypeMeta } from '../../lib/supportCaseTypes'
+import { getRoomCaseTypeMeta, sortSupportRooms } from '../../lib/supportCaseTypes'
 import SupportCaseTag from '../../components/support/SupportCaseTag'
+import SupportPriorityTag from '../../components/support/SupportPriorityTag'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -318,7 +319,9 @@ export default function MessagesPage() {
   const [supportRoomLoading, setSupportRoomLoading] = useState(false)
   const [directMessageOpen, setDirectMessageOpen] = useState(false)
   const [messagesLoading, setMessagesLoading] = useState(false)
+  const [messageSending, setMessageSending] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [roomTypeFilter, setRoomTypeFilter] = useState('all')
   const [contactType, setContactType] = useState(() => {
     if (shouldAutoOpenSupport || initialType === 'support') return 'support'
     return 'doctors'
@@ -326,6 +329,9 @@ export default function MessagesPage() {
   const [supportCaseType, setSupportCaseType] = useState(() => {
     return SUPPORT_CASE_TYPES.some((option) => option.key === initialCaseType) ? initialCaseType : ''
   })
+  const [ticketOpen, setTicketOpen] = useState(false)
+  const [ticketSubmitting, setTicketSubmitting] = useState(false)
+  const [ticketForm, setTicketForm] = useState({ title: '', description: '', priority: 'medium', attachments: [] })
   const [localRoomCaseTypes, setLocalRoomCaseTypes] = useState(() => {
     try {
       const parsed = JSON.parse(localStorage.getItem(ROOM_CASE_KEY) || '{}')
@@ -336,6 +342,7 @@ export default function MessagesPage() {
   })
   const connectionRef = useRef(null)
   const activeRoomRef = useRef(null)
+  const roomsRef = useRef([])
   const hydrationTimersRef = useRef({})
   const optimisticSafetyTimersRef = useRef({})
   const supportRoomIdsRef = useRef(new Set())
@@ -406,6 +413,7 @@ export default function MessagesPage() {
 
   // ── Sync ref ────────────────────────────────────────────────────────────────
   useEffect(() => { activeRoomRef.current = activeRoom }, [activeRoom])
+  useEffect(() => { roomsRef.current = rooms }, [rooms])
 
   const isPatient = role === Roles.PATIENT
   const isSupportOperator = role === Roles.STAFF
@@ -759,6 +767,17 @@ export default function MessagesPage() {
               }
             }
           }
+          if (!fromCurrentUser) {
+            const incomingRoom = roomsRef.current.find(
+              (room) => String(room?.Id || room?.id || '') === msgRoomId,
+            )
+            const incomingMeta = getRoomCaseTypeMeta(incomingRoom || msg, isRTL, localRoomCaseTypes)
+            if (incomingMeta.priority && currentRoomId !== msgRoomId) {
+              toast.error(
+                t('support.emergencyNewMessage', 'New message in an emergency support case'),
+              )
+            }
+          }
           debouncedFetchRooms()
         }
 
@@ -825,7 +844,7 @@ export default function MessagesPage() {
   // ── Send ────────────────────────────────────────────────────────────────────
   const handleSendMessage = async (msgData) => {
     const roomId = activeRoom?.Id || activeRoom?.id
-    if (!roomId) return
+    if (!roomId || messageSending) return
     const savedCaseType = localRoomCaseTypes[String(roomId)]
     if (isPatient && isSupportRoom(activeRoom) && !supportCaseType && !savedCaseType) {
       toast.warning(t('chat.caseTypeRequired', 'Select a support case type before sending your first message.'))
@@ -883,6 +902,8 @@ export default function MessagesPage() {
       setMessages(prev => prev.filter(m => m.id !== optimisticId))
       const fallback = t("auto.failedToSendMessage")
       toast.error(String(error?.message || fallback))
+    } finally {
+      setMessageSending(false)
     }
   }
 
@@ -890,13 +911,22 @@ export default function MessagesPage() {
   const getConversation = (room) => {
     if (!room) return null
     const participant = resolveParticipant(room, currentUserId)
+    const onlineSignals = [
+      room?.OtherParticipantOnline,
+      room?.otherParticipantOnline,
+      room?.IsOnline,
+      room?.isOnline,
+      participant.role === 'doctor' ? room?.DoctorIsOnline : null,
+    ].filter((value) => value !== undefined && value !== null)
     return {
       id: room.Id || room.id,
       participant: {
         name: participant.name,
         avatar: participant.image,
         role: participant.role,
-        online: true,
+        online: onlineSignals.length > 0
+          ? onlineSignals.some((value) => value === true || String(value).toLowerCase() === 'true')
+          : false,
       },
       caseTypeMeta: (role === Roles.STAFF || isSupportRoom(room))
         ? getRoomCaseTypeMeta(room, isRTL, localRoomCaseTypes)
@@ -934,14 +964,24 @@ export default function MessagesPage() {
     })
     : rooms
 
-  const filteredRooms = filteredByContactType.filter((room) => {
-    const participant = resolveParticipant(room, currentUserId)
-    return participant.name.toLowerCase().includes(searchQuery.toLowerCase())
-  })
+  const filteredRooms = sortSupportRooms(
+    filteredByContactType.filter((room) => {
+      const participant = resolveParticipant(room, currentUserId)
+      const caseMeta = getRoomCaseTypeMeta(room, isRTL, localRoomCaseTypes)
+      const matchesSearch =
+        participant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(room.LastMessage || room.lastMessage || '').toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesType = roomTypeFilter === 'all' || caseMeta.key === roomTypeFilter
+      return matchesSearch && matchesType
+    }),
+    localRoomCaseTypes,
+  )
 
   const selectedSupportCaseType = SUPPORT_CASE_TYPES.find((option) => option.key === supportCaseType) || null
 
   const unreadTotal = rooms.reduce((acc, r) => acc + (r.UnreadCount || 0), 0)
+  const supportRoomsCount = rooms.filter((room) => isSupportRoom(room)).length
+  const therapistRoomsCount = rooms.length - supportRoomsCount
 
   const handleSelectRoom = (room) => {
     if (isPatient && isSupportRoom(room)) {
@@ -974,6 +1014,7 @@ export default function MessagesPage() {
       targetUser?.Email ||
       t('chat.newConversation', 'New conversation')
 
+    setMessageSending(true)
     try {
       const roomsResponse = await chatAPI.getRooms()
       const roomList = Array.isArray(roomsResponse?.Data)
@@ -1153,13 +1194,57 @@ export default function MessagesPage() {
     }
   }, [currentUserId, enrichRoomsWithSupportMeta, isPatient, isRTL, saveRoomCaseType, supportCaseType, t, toast])
 
-  useEffect(() => {
-    if (!isPatient || contactType !== 'support') return
-    if (!supportCaseType) return
-    if (supportRoomLoading || loading) return
-    if (rooms.some((room) => isSupportRoom(room))) return
-    openSupportChat()
-  }, [contactType, isPatient, isSupportRoom, loading, openSupportChat, rooms, supportCaseType, supportRoomLoading])
+  const createSupportTicket = async () => {
+    const title = ticketForm.title.trim()
+    const description = ticketForm.description.trim()
+    if (!supportCaseType) {
+      toast.warning(t('chat.caseTypeRequired', 'Select a support case type first.'))
+      return
+    }
+    if (title.length < 4 || description.length < 10) {
+      toast.warning(t('chat.ticketValidation', 'Add a short title and a description of at least 10 characters.'))
+      return
+    }
+    if (!currentUserId || ticketSubmitting) return
+
+    setTicketSubmitting(true)
+    try {
+      const sensitive = supportCaseType === 'emergency' || supportCaseType === 'blackmail_abuse'
+      const priority = sensitive ? 'high' : ticketForm.priority
+      const chatType = CASE_TYPE_CHAT_TYPE_MAP[supportCaseType] ?? 2
+      const response = await chatAPI.openPatientSupportChat(currentUserId, chatType, supportCaseType, priority, {
+        Title: title,
+        Subject: title,
+        Description: description,
+        IsPrivate: supportCaseType === 'blackmail_abuse',
+      })
+      if (response?.IsSuccess === false || response?.isSuccess === false) {
+        throw new Error(response?.Message || response?.message || 'Failed to create support ticket')
+      }
+      const data = response?.Data ?? response?.data ?? response
+      const roomId = String(data?.RoomId || data?.roomId || data?.Id || data?.id || data?.ChatRoomId || data?.chatRoomId || '')
+      if (roomId) {
+        supportRoomIdsRef.current.add(roomId)
+        saveRoomCaseType(roomId, supportCaseType)
+        await chatAPI.sendMessage(roomId, `${title}\n\n${description}`)
+        for (const file of ticketForm.attachments) {
+          const upload = await filesAPI.uploadFile(file)
+          const url = upload?.Data?.PublicUrl
+          const name = upload?.Data?.FileName || file.name
+          await chatAPI.sendMessage(roomId, '', MessageType.Attachment, url, name)
+        }
+      }
+      await fetchRooms()
+      setTicketOpen(false)
+      setTicketForm({ title: '', description: '', priority: 'medium', attachments: [] })
+      toast.success(t('chat.ticketCreated', 'Support ticket created successfully.'))
+    } catch (error) {
+      console.error('Failed to create support ticket:', error)
+      toast.error(t('chat.ticketCreateFailed', 'Could not create the support ticket. Please try again.'))
+    } finally {
+      setTicketSubmitting(false)
+    }
+  }
 
   useEffect(() => {
     if (!supportCaseType || !activeRoom || !isSupportRoom(activeRoom)) return
@@ -1179,7 +1264,7 @@ export default function MessagesPage() {
   return (
     <>
     <div
-      className="flex min-h-[calc(100vh-6rem)] h-[calc(100vh-4.25rem)] overflow-hidden rounded-2xl border border-border/60 shadow-sm bg-background-paper"
+      className="flex min-h-[calc(100vh-6rem)] h-[calc(100vh-4.25rem)] overflow-hidden rounded-[26px] border border-border/70 shadow-[0_20px_55px_-35px_rgba(15,76,58,0.55)] bg-background-paper"
       
     >
 
@@ -1227,27 +1312,28 @@ export default function MessagesPage() {
 
           {isPatient && (
             <div className="mb-3 space-y-3">
-              <div className="grid grid-cols-2 p-1 rounded-2xl border border-border bg-background-subtle gap-1 w-full">
+              <div className="grid grid-cols-2 gap-2 w-full">
                 <button
                   onClick={() => setContactType('doctors')}
-                  className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+                  className={`rounded-2xl border px-3 py-3 text-xs font-semibold transition-all duration-300 ${
                     contactType === 'doctors'
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-text-muted hover:text-text-heading hover:bg-background-paper'
+                      ? 'border-primary bg-primary text-white shadow-lg shadow-primary/20'
+                      : 'border-border bg-background-paper text-text-muted hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary'
                   }`}
                 >
-                  <span className="inline-flex items-center gap-1.5">
+                  <span className="flex items-center justify-center gap-1.5">
                     <Stethoscope className="w-3.5 h-3.5" />
                     {t('chat.talkToDoctors', 'Talk to Therapists')}
+                    <span className={`rounded-full px-1.5 py-0.5 text-[9px] ${contactType === 'doctors' ? 'bg-white/15' : 'bg-primary/10 text-primary'}`}>{therapistRoomsCount}</span>
                   </span>
                 </button>
 
                 <button
                   onClick={() => setContactType('support')}
-                  className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+                  className={`rounded-2xl border px-3 py-3 text-xs font-semibold transition-all duration-300 ${
                     contactType === 'support'
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-text-muted hover:text-text-heading hover:bg-background-paper'
+                      ? 'border-primary bg-primary text-white shadow-lg shadow-primary/20'
+                      : 'border-border bg-background-paper text-text-muted hover:-translate-y-0.5 hover:border-primary/30 hover:text-primary'
                   }`}
                 >
                   <span className="inline-flex items-center gap-1.5">
@@ -1257,6 +1343,7 @@ export default function MessagesPage() {
                       <SupportAgent className="w-3.5 h-3.5" />
                     )}
                     {t('chat.talkToSupport', 'Talk to Support')}
+                    <span className={`rounded-full px-1.5 py-0.5 text-[9px] ${contactType === 'support' ? 'bg-white/15' : 'bg-primary/10 text-primary'}`}>{supportRoomsCount}</span>
                   </span>
                 </button>
               </div>
@@ -1287,6 +1374,28 @@ export default function MessagesPage() {
                       {isRTL ? selectedSupportCaseType.descAr : selectedSupportCaseType.descEn}
                     </p>
                   )}
+                  {supportCaseType === 'blackmail_abuse' && (
+                    <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-start">
+                      <div className="flex items-center gap-2 text-rose-800">
+                        <LockKeyhole className="h-4 w-4" />
+                        <p className="text-xs font-black">{isRTL ? 'بلاغ سري ومحمي' : 'Private and protected report'}</p>
+                      </div>
+                      <p className="mt-2 text-[11px] leading-5 text-rose-700">
+                        {isRTL
+                          ? 'يصل البلاغ للمختصين المعتمدين فقط، وتتم معالجة بياناتك بسرية تامة وبأقل عدد من الخطوات.'
+                          : 'Only approved specialists can access this report. Your information is handled confidentially with minimal steps.'}
+                      </p>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setTicketOpen(true)}
+                    disabled={!supportCaseType || supportRoomLoading}
+                    className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 text-xs font-bold text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {supportRoomLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+                    {t('chat.startSupportCase', 'Create support case')}
+                  </button>
                 </div>
               )}
             </div>
@@ -1303,6 +1412,30 @@ export default function MessagesPage() {
               className={`w-full ps-10 pe-4 py-2 bg-background-subtle border border-border/60 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-text placeholder:text-text-muted`}
             />
           </div>
+          {isSupportOperator && (
+            <div className="mt-3 flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+              {[
+                ['all', t('common.all', 'All')],
+                ['emergency', t('support.emergency', 'Emergency')],
+                ['technical', t('staff.technical', 'Technical')],
+                ['medical', t('support.medicalInquiry', 'Medical')],
+                ['billing', t('staff.payment', 'Billing')],
+                ['appointment', t('staff.appointment', 'Appointment')],
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  onClick={() => setRoomTypeFilter(value)}
+                  className={`whitespace-nowrap rounded-full border px-3 py-1.5 text-[11px] font-bold transition ${
+                    roomTypeFilter === value
+                      ? 'border-primary bg-primary text-white'
+                      : 'border-border bg-background-paper text-text-muted hover:border-primary/40'
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Rooms List */}
@@ -1316,11 +1449,16 @@ export default function MessagesPage() {
             </div>
           ) : filteredRooms.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-primary/8 flex items-center justify-center mb-4">
-                <MessageSquare className="w-7 h-7 text-primary/40" />
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                {contactType === 'support' ? <Headphones className="w-7 h-7 text-primary" /> : <Stethoscope className="w-7 h-7 text-primary" />}
               </div>
-              <p className="text-sm font-medium text-text-muted">
+              <p className="text-sm font-bold text-text-heading">
                 {searchQuery ? t('chat.noResults', 'No results found') : t('chat.noConversations', 'No conversations yet')}
+              </p>
+              <p className="mt-2 max-w-xs text-xs leading-5 text-text-muted">
+                {contactType === 'support'
+                  ? t('chat.noSupportCasesDesc', 'Choose a case type above to create and follow a support request.')
+                  : t('chat.noTherapistChatsDesc', 'Your therapist conversations will appear here after they become available.')}
               </p>
             </div>
           ) : (
@@ -1333,6 +1471,7 @@ export default function MessagesPage() {
                 const roomInitials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
                 const hasUnread = (room.UnreadCount || 0) > 0
                 const lastTime = formatLastSeen(room.LastMessageAt || room.lastMessageAt)
+                const caseMeta = getRoomCaseTypeMeta(room, isRTL, localRoomCaseTypes)
 
                 return (
                   <button
@@ -1340,9 +1479,11 @@ export default function MessagesPage() {
                     onClick={() => handleSelectRoom(room)}
                     className={`
                       w-full px-4 py-3.5 transition-all text-start relative
-                      ${isActive
-                        ? 'bg-primary/8 border-s-2 border-s-primary'
-                        : 'hover:bg-background-subtle/80 border-s-2 border-s-transparent'
+                      ${caseMeta.priority
+                        ? 'mx-2 my-1 rounded-2xl border border-red-300 bg-red-50/90 shadow-md shadow-red-100 ring-1 ring-red-100'
+                        : isActive
+                          ? 'mx-2 my-1 rounded-2xl bg-primary/8 border border-primary/20 shadow-sm'
+                          : 'mx-2 my-1 rounded-2xl border border-transparent hover:border-border hover:bg-background-subtle/80'
                       }
                     `}
                   >
@@ -1372,6 +1513,7 @@ export default function MessagesPage() {
                                 <SupportCaseTag room={room} isRTL={isRTL} localMap={localRoomCaseTypes} />
                               )
                             })()}
+                            {role === Roles.STAFF && <SupportPriorityTag room={room} isRTL={isRTL} />}
                             {lastTime && (
                               <span className="text-[10px] text-text-muted whitespace-nowrap">{lastTime}</span>
                             )}
@@ -1384,6 +1526,9 @@ export default function MessagesPage() {
                         </div>
                         <p className={`text-xs truncate mt-0.5 ${hasUnread ? 'text-text font-medium' : 'text-text-muted'}`}>
                           {room.LastMessage || room.lastMessage || t('chat.noMessagesYet', 'No messages yet')}
+                        </p>
+                        <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-text-muted">
+                          {participant.role === 'doctor' ? t('common.therapist', 'Therapist') : participant.role === 'support' ? t('chat.supportTeam', 'Support team') : participant.role}
                         </p>
                       </div>
                     </div>
@@ -1415,6 +1560,7 @@ export default function MessagesPage() {
               onBack={() => { setActiveRoom(null); setMessages([]) }}
               composerDisabled={isPatient && isSupportRoom(activeRoom) && !supportCaseType && !localRoomCaseTypes[String(activeRoom?.Id || activeRoom?.id || '')]}
               composerDisabledReason={t('chat.caseTypeRequired', 'Select a support case type before sending your first message.')}
+              sending={messageSending}
             />
           )
         ) : (
@@ -1450,6 +1596,110 @@ export default function MessagesPage() {
       onOpenChange={setDirectMessageOpen}
       onStarted={handleDirectMessageStarted}
     />
+    {ticketOpen && (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/55 p-3 backdrop-blur-sm" onClick={() => !ticketSubmitting && setTicketOpen(false)}>
+        <div
+          dir={isRTL ? 'rtl' : 'ltr'}
+          className={`max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-[26px] border bg-background-paper shadow-2xl ${
+            supportCaseType === 'blackmail_abuse' ? 'border-rose-300' : supportCaseType === 'emergency' ? 'border-red-300' : 'border-border'
+          }`}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className={`relative overflow-hidden px-5 py-5 sm:px-7 ${
+            supportCaseType === 'blackmail_abuse'
+              ? 'bg-gradient-to-br from-rose-900 to-rose-700 text-white'
+              : supportCaseType === 'emergency'
+                ? 'bg-gradient-to-br from-red-700 to-red-600 text-white'
+                : 'bg-gradient-to-br from-primary to-primary-dark text-white'
+          }`}>
+            <button onClick={() => setTicketOpen(false)} disabled={ticketSubmitting} className="absolute end-4 top-4 grid h-9 w-9 place-items-center rounded-xl bg-white/10 hover:bg-white/20">
+              <X className="h-4 w-4" />
+            </button>
+            <span className="mb-4 grid h-12 w-12 place-items-center rounded-2xl bg-white/15">
+              {supportCaseType === 'blackmail_abuse' ? <LockKeyhole className="h-6 w-6" /> : supportCaseType === 'emergency' ? <AlertTriangle className="h-6 w-6" /> : <Headphones className="h-6 w-6" />}
+            </span>
+            <h3 className="text-xl font-black">{t('chat.createSupportTicket', 'Create support ticket')}</h3>
+            <p className="mt-2 max-w-md text-sm leading-6 text-white/80">
+              {supportCaseType === 'blackmail_abuse'
+                ? (isRTL ? 'بلاغك سري ويصل مباشرة إلى فريق الحماية المختص.' : 'Your report is private and goes directly to the specialist protection team.')
+                : t('chat.ticketIntro', 'Describe the issue clearly so the right team can help you faster.')}
+            </p>
+          </div>
+
+          <div className="space-y-5 p-5 sm:p-7">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="grid gap-2 text-sm font-bold text-text-heading">
+                {t('chat.caseType', 'Case type')}
+                <SelectDropdown
+                  value={supportCaseType}
+                  onChange={setSupportCaseType}
+                  options={SUPPORT_CASE_TYPES.map((option) => ({ value: option.key, label: isRTL ? option.labelAr : option.labelEn }))}
+                />
+              </label>
+              <label className="grid gap-2 text-sm font-bold text-text-heading">
+                {t('chat.priority', 'Priority')}
+                <select
+                  value={supportCaseType === 'emergency' || supportCaseType === 'blackmail_abuse' ? 'high' : ticketForm.priority}
+                  disabled={supportCaseType === 'emergency' || supportCaseType === 'blackmail_abuse'}
+                  onChange={(event) => setTicketForm((prev) => ({ ...prev, priority: event.target.value }))}
+                  className="h-12 rounded-xl border border-border bg-background-subtle px-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:opacity-70"
+                >
+                  <option value="low">{t('support.lowPriority', 'Low Priority')}</option>
+                  <option value="medium">{t('support.mediumPriority', 'Medium Priority')}</option>
+                  <option value="high">{t('support.highPriority', 'High Priority')}</option>
+                </select>
+              </label>
+            </div>
+
+            <label className="grid gap-2 text-sm font-bold text-text-heading">
+              {t('chat.ticketTitle', 'Short issue title')}
+              <input
+                value={ticketForm.title}
+                maxLength={100}
+                onChange={(event) => setTicketForm((prev) => ({ ...prev, title: event.target.value }))}
+                className="h-12 rounded-xl border border-border bg-background-subtle px-4 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+                placeholder={t('chat.ticketTitlePlaceholder', 'Example: I cannot join my session')}
+              />
+            </label>
+
+            <label className="grid gap-2 text-sm font-bold text-text-heading">
+              {t('chat.ticketDescription', 'Description')}
+              <textarea
+                value={ticketForm.description}
+                rows={5}
+                maxLength={1500}
+                onChange={(event) => setTicketForm((prev) => ({ ...prev, description: event.target.value }))}
+                className="resize-none rounded-xl border border-border bg-background-subtle px-4 py-3 text-sm leading-6 outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+                placeholder={t('chat.ticketDescriptionPlaceholder', 'Tell us what happened and what you need help with...')}
+              />
+              <span className="text-end text-[10px] font-medium text-text-muted">{ticketForm.description.length}/1500</span>
+            </label>
+
+            <label className="flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-dashed border-primary/30 bg-primary/5 p-4 transition hover:border-primary/60 hover:bg-primary/10">
+              <span className="flex items-center gap-3">
+                <span className="grid h-10 w-10 place-items-center rounded-xl bg-background-paper text-primary"><Paperclip className="h-5 w-5" /></span>
+                <span>
+                  <span className="block text-sm font-bold text-text-heading">{t('chat.attachFiles', 'Attach files')}</span>
+                  <span className="text-xs text-text-muted">{ticketForm.attachments.length ? `${ticketForm.attachments.length} ${t('chat.filesSelected', 'files selected')}` : t('chat.attachFilesHint', 'Images, PDF, or documents')}</span>
+                </span>
+              </span>
+              <input type="file" multiple accept="image/*,.pdf,.doc,.docx" className="hidden" onChange={(event) => setTicketForm((prev) => ({ ...prev, attachments: Array.from(event.target.files || []) }))} />
+            </label>
+
+            <button
+              onClick={createSupportTicket}
+              disabled={ticketSubmitting}
+              className={`inline-flex h-12 w-full items-center justify-center gap-2 rounded-xl px-6 text-sm font-black text-white transition-colors disabled:opacity-60 ${
+                supportCaseType === 'blackmail_abuse' ? 'bg-rose-800 hover:bg-rose-900' : supportCaseType === 'emergency' ? 'bg-red-600 hover:bg-red-700' : 'bg-primary hover:bg-primary-dark'
+              }`}
+            >
+              {ticketSubmitting ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileText className="h-4 w-4" />}
+              {t('chat.submitTicket', 'Submit support ticket')}
+            </button>
+          </div>
+        </div>
+      </div>
+    )}
     </>
   )
 }

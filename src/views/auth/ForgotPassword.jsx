@@ -6,7 +6,7 @@ import Input from '../../components/ui/Input'
 import { useToast } from '../../components/ui/Toast'
 import { validateEmail } from '../../lib/validation'
 import { Mail, ArrowLeft, Shield, Lock, CheckCircle, Eye, EyeOff } from 'lucide-react'
-import { authAPI, extractErrorMessage } from '../../lib/api'
+import { authAPI, extractErrorMessage, toUserFacingError } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 
 export default function ForgotPassword() {
@@ -51,7 +51,7 @@ export default function ForgotPassword() {
           })
         }, 1000)
       } else {
-        toast.error(response?.Message || t('errors.failedSendOtp'))
+        toast.error(toUserFacingError(response?.Message, t('errors.failedSendOtp')))
       }
     } catch (error) {
       toast.error(extractErrorMessage(error, t('errors.failedSendOtp')))
@@ -78,7 +78,7 @@ export default function ForgotPassword() {
         toast.success(t('success.codeVerified'))
         setStep(3)
       } else {
-        toast.error(response?.Message || t('errors.failedVerifyOtp'))
+        toast.error(toUserFacingError(response?.Message, t('errors.failedVerifyOtp')))
       }
     } catch (error) {
       toast.error(extractErrorMessage(error, t('errors.failedVerifyOtp')))
@@ -109,7 +109,7 @@ export default function ForgotPassword() {
         toast.success(t('success.passwordReset'))
         navigate('/auth/login')
       } else {
-        toast.error(response?.Message || t('errors.failedResetPassword'))
+        toast.error(toUserFacingError(response?.Message, t('errors.failedResetPassword')))
       }
     } catch (error) {
       toast.error(extractErrorMessage(error, t('errors.failedResetPassword')))
@@ -136,7 +136,7 @@ export default function ForgotPassword() {
           })
         }, 1000)
       } else {
-        toast.error(response?.Message || t('errors.failedSendOtp'))
+        toast.error(toUserFacingError(response?.Message, t('errors.failedSendOtp')))
       }
     } catch (error) {
       toast.error(extractErrorMessage(error, t('errors.failedSendOtp')))

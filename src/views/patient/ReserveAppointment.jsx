@@ -137,6 +137,23 @@ export default function ReserveAppointment() {
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
   };
 
+  const getDoctorReviewCount = (doctor) => {
+    const parsed = Number(
+      doctor?.ReviewsCount ?? doctor?.ReviewCount ?? doctor?.RatingsCount ?? doctor?.NumberOfReviews,
+    );
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
+  };
+
+  const getDoctorSessionTypes = (doctor) => {
+    const configured = doctor?.SessionTypes ?? doctor?.ConsultationTypes ?? doctor?.AvailableSessionTypes;
+    if (Array.isArray(configured) && configured.length > 0) return configured.map(String);
+    return [
+      t("patient.videoConsultation", "Video"),
+      t("patient.audioConsultation", "Audio"),
+      t("patient.writtenConsultation", "Chat"),
+    ];
+  };
+
   const getNextAvailableSlot = (doctor) => {
     const raw = doctor?.NextAvailableSlot ?? doctor?.nextAvailableSlot;
     if (raw) {
@@ -1279,6 +1296,10 @@ export default function ReserveAppointment() {
       src = src.filter((d) => {
         const slot = getNextAvailableSlot(d);
         if (!slot) return false;
+        if (filterAvailability === "now") {
+          const diff = slot.getTime() - today.getTime();
+          return diff >= 0 && diff <= 2 * 60 * 60 * 1000;
+        }
         return filterAvailability === "today"
           ? slot.toDateString() === today.toDateString()
           : slot <= weekEnd;
@@ -1374,10 +1395,10 @@ export default function ReserveAppointment() {
       </div>
 
       {/* Tabs */}
-      <div className="flex p-1 rounded-2xl border border-border bg-background-subtle mb-6 sm:mb-8 overflow-x-auto no-scrollbar scroll-smooth gap-1 w-fit max-w-full">
+      <div className="sticky top-2 z-20 grid w-full grid-cols-3 gap-1 overflow-x-auto rounded-2xl border border-border bg-background-paper/95 p-1.5 shadow-[0_16px_42px_-28px_rgba(15,76,58,0.45)] backdrop-blur no-scrollbar scroll-smooth mb-6 sm:mb-8">
         <button
-          onClick={() => { setMainTab("all"); setStep(1); setSelectedDoctor(null); }}
-          className={`px-4 sm:px-5 md:px-8 py-2.5 sm:py-3 text-xs sm:text-sm md:text-base font-semibold transition-all relative whitespace-nowrap rounded-xl ${
+          onClick={() => { setMainTab("all"); setStep(1); setSelectedDoctor(null); setSearchParams({}); }}
+          className={`min-w-max px-3 sm:px-5 md:px-8 py-3 text-[11px] sm:text-sm md:text-base font-semibold transition-all duration-300 relative whitespace-nowrap rounded-xl ${
             mainTab === "all"
               ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
               : "text-text-muted hover:text-text-heading hover:bg-background-paper"
@@ -1387,8 +1408,8 @@ export default function ReserveAppointment() {
           {t("patient.allDoctors", "All Therapists")}
         </button>
         <button
-          onClick={() => { setMainTab("available"); setStep(1); setSelectedDoctor(null); }}
-          className={`px-4 sm:px-5 md:px-8 py-2.5 sm:py-3 text-xs sm:text-sm md:text-base font-semibold transition-all relative whitespace-nowrap rounded-xl ${
+          onClick={() => { setMainTab("available"); setStep(1); setSelectedDoctor(null); setSearchParams({ tab: "available" }); }}
+          className={`min-w-max px-3 sm:px-5 md:px-8 py-3 text-[11px] sm:text-sm md:text-base font-semibold transition-all duration-300 relative whitespace-nowrap rounded-xl ${
             mainTab === "available"
               ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
               : "text-text-muted hover:text-text-heading hover:bg-background-paper"
@@ -1398,8 +1419,8 @@ export default function ReserveAppointment() {
           {t("patient.availableDoctors", "Available Therapists")}
         </button>
         <button
-          onClick={() => setMainTab("status")}
-          className={`px-4 sm:px-5 md:px-8 py-2.5 sm:py-3 text-xs sm:text-sm md:text-base font-semibold transition-all relative whitespace-nowrap rounded-xl ${
+          onClick={() => { setMainTab("status"); setSearchParams({ tab: "status" }); }}
+          className={`min-w-max px-3 sm:px-5 md:px-8 py-3 text-[11px] sm:text-sm md:text-base font-semibold transition-all duration-300 relative whitespace-nowrap rounded-xl ${
             mainTab === "status"
               ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
               : "text-text-muted hover:text-text-heading hover:bg-background-paper"
@@ -1693,13 +1714,13 @@ export default function ReserveAppointment() {
                                 <Card
                                   key={doctor.Id}
                                   dir={isRTL ? "rtl" : "ltr"}
-                                  className={`hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1 rounded-2xl shadow-sm border ${specialtyTheme.surface}`}
+                                  className={`group overflow-hidden hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1 rounded-[24px] shadow-[0_16px_42px_-28px_rgba(15,76,58,0.45)] hover:shadow-[0_24px_60px_-28px_rgba(15,76,58,0.6)] border ${specialtyTheme.surface}`}
                                 >
-                                  <CardContent className="p-4 sm:p-5 flex flex-col h-full">
+                                  <CardContent className="p-5 sm:p-6 flex flex-col h-full">
                                     {/* Header: Image & Name */}
                                     <div className="flex items-start gap-3 sm:gap-4 mb-3 min-h-[88px]">
                                       <div
-                                        className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center border shadow-inner ${specialtyTheme.avatar}`}
+                                        className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center border shadow-inner ${specialtyTheme.avatar}`}
                                       >
                                         {doctor.Image ? (
                                           <img
@@ -1725,6 +1746,9 @@ export default function ReserveAppointment() {
                                             <span className="text-[13px] font-semibold text-text">
                                               {getDoctorRating(doctor).toFixed(1)}
                                             </span>
+                                            <span className="text-[11px] text-text-muted">
+                                              ({getDoctorReviewCount(doctor)} {t("patient.reviews", "reviews")})
+                                            </span>
                                           </div>
                                         )}
 
@@ -1741,6 +1765,14 @@ export default function ReserveAppointment() {
                                       <span className="truncate">
                                         {t("patient.nextAvailableSlot")}: {formatNearestAvailability(doctor)}
                                       </span>
+                                    </div>
+
+                                    <div className="mt-3 flex flex-wrap gap-1.5">
+                                      {getDoctorSessionTypes(doctor).slice(0, 3).map((type) => (
+                                        <span key={type} className="rounded-full border border-primary/15 bg-primary/5 px-2.5 py-1 text-[10px] font-bold text-primary">
+                                          {type}
+                                        </span>
+                                      ))}
                                     </div>
 
                                     {getDoctorExperience(doctor) !== null && (
@@ -1789,8 +1821,14 @@ export default function ReserveAppointment() {
                                         </span>
                                       )}
                                     </div>
+                                    <div className="mt-6 flex items-center justify-between rounded-2xl bg-background-paper/80 px-3 py-2.5">
+                                      <span className="text-xs font-semibold text-text-muted">{t("patient.sessionPrice", "Session price")}</span>
+                                      <span className="text-base font-black text-primary">
+                                        {getNumericFee(doctor) > 0 ? formatCurrency(getNumericFee(doctor)) : t("patient.priceNotAvailable")}
+                                      </span>
+                                    </div>
                                     <Button
-                                      className="w-full !mt-8 gap-2"
+                                      className="w-full !mt-4 gap-2"
                                       onClick={() => handleSelectDoctor(doctor.Id)}
                                       disabled={!getNextAvailableSlot(doctor)}
                                     >

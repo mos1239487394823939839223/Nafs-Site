@@ -39,7 +39,7 @@ export const HeroCard = ({ isNewPatient = false }: { isNewPatient?: boolean }) =
           </p>
           <button
             onClick={() => navigate("/dashboard/patient/reserve")}
-            className="inline-flex h-[52px] w-fit items-center justify-center gap-4 rounded-xl bg-[#0F5132] px-9 text-base font-bold text-white shadow-[0_10px_22px_rgba(15,81,50,0.18)] transition-colors hover:bg-[#0b3d25]"
+            className="inline-flex h-[52px] w-fit items-center justify-center gap-4 rounded-xl bg-[#0F4C3A] px-9 text-base font-bold text-white shadow-[0_10px_22px_rgba(15,76,58,0.18)] transition-colors hover:bg-[#0A3F32]"
           >
             {isNewPatient ? t("patientHome.hero.firstSession") : t("patientHome.hero.bookSession")}
             <ArrowRight className={`h-5 w-5 ${isRTL ? "rotate-180" : ""}`} />

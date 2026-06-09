@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Lock, BadgeCheck, Clock, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../../contexts/LanguageContext";
-import heroImg from "../assets/hero-armchair.jpg";
+import { heroArmchair as heroImg } from "../assets";
 
 export const Hero = () => {
   const navigate = useNavigate();
@@ -17,7 +17,7 @@ export const Hero = () => {
   ];
 
   return (
-  <section id="home" dir={isAr ? "rtl" : "ltr"} className="relative overflow-hidden bg-cream-deep pt-6 sm:pt-10">
+  <section id="home" dir={isAr ? "rtl" : "ltr"} className="relative overflow-hidden bg-cream-deep pt-10 sm:pt-14">
     <div className="container relative z-10 mx-auto px-4">
       <div className="grid min-h-[400px] sm:min-h-[500px] grid-cols-1 items-center gap-6 sm:gap-8 pb-24 sm:pb-28 lg:grid-cols-[1.02fr_0.98fr] lg:gap-10 lg:pb-36">
         <div className="order-2 text-start lg:order-1">
@@ -29,14 +29,14 @@ export const Hero = () => {
           </p>
           <div className="mt-6 sm:mt-8 flex flex-wrap justify-start gap-3">
             <Button
-              className="h-auto rounded-xl bg-brand px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-medium text-brand-foreground hover:bg-brand/90"
+              className="bg-brand text-brand-foreground shadow-[0_12px_28px_rgba(15,76,58,0.2)] hover:bg-brand/90 sm:text-base"
               onClick={() => navigate("/auth/login")}
             >
               {t("landing.hero.bookNow")}
             </Button>
             <Button
               variant="outline"
-              className="h-auto rounded-xl border-border bg-card px-5 sm:px-7 py-3 sm:py-4 text-sm sm:text-base font-medium text-foreground hover:bg-secondary"
+              className="border-border bg-card text-foreground hover:bg-secondary sm:text-base"
               onClick={() => navigate("/auth/login")}
             >
               {t("landing.hero.freeAssessment")}

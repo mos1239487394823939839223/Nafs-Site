@@ -13,10 +13,10 @@ export const Stats = () => {
   ];
 
   return (
-    <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-10">
+    <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-20 md:py-24">
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {stats.map(({ icon: Icon, valueKey, labelKey }) => (
-          <div key={labelKey} className="flex flex-col items-center gap-3 rounded-2xl bg-card border border-border shadow-[var(--shadow-card)] px-4 py-6">
+          <div key={labelKey} className="flex flex-col items-center gap-3 rounded-[24px] bg-card border border-border shadow-[var(--shadow-card)] px-4 py-7">
             <span className="grid h-12 w-12 place-items-center rounded-full bg-brand/10 text-brand">
               <Icon className="h-6 w-6" strokeWidth={1.75} />
             </span>

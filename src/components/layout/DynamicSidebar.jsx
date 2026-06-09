@@ -8,6 +8,7 @@ import { BlackmailProtectionCard } from "../sidebar-cards/BlackmailProtectionCar
 import RoleBadge from "../ui/RoleBadge";
 import { UserAvatar } from "../ui/Avatar";
 import { useToast } from "../ui/Toast";
+import { useNotifications } from "../../contexts/NotificationContext";
 import {
   Activity,
   BarChart3,
@@ -34,6 +35,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
+  const { notifications } = useNotifications();
 
   const closeOnMobile = () => {
     if (onClose && window.innerWidth < 1024) onClose();
@@ -80,6 +82,11 @@ export default function DynamicSidebar({ isOpen, onClose }) {
   };
 
   if (role === Roles.PATIENT) {
+    const unreadByCategory = notifications.reduce((counts, notification) => {
+      if (notification.isRead) return counts;
+      counts[notification.category] = (counts[notification.category] || 0) + 1;
+      return counts;
+    }, {});
     const mainItems = [
       { name: t("nav.home"), path: "/dashboard/patient/home", icon: Home },
       { name: t("nav.mySessions"), path: "/dashboard/patient/reserve", icon: Calendar },
@@ -87,9 +94,10 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       { name: t("nav.psychologicalAssessment"), path: "/dashboard/patient/tests", icon: Brain },
       { name: t("nav.treatmentPrograms"), path: "/dashboard/patient/tests", icon: HeartHandshake },
       { name: t("nav.contentLibrary"), path: "/dashboard/patient/blogs", icon: BookOpen },
+      { name: t("nav.messages", "الرسائل"), path: "/dashboard/patient/messages?type=doctors", icon: MessageSquare, badge: unreadByCategory.messages || 0 },
     ];
     const supportItems = [
-      { name: t("nav.supportAndHelp"), path: "/dashboard/patient/messages?type=support", icon: Headphones },
+      { name: t("nav.supportAndHelp"), path: "/dashboard/patient/messages?type=support", icon: Headphones, badge: (unreadByCategory.support || 0) + (unreadByCategory.emergency || 0), emergency: Boolean(unreadByCategory.emergency) },
       { name: t("nav.settings"), path: "/dashboard/patient/profile", icon: Settings },
     ];
     const currentUrl = `${location.pathname}${location.search}`;
@@ -114,6 +122,11 @@ export default function DynamicSidebar({ isOpen, onClose }) {
           >
             <Icon className="h-5 w-5 flex-shrink-0" />
             <span>{item.name}</span>
+            {item.badge > 0 && (
+              <span className={`ms-auto grid min-w-6 place-items-center rounded-full px-1.5 py-0.5 text-[10px] font-black ${item.emergency ? "bg-red-500 text-white" : "bg-white/15 text-white"}`}>
+                {item.badge > 99 ? "99+" : item.badge}
+              </span>
+            )}
           </NavLink>
         </li>
       );
@@ -125,7 +138,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
           <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onClose} />
         )}
         <aside
-          className={`fixed start-0 top-0 z-50 h-full w-[86vw] max-w-[280px] border-e border-white/10 bg-gradient-to-b from-[#0F5132] via-[#104733] to-[#083625] text-white shadow-2xl shadow-black/25 transform transition-transform duration-300 ease-in-out ${
+          className={`fixed start-0 top-0 z-50 h-full w-[86vw] max-w-[280px] border-e border-white/10 bg-gradient-to-b from-[#0F4C3A] via-[#0D5A43] to-[#0A3F32] text-white shadow-2xl shadow-black/25 transform transition-transform duration-300 ease-in-out ${
             isOpen
               ? "translate-x-0"
               : isRTL

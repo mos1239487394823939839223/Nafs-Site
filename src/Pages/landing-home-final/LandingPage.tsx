@@ -20,7 +20,7 @@ const LandingPage = () => {
     <div dir={isAr ? "rtl" : "ltr"} className="min-h-screen bg-background">
       <Navbar />
       <Hero />
-      <main className="mx-auto max-w-screen-xl">
+      <main>
         <Journey />
         <EmergencyBand />
         <Services />

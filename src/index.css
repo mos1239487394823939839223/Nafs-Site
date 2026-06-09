@@ -15,10 +15,10 @@ html {
 
   /* Nafas landing design tokens (HSL bare values for Tailwind opacity modifiers) */
   /* Mapped to the main project color system */
-  --brand: 160 26% 39%;           /* #4A7E6D - primary-dark */
+  --brand: 162 67% 18%;           /* #0F4C3A - primary */
   --brand-foreground: 0 0% 100%;  /* white */
   --brand-soft: 153 34% 87%;      /* #D4EAE0 - secondary-light */
-  --brand-muted: 155 26% 65%;     /* #8FBDAA - primary-light */
+  --brand-muted: 160 46% 33%;     /* #2D7A61 - primary-light */
   --cream: 144 33% 97%;           /* #F5FAF7 - background */
   --cream-deep: 142 29% 95%;      /* #EDF5F0 - background-subtle */
   --background: 144 33% 97%;      /* #F5FAF7 */
@@ -26,13 +26,13 @@ html {
   --foreground: 150 15% 21%;      /* #2D3D35 */
 
   /* Color System - Light Mode (Default) */
-  --color-primary: #6B9E8A;
-  --color-primary-light: #8FBDAA;
-  --color-primary-dark: #4A7E6D;
+  --color-primary: #0F4C3A;
+  --color-primary-light: #2D7A61;
+  --color-primary-dark: #0A3F32;
 
-  --color-secondary: #8FBDAA;
+  --color-secondary: #2D7A61;
   --color-secondary-light: #D4EAE0;
-  --color-secondary-dark: #6B9E8A;
+  --color-secondary-dark: #0F4C3A;
 
   --color-background: #F5FAF7;
   --color-background-paper: #FFFFFF;
@@ -43,8 +43,22 @@ html {
   --color-border-dark: #8FBDAA;
 
   --color-text: #2D3D35;
-  --color-text-light: #4A7E6D;
+  --color-text-light: #2D7A61;
   --color-text-heading: #1A2B23;
+
+  /* Shared design-system tokens */
+  --ds-primary: #0F4C3A;
+  --ds-primary-hover: #0A3F32;
+  --ds-secondary: #2D7A61;
+  --ds-success: #16835F;
+  --ds-warning: #D79A16;
+  --ds-error: #C83D4D;
+  --ds-info: #3977C3;
+  --ds-radius-control: 12px;
+  --ds-radius-card: 20px;
+  --ds-radius-panel: 26px;
+  --ds-shadow-card: 0 12px 35px -28px rgba(15, 76, 58, 0.45);
+  --ds-shadow-elevated: 0 18px 50px -30px rgba(15, 76, 58, 0.38);
 
   /* App Defaults */
   color-scheme: light;
@@ -60,14 +74,11 @@ html {
 /* Dark Mode Configuration */
 .dark {
   /* Dark Mode Colors - Deep Forest/Clinical Dark */
-  --color-primary: #6B9E8A;
-  /* Keep primary brand perception */
-  --color-primary-light: #4A7E6D;
-  /* Invert slightly for contrast if needed, or keep */
-  --color-primary-dark: #8FBDAA;
-  /* Lighten for dark bg? or keep logic */
+  --color-primary: #0F4C3A;
+  --color-primary-light: #2D7A61;
+  --color-primary-dark: #0A3F32;
 
-  --color-secondary: #4A7E6D;
+  --color-secondary: #2D7A61;
   --color-secondary-light: #2D3D35;
   --color-secondary-dark: #8FBDAA;
 
@@ -93,10 +104,10 @@ html {
   color-scheme: dark;
 
   /* Nafas landing dark tokens - mapped to project dark palette */
-  --brand: 155 26% 65%;           /* #8FBDAA - lighter for dark bg */
-  --brand-foreground: 156 33% 3%; /* #050a08 - very dark on light brand */
+  --brand: 162 67% 18%;           /* #0F4C3A - primary */
+  --brand-foreground: 0 0% 100%;  /* white */
   --brand-soft: 154 26% 16%;      /* #1e332a - dark border as soft */
-  --brand-muted: 155 26% 65%;     /* same as brand */
+  --brand-muted: 160 46% 33%;     /* #2D7A61 */
   --cream: 153 26% 7%;            /* #0d1612 - dark paper */
   --cream-deep: 157 24% 11%;      /* #15221d - dark subtle */
   --background: 156 33% 3%;       /* #050a08 */
@@ -221,8 +232,8 @@ a {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #6B9E8A;
-  /* Sage Green */
+  background: #0F4C3A;
+  /* Primary Green */
 }
 
 /* Doctor sidebar scrollbar */

@@ -17,19 +17,19 @@ export const Services = () => {
   ];
 
   return (
-  <section id="services" dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-12">
-    <h2 className="text-center text-2xl sm:text-3xl font-bold text-foreground">{t("landing.services.title")}</h2>
-    <div className="mt-8 grid gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+  <section id="services" dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-20 md:py-24">
+    <h2 className="text-center text-2xl sm:text-3xl font-black text-foreground">{t("landing.services.title")}</h2>
+    <div className="mt-10 grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
       {services.map(({ icon: Icon, titleKey, descKey }) => (
         <div
           key={titleKey}
-          className="rounded-2xl border border-border/70 bg-card p-6 text-center shadow-[var(--shadow-card)] transition hover:-translate-y-0.5 hover:shadow-[var(--shadow-soft)]"
+          className="group min-h-[220px] rounded-[24px] border border-border/70 bg-card p-6 text-center shadow-[var(--shadow-card)] transition hover:-translate-y-1 hover:border-brand/25 hover:shadow-[var(--shadow-soft)]"
         >
-          <span className="mx-auto mb-4 grid h-12 w-12 place-items-center rounded-full bg-brand-soft text-brand">
+          <span className="mx-auto mb-5 grid h-14 w-14 place-items-center rounded-2xl bg-brand-soft text-brand transition group-hover:bg-brand group-hover:text-brand-foreground">
             <Icon className="h-6 w-6" strokeWidth={1.8} />
           </span>
           <h3 className="text-base font-bold text-foreground">{t(titleKey)}</h3>
-          <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{t(descKey)}</p>
+          <p className="mt-3 text-sm leading-6 text-muted-foreground">{t(descKey)}</p>
         </div>
       ))}
     </div>
@@ -37,7 +37,7 @@ export const Services = () => {
       <Button
         variant="outline"
         onClick={() => navigate("/auth/login")}
-        className="rounded-full border-border bg-card px-7 text-foreground hover:bg-secondary"
+        className="border-border bg-card text-foreground hover:bg-secondary"
       >
         {t("landing.services.viewAll")}
       </Button>

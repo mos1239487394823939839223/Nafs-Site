@@ -28,7 +28,7 @@ export const Navbar = () => {
       dir={isAr ? "rtl" : "ltr"}
       className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/85 backdrop-blur"
     >
-      <nav className="container mx-auto flex h-14 sm:h-16 items-center justify-between gap-2 px-3 sm:px-4">
+      <nav className="container mx-auto flex h-[80px] items-center justify-between gap-2 px-3 sm:px-4">
         {/* Logo */}
         <div className="flex-shrink-0 min-w-0">
           <Logo />
@@ -72,14 +72,14 @@ export const Navbar = () => {
 
           <Button
             variant="outline"
-            className="rounded-full border-border bg-card text-foreground hover:bg-secondary"
+            className="border-border bg-card text-foreground hover:bg-secondary"
             onClick={() => navigate("/auth/login")}
           >
             {isAr ? "تسجيل الدخول" : "Login"}
           </Button>
           <Button
-            className="rounded-full bg-brand px-5 text-brand-foreground hover:bg-brand/90"
-            onClick={() => navigate("/auth/login")}
+            className="bg-brand text-brand-foreground shadow-[0_10px_22px_rgba(15,76,58,0.16)] hover:bg-brand/90"
+            onClick={() => navigate("/auth/role-selection")}
           >
             {isAr ? "احجز جلسة الآن" : "Book Now"}
           </Button>
@@ -117,14 +117,14 @@ export const Navbar = () => {
             {/* Action buttons */}
             <div className="flex flex-col gap-2 pt-2 border-t border-border/60">
               <Button
-                className="w-full rounded-full bg-brand text-brand-foreground hover:bg-brand/90"
-                onClick={() => { closeMenu(); navigate("/auth/login"); }}
+                className="w-full bg-brand text-brand-foreground hover:bg-brand/90"
+                onClick={() => { closeMenu(); navigate("/auth/role-selection"); }}
               >
                 {isAr ? "احجز جلسة الآن" : "Book Now"}
               </Button>
               <Button
                 variant="outline"
-                className="w-full rounded-full border-border bg-card text-foreground hover:bg-secondary"
+                className="w-full border-border bg-card text-foreground hover:bg-secondary"
                 onClick={() => { closeMenu(); navigate("/auth/login"); }}
               >
                 {isAr ? "تسجيل الدخول" : "Login"}

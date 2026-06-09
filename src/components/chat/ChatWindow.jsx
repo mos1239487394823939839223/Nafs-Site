@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Paperclip, Smile, ArrowLeft, X, File as FileIcon, MessageSquare, LockKeyhole } from 'lucide-react'
+import { Send, Paperclip, Smile, ArrowLeft, X, File as FileIcon, MessageSquare, LockKeyhole, Loader2 } from 'lucide-react'
 import EmojiPicker from 'emoji-picker-react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import MessageBubble from './MessageBubble'
 import SupportCaseTag from '../support/SupportCaseTag'
 
-export default function ChatWindow({ conversation, onSendMessage, onBack, isTyping: isOtherTyping = false, onTyping, onStopTyping, composerDisabled = false, composerDisabledReason = '' }) {
+export default function ChatWindow({ conversation, onSendMessage, onBack, isTyping: isOtherTyping = false, onTyping, onStopTyping, composerDisabled = false, composerDisabledReason = '', sending = false }) {
   const { theme } = useTheme()
   const { t, isRTL } = useLanguage()
   const [messageInput, setMessageInput] = useState('')
@@ -85,7 +85,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
   }
 
   const handleSend = () => {
-    if (composerDisabled) return
+    if (composerDisabled || sending) return
     if (messageInput.trim() || attachments.length > 0) {
       onSendMessage({ content: messageInput, attachments })
       setMessageInput('')
@@ -138,7 +138,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
     <div className="h-full flex flex-col bg-background-paper">
 
       {/* ── Header ── */}
-      <div className="relative px-4 md:px-5 py-3.5 border-b border-border/60 bg-background-paper">
+      <div className="relative px-4 md:px-6 py-4 border-b border-border/60 bg-background-paper">
         {/* subtle gradient line at top */}
         <div className="absolute top-0 start-0 end-0 h-0.5 bg-gradient-to-r from-primary/60 via-secondary/40 to-transparent" />
 
@@ -177,6 +177,13 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
             <p className="text-xs text-emerald-500 font-medium">
               {conversation.participant.online ? t('common.online', 'Online') : t('common.offline', 'Offline')}
             </p>
+            <span className="mt-1 inline-flex rounded-full bg-primary/8 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
+              {conversation.participant.role === 'doctor'
+                ? t('common.therapist', 'Therapist')
+                : conversation.participant.role === 'support'
+                  ? t('chat.supportTeam', 'Support team')
+                  : conversation.participant.role}
+            </span>
           </div>
         </div>
       </div>
@@ -184,7 +191,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
       {/* ── Messages Area ── */}
       <div
         ref={scrollContainerRef}
-        className="flex-1 overflow-y-auto px-4 md:px-6 py-4 space-y-1"
+        className="flex-1 overflow-y-auto px-3 py-5 space-y-1 sm:px-5 md:px-8"
         style={{
           backgroundImage: 'radial-gradient(circle at 20% 50%, var(--color-primary, #7DAE9F)08 0%, transparent 50%), radial-gradient(circle at 80% 20%, var(--color-secondary, #93B5C6)06 0%, transparent 40%)',
           backgroundAttachment: 'fixed',
@@ -283,19 +290,19 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
       )}
 
       {/* ── Input Area ── */}
-      <div className="px-4 md:px-5 py-3.5 border-t border-border/60 bg-background-paper">
+      <div className="px-3 py-3.5 border-t border-border/60 bg-background-paper sm:px-5">
         {composerDisabled && (
           <div className="mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-amber-800">
             <LockKeyhole className="w-4 h-4 mt-0.5 flex-shrink-0" />
             <p className="text-xs font-medium">{composerDisabledReason}</p>
           </div>
         )}
-        <div className={`flex items-end gap-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
+        <div className={`flex items-end gap-2 rounded-2xl border border-border/60 bg-background-subtle/50 p-2 ${isRTL ? 'flex-row-reverse' : ''}`}>
 
           {/* Attach */}
           <button
             onClick={() => fileInputRef.current?.click()}
-            disabled={composerDisabled}
+            disabled={composerDisabled || sending}
             className="p-2.5 hover:bg-background-subtle rounded-xl transition-colors flex-shrink-0 text-text-muted hover:text-primary"
             title="Attach file"
           >
@@ -309,10 +316,10 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
               value={messageInput}
               onChange={(e) => { setMessageInput(e.target.value); handleTyping() }}
               onKeyPress={handleKeyPress}
-              disabled={composerDisabled}
+              disabled={composerDisabled || sending}
               placeholder={composerDisabled ? composerDisabledReason : t('chat.typeMessage', 'Type a message...')}
               rows="1"
-              className={`w-full py-2.5 border border-border/70 rounded-2xl focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary/50 resize-none max-h-32 bg-background-subtle text-text text-sm transition-all placeholder:text-text-muted px-4 pe-10`}
+              className={`w-full py-2.5 border border-transparent rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/30 resize-none max-h-32 bg-background-paper text-text text-sm transition-all placeholder:text-text-muted px-4 pe-10`}
             />
             {/* Emoji button inside input */}
             <button
@@ -332,10 +339,10 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
           {/* Send Button */}
           <button
             onClick={handleSend}
-            disabled={composerDisabled || (!messageInput.trim() && attachments.length === 0)}
+            disabled={composerDisabled || sending || (!messageInput.trim() && attachments.length === 0)}
             className="p-2.5 bg-primary text-white rounded-xl hover:bg-primary-dark active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed flex-shrink-0 shadow-sm shadow-primary/20"
           >
-            <Send className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />
+            {sending ? <Loader2 className="h-5 w-5 animate-spin" /> : <Send className={`w-5 h-5 ${isRTL ? 'rotate-180' : ''}`} />}
           </button>
         </div>
       </div>

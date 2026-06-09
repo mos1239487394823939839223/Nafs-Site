@@ -1,4 +1,5 @@
 import { Camera, Loader2, Mail } from 'lucide-react'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 /**
  * Reusable, fully-responsive profile hero header for all roles
@@ -30,7 +31,14 @@ export default function ProfileHero({
     badges = [],
     actions,
     showOnlineDot = true,
+    status = 'online',
 }) {
+    const { t } = useLanguage()
+    const statusMeta = {
+        online: { label: t('common.online'), dot: 'bg-emerald-400' },
+        away: { label: t('common.away', 'Away'), dot: 'bg-amber-400' },
+        offline: { label: t('common.offline'), dot: 'bg-slate-400' },
+    }[status] || { label: t('common.online'), dot: 'bg-emerald-400' }
     return (
         <>
             {/* ─── Cover banner ─── */}
@@ -96,13 +104,13 @@ export default function ProfileHero({
                                 </label>
                             )}
                             {showOnlineDot && (
-                                <div className="absolute bottom-1 end-1 sm:bottom-2 sm:end-2 w-3.5 h-3.5 sm:w-4 sm:h-4 bg-emerald-400 rounded-full border-2 border-background-paper shadow" />
+                                <div title={statusMeta.label} className={`absolute bottom-1 end-1 sm:bottom-2 sm:end-2 w-3.5 h-3.5 sm:w-4 sm:h-4 ${statusMeta.dot} rounded-full border-2 border-background-paper shadow`} />
                             )}
                         </div>
                     </div>
 
                     {/* Name + badges + email + actions */}
-                    <div className="pt-4 flex flex-col md:flex-row items-center md:items-end justify-between pb-6 border-b border-border gap-5">
+                    <div className="mt-4 rounded-[var(--ds-radius-card)] border border-border bg-background-paper px-5 pt-4 flex flex-col md:flex-row items-center md:items-end justify-between pb-5 shadow-[var(--ds-shadow-card)] gap-5">
                         <div className="text-center md:text-start md:ms-3 min-w-0 w-full md:max-w-sm">
                             <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-text-heading break-words">
                                 {displayName}
@@ -138,6 +146,10 @@ export default function ProfileHero({
                                     <span className="truncate min-w-0">{email}</span>
                                 </p>
                             )}
+                            <p className="mt-2 inline-flex items-center gap-2 text-xs font-bold text-text-muted">
+                                <span className={`h-2.5 w-2.5 rounded-full ${statusMeta.dot}`} />
+                                {statusMeta.label}
+                            </p>
                         </div>
 
                         {actions && (

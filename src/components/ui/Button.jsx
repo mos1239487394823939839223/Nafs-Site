@@ -82,6 +82,8 @@ const Button = React.forwardRef(
         className={className}
         startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
         sx={{
+          minWidth: 40,
+          borderRadius: 'var(--ds-radius-control)',
           ...glassSx,
           ...linkSx,
           ...sx,

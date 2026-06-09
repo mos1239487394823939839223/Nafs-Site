@@ -1,10 +1,10 @@
 import { Leaf } from "lucide-react";
 
 export const Logo = ({ className = "" }: { className?: string }) => (
-  <div className={`flex items-center gap-1.5 sm:gap-2 ${className}`}>
-    <span className="grid h-8 w-8 sm:h-9 sm:w-9 place-items-center rounded-full bg-brand text-brand-foreground flex-shrink-0">
-      <Leaf className="h-4 w-4 sm:h-5 sm:w-5" strokeWidth={2.2} />
+  <div className={`flex items-center gap-2.5 ${className}`}>
+    <span className="grid h-11 w-11 place-items-center rounded-2xl bg-brand text-brand-foreground shadow-[0_8px_20px_rgba(15,76,58,0.2)] flex-shrink-0 sm:h-12 sm:w-12">
+      <Leaf className="h-5 w-5 sm:h-6 sm:w-6" strokeWidth={2.2} />
     </span>
-    <span className="text-xl sm:text-2xl font-bold text-brand tracking-tight">nafas</span>
+    <span className="text-2xl font-black text-brand tracking-tight sm:text-[28px]">nafas</span>
   </div>
 );

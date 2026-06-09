@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { CheckCircle2 } from "lucide-react";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { useToast } from "../../components/ui/Toast";
 
 type MoodKey = "terrible" | "bad" | "okay" | "good" | "great";
 
@@ -18,17 +20,55 @@ const moodMeta: Array<{
 ];
 
 export const MoodCheckIn = () => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const toast = useToast();
   const [selected, setSelected] = useState<MoodKey | null>(null);
+  const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("patient_daily_mood");
+    if (!stored) return;
+    try {
+      const entry = JSON.parse(stored);
+      if (entry?.date === new Date().toISOString().slice(0, 10)) {
+        setSelected(entry.mood);
+        setSaved(true);
+      }
+    } catch {
+      localStorage.removeItem("patient_daily_mood");
+    }
+  }, []);
+
+  const saveMood = (mood: MoodKey) => {
+    setSelected(mood);
+    setSaved(true);
+    localStorage.setItem("patient_daily_mood", JSON.stringify({
+      mood,
+      date: new Date().toISOString().slice(0, 10),
+      recordedAt: new Date().toISOString(),
+    }));
+    window.dispatchEvent(new CustomEvent("patient-mood-updated", { detail: { mood } }));
+    toast.success(language === "ar" ? "تم حفظ حالتك اليومية" : "Your daily mood has been saved");
+  };
 
   return (
-    <section className="rounded-[26px] border border-[#E5E7EB] bg-white p-5 text-center shadow-sm md:p-6">
+    <section className="rounded-[26px] border border-[#DCE8E2] bg-[linear-gradient(135deg,#FFFFFF_0%,#F7FAF8_100%)] p-5 text-center shadow-[0_16px_42px_-28px_rgba(15,76,58,0.4)] md:p-7">
+      <div className="flex flex-col items-center justify-between gap-3 sm:flex-row sm:text-start">
+        <div>
       <h3 className="text-xl font-black text-[#12372A]">
         {t("patientHome.moodCheckIn.title", "كيف تشعر اليوم؟")}
       </h3>
       <p className="mt-2 text-sm font-medium text-[#6B7F75]">
         {t("patientHome.moodCheckIn.subtitle", "شاركنا مشاعرك لمساعدتك بشكل أفضل")}
       </p>
+        </div>
+        {saved && (
+          <span className="inline-flex items-center gap-2 rounded-full bg-[#EAF5F0] px-4 py-2 text-xs font-bold text-[#0F4C3A]">
+            <CheckCircle2 className="h-4 w-4" />
+            {language === "ar" ? "تم تسجيل حالة اليوم" : "Today's mood recorded"}
+          </span>
+        )}
+      </div>
 
       <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
         {moodMeta.map((mood) => {
@@ -38,11 +78,11 @@ export const MoodCheckIn = () => {
             <button
               key={mood.key}
               type="button"
-              onClick={() => setSelected(mood.key)}
-              className={`group min-h-[92px] rounded-2xl border bg-white px-3 py-4 text-center shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[#B8D5C9] hover:shadow-lg ${
+              onClick={() => saveMood(mood.key)}
+              className={`group min-h-[104px] rounded-2xl border bg-white px-3 py-4 text-center shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[#B8D5C9] hover:shadow-lg ${
                 isSelected
-                  ? `border-[#2F855A] ring-4 ${mood.ring}`
-                  : "border-[#E5E7EB]"
+                  ? `border-[#0F4C3A] ring-4 ${mood.ring}`
+                  : "border-[#DCE8E2]"
               }`}
               aria-pressed={isSelected}
             >
