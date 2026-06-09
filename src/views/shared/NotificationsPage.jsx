@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Bell, CheckCheck, Loader2 } from "lucide-react";
+import { Bell, CheckCheck, Loader2, Mail, MailOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button";
 import NotificationItem from "../../components/notifications/NotificationItem";
@@ -10,12 +10,17 @@ import { NOTIFICATION_CATEGORIES } from "../../lib/notificationUtils";
 export default function NotificationsPage() {
   const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
-  const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, loading, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   const [category, setCategory] = useState("all");
+  const [readState, setReadState] = useState("all");
 
   const filtered = useMemo(
-    () => category === "all" ? notifications : notifications.filter((item) => item.category === category),
-    [category, notifications],
+    () => notifications.filter((item) => {
+      const matchesCategory = category === "all" || item.category === category;
+      const matchesReadState = readState === "all" || (readState === "unread" ? !item.isRead : item.isRead);
+      return matchesCategory && matchesReadState;
+    }),
+    [category, notifications, readState],
   );
   const categoryCounts = useMemo(
     () => NOTIFICATION_CATEGORIES.reduce((counts, item) => ({
@@ -69,6 +74,27 @@ export default function NotificationsPage() {
         ))}
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        {[
+          ["all", Bell, t("common.all", "All")],
+          ["unread", Mail, t("chat.unread", "Unread")],
+          ["read", MailOpen, t("notifications.read", "Read")],
+        ].map(([value, Icon, label]) => (
+          <button
+            key={value}
+            onClick={() => setReadState(value)}
+            className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold ${
+              readState === value
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border bg-background-paper text-text-muted"
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </button>
+        ))}
+      </div>
+
       {loading ? (
         <div className="py-16 flex justify-center"><Loader2 className="w-8 h-8 text-primary animate-spin" /></div>
       ) : filtered.length === 0 ? (
@@ -78,7 +104,15 @@ export default function NotificationsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {filtered.map((item) => <NotificationItem key={item.id} notification={item} onClick={openNotification} />)}
+          {filtered.map((item) => (
+            <NotificationItem
+              key={item.id}
+              notification={item}
+              onClick={openNotification}
+              onMarkAsRead={(notification) => markAsRead(notification.id)}
+              onDelete={(notification) => deleteNotification(notification.id)}
+            />
+          ))}
         </div>
       )}
     </div>

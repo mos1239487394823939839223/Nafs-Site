@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { FileClock, MessageSquare, PlayCircle } from "lucide-react";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import { APPOINTMENT_STATUS } from "../../../lib/appointmentStatus";
 
@@ -128,12 +129,17 @@ export const RecentPatients = ({ patients = [], loading = false }: RecentPatient
                     {t(sKey)}
                   </span>
 
-                  <Link
-                    to="/dashboard/doctor/history"
-                    className="whitespace-nowrap rounded-xl border border-[#CFE0D8] bg-white px-3 py-2 text-xs font-bold text-[#0F4C3A] hover:bg-[#EAF5F0] sm:text-sm"
-                  >
-                    {t("doctor.dashboardHome.recentPatients.viewFile")}
-                  </Link>
+                  <div className="flex items-center gap-1.5">
+                    <Link title={isRTL ? "عرض السجل والخطة العلاجية" : "View history and treatment plan"} to="/dashboard/doctor/history" className="grid h-9 w-9 place-items-center rounded-xl border border-[#CFE0D8] bg-white text-[#0F4C3A] hover:bg-[#EAF5F0]">
+                      <FileClock className="size-4" />
+                    </Link>
+                    <Link title={isRTL ? "إرسال رسالة" : "Send message"} to={`/dashboard/doctor/messages${p.PatientId ? `?patient=${p.PatientId}` : ""}`} className="grid h-9 w-9 place-items-center rounded-xl border border-[#CFE0D8] bg-white text-[#0F4C3A] hover:bg-[#EAF5F0]">
+                      <MessageSquare className="size-4" />
+                    </Link>
+                    <Link title={isRTL ? "بدء الجلسة" : "Start session"} to="/dashboard/doctor/queue" className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#0F4C3A] px-3 text-xs font-bold text-white hover:bg-[#0A3F32]">
+                      <PlayCircle className="size-4" />{isRTL ? "بدء" : "Start"}
+                    </Link>
+                  </div>
                 </div>
               </div>
             );

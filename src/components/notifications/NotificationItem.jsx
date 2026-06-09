@@ -1,4 +1,4 @@
-import { AlertTriangle, CalendarClock, Headphones, MessageSquare, Settings2 } from "lucide-react";
+import { AlertTriangle, CalendarClock, Check, Headphones, MessageSquare, Settings2, Trash2 } from "lucide-react";
 import SupportCaseTag from "../support/SupportCaseTag";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { getRoomCaseTypeMeta } from "../../lib/supportCaseTypes";
@@ -22,7 +22,7 @@ const supportCardStyles = {
   other: "bg-slate-50 border-slate-200 hover:border-slate-300",
 };
 
-export default function NotificationItem({ notification, onClick, compact = false }) {
+export default function NotificationItem({ notification, onClick, onMarkAsRead, onDelete, compact = false }) {
   const { isRTL } = useLanguage();
   const style = categoryStyles[notification.category] || categoryStyles.system;
   const Icon = style.Icon;
@@ -47,12 +47,16 @@ export default function NotificationItem({ notification, onClick, compact = fals
     : style.card;
 
   return (
-    <button
-      type="button"
+    <article
       onClick={() => onClick?.(notification)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") onClick?.(notification);
+      }}
       className={`w-full text-start rounded-xl border transition-all ${
         compact ? "p-3" : "p-4"
-      } ${cardStyle} ${notification.isRead ? "opacity-80" : "ring-1 ring-current/5"}`}
+      } ${cardStyle} ${notification.isRead ? "opacity-70" : "ring-1 ring-current/10 shadow-sm"} cursor-pointer`}
     >
       <div className="flex items-start gap-3">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${style.className}`}>
@@ -72,8 +76,38 @@ export default function NotificationItem({ notification, onClick, compact = fals
           <p className="text-[11px] text-text-light mt-2">
             {Number.isNaN(date.getTime()) ? "" : date.toLocaleString()}
           </p>
+          {!compact && (onMarkAsRead || onDelete) && (
+            <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-current/10 pt-3">
+              {!notification.isRead && onMarkAsRead && (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onMarkAsRead(notification);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-white/70 px-2.5 py-1.5 text-[11px] font-bold text-primary hover:bg-white"
+                >
+                  <Check className="h-3.5 w-3.5" />
+                  {isRTL ? "تحديد كمقروء" : "Mark as read"}
+                </button>
+              )}
+              {onDelete && (
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    onDelete(notification);
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-white/70 px-2.5 py-1.5 text-[11px] font-bold text-red-600 hover:bg-red-50"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  {isRTL ? "حذف" : "Delete"}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </div>
-    </button>
+    </article>
   );
 }

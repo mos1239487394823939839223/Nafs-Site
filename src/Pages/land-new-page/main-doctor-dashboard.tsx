@@ -19,7 +19,7 @@ const MainDoctorDashboard = () => {
     <div dir={isRTL ? "rtl" : "ltr"} className="min-h-screen bg-[#F7FAF8]">
       <main className="mx-auto w-full max-w-[1180px] pb-8">
         <HeroCard doctorName={doctorName} />
-        <StatTiles todayCount={todayBookings.length} />
+        <StatTiles todayCount={todayBookings.length} stats={stats} />
         <TodaySchedule bookings={todayBookings} loading={loading} />
         <PerformanceSummary stats={stats} loading={loading} />
         <QuickTools />

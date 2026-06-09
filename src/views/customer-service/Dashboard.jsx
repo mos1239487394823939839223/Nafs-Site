@@ -23,6 +23,9 @@ import {
   Wallet as AccountBalanceWallet,
   User as Person,
   MessageSquare,
+  AlertTriangle,
+  ArrowUpRight,
+  UserPlus,
 } from "lucide-react";
 import { customerSupportAPI, chatAPI } from "../../lib/api";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -201,8 +204,8 @@ export default function CustomerServiceDashboard() {
   }, []);
 
   useEffect(() => {
-    if (activeModule === "chat-rooms") fetchChatRooms();
-  }, [activeModule, fetchChatRooms]);
+    fetchChatRooms();
+  }, [fetchChatRooms]);
 
   const getProviderLabel = (providerValue) => {
     const value = Number(providerValue);
@@ -319,6 +322,16 @@ export default function CustomerServiceDashboard() {
 
   const activeModuleMeta =
     moduleTabs.find((item) => item.id === activeModule) || moduleTabs[0];
+
+  const supportOverview = useMemo(() => {
+    const localMap = readLocalRoomCaseTypes();
+    return {
+      total: chatRooms.length,
+      urgent: chatRooms.filter((room) => getRoomCaseTypeMeta(room, false, localMap).priority).length,
+      unread: chatRooms.filter((room) => Number(room.UnreadCount) > 0).length,
+      resolved: chatRooms.filter((room) => room.IsActive === false).length,
+    };
+  }, [chatRooms]);
 
   const handleConfirmPayment = async (paymentItem) => {
     setActionLoadingId(paymentItem.Id);
@@ -528,6 +541,22 @@ export default function CustomerServiceDashboard() {
           </div>
         </div>
       </motion.div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[
+          [MessageSquare, tx("support.totalCases", "Total cases"), supportOverview.total, "bg-blue-50 text-blue-700"],
+          [AlertTriangle, tx("support.emergencyCases", "Emergency cases"), supportOverview.urgent, "bg-red-50 text-red-700"],
+          [PendingActions, tx("support.waitingReply", "Waiting reply"), supportOverview.unread, "bg-amber-50 text-amber-700"],
+          [Verified, tx("staff.resolved", "Resolved"), supportOverview.resolved, "bg-emerald-50 text-emerald-700"],
+        ].map(([Icon, label, value, tone]) => (
+          <div key={label} className="rounded-[20px] border border-border bg-background-paper p-4 shadow-[var(--ds-shadow-card)]">
+            <div className="flex items-start justify-between gap-3">
+              <div><p className="text-2xl font-black text-text-heading">{value}</p><p className="mt-1 text-xs font-bold text-text-muted">{label}</p></div>
+              <span className={`grid h-11 w-11 place-items-center rounded-2xl ${tone}`}><Icon className="h-5 w-5" /></span>
+            </div>
+          </div>
+        ))}
+      </div>
 
       <Card className="border border-border/80 shadow-sm">
         <CardContent className="p-3 md:p-4">
@@ -1127,6 +1156,23 @@ export default function CustomerServiceDashboard() {
                         <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-text-muted">
                           <span>{t("support.createdAt", "Created")}: {new Date(room.CreatedAt || room.createdAt || updatedAt).toLocaleString()}</span>
                           <span>{t("support.lastUpdated", "Last updated")}: {new Date(updatedAt).toLocaleString()}</span>
+                        </div>
+                        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+                          <button
+                            type="button"
+                            onClick={(event) => { event.stopPropagation(); navigate(`/dashboard/staff/messages?room=${room.Id || room.id}`); }}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-2.5 py-1.5 text-[11px] font-bold text-white"
+                          >
+                            <MessageSquare className="h-3.5 w-3.5" />{tx("support.startChat", "Start chat")}
+                          </button>
+                          <button type="button" onClick={(event) => { event.stopPropagation(); toast.success(tx("support.caseAssigned", "Case assigned to you")); }} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-[11px] font-bold text-text">
+                            <UserPlus className="h-3.5 w-3.5" />{tx("support.assignCase", "Assign case")}
+                          </button>
+                          {meta.priority && (
+                            <button type="button" onClick={(event) => { event.stopPropagation(); toast.success(tx("support.caseEscalated", "Case escalated")); }} className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[11px] font-bold text-red-700">
+                              <ArrowUpRight className="h-3.5 w-3.5" />{tx("support.escalate", "Escalate")}
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

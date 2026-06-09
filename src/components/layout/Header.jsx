@@ -234,6 +234,13 @@ export default function Header({ onMenuClick }) {
                       ))}
                     </div>
                   )}
+                  <button
+                    onClick={() => { setShowNotifications(false); navigate('/notifications') }}
+                    className="mt-2 flex w-full items-center justify-center gap-2 border-t border-border pt-3 text-sm font-semibold text-primary hover:underline"
+                  >
+                    {t('notifications.viewAll', 'View all notifications')}
+                    <ArrowRight className={`h-4 w-4 ${isRTL ? 'rotate-180' : ''}`} />
+                  </button>
                 </div>
               </DropdownMenu>
             </div>

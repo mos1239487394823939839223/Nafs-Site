@@ -11,6 +11,7 @@ import { useToast } from "../ui/Toast";
 import { useNotifications } from "../../contexts/NotificationContext";
 import {
   Activity,
+  Bell,
   BarChart3,
   BookOpen,
   Brain,
@@ -35,7 +36,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
   const navigate = useNavigate();
   const location = useLocation();
   const toast = useToast();
-  const { notifications } = useNotifications();
+  const { unreadCount, unreadByCategory } = useNotifications();
 
   const closeOnMobile = () => {
     if (onClose && window.innerWidth < 1024) onClose();
@@ -82,11 +83,6 @@ export default function DynamicSidebar({ isOpen, onClose }) {
   };
 
   if (role === Roles.PATIENT) {
-    const unreadByCategory = notifications.reduce((counts, notification) => {
-      if (notification.isRead) return counts;
-      counts[notification.category] = (counts[notification.category] || 0) + 1;
-      return counts;
-    }, {});
     const mainItems = [
       { name: t("nav.home"), path: "/dashboard/patient/home", icon: Home },
       { name: t("nav.mySessions"), path: "/dashboard/patient/reserve", icon: Calendar },
@@ -95,6 +91,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       { name: t("nav.treatmentPrograms"), path: "/dashboard/patient/tests", icon: HeartHandshake },
       { name: t("nav.contentLibrary"), path: "/dashboard/patient/blogs", icon: BookOpen },
       { name: t("nav.messages", "الرسائل"), path: "/dashboard/patient/messages?type=doctors", icon: MessageSquare, badge: unreadByCategory.messages || 0 },
+      { name: t("common.notifications", "Notifications"), path: "/notifications", icon: Bell, badge: unreadCount },
     ];
     const supportItems = [
       { name: t("nav.supportAndHelp"), path: "/dashboard/patient/messages?type=support", icon: Headphones, badge: (unreadByCategory.support || 0) + (unreadByCategory.emergency || 0), emergency: Boolean(unreadByCategory.emergency) },
@@ -227,7 +224,8 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       { name: t("nav.schedule"), path: "/dashboard/doctor/schedule", icon: Calendar },
       { name: t("nav.blogs"), path: "/dashboard/doctor/blogs", icon: FileText },
       { name: t("nav.history"), path: "/dashboard/doctor/history", icon: Activity },
-      { name: t("nav.messages"), path: "/dashboard/doctor/messages", icon: MessageSquare },
+      { name: t("nav.messages"), path: "/dashboard/doctor/messages", icon: MessageSquare, badge: unreadByCategory.messages || 0 },
+      { name: t("common.notifications", "Notifications"), path: "/notifications", icon: Bell, badge: unreadCount },
       { name: t("nav.profile"), path: "/dashboard/doctor/settings", icon: Settings },
     ],
     [Roles.ADMIN]: [
@@ -236,13 +234,16 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       { name: t("nav.paymentDetails"), path: "/admin/payment-details", icon: DollarSign },
       { name: t("nav.blogs"), path: "/admin/blogs", icon: FileText },
       { name: t("admin.tests") || "Tests", path: "/admin/tests", icon: TestTube },
-      { name: t("nav.messages"), path: "/admin/messages", icon: MessageSquare },
+      { name: t("nav.messages"), path: "/admin/messages", icon: MessageSquare, badge: unreadByCategory.messages || 0 },
+      { name: t("common.notifications", "Notifications"), path: "/notifications", icon: Bell, badge: unreadCount },
       { name: t("nav.profile"), path: "/admin/profile", icon: Settings },
     ],
     [Roles.STAFF]: [
       { name: t("nav.dashboard"), path: "/dashboard/staff", icon: Home },
       { name: t("nav.blogs"), path: "/dashboard/staff/blogs", icon: FileText },
-      { name: t("nav.messages"), path: "/dashboard/staff/messages", icon: MessageSquare },
+      { name: t("nav.messages"), path: "/dashboard/staff/messages", icon: MessageSquare, badge: unreadByCategory.messages || 0 },
+      { name: t("nav.supportAndHelp", "Support"), path: "/dashboard/staff", icon: Headphones, badge: (unreadByCategory.support || 0) + (unreadByCategory.emergency || 0), emergency: Boolean(unreadByCategory.emergency) },
+      { name: t("common.notifications", "Notifications"), path: "/notifications", icon: Bell, badge: unreadCount },
       { name: t("nav.profile"), path: "/dashboard/staff/profile", icon: Settings },
     ],
   };
@@ -306,6 +307,11 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                       >
                         <Icon className="h-5 w-5 shrink-0" />
                         <span>{item.name}</span>
+                        {item.badge > 0 && (
+                          <span className={`ms-auto rounded-full px-2 py-0.5 text-[10px] font-black ${item.emergency ? "bg-red-500 text-white" : "bg-white/15 text-white"}`}>
+                            {item.badge > 99 ? "99+" : item.badge}
+                          </span>
+                        )}
                       </NavLink>
                     </li>
                   );
@@ -388,6 +394,11 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                     >
                       <Icon className="w-5 h-5 flex-shrink-0" />
                       <span className="font-medium">{item.name}</span>
+                      {item.badge > 0 && (
+                        <span className={`ms-auto rounded-full px-2 py-0.5 text-[10px] font-black text-white ${item.emergency ? "bg-red-500" : "bg-primary"}`}>
+                          {item.badge > 99 ? "99+" : item.badge}
+                        </span>
+                      )}
                     </NavLink>
                   </li>
                 );

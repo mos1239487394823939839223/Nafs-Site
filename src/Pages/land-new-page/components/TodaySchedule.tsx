@@ -1,7 +1,7 @@
-import { Clock } from "lucide-react";
+import { CalendarDays, Clock, Video } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useLanguage } from "../../../contexts/LanguageContext";
-import { APPOINTMENT_STATUS } from "../../../lib/appointmentStatus";
+import { APPOINTMENT_STATUS, getAppointmentStatusMeta } from "../../../lib/appointmentStatus";
 
 interface BookingDto {
   BookingId?: number | string;
@@ -63,9 +63,15 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
       )}
 
       {!loading && bookings.length === 0 && (
-        <p className="text-center text-muted-foreground py-6 text-sm">
-          {t("doctor.dashboardHome.schedule.noSessions")}
-        </p>
+        <div className="rounded-[22px] border border-dashed border-[#CFE0D8] bg-[#FBFDFC] px-5 py-12 text-center">
+          <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-[#EAF5F0] text-[#2D7A61]">
+            <CalendarDays className="size-6" />
+          </span>
+          <p className="font-extrabold text-[#1F2D2A]">{t("doctor.dashboardHome.schedule.noSessions")}</p>
+          <p className="mt-2 text-xs font-medium text-[#71857C]">
+            {isRTL ? "لا توجد جلسات مجدولة اليوم. راجع الجدول الكامل للجلسات القادمة." : "Your day is clear. Review the full calendar for upcoming sessions."}
+          </p>
+        </div>
       )}
 
       {!loading && bookings.length > 0 && (
@@ -73,6 +79,8 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
           {bookings.map((b, i) => {
             const isPrimary =
               b.Status === APPOINTMENT_STATUS.IN_PROGRESS;
+            const isUpcoming = b.Status === APPOINTMENT_STATUS.CONFIRMED;
+            const status = getAppointmentStatusMeta(b.Status, { t, isRTL, booking: b });
             const ctaKey =
               b.Status === APPOINTMENT_STATUS.CONFIRMED ||
               b.Status === APPOINTMENT_STATUS.IN_PROGRESS
@@ -89,8 +97,15 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
             return (
               <div
                 key={b.BookingId ?? i}
-                className="group flex flex-wrap items-center gap-4 rounded-[20px] border border-transparent bg-[#FBFDFC] p-4 transition-all hover:border-[#DCE8E2] hover:bg-[#F1F8F4] hover:shadow-sm sm:p-5"
+                className={`group relative flex flex-wrap items-center gap-4 rounded-[20px] border p-4 transition-all hover:shadow-sm sm:p-5 ${
+                  isPrimary
+                    ? "border-[#2D7A61] bg-[#EAF5F0] shadow-md shadow-[#0F4C3A]/10"
+                    : isUpcoming
+                      ? "border-violet-200 bg-violet-50/40"
+                      : "border-[#E4EEE9] bg-[#FBFDFC]"
+                }`}
               >
+                <span className={`absolute bottom-4 start-0 top-4 w-1 rounded-full ${isPrimary ? "bg-[#0F4C3A]" : isUpcoming ? "bg-violet-400" : "bg-[#CFE0D8]"}`} />
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <img
                     src={avatar}
@@ -104,6 +119,17 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
                     <p className="mt-1 truncate text-xs font-medium text-[#71857C]">
                       {t("doctor.dashboardHome.schedule.sessionTypes.individual")}
                     </p>
+                    <span className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                      status.variant === "success"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : status.variant === "danger"
+                          ? "bg-red-100 text-red-700"
+                          : status.variant === "primary"
+                            ? "bg-violet-100 text-violet-700"
+                            : "bg-amber-100 text-amber-700"
+                    }`}>
+                      {status.label}
+                    </span>
                   </div>
                 </div>
 
@@ -123,6 +149,7 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
                         : "border border-[#CFE0D8] bg-white text-[#0F4C3A] hover:bg-[#EAF5F0]"
                     }`}
                   >
+                    <Video className="me-1 inline size-4" />
                     {t(ctaKey)}
                   </button>
                 </div>

@@ -72,14 +72,32 @@ export function NotificationProvider({ children }) {
     await Promise.allSettled(unread.filter((item) => !item.id.startsWith("local-")).map((item) => notificationAPI.markAsRead(item.id)));
   }, [notifications]);
 
+  const deleteNotification = useCallback(async (id) => {
+    const notificationId = String(id);
+    setNotifications((prev) => prev.filter((item) => item.id !== notificationId));
+    if (!notificationId.startsWith("local-")) {
+      await notificationAPI.deleteNotification(id).catch((error) => {
+        console.error("Failed to delete notification", error);
+        fetchNotifications();
+      });
+    }
+  }, [fetchNotifications]);
+
+  const unreadByCategory = useMemo(() => notifications.reduce((counts, item) => {
+    if (!item.isRead) counts[item.category] = (counts[item.category] || 0) + 1;
+    return counts;
+  }, {}), [notifications]);
+
   const value = useMemo(() => ({
     notifications,
     unreadCount: notifications.filter((item) => !item.isRead).length,
+    unreadByCategory,
     loading,
     fetchNotifications,
     markAsRead,
     markAllAsRead,
-  }), [fetchNotifications, loading, markAllAsRead, markAsRead, notifications]);
+    deleteNotification,
+  }), [deleteNotification, fetchNotifications, loading, markAllAsRead, markAsRead, notifications, unreadByCategory]);
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
 }

@@ -58,7 +58,7 @@ export const HeroCard = ({ doctorName }: HeroCardProps) => {
                 "linear-gradient(90deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.72) 16%, #000 34%, #000 100%)",
             }}
           />
-          <div className="pointer-events-none absolute inset-y-0 start-0 z-[2] hidden w-[38%] bg-gradient-to-r from-[#F8FBF9] via-[#F8FBF9]/55 to-transparent md:block" />
+          {/* <div className="pointer-events-none absolute inset-y-0 start-0 z-[2] hidden w-[38%] bg-gradient-to-r from-[#F8FBF9] via-[#F8FBF9]/55 to-transparent md:block" /> */}
         </div>
       </div>
     </section>

@@ -1127,6 +1127,12 @@ export const notificationAPI = {
     return response.data;
   },
 
+  // Delete a notification
+  deleteNotification: async (id) => {
+    const response = await api.delete(`/Notification/${id}`);
+    return response.data;
+  },
+
   // Get notifications
   getNotifications: async (pageIndex = 1, pageSize = 20) => {
     const response = await api.get("/Notification", {
