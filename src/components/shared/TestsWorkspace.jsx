@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import Card, { CardContent } from '../ui/Card'
 import Badge from '../ui/Badge'
 import Input from '../ui/Input'
@@ -8,6 +9,7 @@ import { useLanguage } from '../../contexts/LanguageContext'
 import { useAuth } from '../../contexts/AuthContext'
 import { extractErrorMessage, medicalAPI, userAPI } from '../../lib/api'
 import { Beaker as Science, ExternalLink as OpenInNew, ClipboardCheck as AssignmentTurnedIn, Loader2, Eye, ArrowRight } from 'lucide-react'
+import { normalizeTestTypeItem } from '../../lib/testCatalog'
 import TestDetailModal from './TestDetailModal'
 
 function UserResultCard({
@@ -19,6 +21,7 @@ function UserResultCard({
   isSubmitting,
   isRTL,
   onViewDetails,
+  showInlineSubmit,
 }) {
   const hasResult = Boolean(String(result?.resultText || '').trim())
   const { t } = useLanguage()
@@ -78,7 +81,7 @@ function UserResultCard({
               {t("auto.submittedAt")} {new Date(result.submittedAt).toLocaleString()}
             </p>
           </div>
-        ) : (
+        ) : showInlineSubmit ? (
           <div className="space-y-2 pt-1" onClick={(e) => e.stopPropagation()}>
             <Input
               label={t("auto.enterYourResultAfterCompletingTheTest")}
@@ -96,6 +99,8 @@ function UserResultCard({
               {t("auto.submitResult")}
             </Button>
           </div>
+        ) : (
+          <p className="text-xs text-text-muted pt-1">{t('tests.openDetailsToSubmit', 'Open test details to submit your result.')}</p>
         )}
 
         <div className="mt-auto pt-2 border-t border-border/60 flex items-center justify-between gap-3 text-sm font-semibold text-primary">
@@ -111,6 +116,7 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
   const { t, isRTL } = useLanguage()
   const { user } = useAuth()
   const toast = useToast()
+  const navigate = useNavigate()
   const isPatientView = String(roleLabel).toLowerCase() === 'patient'
 
   const userId = useMemo(() => {
@@ -136,89 +142,20 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
     const loadTests = async () => {
       setTestsLoading(true)
       try {
-        if (isPatientView) {
-          if (!userId) {
-            if (!cancelled) {
-              setTests([])
-              setDiseases([])
-              setSubmittedResultsByTest({})
-            }
-            return
-          }
-
-          const response = await medicalAPI.getPatientHistory(userId, 1, 200)
-          const data = response?.Data ?? response?.data ?? response
-          const items = Array.isArray(data?.Items)
-            ? data.Items
-            : Array.isArray(data?.items)
-            ? data.items
-            : Array.isArray(data)
-            ? data
-            : []
-
-          const normalized = items
-            .map((item) => {
-              const recordId = item?.RecordID ?? item?.RecordId ?? item?.recordId ?? item?.ID ?? item?.Id ?? item?.id
-              if (!recordId) return null
-
-              const testName = String(
-                item?.TestTypeName ?? item?.testTypeName ?? item?.Name ?? item?.name ?? '',
-              ).trim()
-
-              const description = String(item?.ExamNotes ?? item?.examNotes ?? '').trim()
-              const scanUrl = String(item?.ScanUrl ?? item?.scanUrl ?? '').trim()
-              const testDate = item?.TestDate ?? item?.testDate ?? item?.CreatedAt ?? item?.createdAt
-              const doctorName = String(item?.DoctorName ?? item?.doctorName ?? '').trim()
-
-              return {
-                id: String(recordId),
-                name: testName || (t("auto.medicalTest")),
-                description,
-                purpose: String(item?.Purpose ?? item?.purpose ?? item?.Goal ?? item?.goal ?? '').trim(),
-                duration: String(item?.Duration ?? item?.duration ?? item?.EstimatedDuration ?? item?.estimatedDuration ?? '').trim(),
-                price: item?.Price ?? item?.price ?? item?.Cost ?? item?.cost ?? null,
-                steps: item?.Steps ?? item?.steps ?? item?.Instructions ?? item?.instructions ?? '',
-                url: scanUrl,
-                tagName: doctorName || (testDate ? new Date(testDate).toLocaleDateString() : ''),
-                resultText: String(item?.Result ?? item?.result ?? '').trim(),
-                submittedAt: testDate || new Date().toISOString(),
-              }
-            })
-            .filter(Boolean)
-
-          const mappedResults = normalized.reduce((acc, item) => {
-            if (!String(item.resultText || '').trim()) return acc
-            acc[String(item.id)] = {
-              testId: String(item.id),
-              resultText: item.resultText,
-              submittedAt: item.submittedAt,
-            }
-            return acc
-          }, {})
-
-          if (!cancelled) {
-            setDiseases([])
-            setTests(normalized)
-            setSubmittedResultsByTest(mappedResults)
-          }
-
-          return
-        }
-
         const selectedDiseaseId = selectedTag === 'all' ? null : Number(selectedTag)
         const [diseasesResponse, testsResponse] = await Promise.all([
           medicalAPI.getDiseases(1, 200),
-          medicalAPI.getTestTypes(1, 50, selectedDiseaseId),
+          medicalAPI.getTestTypes(1, 200, selectedDiseaseId),
         ])
 
         const diseasesData = diseasesResponse?.Data ?? diseasesResponse?.data ?? diseasesResponse
         const diseasesItems = Array.isArray(diseasesData?.Items)
           ? diseasesData.Items
           : Array.isArray(diseasesData?.items)
-          ? diseasesData.items
-          : Array.isArray(diseasesData)
-          ? diseasesData
-          : []
+            ? diseasesData.items
+            : Array.isArray(diseasesData)
+              ? diseasesData
+              : []
 
         const normalizedDiseases = diseasesItems
           .map((item) => {
@@ -229,10 +166,6 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
           })
           .filter(Boolean)
 
-        if (!cancelled) {
-          setDiseases(normalizedDiseases)
-        }
-
         const diseaseNameById = new Map(
           normalizedDiseases.map((item) => [item.id, item.name]),
         )
@@ -241,58 +174,17 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
         const testsItems = Array.isArray(testsData?.Items)
           ? testsData.Items
           : Array.isArray(testsData?.items)
-          ? testsData.items
-          : Array.isArray(testsData)
-          ? testsData
-          : []
+            ? testsData.items
+            : Array.isArray(testsData)
+              ? testsData
+              : []
 
         const normalized = testsItems
-          .map((item) => {
-            const id = item?.ID ?? item?.Id ?? item?.id
-            const name = String(item?.Name ?? item?.name ?? '').trim()
-            if (!id || !name) return null
-
-            const diseaseIds = Array.isArray(item?.DiseaseIds)
-              ? item.DiseaseIds
-                  .map((value) => Number(value))
-                  .filter((value) => Number.isFinite(value) && value > 0)
-              : []
-
-            const tagNamesFromDiseases = diseaseIds
-              .map((diseaseId) => diseaseNameById.get(String(diseaseId)))
-              .filter(Boolean)
-
-            const rawTags = Array.isArray(item?.Tags)
-              ? item.Tags
-              : Array.isArray(item?.tags)
-              ? item.tags
-              : []
-
-            const tagNamesFromPayload = rawTags
-              .map((tag) => {
-                if (typeof tag === 'string') return tag.trim()
-                return String(tag?.Name ?? tag?.name ?? '').trim()
-              })
-              .filter(Boolean)
-
-            const resolvedTagNames =
-              tagNamesFromDiseases.length > 0 ? tagNamesFromDiseases : tagNamesFromPayload
-
-            return {
-              id: String(id),
-              name,
-              description: String(item?.Description ?? item?.description ?? '').trim(),
-              purpose: String(item?.Purpose ?? item?.purpose ?? item?.Goal ?? item?.goal ?? item?.Objective ?? item?.objective ?? '').trim(),
-              duration: String(item?.Duration ?? item?.duration ?? item?.DurationMinutes ?? item?.durationMinutes ?? item?.EstimatedDuration ?? item?.estimatedDuration ?? '').trim(),
-              price: item?.Price ?? item?.price ?? item?.TestPrice ?? item?.testPrice ?? item?.Cost ?? item?.cost ?? null,
-              steps: item?.Steps ?? item?.steps ?? item?.Instructions ?? item?.instructions ?? item?.BookingSteps ?? item?.bookingSteps ?? '',
-              url: String(item?.Url ?? item?.url ?? '').trim(),
-              tagName: resolvedTagNames.join(', '),
-            }
-          })
+          .map((item) => normalizeTestTypeItem(item, { diseaseNameById }))
           .filter(Boolean)
 
         if (!cancelled) {
+          setDiseases(normalizedDiseases)
           setTests(normalized)
         }
       } catch (error) {
@@ -313,7 +205,63 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
     return () => {
       cancelled = true
     }
-  }, [isRTL, toast, selectedTag, isPatientView, userId, resultsRefreshTick])
+  }, [toast, selectedTag, resultsRefreshTick, t])
+
+  useEffect(() => {
+    if (!isPatientView) return undefined
+
+    let cancelled = false
+
+    const loadPatientResults = async () => {
+      if (!userId) {
+        setSubmittedResultsByTest({})
+        return
+      }
+
+      try {
+        const response = await medicalAPI.getMyHistory(1, 200)
+        const data = response?.Data ?? response?.data ?? response
+        const items = Array.isArray(data?.Items)
+          ? data.Items
+          : Array.isArray(data?.items)
+            ? data.items
+            : Array.isArray(data)
+              ? data
+              : []
+
+        const mapped = items.reduce((acc, item) => {
+          const testTypeId = item?.TestTypeID ?? item?.TestTypeId ?? item?.testTypeId
+          if (!testTypeId) return acc
+
+          const resultText = String(
+            item?.Result ?? item?.result ?? item?.ExamNotes ?? item?.examNotes ?? '',
+          ).trim()
+          if (!resultText) return acc
+
+          acc[String(testTypeId)] = {
+            testId: String(testTypeId),
+            resultText,
+            submittedAt:
+              item?.TestDate ||
+              item?.testDate ||
+              item?.CreatedAt ||
+              item?.createdAt ||
+              new Date().toISOString(),
+          }
+          return acc
+        }, {})
+
+        if (!cancelled) setSubmittedResultsByTest(mapped)
+      } catch {
+        if (!cancelled) setSubmittedResultsByTest({})
+      }
+    }
+
+    loadPatientResults()
+    return () => {
+      cancelled = true
+    }
+  }, [isPatientView, userId, resultsRefreshTick])
 
   useEffect(() => {
     if (isPatientView) {
@@ -463,6 +411,15 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
     }
   }
 
+  const openTestDetails = (test) => {
+    if (isPatientView) {
+      navigate(`/dashboard/patient/tests/${test.id}`)
+      return
+    }
+    setSelectedTest(test)
+    setIsModalOpen(true)
+  }
+
   const headerTitle = t("auto.availableTests")
   const headerSubtitle = t("auto.openTheExternalTestLinkThenReturnAndSubmitYourResultEachTestCanBeSubmittedOnceOnly")
 
@@ -548,19 +505,22 @@ export default function TestsWorkspace({ roleLabel = 'user' }) {
               onSubmit={submitResultForTest}
               isSubmitting={isSubmitting}
               isRTL={isRTL}
-              onViewDetails={() => { setSelectedTest(test); setIsModalOpen(true); }}
+              onViewDetails={() => openTestDetails(test)}
+              showInlineSubmit={!isPatientView}
             />
           ))}
         </div>
       )}
 
-      <TestDetailModal
-        open={isModalOpen}
-        onOpenChange={setIsModalOpen}
-        test={selectedTest}
-        result={selectedTest ? submittedResultsByTest[String(selectedTest.id)] : null}
-        isRTL={isRTL}
-      />
+      {!isPatientView && (
+        <TestDetailModal
+          open={isModalOpen}
+          onOpenChange={setIsModalOpen}
+          test={selectedTest}
+          result={selectedTest ? submittedResultsByTest[String(selectedTest.id)] : null}
+          isRTL={isRTL}
+        />
+      )}
     </div>
   )
 }

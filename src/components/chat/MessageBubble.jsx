@@ -112,10 +112,25 @@ export default function MessageBubble({ message, isSent, showAvatar = true, part
           )}
         </div>
 
-        {/* Timestamp */}
-        <span className={`text-[10px] text-text-muted mt-1 px-1 ${isSent ? 'text-end' : 'text-start'}`}>
-          {formatTime(message.timestamp)}
-        </span>
+        {/* Timestamp + Status checkmarks */}
+        <div className={`flex items-center gap-1 mt-1 px-1 ${isSent ? 'justify-end' : 'justify-start'}`}>
+          <span className="text-[10px] text-text-muted">
+            {formatTime(message.timestamp)}
+          </span>
+          {isSent && (
+            <span className="flex items-center">
+              {(message.isRead !== false && message.isRead !== undefined) ? (
+                <svg className="w-3.5 h-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7M8 17l4 4L22 10" />
+                </svg>
+              ) : (
+                <svg className="w-3.5 h-3.5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Spacer for sent messages (no avatar) */}

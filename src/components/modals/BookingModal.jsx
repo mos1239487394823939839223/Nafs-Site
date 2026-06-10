@@ -6,6 +6,7 @@ import Badge from "../ui/Badge";
 import DatePicker from "../ui/DatePicker";
 import { Search, Calendar, Clock, Star, Loader2, Stethoscope } from "lucide-react";
 import { patientAPI, extractErrorMessage } from "../../lib/api";
+import { SESSION_DURATION_MINUTES } from "../../lib/patientBookingSlots";
 import { useToast } from "../ui/Toast";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { getDoctorSpecialtyTheme } from "../../lib/doctorSpecialtyTheme";
@@ -89,7 +90,7 @@ export default function BookingModal({ isOpen, onClose }) {
       const bookingData = {
         DoctorId: doctorId,
         SessionStartTime: sessionStartTime,
-        DurationMinutes: 30,
+        DurationMinutes: SESSION_DURATION_MINUTES,
       };
 
       const response = await patientAPI.createBooking(bookingData);

@@ -20,6 +20,7 @@ import PatientProfile from "./views/patient/Profile";
 import ReserveAppointment from "./views/patient/ReserveAppointment";
 import MeetingRoom from "./views/patient/MeetingRoom";
 import PatientTests from "./views/patient/Tests";
+import PatientTestDetailPage from "./views/patient/TestDetailPage";
 import PatientArticles from "./views/patient/Articles";
 import Schedule from "./views/doctor/Schedule";
 import PatientQueue from "./views/doctor/PatientQueue";
@@ -130,6 +131,16 @@ function AppRoutes() {
             <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
               <Layout>
                 <MeetingRoom />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/patient/tests/:testId"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
+              <Layout>
+                <PatientTestDetailPage />
               </Layout>
             </ProtectedRoute>
           }

@@ -1486,6 +1486,17 @@ export default {
   },
   notifications: {
     viewAll: "عرض كل الإشعارات",
+    read: "مقروء",
+    reminder24h: "جلسة خلال 24 ساعة",
+    reminder1h: "جلسة خلال ساعة",
+    reminder10m: "جلسة خلال 10 دقائق",
+    bookingCreated: "تم إنشاء حجز جديد",
+    bookingConfirmed: "تم تأكيد الحجز",
+    bookingCancelled: "تم إلغاء الحجز",
+    bookingStatusUpdated: "تم تحديث حالة الحجز",
+    newSupportMessage: "رسالة دعم جديدة",
+    newTherapistMessage: "رسالة من المعالج",
+    emergencyAlert: "تنبيه طارئ",
     categories: {
       all: "الكل",
       appointments: "المواعيد",

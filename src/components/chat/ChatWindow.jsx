@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from 'react'
-import { Send, Paperclip, Smile, ArrowLeft, X, File as FileIcon, MessageSquare, LockKeyhole, Loader2 } from 'lucide-react'
+import { Send, Paperclip, Smile, ArrowLeft, X, File as FileIcon, MessageSquare, LockKeyhole, Loader2, Phone, Video, Info, MoreVertical } from 'lucide-react'
 import EmojiPicker from 'emoji-picker-react'
 import { useTheme } from '../../contexts/ThemeContext'
 import { useLanguage } from '../../contexts/LanguageContext'
 import MessageBubble from './MessageBubble'
 import SupportCaseTag from '../support/SupportCaseTag'
 
-export default function ChatWindow({ conversation, onSendMessage, onBack, isTyping: isOtherTyping = false, onTyping, onStopTyping, composerDisabled = false, composerDisabledReason = '', sending = false }) {
+export default function ChatWindow({ conversation, onSendMessage, onBack, isTyping: isOtherTyping = false, onTyping, onStopTyping, composerDisabled = false, composerDisabledReason = '', sending = false, onToggleDetails, showDetails }) {
   const { theme } = useTheme()
   const { t, isRTL } = useLanguage()
   const [messageInput, setMessageInput] = useState('')
@@ -184,6 +184,43 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
                   ? t('chat.supportTeam', 'Support team')
                   : conversation.participant.role}
             </span>
+          </div>
+
+          {/* Action Buttons */}
+          <div className={`flex items-center gap-1.5 ${isRTL ? 'flex-row-reverse' : ''}`}>
+            {conversation.participant.role === 'doctor' && (
+              <button
+                onClick={() => {
+                  window.open(`/dashboard/patient/meeting/${conversation.id}`, '_blank');
+                }}
+                className="p-2 hover:bg-background-subtle rounded-xl text-primary hover:text-primary-dark transition-colors"
+                title={t('chat.startMeeting', 'Start Meeting')}
+              >
+                <Video className="w-4.5 h-4.5" />
+              </button>
+            )}
+            <button
+              onClick={() => alert(t('chat.callingNotSupported', 'Voice calls are coming soon.'))}
+              className="p-2 hover:bg-background-subtle rounded-xl text-text-muted hover:text-text transition-colors"
+              title={t('chat.call', 'Call')}
+            >
+              <Phone className="w-4.5 h-4.5" />
+            </button>
+            <button
+              onClick={onToggleDetails}
+              className={`p-2 rounded-xl transition-all ${
+                showDetails ? 'text-primary bg-primary/10' : 'text-text-muted hover:text-text hover:bg-background-subtle'
+              }`}
+              title={t('chat.viewProfile', 'View Profile')}
+            >
+              <Info className="w-4.5 h-4.5" />
+            </button>
+            <button
+              className="p-2 hover:bg-background-subtle rounded-xl text-text-muted hover:text-text transition-colors"
+              title={t('common.more', 'More')}
+            >
+              <MoreVertical className="w-4.5 h-4.5" />
+            </button>
           </div>
         </div>
       </div>

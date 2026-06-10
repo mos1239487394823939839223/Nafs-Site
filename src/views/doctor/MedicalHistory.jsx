@@ -13,6 +13,21 @@ import { medicalAPI } from '../../lib/api'
 import { getAppointmentStatusKey } from '../../lib/appointmentStatus'
 
 export default function MedicalHistory() {
+import { useState, useEffect } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Search, FileText, User, Plus, Calendar, Clock, ChevronRight, ArrowLeft, Save, Pill, MessageSquare, Loader2 } from 'lucide-react'
+import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
+import Button from '../../components/ui/Button'
+import Badge from '../../components/ui/Badge'
+import Modal from '../../components/ui/Modal'
+import { useAuth } from '../../contexts/AuthContext'
+import { useToast } from '../../components/ui/Toast'
+import { doctorAPI } from '../../lib/api'
+import { useLanguage } from '../../contexts/LanguageContext'
+import { medicalAPI } from '../../lib/api'
+import { getAppointmentStatusKey } from '../../lib/appointmentStatus'
+
+export default function MedicalHistory() {
     const { user } = useAuth()
     const toast = useToast()
     const { t } = useLanguage()
@@ -20,7 +35,16 @@ export default function MedicalHistory() {
     const [selectedPatient, setSelectedPatient] = useState(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-    const [newRecord, setNewRecord] = useState({ summary: '', medications: '' })
+    const [newRecord, setNewRecord] = useState({
+        summary: '',
+        medications: '',
+        treatmentProgram: '',
+        customProgram: '',
+        programSessions: 8,
+        assessment: '',
+        assessmentLevel: '',
+        recommendations: '',
+    })
     const [loading, setLoading] = useState(true)
     const [bookings, setBookings] = useState([])
     const [patientHistory, setPatientHistory] = useState([])
@@ -29,6 +53,20 @@ export default function MedicalHistory() {
     const [selectedTestTypeId, setSelectedTestTypeId] = useState('')
     const [creatingType, setCreatingType] = useState(false)
     const [updatingResultId, setUpdatingResultId] = useState(null)
+
+    const tryParseJSON = (str) => {
+        if (!str) return null
+        const trimmed = str.trim()
+        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+            try {
+                const parsed = JSON.parse(trimmed)
+                if (parsed && typeof parsed === 'object') return parsed
+            } catch {
+                return null
+            }
+        }
+        return null
+    }
 
     const fetchPatientHistory = async (patientId) => {
         if (!patientId) {
@@ -131,7 +169,7 @@ export default function MedicalHistory() {
     )
 
     const handleAddRecord = () => {
-        if (!newRecord.summary) {
+        if (!newRecord.summary && !newRecord.treatmentProgram && !newRecord.assessment) {
             toast.error(t('errors.enterSummary'))
             return
         }
@@ -149,11 +187,22 @@ export default function MedicalHistory() {
                 })
                 const selectedTypeScanUrl = String(selectedType?.Url ?? selectedType?.url ?? '').trim()
 
+                const notesObj = {
+                    isStructured: true,
+                    examNotes: newRecord.summary,
+                    medications: newRecord.medications,
+                    treatmentProgram: newRecord.treatmentProgram === 'custom' ? newRecord.customProgram : newRecord.treatmentProgram,
+                    treatmentProgramSessions: newRecord.treatmentProgram ? Number(newRecord.programSessions) || 8 : null,
+                    assessment: newRecord.assessment,
+                    assessmentLevel: newRecord.assessmentLevel,
+                    recommendations: newRecord.recommendations,
+                }
+
                 const response = await medicalAPI.addPatientTest({
                     PatientID: String(selectedPatient.id),
                     TestTypeID: String(selectedTestTypeId),
                     ScanUrl: selectedTypeScanUrl || null,
-                    ExamNotes: newRecord.summary,
+                    ExamNotes: JSON.stringify(notesObj),
                     TestDate: new Date().toISOString(),
                 })
 
@@ -164,7 +213,16 @@ export default function MedicalHistory() {
 
                 toast.success(t('success.recordAdded'))
                 setIsAddModalOpen(false)
-                setNewRecord({ summary: '', medications: '' })
+                setNewRecord({
+                    summary: '',
+                    medications: '',
+                    treatmentProgram: '',
+                    customProgram: '',
+                    programSessions: 8,
+                    assessment: '',
+                    assessmentLevel: '',
+                    recommendations: '',
+                })
 
                 await fetchPatientHistory(selectedPatient.id)
             } catch {
@@ -393,50 +451,90 @@ export default function MedicalHistory() {
                             {historyLoading ? (
                                 <div className="text-center py-12 text-text-muted">{t('common.loading')}</div>
                             ) : patientHistory.length > 0 ? (
-                                patientHistory.map((record) => (
-                                    <Card key={record.id} className="overflow-hidden border-border/50">
-                                        <div className="bg-background px-4 md:px-6 py-3 border-b border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                            <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-text-muted">
-                                                <div className="flex items-center gap-1.5 font-bold italic text-text-heading">
-                                                    <Calendar className="w-4 h-4" />
-                                                    {record.date}
-                                                </div>
-                                                <div className="flex items-center gap-1.5 font-bold italic text-text-heading">
-                                                    <User className="w-4 h-4" />
-                                                    {record.doctorName}
-                                                </div>
-                                            </div>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleUpdateResult(record)}
-                                                disabled={updatingResultId === record.id}
-                                            >
-                                                {updatingResultId === record.id ? t('common.updating') : 'Update Result'}
-                                            </Button>
-                                        </div>
-                                        <div className="p-6 space-y-4">
-                                            <div>
-                                                <h4 className="text-xs font-black italic uppercase tracking-widest text-text-muted mb-2">{t('doctor.sessionSummary')}</h4>
-                                                <p className="text-text-heading leading-relaxed">{record.testTypeName}</p>
-                                                {!!record.examNotes && <p className="text-text-muted mt-2">{record.examNotes}</p>}
-                                                {!!record.result && <p className="text-primary mt-2">Result: {record.result}</p>}
-                                            </div>
-                                            {record.medications && record.medications.length > 0 && (
-                                                <div>
-                                                    <h4 className="text-xs font-black italic uppercase tracking-widest text-text-muted mb-2">{t('doctor.prescribedMedications')}</h4>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {record.medications.map((med, idx) => (
-                                                            <Badge key={idx} variant="primary" className="flex items-center gap-1 bg-primary/5 text-primary border-primary/20">
-                                                                <Pill className="w-3 h-3" /> {med}
-                                                            </Badge>
-                                                        ))}
+                                patientHistory.map((record) => {
+                                    const parsed = tryParseJSON(record.examNotes)
+                                    const actualNotes = parsed ? parsed.examNotes : record.examNotes
+                                    const medications = parsed ? parsed.medications : record.medications
+
+                                    return (
+                                        <Card key={record.id} className="overflow-hidden border-border/50">
+                                            <div className="bg-background px-4 md:px-6 py-3 border-b border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-text-muted">
+                                                    <div className="flex items-center gap-1.5 font-bold italic text-text-heading">
+                                                        <Calendar className="w-4 h-4" />
+                                                        {record.date}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 font-bold italic text-text-heading">
+                                                        <User className="w-4 h-4" />
+                                                        {record.doctorName}
                                                     </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    </Card>
-                                ))
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleUpdateResult(record)}
+                                                    disabled={updatingResultId === record.id}
+                                                >
+                                                    {updatingResultId === record.id ? t('common.updating') : 'Update Result'}
+                                                </Button>
+                                            </div>
+                                            <div className="p-6 space-y-4">
+                                                <div>
+                                                    <h4 className="text-xs font-black italic uppercase tracking-widest text-text-muted mb-2">{t('doctor.sessionSummary')}</h4>
+                                                    <p className="text-text-heading leading-relaxed font-bold">{record.testTypeName}</p>
+
+                                                    {parsed && parsed.treatmentProgram && (
+                                                        <div className="mt-2 text-sm text-text-muted">
+                                                            <span className="font-bold text-primary">البرنامج العلاجي:</span> {parsed.treatmentProgram} ({parsed.treatmentProgramSessions} جلسات)
+                                                        </div>
+                                                    )}
+
+                                                    {parsed && parsed.assessment && (
+                                                        <div className="mt-2 text-sm text-text-muted">
+                                                            <span className="font-bold text-primary">تقييم المعالج:</span> {parsed.assessment}
+                                                            {parsed.assessmentLevel && <span className="ms-2 inline-flex items-center rounded-md bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-800 border border-orange-200">{parsed.assessmentLevel}</span>}
+                                                        </div>
+                                                    )}
+
+                                                    {parsed && parsed.recommendations && (
+                                                        <div className="mt-2 text-sm text-text-muted">
+                                                            <span className="font-bold text-primary">التوصيات:</span> {parsed.recommendations}
+                                                        </div>
+                                                    )}
+
+                                                    {!!actualNotes && (
+                                                        <div className="mt-2">
+                                                            <span className="font-bold text-xs text-text-muted uppercase">ملاحظات:</span>
+                                                            <p className="text-text-light mt-1 whitespace-pre-wrap">{actualNotes}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {!!record.result && <p className="text-primary mt-2">Result: {record.result}</p>}
+                                                </div>
+                                                {medications && medications.length > 0 && (
+                                                    <div>
+                                                        <h4 className="text-xs font-black italic uppercase tracking-widest text-text-muted mb-2">{t('doctor.prescribedMedications')}</h4>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {typeof medications === 'string' ? (
+                                                                medications.split(',').map((med, idx) => (
+                                                                    <Badge key={idx} variant="primary" className="flex items-center gap-1 bg-primary/5 text-primary border-primary/20">
+                                                                        <Pill className="w-3 h-3" /> {med.trim()}
+                                                                    </Badge>
+                                                                ))
+                                                            ) : Array.isArray(medications) ? (
+                                                                medications.map((med, idx) => (
+                                                                    <Badge key={idx} variant="primary" className="flex items-center gap-1 bg-primary/5 text-primary border-primary/20">
+                                                                        <Pill className="w-3 h-3" /> {med}
+                                                                    </Badge>
+                                                                ))
+                                                            ) : null}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </Card>
+                                    )
+                                })
                             ) : (
                                 <div className="text-center py-20 bg-background-paper rounded-3xl border-2 border-dashed border-border">
                                     <FileText className="w-16 h-16 text-text-muted mx-auto mb-4 opacity-20" />
@@ -456,36 +554,123 @@ export default function MedicalHistory() {
                 size="lg"
             >
                 <div className="space-y-6">
-                    <div className="space-y-2">
-                        <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Test Type</label>
-                        <div className="flex gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Test Type</label>
+                            <div className="flex gap-2">
+                                <select
+                                    value={selectedTestTypeId}
+                                    onChange={(e) => setSelectedTestTypeId(e.target.value)}
+                                    className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
+                                >
+                                    {testTypes.length === 0 ? (
+                                        <option value="">No test types available</option>
+                                    ) : (
+                                        testTypes.map((type) => (
+                                            <option key={type.ID} value={String(type.ID)}>{type.Name}</option>
+                                        ))
+                                    )}
+                                </select>
+                                <Button variant="outline" onClick={handleCreateTestType} disabled={creatingType}>
+                                    {creatingType ? t('common.saving') : 'Create'}
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Treatment Program (البرنامج العلاجي)</label>
                             <select
-                                value={selectedTestTypeId}
-                                onChange={(e) => setSelectedTestTypeId(e.target.value)}
+                                value={newRecord.treatmentProgram}
+                                onChange={(e) => setNewRecord({ ...newRecord, treatmentProgram: e.target.value })}
                                 className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
                             >
-                                {testTypes.length === 0 ? (
-                                    <option value="">No test types available</option>
-                                ) : (
-                                    testTypes.map((type) => (
-                                        <option key={type.ID} value={String(type.ID)}>{type.Name}</option>
-                                    ))
-                                )}
+                                <option value="">No program (بدون تحديد برنامج)</option>
+                                <option value="برنامج إدارة القلق">برنامج إدارة القلق (Anxiety Program)</option>
+                                <option value="برنامج علاج الاكتئاب">برنامج علاج الاكتئاب (Depression Program)</option>
+                                <option value="برنامج التخلص من التوتر">برنامج التخلص من التوتر (Stress Program)</option>
+                                <option value="برنامج تعزيز الثقة بالنفس">برنامج تعزيز الثقة بالنفس (Self-Esteem Program)</option>
+                                <option value="برنامج التحكم في الغضب">برنامج التحكم في الغضب (Anger Program)</option>
+                                <option value="برنامج الدعم السلوكي المعرفي">برنامج الدعم السلوكي المعرفي (CBT Program)</option>
+                                <option value="custom">Other / Custom Program (برنامج مخصص)</option>
                             </select>
-                            <Button variant="outline" onClick={handleCreateTestType} disabled={creatingType}>
-                                {creatingType ? t('common.saving') : 'Create'}
-                            </Button>
                         </div>
                     </div>
+
+                    {newRecord.treatmentProgram === 'custom' && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Custom Program Name (اسم البرنامج المخصص)</label>
+                            <input
+                                type="text"
+                                value={newRecord.customProgram}
+                                onChange={(e) => setNewRecord({ ...newRecord, customProgram: e.target.value })}
+                                placeholder="Enter program name"
+                                className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
+                            />
+                        </div>
+                    )}
+
+                    {newRecord.treatmentProgram && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Program Sessions Total (عدد الجلسات الإجمالي)</label>
+                            <input
+                                type="number"
+                                min="1"
+                                max="100"
+                                value={newRecord.programSessions}
+                                onChange={(e) => setNewRecord({ ...newRecord, programSessions: parseInt(e.target.value) || 8 })}
+                                className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
+                            />
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Assessment Summary (تشخيص الحالة)</label>
+                            <input
+                                type="text"
+                                value={newRecord.assessment}
+                                onChange={(e) => setNewRecord({ ...newRecord, assessment: e.target.value })}
+                                placeholder="e.g. Generalized Anxiety Disorder"
+                                className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Severity Level (مستوى الشدة)</label>
+                            <select
+                                value={newRecord.assessmentLevel}
+                                onChange={(e) => setNewRecord({ ...newRecord, assessmentLevel: e.target.value })}
+                                className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
+                            >
+                                <option value="">Select severity level (اختر مستوى الشدة)</option>
+                                <option value="خفيف (Mild)">خفيف (Mild)</option>
+                                <option value="متوسط (Moderate)">متوسط (Moderate)</option>
+                                <option value="شديد (Severe)">شديد (Severe)</option>
+                                <option value="عاجل (Urgent)">عاجل (Urgent)</option>
+                            </select>
+                        </div>
+                    </div>
+
                     <div className="space-y-2">
-                        <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.sessionSummary')}</label>
+                        <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Therapist Recommendations (التوصيات العلاجية)</label>
+                        <textarea
+                            value={newRecord.recommendations}
+                            onChange={(e) => setNewRecord({ ...newRecord, recommendations: e.target.value })}
+                            placeholder="Write recommendations, exercises, home tasks..."
+                            className="w-full h-24 p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none text-text"
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.sessionSummary')} / ملاحظات الجلسة</label>
                         <textarea
                             value={newRecord.summary}
                             onChange={(e) => setNewRecord({ ...newRecord, summary: e.target.value })}
                             placeholder="Describe the session highlights, patient progress, etc..."
-                            className="w-full h-40 p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none text-text"
+                            className="w-full h-32 p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none text-text"
                         />
                     </div>
+
                     <div className="space-y-2">
                         <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.medications')}</label>
                         <input
@@ -496,6 +681,7 @@ export default function MedicalHistory() {
                             className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
                         />
                     </div>
+
                     <div className="flex gap-3 pt-4 border-t border-border">
                         <Button variant="outline" className="flex-1" onClick={() => setIsAddModalOpen(false)}>{t('common.cancel')}</Button>
                         <Button className="flex-1 gap-2" onClick={handleAddRecord}>

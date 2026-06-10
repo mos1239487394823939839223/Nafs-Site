@@ -14,27 +14,36 @@ import Table, {
   TableHeader,
   TableRow,
 } from "../../components/ui/Table";
-import { Search, Stethoscope, Calendar, Clock, ChevronRight, User, ArrowLeft, CheckCircle, XCircle, ChevronLeft, Loader2, Eye, List as ViewList, LayoutGrid as GridView, Star, Send, ThumbsUp as ThumbUp, Badge as BadgeIcon, Zap as FlashOn, Wallet as AccountBalanceWallet, Upload as UploadIcon, Receipt as ReceiptLong, Filter, SlidersHorizontal, X } from "lucide-react";
+import { Search, Stethoscope, Calendar, Clock, ChevronRight, User, ArrowLeft, CheckCircle, XCircle, ChevronLeft, Loader2, Eye, List as ViewList, LayoutGrid as GridView, Star, Send, ThumbsUp as ThumbUp, Badge as BadgeIcon, Zap as FlashOn, Wallet as AccountBalanceWallet, Upload as UploadIcon, Receipt as ReceiptLong, Filter, SlidersHorizontal, X, Video } from "lucide-react";
 import DoctorFilterPanel from "../../components/patient/DoctorFilterPanel";
 
 import { useAuth } from "../../contexts/AuthContext";
-import { patientAPI, paymentAPI, filesAPI } from "../../lib/api";
+import { patientAPI, paymentAPI, filesAPI, meetingAPI, extractErrorMessage } from "../../lib/api";
 import { getPaymentStatusMeta } from "../../lib/paymentStatus";
 import { useToast } from "../../components/ui/Toast";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useSignalR } from "../../hooks/useSignalR";
 import DoctorDocumentsViewer from "../../components/patient/DoctorDocumentsViewer";
 import Modal from "../../components/ui/Modal";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { getDoctorSpecialtyTheme } from "../../lib/doctorSpecialtyTheme";
 import { getAppointmentStatusMeta } from "../../lib/appointmentStatus";
+import {
+  SESSION_DURATION_MINUTES,
+  canStartPatientSession,
+  findNearestAvailableFromApiSlots,
+  formatDateKey as bookingFormatDateKey,
+  formatNearestSlotLabel,
+  getDoctorNearestSlotDate,
+} from "../../lib/patientBookingSlots";
 
 const TWO_DAYS_IN_MS = 2 * 24 * 60 * 60 * 1000;
 
 export default function ReserveAppointment() {
   const { user: currentUser } = useAuth();
   const toast = useToast();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab =
     searchParams.get("tab") === "status"
@@ -113,6 +122,7 @@ export default function ReserveAppointment() {
     setPendingManualPaymentBookingId,
   ] = useState(null);
   const [bookingPendingReview, setBookingPendingReview] = useState(false);
+  const [startingMeetingId, setStartingMeetingId] = useState(null);
 
   const getNumericFee = (doctor) => {
     const rawFee =
@@ -154,43 +164,25 @@ export default function ReserveAppointment() {
     ];
   };
 
-  const getNextAvailableSlot = (doctor) => {
-    const raw = doctor?.NextAvailableSlot ?? doctor?.nextAvailableSlot;
-    if (raw) {
-      const slot = new Date(raw);
-      if (!Number.isNaN(slot.getTime())) return slot;
+  const getNextAvailableSlot = (doctor) => getDoctorNearestSlotDate(doctor);
+
+  const formatNearestAvailability = (doctor) =>
+    formatNearestSlotLabel(getDoctorNearestSlotDate(doctor), { t, language });
+
+  const fetchNearestSlotForDoctor = async (doctorId) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const end = new Date(today);
+    end.setDate(end.getDate() + 30);
+    const response = await patientAPI.getDoctorSlots(
+      String(doctorId),
+      bookingFormatDateKey(today),
+      bookingFormatDateKey(end),
+    );
+    if (response?.IsSuccess) {
+      return findNearestAvailableFromApiSlots(response.Data);
     }
-
-    const now = new Date();
-    const scheduleSlots = Array.isArray(doctor?.DoctoreSchualings)
-      ? doctor.DoctoreSchualings
-          .filter((slot) => slot?.Aviable !== false && slot?.Date)
-          .map((slot) => new Date(slot.Date))
-          .filter((slot) => !Number.isNaN(slot.getTime()) && slot > now)
-          .sort((a, b) => a - b)
-      : [];
-    return scheduleSlots[0] || null;
-  };
-
-  const formatNearestAvailability = (doctor) => {
-    const slot = getNextAvailableSlot(doctor);
-    if (!slot) return t("patient.noAvailableAppointments");
-
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const slotDay = new Date(slot.getFullYear(), slot.getMonth(), slot.getDate());
-    const dayDiff = Math.round((slotDay.getTime() - today.getTime()) / 86400000);
-    const dayLabel =
-      dayDiff === 0
-        ? t("patient.availabilityToday")
-        : dayDiff === 1
-          ? t("patient.availabilityTomorrow")
-          : slot.toLocaleDateString(t("auto.enus"), { weekday: "long" });
-    const timeLabel = slot.toLocaleTimeString(t("auto.enus"), {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    return `${dayLabel} - ${timeLabel}`;
+    return null;
   };
 
   const getTransferFeeAmount = (baseFee, provider) => {
@@ -253,19 +245,45 @@ export default function ReserveAppointment() {
       const batch = items.slice(index, index + batchSize);
       const batchResults = await Promise.all(
         batch.map(async (doctor) => {
+        let merged = doctor;
         const alreadyHasPrice = getNumericFee(doctor) > 0;
         const alreadyHasDetails =
           alreadyHasPrice &&
           (getDoctorExperience(doctor) !== null || doctor.Gender !== undefined);
-        if (alreadyHasDetails) return doctor;
 
-        try {
-          const response = await patientAPI.getDoctorById(String(doctor.Id));
-          const details = response?.Data;
-          return details ? { ...doctor, ...details, NextAvailableSlot: doctor.NextAvailableSlot } : doctor;
-        } catch {
-          return doctor;
+        if (!alreadyHasDetails) {
+          try {
+            const response = await patientAPI.getDoctorById(String(doctor.Id));
+            const details = response?.Data;
+            if (details) {
+              merged = {
+                ...doctor,
+                ...(details?.Items?.[0] || details),
+                NextAvailableSlot: doctor.NextAvailableSlot,
+              };
+            }
+          } catch {
+            merged = doctor;
+          }
         }
+
+        if (!merged._nearestSlotAt) {
+          try {
+            const nearest = await fetchNearestSlotForDoctor(merged.Id);
+            if (nearest) {
+              const iso = nearest.toISOString();
+              merged = {
+                ...merged,
+                NextAvailableSlot: iso,
+                _nearestSlotAt: iso,
+              };
+            }
+          } catch {
+            // Keep list usable if slot lookup fails for one doctor.
+          }
+        }
+
+        return merged;
         }),
       );
       enriched.push(...batchResults);
@@ -732,7 +750,7 @@ export default function ReserveAppointment() {
             const durationMinutes =
               Number.isFinite(rawDuration) && rawDuration > 0
                 ? rawDuration
-                : null;
+                : SESSION_DURATION_MINUTES;
 
             const slotEndTime =
               slot.EndTime || slot.End || slot.SessionEndTime || null;
@@ -1134,7 +1152,7 @@ export default function ReserveAppointment() {
       const bookingRequest = {
         DoctorId: selectedDoctor.Id,
         SessionStartTime: formatDate(bookingDate),
-        DurationMinutes: 30, // Backend accepts 30 or 45 minutes only
+        DurationMinutes: SESSION_DURATION_MINUTES,
         PatientNotes: "Booked via Web App",
       };
 
@@ -1223,6 +1241,43 @@ export default function ReserveAppointment() {
     }
   };
 
+  const handleStartMeeting = async (booking) => {
+    const bookingId = booking?.BookingId || booking?.Id;
+    if (!bookingId || startingMeetingId || !canStartPatientSession(booking)) return;
+
+    setStartingMeetingId(bookingId);
+    try {
+      const response = await meetingAPI.startBookingMeeting(bookingId);
+      if (response?.IsSuccess === false || response?.isSuccess === false) {
+        throw new Error(response?.Message || response?.message || "Failed to start meeting");
+      }
+      const meeting = response?.Data ?? response?.data ?? response;
+      const meetingUrl =
+        meeting?.MeetingUrl ||
+        meeting?.meetingUrl ||
+        meeting?.RoomUrl ||
+        meeting?.roomUrl ||
+        meeting?.JoinUrl ||
+        meeting?.joinUrl ||
+        booking?.MeetingUrl ||
+        "";
+
+      navigate(`/dashboard/patient/meeting/${bookingId}`, {
+        state: { session: booking, meeting, meetingUrl },
+      });
+    } catch (error) {
+      console.error("Failed to start meeting:", error);
+      toast.error(
+        extractErrorMessage(
+          error,
+          t("patientHome.upcomingSession.meetingStartFailed", "Could not start the session."),
+        ),
+      );
+    } finally {
+      setStartingMeetingId(null);
+    }
+  };
+
   const formatHourLabel = (timeKey) => {
     const [rawHour, rawMinute] = String(timeKey || "00:00").split(":");
     const hour = Number(rawHour);
@@ -1259,6 +1314,10 @@ export default function ReserveAppointment() {
   // Client-side filtered + sorted doctor list
   const processedDoctors = useMemo(() => {
     let src = mainTab === "available" ? availableDoctors : doctors;
+
+    if (mainTab === "available") {
+      src = src.filter((d) => getDoctorNearestSlotDate(d));
+    }
 
     if (doctorSearch.trim()) {
       const q = doctorSearch.toLowerCase();
@@ -1763,7 +1822,9 @@ export default function ReserveAppointment() {
                                     }`}>
                                       <Clock className="w-3.5 h-3.5 flex-shrink-0" />
                                       <span className="truncate">
-                                        {t("patient.nextAvailableSlot")}: {formatNearestAvailability(doctor)}
+                                        {getNextAvailableSlot(doctor)
+                                          ? `${t("patient.nextAvailableSlot")}: ${formatNearestAvailability(doctor)}`
+                                          : formatNearestAvailability(doctor)}
                                       </span>
                                     </div>
 
@@ -3325,6 +3386,8 @@ export default function ReserveAppointment() {
                     statusInfo.key === "approved" ||
                     statusInfo.key === "paid";
                   const canCancel = canCancelByStatus && Boolean(isBefore48h);
+                  const canStart = canStartPatientSession(booking);
+                  const bookingId = booking?.BookingId || booking?.Id;
 
                   return (
                     <Card
@@ -3397,6 +3460,22 @@ export default function ReserveAppointment() {
                               {t("auto.payment")}
                               {paymentStatusInfo.label}
                             </Badge>
+
+                            {canStart && (
+                              <Button
+                                size="sm"
+                                className="gap-1.5"
+                                onClick={() => handleStartMeeting(booking)}
+                                disabled={String(startingMeetingId) === String(bookingId)}
+                              >
+                                {String(startingMeetingId) === String(bookingId) ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Video className="w-4 h-4" />
+                                )}
+                                {t("patientHome.upcomingSession.enterSession")}
+                              </Button>
+                            )}
 
                             {canCancel && (
                               <Button

@@ -56,8 +56,11 @@ api.interceptors.request.use(
     // Public auth endpoints must not receive a stale session token.
     if (token && !isPublicAuthRequest) {
       config.headers.Authorization = `Bearer ${token}`;
-    } else if (isPublicAuthRequest && config.headers?.Authorization) {
+    } else if (isPublicAuthRequest) {
       delete config.headers.Authorization;
+      if (config.headers.common) {
+        delete config.headers.common.Authorization;
+      }
     }
 
     if (

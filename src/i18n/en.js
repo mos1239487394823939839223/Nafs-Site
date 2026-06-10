@@ -1517,6 +1517,17 @@ export default {
   },
   notifications: {
     viewAll: "View all notifications",
+    read: "Read",
+    reminder24h: "Session in 24 hours",
+    reminder1h: "Session in 1 hour",
+    reminder10m: "Session in 10 minutes",
+    bookingCreated: "New booking created",
+    bookingConfirmed: "Booking confirmed",
+    bookingCancelled: "Booking cancelled",
+    bookingStatusUpdated: "Booking status updated",
+    newSupportMessage: "New support message",
+    newTherapistMessage: "New therapist message",
+    emergencyAlert: "Emergency alert",
     categories: {
       all: "All",
       appointments: "Appointments",

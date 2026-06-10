@@ -3,8 +3,8 @@ import { Calendar, Clock, FileText, Loader2, RefreshCw, Sparkles, Video } from "
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useToast } from "../../components/ui/Toast";
-import { extractErrorMessage, meetingAPI } from "../../lib/api";
-import { getAppointmentStatusKey } from "../../lib/appointmentStatus";
+import { extractErrorMessage, meetingAPI, patientAPI } from "../../lib/api";
+import { canStartPatientSession } from "../../lib/patientBookingSlots";
 import fallbackDoc from "./assets/doctor-2.jpg";
 import { SectionHeading } from "./SectionHeading";
 
@@ -48,58 +48,7 @@ export const UpcomingSession = ({
     });
 
   const bookingId = session?.BookingId || session?.Id;
-  const statusKey = session ? getAppointmentStatusKey(session.Status, session) : "";
-  const startTime = session?.SessionStartTime ? new Date(session.SessionStartTime).getTime() : NaN;
-  const endTime = session?.SessionEndTime ? new Date(session.SessionEndTime).getTime() : NaN;
-  const now = Date.now();
-  const startWindowMs = 15 * 60 * 1000;
-  const fallbackEnd = Number.isFinite(startTime) ? startTime + 90 * 60 * 1000 : NaN;
-  const allowedEnd = Number.isFinite(endTime) ? endTime : fallbackEnd;
-  const isWithinStartWindow =
-    Number.isFinite(startTime) && Number.isFinite(allowedEnd)
-      ? now >= startTime - startWindowMs && now <= allowedEnd
-      : Boolean(session?.MeetingUrl);
-
-  const therapistSignals = [
-    session?.DoctorIsOnline,
-    session?.IsDoctorOnline,
-    session?.DoctorAvailable,
-    session?.IsDoctorAvailable,
-    session?.TherapistOnline,
-    session?.TherapistAvailable,
-    session?.Doctor?.IsOnline,
-    session?.Doctor?.IsAvailable,
-  ];
-  const hasTherapistSignal = therapistSignals.some((value) => value !== undefined && value !== null);
-  const isTherapistAvailable = hasTherapistSignal
-    ? therapistSignals.some((value) => value === true || String(value).toLowerCase() === "true")
-    : Boolean(session?.MeetingUrl);
-
-  const paymentStatus = String(
-    session?.PaymentStatusText ||
-      session?.PaymentStatusName ||
-      session?.PaymentStatus ||
-      session?.paymentStatus ||
-      "",
-  ).toLowerCase();
-  const paidSignals = [
-    session?.IsPaid,
-    session?.Paid,
-    session?.PaymentConfirmed,
-    session?.IsPaymentConfirmed,
-  ];
-  const hasPaymentSignal = paidSignals.some((value) => value !== undefined && value !== null) || paymentStatus;
-  const isPaid = hasPaymentSignal
-    ? paidSignals.some((value) => value === true || String(value).toLowerCase() === "true") ||
-      paymentStatus === "2" ||
-      paymentStatus.includes("paid") ||
-      paymentStatus.includes("confirmed")
-    : Boolean(session?.MeetingUrl);
-
-  const isConfirmed = ["confirmed", "inProgress"].includes(statusKey);
-  const canStartMeeting = Boolean(
-    session && bookingId && isTherapistAvailable && isPaid && isConfirmed && isWithinStartWindow,
-  );
+  const canStartMeeting = Boolean(session && bookingId && canStartPatientSession(session));
 
   const handleStartMeeting = async () => {
     if (!session || !bookingId || meetingLoading || !canStartMeeting) return;

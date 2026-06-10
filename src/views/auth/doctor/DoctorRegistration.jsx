@@ -5,12 +5,35 @@ import { useMultiStepForm } from '../../../hooks/useMultiStepForm'
 import { useToast } from '../../../components/ui/Toast'
 import ProgressStepper from '../../../components/forms/ProgressStepper'
 import Button from '../../../components/ui/Button'
-import Input, { Textarea } from '../../../components/ui/Input'
+import Input, { Select, Textarea } from '../../../components/ui/Input'
 import SelectDropdown from '../../../components/ui/SelectDropdown'
-import { validateRequired, validateFileSize, validateFileType } from '../../../lib/validation'
-import { ArrowLeft, ArrowRight, Stethoscope, Upload, Calendar, FileText, X, CheckCircle, Clock, Home, Globe } from 'lucide-react'
+import {
+  validateRequired,
+  validateEmail,
+  validatePassword,
+  validatePhone,
+  validateDate,
+  calculateAge,
+  validateFileSize,
+  validateFileType,
+} from '../../../lib/validation'
+import {
+  ArrowLeft,
+  ArrowRight,
+  Stethoscope,
+  Upload,
+  Calendar,
+  FileText,
+  X,
+  CheckCircle,
+  Clock,
+  Home,
+  Globe,
+  User,
+  Lock,
+  Check,
+} from 'lucide-react'
 
-import { useAuth } from '../../../contexts/AuthContext'
 import { api, authAPI, extractErrorMessage, toUserFacingError } from '../../../lib/api'
 import { useLanguage } from '../../../contexts/LanguageContext'
 
@@ -21,13 +44,14 @@ export default function DoctorRegistration() {
   const [loading, setLoading] = useState(false)
   const [uploadedFiles, setUploadedFiles] = useState({
     license: null,
-    certificates: []
+    certificates: [],
   })
 
   const steps = [
-    { id: 1, title: t('doctorReg.professionalDetails'), subtitle: t('doctorReg.yourExpertise'), icon: Stethoscope },
-    { id: 2, title: t('doctorReg.documentation'), subtitle: t('doctorReg.verifyCredentials'), icon: FileText },
-    { id: 3, title: t('doctorReg.availability'), subtitle: t('doctorReg.setSchedule'), icon: Calendar },
+    { id: 1, title: t('auth.basicInfo'),            subtitle: t('auth.personalDetails'),          icon: User },
+    { id: 2, title: t('doctorReg.professionalDetails'), subtitle: t('doctorReg.yourExpertise'),   icon: Stethoscope },
+    { id: 3, title: t('doctorReg.documentation'),   subtitle: t('doctorReg.verifyCredentials'),   icon: FileText },
+    { id: 4, title: t('doctorReg.availability'),    subtitle: t('doctorReg.setSchedule'),         icon: Calendar },
   ]
 
   const {
@@ -41,116 +65,158 @@ export default function DoctorRegistration() {
     clearFieldError,
     isFirstStep,
     isLastStep,
-  } = useMultiStepForm({
-    // Step 1
-    specialty: '',
-    yearsOfExperience: '',
-    bio: '',
-    consultationFee: '',
-    languages: [],
-    // Step 2
-    licenseNumber: '',
-    // Step 3
-    availability: {
-      monday: { enabled: false, start: '09:00', end: '17:00' },
-      tuesday: { enabled: false, start: '09:00', end: '17:00' },
-      wednesday: { enabled: false, start: '09:00', end: '17:00' },
-      thursday: { enabled: false, start: '09:00', end: '17:00' },
-      friday: { enabled: false, start: '09:00', end: '17:00' },
-      saturday: { enabled: false, start: '09:00', end: '17:00' },
-      sunday: { enabled: false, start: '09:00', end: '17:00' },
+  } = useMultiStepForm(
+    {
+      // Step 1 – Basic Info
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      phone: '',
+      dateOfBirth: '',
+      gender: '',
+      // Step 2 – Professional Details
+      specialty: '',
+      yearsOfExperience: '',
+      bio: '',
+      consultationFee: '',
+      languages: [],
+      // Step 3 – Documentation
+      licenseNumber: '',
+      // Step 4 – Availability
+      availability: {
+        monday:    { enabled: false, start: '09:00', end: '17:00' },
+        tuesday:   { enabled: false, start: '09:00', end: '17:00' },
+        wednesday: { enabled: false, start: '09:00', end: '17:00' },
+        thursday:  { enabled: false, start: '09:00', end: '17:00' },
+        friday:    { enabled: false, start: '09:00', end: '17:00' },
+        saturday:  { enabled: false, start: '09:00', end: '17:00' },
+        sunday:    { enabled: false, start: '09:00', end: '17:00' },
+      },
     },
-  }, 3)
+    4,
+  )
+
+  // Live password checks
+  const passwordChecks = validatePassword(formData.password)
 
   const specialties = [
-    { value: 'Cardiology', label: t('doctorReg.specialties.cardiology') },
-    { value: 'Dermatology', label: t('doctorReg.specialties.dermatology') },
+    { value: 'Cardiology',       label: t('doctorReg.specialties.cardiology') },
+    { value: 'Dermatology',      label: t('doctorReg.specialties.dermatology') },
     { value: 'General Medicine', label: t('doctorReg.specialties.generalMedicine') },
-    { value: 'Pediatrics', label: t('doctorReg.specialties.pediatrics') },
-    { value: 'Orthopedics', label: t('doctorReg.specialties.orthopedics') },
-    { value: 'Neurology', label: t('doctorReg.specialties.neurology') },
-    { value: 'Psychiatry', label: t('doctorReg.specialties.psychiatry') },
-    { value: 'Gynecology', label: t('doctorReg.specialties.gynecology') },
-    { value: 'Ophthalmology', label: t('doctorReg.specialties.ophthalmology') },
-    { value: 'ENT', label: t('doctorReg.specialties.ent') },
+    { value: 'Pediatrics',       label: t('doctorReg.specialties.pediatrics') },
+    { value: 'Orthopedics',      label: t('doctorReg.specialties.orthopedics') },
+    { value: 'Neurology',        label: t('doctorReg.specialties.neurology') },
+    { value: 'Psychiatry',       label: t('doctorReg.specialties.psychiatry') },
+    { value: 'Gynecology',       label: t('doctorReg.specialties.gynecology') },
+    { value: 'Ophthalmology',    label: t('doctorReg.specialties.ophthalmology') },
+    { value: 'ENT',              label: t('doctorReg.specialties.ent') },
   ]
 
   const languagesAvailable = [
-    { value: 'Arabic', label: t('doctorReg.languages.arabic') },
+    { value: 'Arabic',  label: t('doctorReg.languages.arabic') },
     { value: 'English', label: t('doctorReg.languages.english') },
-    { value: 'French', label: t('doctorReg.languages.french') },
-    { value: 'German', label: t('doctorReg.languages.german') },
+    { value: 'French',  label: t('doctorReg.languages.french') },
+    { value: 'German',  label: t('doctorReg.languages.german') },
   ]
 
-  // Step 1 Validation
+  // ── Validation ─────────────────────────────────────────────────────────────
+
   const validateStep1 = () => {
-    let isValid = true
+    let ok = true
+
+    if (!validateRequired(formData.firstName)) {
+      setFieldError('firstName', t('errors.firstNameRequired'))
+      ok = false
+    }
+    if (!validateRequired(formData.lastName)) {
+      setFieldError('lastName', t('errors.lastNameRequired'))
+      ok = false
+    }
+    if (!validateEmail(formData.email)) {
+      setFieldError('email', t('errors.invalidEmail'))
+      ok = false
+    }
+    if (!passwordChecks.isValid) {
+      setFieldError('password', t('auth.passwordRequirements'))
+      ok = false
+    }
+    if (formData.phone.trim() && !validatePhone(formData.phone)) {
+      setFieldError('phone', t('errors.invalidPhone'))
+      ok = false
+    }
+    if (!validateDate(formData.dateOfBirth)) {
+      setFieldError('dateOfBirth', t('errors.invalidDate'))
+      ok = false
+    }
+    if (!validateRequired(formData.gender)) {
+      setFieldError('gender', t('errors.selectGender'))
+      ok = false
+    }
+
+    return ok
+  }
+
+  const validateStep2 = () => {
+    let ok = true
 
     if (!validateRequired(formData.specialty)) {
       setFieldError('specialty', t('errors.selectSpecialty'))
-      isValid = false
+      ok = false
     }
-
-    if (!validateRequired(formData.yearsOfExperience) || formData.yearsOfExperience < 0) {
+    if (!validateRequired(formData.yearsOfExperience) || Number(formData.yearsOfExperience) < 0) {
       setFieldError('yearsOfExperience', t('errors.validExperience'))
-      isValid = false
+      ok = false
     }
-
     if (!validateRequired(formData.bio) || formData.bio.length < 50) {
       setFieldError('bio', t('errors.bioMinLength'))
-      isValid = false
+      ok = false
     }
-
-    if (!validateRequired(formData.consultationFee) || formData.consultationFee < 100) {
+    if (!validateRequired(formData.consultationFee) || Number(formData.consultationFee) < 100) {
       setFieldError('consultationFee', t('errors.minFee'))
-      isValid = false
+      ok = false
     }
-
     if (!formData.languages || formData.languages.length === 0) {
       setFieldError('languages', t('errors.selectLanguage'))
-      isValid = false
+      ok = false
     }
 
-    return isValid
+    return ok
   }
 
-  // Step 2 Validation
-  const validateStep2 = () => {
+  const validateStep3 = () => {
     if (!uploadedFiles.license) {
       toast.error(t('errors.uploadLicense'))
       return false
     }
-
     if (!validateRequired(formData.licenseNumber)) {
       setFieldError('licenseNumber', t('errors.licenseRequired'))
       return false
     }
-
     return true
   }
 
-  // Step 3 Validation
-  const validateStep3 = () => {
-    const hasAvailability = Object.values(formData.availability).some(day => day.enabled)
-    if (!hasAvailability) {
+  const validateStep4 = () => {
+    const hasAny = Object.values(formData.availability).some((d) => d.enabled)
+    if (!hasAny) {
       toast.error(t('errors.setAvailability'))
       return false
     }
     return true
   }
 
+  // ── Navigation ──────────────────────────────────────────────────────────────
+
   const handleNext = () => {
-    let isValid = false
-
-    if (currentStep === 1) {
-      isValid = validateStep1()
-    } else if (currentStep === 2) {
-      isValid = validateStep2()
-    } else if (currentStep === 3) {
-      isValid = validateStep3()
+    const validators = {
+      1: validateStep1,
+      2: validateStep2,
+      3: validateStep3,
+      4: validateStep4,
     }
+    const ok = validators[currentStep]?.() ?? true
 
-    if (isValid) {
+    if (ok) {
       if (isLastStep) {
         handleSubmit()
       } else {
@@ -161,50 +227,43 @@ export default function DoctorRegistration() {
     }
   }
 
+  // ── Submit ──────────────────────────────────────────────────────────────────
+
   const handleSubmit = async () => {
     setLoading(true)
-
     try {
-      // Get temporary credentials from sessionStorage
-      const tempRegData = JSON.parse(sessionStorage.getItem('temp_reg_data') || '{}')
+      const cleanPhone = formData.phone.replace(/[\s+]/g, '')
 
-      // Build the doctor registration payload for Admin/AddDoctor
-      const doctorPayload = {
-        name: tempRegData.name || `${tempRegData.firstName || ''} ${tempRegData.lastName || ''}`.trim(),
-        email: tempRegData.email,
-        password: tempRegData.password,
-        phoneNumber: tempRegData.phone || '',
-        description: formData.bio || null,
-        specialist: formData.specialty ? [formData.specialty] : null,
-      }
-
-      // Try registering via the general Auth/Register first (as patient), 
-      // then the admin can approve as doctor. Or use Admin/AddDoctor if available.
-      // For self-registration, use Auth/Register and then navigate to pending approval.
       const registerPayload = {
-        Name: doctorPayload.name,
-        PhoneNumber: doctorPayload.phoneNumber,
-        Email: doctorPayload.email,
-        Password: doctorPayload.password,
-        Gender: tempRegData.gender === 'female' ? 2 : 1,
-        Birthday: tempRegData.dateOfBirth ? new Date(tempRegData.dateOfBirth).toISOString() : null,
+        Name: `${formData.firstName} ${formData.lastName}`.trim(),
+        Email: formData.email,
+        Password: formData.password,
+        PhoneNumber: cleanPhone || null,
+        Gender: formData.gender === 'female' ? 2 : 1,
+        Birthday: formData.dateOfBirth
+          ? new Date(formData.dateOfBirth).toISOString()
+          : null,
       }
 
       const response = await api.post('/Auth/Register', registerPayload)
 
       if (response.data?.IsSuccess === true && response.status === 200) {
-        // Send OTP for email verification
+        // Try sending OTP for email verification
         try {
-          await authAPI.sendOtp(doctorPayload.email)
+          await authAPI.sendOtp(formData.email)
         } catch (otpErr) {
           console.warn('OTP send failed after doctor registration:', otpErr)
         }
 
-        sessionStorage.removeItem('temp_reg_data')
         toast.success(t('auth.registrationSubmitted'))
         navigate('/auth/pending-approval')
       } else {
-        toast.error(toUserFacingError(response.data?.Message, t('errors.somethingWentWrong')))
+        toast.error(
+          toUserFacingError(
+            response.data?.Message,
+            t('errors.somethingWentWrong'),
+          ),
+        )
       }
     } catch (error) {
       console.error('Doctor registration error:', error)
@@ -214,6 +273,8 @@ export default function DoctorRegistration() {
     }
   }
 
+  // ── Helpers ─────────────────────────────────────────────────────────────────
+
   const handleFieldChange = (field, value) => {
     updateFormData({ [field]: value })
     clearFieldError(field)
@@ -222,32 +283,29 @@ export default function DoctorRegistration() {
   const toggleLang = (lang) => {
     const current = formData.languages || []
     const updated = current.includes(lang)
-      ? current.filter(l => l !== lang)
+      ? current.filter((l) => l !== lang)
       : [...current, lang]
     handleFieldChange('languages', updated)
   }
 
   const handleFileUpload = (e, type) => {
     const files = Array.from(e.target.files)
-
     for (const file of files) {
       if (!validateFileSize(file, 5)) {
         toast.error(`${file.name} ${t('errors.fileTooLarge')}`)
         continue
       }
-
       if (!validateFileType(file)) {
         toast.error(`${file.name} ${t('errors.invalidFileFormat')}`)
         continue
       }
-
       if (type === 'license') {
-        setUploadedFiles(prev => ({ ...prev, license: file }))
+        setUploadedFiles((prev) => ({ ...prev, license: file }))
         toast.success(t('success.licenseUploaded'))
       } else {
-        setUploadedFiles(prev => ({
+        setUploadedFiles((prev) => ({
           ...prev,
-          certificates: [...prev.certificates, file]
+          certificates: [...prev.certificates, file],
         }))
         toast.success(`${t('success.certificateUploaded')} ${file.name}`)
       }
@@ -256,39 +314,34 @@ export default function DoctorRegistration() {
 
   const removeFile = (type, index = null) => {
     if (type === 'license') {
-      setUploadedFiles(prev => ({ ...prev, license: null }))
+      setUploadedFiles((prev) => ({ ...prev, license: null }))
     } else {
-      setUploadedFiles(prev => ({
+      setUploadedFiles((prev) => ({
         ...prev,
-        certificates: prev.certificates.filter((_, i) => i !== index)
+        certificates: prev.certificates.filter((_, i) => i !== index),
       }))
     }
   }
 
   const toggleDayAvailability = (day) => {
-    const updated = {
+    handleFieldChange('availability', {
       ...formData.availability,
-      [day]: {
-        ...formData.availability[day],
-        enabled: !formData.availability[day].enabled
-      }
-    }
-    handleFieldChange('availability', updated)
+      [day]: { ...formData.availability[day], enabled: !formData.availability[day].enabled },
+    })
   }
 
   const updateDayTime = (day, field, value) => {
-    const updated = {
+    handleFieldChange('availability', {
       ...formData.availability,
-      [day]: {
-        ...formData.availability[day],
-        [field]: value
-      }
-    }
-    handleFieldChange('availability', updated)
+      [day]: { ...formData.availability[day], [field]: value },
+    })
   }
+
+  // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
     <div className="min-h-screen bg-background py-6 sm:py-8 px-3 sm:px-4">
+
       {/* ── Floating Top Bar ── */}
       <div className="fixed top-4 inset-x-4 z-50 flex items-center justify-between pointer-events-none">
         <button
@@ -310,8 +363,12 @@ export default function DoctorRegistration() {
       <div className="max-w-4xl mx-auto pt-12">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-text-heading">{t('doctorReg.title')}</h1>
-          <p className="text-text-muted mt-2 text-sm sm:text-base">{t('doctorReg.subtitle')}</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-text-heading">
+            {t('doctorReg.title')}
+          </h1>
+          <p className="text-text-muted mt-2 text-sm sm:text-base">
+            {t('doctorReg.subtitle')}
+          </p>
         </div>
 
         {/* Progress Stepper */}
@@ -320,7 +377,8 @@ export default function DoctorRegistration() {
         {/* Form Card */}
         <div className="bg-background-paper rounded-2xl shadow-lg p-5 sm:p-8 mt-6 sm:mt-8 border border-border">
           <AnimatePresence mode="wait">
-            {/* Step 1: Professional Details */}
+
+            {/* ── Step 1: Basic Info ── */}
             {currentStep === 1 && (
               <motion.div
                 key="step1"
@@ -331,11 +389,152 @@ export default function DoctorRegistration() {
               >
                 <div className="flex items-center gap-3 mb-6">
                   <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
+                    <User className="w-6 h-6 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold text-text-heading">
+                      {t('auth.basicInformation')}
+                    </h2>
+                    <p className="text-sm text-text-muted">
+                      {t('auth.tellUsAboutYourself')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Name row */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <Input
+                    label={t('auth.firstName')}
+                    value={formData.firstName}
+                    onChange={(e) => handleFieldChange('firstName', e.target.value)}
+                    error={errors.firstName}
+                    placeholder={t('auth.placeholders.firstName')}
+                  />
+                  <Input
+                    label={t('auth.lastName')}
+                    value={formData.lastName}
+                    onChange={(e) => handleFieldChange('lastName', e.target.value)}
+                    error={errors.lastName}
+                    placeholder={t('auth.placeholders.lastName')}
+                  />
+                </div>
+
+                {/* Email + Password row */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <Input
+                    label={t('auth.email')}
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => handleFieldChange('email', e.target.value)}
+                    error={errors.email}
+                    placeholder={t('auth.placeholders.email')}
+                  />
+                  <Input
+                    label={t('auth.password')}
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => handleFieldChange('password', e.target.value)}
+                    error={errors.password}
+                    placeholder="••••••••"
+                  />
+                </div>
+
+                {/* Password checklist */}
+                <div className="rounded-2xl border border-border bg-background-subtle/60 p-4">
+                  <p className="mb-3 text-sm font-bold text-text-heading">
+                    {t('auth.passwordRequirements', 'Password must contain:')}
+                  </p>
+                  <div className="grid gap-2 text-xs sm:grid-cols-2">
+                    {[
+                      [passwordChecks.minLength,     t('auth.passwordMinLength',  'At least 8 characters')],
+                      [passwordChecks.hasUpperCase,  t('auth.passwordUppercase',  'One uppercase letter (A-Z)')],
+                      [passwordChecks.hasLowerCase,  t('auth.passwordLowercase',  'One lowercase letter (a-z)')],
+                      [passwordChecks.hasNumber,     t('auth.passwordNumber',     'At least one number')],
+                      [passwordChecks.hasSpecialChar,t('auth.passwordSpecial',    'One special character')],
+                    ].map(([passed, label]) => (
+                      <div
+                        key={String(label)}
+                        className={`flex items-center gap-2 ${passed ? 'text-green-700' : 'text-text-muted'}`}
+                      >
+                        <span
+                          className={`grid h-5 w-5 place-items-center rounded-full ${
+                            passed ? 'bg-green-100' : 'bg-background-paper'
+                          }`}
+                        >
+                          {passed
+                            ? <Check className="h-3.5 w-3.5" />
+                            : <X     className="h-3.5 w-3.5" />}
+                        </span>
+                        <span>{label}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Phone (optional) */}
+                <Input
+                  label={`${t('auth.phoneNumber')} (${t('common.optional', 'Optional')})`}
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => handleFieldChange('phone', e.target.value)}
+                  error={errors.phone}
+                  placeholder={t('auth.placeholders.phone')}
+                />
+
+                {/* DOB + Gender row */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <Input
+                    label={t('auth.dateOfBirth')}
+                    type="date"
+                    value={formData.dateOfBirth}
+                    onChange={(e) => handleFieldChange('dateOfBirth', e.target.value)}
+                    error={errors.dateOfBirth}
+                    max={new Date().toISOString().split('T')[0]}
+                    slotProps={{ inputLabel: { shrink: true } }}
+                  />
+                  <Select
+                    label={t('common.gender')}
+                    value={formData.gender}
+                    onChange={(e) => handleFieldChange('gender', e.target.value)}
+                    error={errors.gender}
+                  >
+                    <option value="">{t('common.selectGender')}</option>
+                    <option value="male">{t('common.male')}</option>
+                    <option value="female">{t('common.female')}</option>
+                    <option value="other">{t('common.other')}</option>
+                  </Select>
+                </div>
+
+                {formData.dateOfBirth && validateDate(formData.dateOfBirth) && (
+                  <div className="bg-primary/10 p-4 rounded-lg">
+                    <p className="text-sm text-primary">
+                      {t('common.age')}: {calculateAge(formData.dateOfBirth)} {t('common.yearsOld')}
+                    </p>
+                  </div>
+                )}
+              </motion.div>
+            )}
+
+            {/* ── Step 2: Professional Details ── */}
+            {currentStep === 2 && (
+              <motion.div
+                key="step2"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                className="space-y-6"
+              >
+                <div className="flex items-center gap-3 mb-6">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center">
                     <Stethoscope className="w-6 h-6 text-primary" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-text-heading">{t('doctorReg.professionalDetails')}</h2>
-                    <p className="text-sm text-text-muted">{t('doctorReg.tellUsExpertise')}</p>
+                    <h2 className="text-xl font-semibold text-text-heading">
+                      {t('doctorReg.professionalDetails')}
+                    </h2>
+                    <p className="text-sm text-text-muted">
+                      {t('doctorReg.tellUsExpertise')}
+                    </p>
                   </div>
                 </div>
 
@@ -369,13 +568,17 @@ export default function DoctorRegistration() {
                   />
                 </div>
 
+                {/* Languages */}
                 <div>
                   <label className="block text-sm font-medium text-text-muted mb-3">
                     {t('doctorReg.languagesSpoken')}
                   </label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     {languagesAvailable.map((lang) => (
-                      <label key={lang.value} className="flex items-center gap-2 p-3 border border-border rounded-lg cursor-pointer hover:bg-background-subtle transition-colors">
+                      <label
+                        key={lang.value}
+                        className="flex items-center gap-2 p-3 border border-border rounded-lg cursor-pointer hover:bg-background-subtle transition-colors"
+                      >
                         <input
                           type="checkbox"
                           checked={(formData.languages || []).includes(lang.value)}
@@ -399,16 +602,16 @@ export default function DoctorRegistration() {
                   placeholder={t('doctorReg.bioPlaceholder')}
                   rows={6}
                 />
-                <p className="text-xs text-clinical-gray">
+                <p className="text-xs text-text-muted">
                   {formData.bio.length}/50 {t('doctorReg.bioMinChars')}
                 </p>
               </motion.div>
             )}
 
-            {/* Step 2: Documentation */}
-            {currentStep === 2 && (
+            {/* ── Step 3: Documentation ── */}
+            {currentStep === 3 && (
               <motion.div
-                key="step2"
+                key="step3"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
@@ -419,8 +622,12 @@ export default function DoctorRegistration() {
                     <FileText className="w-6 h-6 text-green-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-text-heading">{t('doctorReg.documentation')}</h2>
-                    <p className="text-sm text-text-muted">{t('doctorReg.uploadCredentials')}</p>
+                    <h2 className="text-xl font-semibold text-text-heading">
+                      {t('doctorReg.documentation')}
+                    </h2>
+                    <p className="text-sm text-text-muted">
+                      {t('doctorReg.uploadCredentials')}
+                    </p>
                   </div>
                 </div>
 
@@ -454,8 +661,12 @@ export default function DoctorRegistration() {
                       <div className="flex items-center gap-3">
                         <CheckCircle className="w-5 h-5 text-green-600" />
                         <div>
-                          <p className="text-sm font-medium text-text-heading">{uploadedFiles.license.name}</p>
-                          <p className="text-xs text-text-muted">{(uploadedFiles.license.size / 1024).toFixed(2)} KB</p>
+                          <p className="text-sm font-medium text-text-heading">
+                            {uploadedFiles.license.name}
+                          </p>
+                          <p className="text-xs text-text-muted">
+                            {(uploadedFiles.license.size / 1024).toFixed(2)} KB
+                          </p>
                         </div>
                       </div>
                       <button
@@ -468,7 +679,7 @@ export default function DoctorRegistration() {
                   )}
                 </div>
 
-                {/* Certificates Upload */}
+                {/* Additional Certificates */}
                 <div>
                   <label className="block text-sm font-medium text-text-muted mb-2">
                     {t('doctorReg.additionalCertificates')}
@@ -489,12 +700,17 @@ export default function DoctorRegistration() {
                   {uploadedFiles.certificates.length > 0 && (
                     <div className="mt-4 space-y-2">
                       {uploadedFiles.certificates.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 border border-border rounded-lg">
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 border border-border rounded-lg"
+                        >
                           <div className="flex items-center gap-3">
                             <FileText className="w-5 h-5 text-primary" />
                             <div>
                               <p className="text-sm font-medium text-text-heading">{file.name}</p>
-                              <p className="text-xs text-text-muted">{(file.size / 1024).toFixed(2)} KB</p>
+                              <p className="text-xs text-text-muted">
+                                {(file.size / 1024).toFixed(2)} KB
+                              </p>
                             </div>
                           </div>
                           <button
@@ -517,10 +733,10 @@ export default function DoctorRegistration() {
               </motion.div>
             )}
 
-            {/* Step 3: Availability */}
-            {currentStep === 3 && (
+            {/* ── Step 4: Availability ── */}
+            {currentStep === 4 && (
               <motion.div
-                key="step3"
+                key="step4"
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
@@ -531,14 +747,23 @@ export default function DoctorRegistration() {
                     <Calendar className="w-6 h-6 text-purple-600" />
                   </div>
                   <div>
-                    <h2 className="text-xl font-semibold text-text-heading">{t('doctorReg.setYourAvailability')}</h2>
-                    <p className="text-sm text-text-muted">{t('doctorReg.chooseWorkingDays')}</p>
+                    <h2 className="text-xl font-semibold text-text-heading">
+                      {t('doctorReg.setYourAvailability')}
+                    </h2>
+                    <p className="text-sm text-text-muted">
+                      {t('doctorReg.chooseWorkingDays')}
+                    </p>
                   </div>
                 </div>
 
                 <div className="space-y-3">
                   {Object.entries(formData.availability).map(([day, schedule]) => (
-                    <div key={day} className={`p-4 border rounded-lg transition-all ${schedule.enabled ? 'border-primary bg-primary/10' : 'border-border'}`}>
+                    <div
+                      key={day}
+                      className={`p-4 border rounded-lg transition-all ${
+                        schedule.enabled ? 'border-primary bg-primary/10' : 'border-border'
+                      }`}
+                    >
                       <div className="flex items-center justify-between mb-3">
                         <label className="flex items-center gap-3 cursor-pointer">
                           <input
@@ -550,9 +775,11 @@ export default function DoctorRegistration() {
                           <span className="font-medium text-text-heading capitalize">{day}</span>
                         </label>
                         {schedule.enabled && (
-                          <div className="flex items-center gap-2 text-sm text-clinical-gray">
+                          <div className="flex items-center gap-2 text-sm text-text-muted">
                             <Clock className="w-4 h-4" />
-                            <span>{schedule.start} - {schedule.end}</span>
+                            <span>
+                              {schedule.start} – {schedule.end}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -560,7 +787,9 @@ export default function DoctorRegistration() {
                       {schedule.enabled && (
                         <div className="grid grid-cols-2 gap-4 mt-3 pt-3 border-t border-border">
                           <div>
-                            <label className="block text-xs font-medium text-text-muted mb-1">{t('doctorReg.startTime')}</label>
+                            <label className="block text-xs font-medium text-text-muted mb-1">
+                              {t('doctorReg.startTime')}
+                            </label>
                             <input
                               type="time"
                               value={schedule.start}
@@ -569,7 +798,9 @@ export default function DoctorRegistration() {
                             />
                           </div>
                           <div>
-                            <label className="block text-xs font-medium text-text-muted mb-1">{t('doctorReg.endTime')}</label>
+                            <label className="block text-xs font-medium text-text-muted mb-1">
+                              {t('doctorReg.endTime')}
+                            </label>
                             <input
                               type="time"
                               value={schedule.end}
@@ -592,15 +823,15 @@ export default function DoctorRegistration() {
             )}
           </AnimatePresence>
 
-          {/* Navigation Buttons */}
+          {/* ── Navigation Buttons ── */}
           <div className="flex items-center justify-between mt-8 pt-6 border-t">
             <Button
               variant="outline"
               onClick={() => {
                 if (isFirstStep) {
-                  navigate('/auth/role-selection');
+                  navigate('/auth/role-selection')
                 } else {
-                  previousStep();
+                  previousStep()
                 }
               }}
               disabled={loading}
@@ -609,10 +840,7 @@ export default function DoctorRegistration() {
               {t('common.back')}
             </Button>
 
-            <Button
-              onClick={handleNext}
-              disabled={loading}
-            >
+            <Button onClick={handleNext} disabled={loading}>
               {loading ? (
                 <div className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

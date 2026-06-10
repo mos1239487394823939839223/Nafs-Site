@@ -2,17 +2,25 @@ import { CalendarDays, Check, Circle, Flag, Leaf, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
 
-type Program = { name: string; currentSession: number; totalSessions: number | null; updatedAt?: string };
+type Program = { 
+  name: string; 
+  currentSession: number; 
+  totalSessions: number | null; 
+  updatedAt?: string;
+  doctorName?: string;
+};
 
 export const TreatmentProgram = ({
   program,
   hasCompletedSession,
   completedCount,
+  hasUpcomingSession,
   loading,
 }: {
   program: Program | null;
   hasCompletedSession: boolean;
   completedCount: number;
+  hasUpcomingSession: boolean;
   loading: boolean;
 }) => {
   const { t, language } = useLanguage();
@@ -20,20 +28,19 @@ export const TreatmentProgram = ({
   const total = program?.totalSessions || 8;
   const current = program?.currentSession || Math.max(completedCount, hasCompletedSession ? 4 : 0);
   const percent = total ? Math.min(100, Math.round((current / total) * 100)) : 0;
-  const programName =
-    program?.name ||
-    (hasCompletedSession
-      ? t("patientHome.treatmentProgram.defaultTitle")
-      : t("patientHome.treatmentProgram.emptyTitle"));
 
   return (
     <section className="relative flex h-full flex-col overflow-hidden rounded-[24px] border border-[#DCE8E2] bg-white p-6 shadow-[0_16px_42px_-28px_rgba(15,76,58,0.4)]">
       <Leaf className="absolute -start-6 bottom-2 h-36 w-36 -rotate-12 text-[#2D7A61]/10" />
-      <div className="relative">
+      <div className="relative flex flex-col h-full justify-between">
         <div className="mb-5 flex items-center justify-between gap-3">
           <div className="text-start">
-            <p className="text-xs font-bold uppercase tracking-wider text-[#2D7A61]">{t("patientHome.treatmentProgram.label")}</p>
-            <h3 className="mt-1 text-xl font-black text-[#1F2D2A]" dir="auto">{programName}</h3>
+            <p className="text-xs font-bold uppercase tracking-wider text-[#2D7A61]">
+              {t("patientHome.treatmentProgram.label")}
+            </p>
+            <h3 className="mt-1 text-xl font-black text-[#1F2D2A]" dir="auto">
+              {program ? program.name : (language === "ar" ? "البرنامج العلاجي" : "Treatment Program")}
+            </h3>
           </div>
           <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#EAF5F0] text-[#0F4C3A]">
             <Flag className="h-6 w-6" />
@@ -42,6 +49,32 @@ export const TreatmentProgram = ({
 
         {loading ? (
           <Loader2 className="mx-auto my-14 h-7 w-7 animate-spin text-[#2F855A]" />
+        ) : !program ? (
+          <div className="flex flex-1 flex-col justify-between">
+            <div className="my-4 text-start">
+              <p className="text-sm leading-6 text-[#60766C]">
+                {language === "ar"
+                  ? "لم يتم تحديد برنامج علاجي بعد. سيقوم المعالج بتحديد البرنامج المناسب بعد أول جلسة."
+                  : "No treatment program has been assigned yet. The therapist will determine the appropriate program after the first session."}
+              </p>
+            </div>
+            
+            {hasUpcomingSession ? (
+              <button
+                onClick={() => navigate("/dashboard/patient/messages")}
+                className="mt-5 h-12 w-full rounded-xl bg-[#0F4C3A] text-sm font-extrabold text-white transition-all hover:bg-[#12372A]"
+              >
+                {language === "ar" ? "ابدأ جلستك الأولى" : "Start your first session"}
+              </button>
+            ) : (
+              <button
+                onClick={() => navigate("/dashboard/patient/reserve")}
+                className="mt-5 h-12 w-full rounded-xl bg-[#0F4C3A] text-sm font-extrabold text-white transition-all hover:bg-[#12372A]"
+              >
+                {language === "ar" ? "احجز جلسة مع معالج" : "Book a session with a therapist"}
+              </button>
+            )}
+          </div>
         ) : (
           <>
             <div className="mb-3 flex items-center justify-between text-sm font-bold text-[#466257]">
@@ -68,14 +101,22 @@ export const TreatmentProgram = ({
               ))}
             </div>
             <p className="mt-5 text-start text-sm leading-6 text-[#60766C]">
-              {program ? t("patientHome.treatmentProgram.continueDesc") : t("patientHome.treatmentProgram.emptyDesc")}
+              {t("patientHome.treatmentProgram.continueDesc")}
             </p>
-            <p className="mt-3 flex items-center gap-2 text-start text-xs font-bold text-[#6B8278]">
-              <CalendarDays className="h-4 w-4 text-[#2D7A61]" />
-              {program?.updatedAt
-                ? new Date(program.updatedAt).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")
-                : language === "ar" ? "سيظهر آخر تحديث من المعالج هنا" : "The latest therapist update will appear here"}
-            </p>
+            <div className="mt-3 flex items-center justify-between text-xs font-bold text-[#6B8278]">
+              {program.doctorName && (
+                <span>
+                  {language === "ar" ? "بواسطة: " : "By: "}
+                  {program.doctorName}
+                </span>
+              )}
+              <span className="flex items-center gap-2">
+                <CalendarDays className="h-4 w-4 text-[#2D7A61]" />
+                {program.updatedAt
+                  ? new Date(program.updatedAt).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")
+                  : ""}
+              </span>
+            </div>
             <button
               onClick={() => navigate("/dashboard/patient/tests")}
               className="mt-5 h-12 w-full rounded-xl border border-[#DCE8E2] text-sm font-extrabold text-[#0F4C3A] transition-colors hover:bg-[#EAF5F0]"
