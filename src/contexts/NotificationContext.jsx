@@ -4,7 +4,22 @@ import { useAuth, Roles } from "./AuthContext";
 import { useFirebaseMessaging } from "../hooks/useFirebaseMessaging";
 import { useSignalR } from "../hooks/useSignalR";
 import { useAppointmentReminders } from "../hooks/useAppointmentReminders";
-import { mapRealtimeNotification, normalizeNotification } from "../lib/notificationUtils";
+import {
+  isChatMessagePayload,
+  mapChatMessageToNotification,
+  mapRealtimeNotification,
+  messageFromCurrentUser,
+  normalizeNotification,
+  getIncomingRoomId,
+  shouldPushChatNotification,
+} from "../lib/notificationUtils";
+
+const CHAT_MESSAGE_EVENTS = new Set([
+  "ReceiveMessage",
+  "NewMessage",
+  "MessageReceived",
+  "ChatMessageCreated",
+]);
 
 const NotificationContext = createContext(null);
 
@@ -23,6 +38,14 @@ const REALTIME_EVENTS = [
   "BookingCanceled",
   "BookingUpdated",
   "BookingStatusUpdated",
+  "BookingRescheduled",
+  "SessionStarted",
+  "LiveSessionStarted",
+  "MeetingStarted",
+  "NewSupportTicket",
+  "SupportTicketCreated",
+  "PatientUpdate",
+  "PatientStatusUpdated",
   "AppointmentReminder",
   "SessionReminder",
   "SupportStatusUpdated",
@@ -59,9 +82,16 @@ export function NotificationProvider({ children }) {
 
   const handleRealtime = useCallback(
     (eventName, payload) => {
+      if (CHAT_MESSAGE_EVENTS.has(eventName) && isChatMessagePayload(payload)) {
+        if (messageFromCurrentUser(payload, user)) return;
+        const roomId = getIncomingRoomId(payload);
+        if (!shouldPushChatNotification(roomId)) return;
+        upsertNotification(mapChatMessageToNotification(payload, role));
+        return;
+      }
       upsertNotification(mapRealtimeNotification(eventName, payload, role));
     },
-    [role, upsertNotification],
+    [role, upsertNotification, user],
   );
 
   const fetchNotifications = useCallback(async (pageIndex = 1, pageSize = 100) => {
@@ -159,8 +189,9 @@ export function NotificationProvider({ children }) {
       markAsRead,
       markAllAsRead,
       deleteNotification,
+      addNotification,
     }),
-    [deleteNotification, fetchNotifications, loading, markAllAsRead, markAsRead, notifications, unreadByCategory],
+    [addNotification, deleteNotification, fetchNotifications, loading, markAllAsRead, markAsRead, notifications, unreadByCategory],
   );
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;

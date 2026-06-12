@@ -6,7 +6,7 @@ import { useLanguage } from '../../contexts/LanguageContext'
 import MessageBubble from './MessageBubble'
 import SupportCaseTag from '../support/SupportCaseTag'
 
-export default function ChatWindow({ conversation, onSendMessage, onBack, isTyping: isOtherTyping = false, onTyping, onStopTyping, composerDisabled = false, composerDisabledReason = '', sending = false, onToggleDetails, showDetails }) {
+export default function ChatWindow({ conversation, onSendMessage, onBack, isTyping: isOtherTyping = false, onTyping, onStopTyping, composerDisabled = false, composerDisabledReason = '', sending = false, onToggleDetails, showDetails, onStartMeeting }) {
   const { theme } = useTheme()
   const { t, isRTL } = useLanguage()
   const [messageInput, setMessageInput] = useState('')
@@ -190,9 +190,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
           <div className={`flex items-center gap-1.5 ${isRTL ? 'flex-row-reverse' : ''}`}>
             {conversation.participant.role === 'doctor' && (
               <button
-                onClick={() => {
-                  window.open(`/dashboard/patient/meeting/${conversation.id}`, '_blank');
-                }}
+                onClick={() => onStartMeeting?.(conversation)}
                 className="p-2 hover:bg-background-subtle rounded-xl text-primary hover:text-primary-dark transition-colors"
                 title={t('chat.startMeeting', 'Start Meeting')}
               >

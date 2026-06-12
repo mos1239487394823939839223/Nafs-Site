@@ -1,23 +1,17 @@
-import { AlertCircle, ArrowDown, Minus } from "lucide-react";
+import { AlertCircle, Minus } from "lucide-react";
 
 const priorityMeta = {
-  high: {
+  urgent: {
     icon: AlertCircle,
-    labelEn: "High Priority",
-    labelAr: "أولوية مرتفعة",
+    labelEn: "Urgent",
+    labelAr: "عاجل",
     className: "border-red-200 bg-red-50 text-red-700",
   },
-  medium: {
+  normal: {
     icon: Minus,
-    labelEn: "Medium Priority",
-    labelAr: "أولوية متوسطة",
-    className: "border-amber-200 bg-amber-50 text-amber-700",
-  },
-  low: {
-    icon: ArrowDown,
-    labelEn: "Low Priority",
-    labelAr: "أولوية منخفضة",
-    className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+    labelEn: "Normal",
+    labelAr: "عادي",
+    className: "border-slate-200 bg-slate-50 text-slate-700",
   },
 };
 
@@ -25,14 +19,14 @@ export function getSupportPriority(room = {}) {
   const raw = String(
     room.Priority ?? room.priority ?? room.SupportPriority ?? room.supportPriority ?? "",
   ).toLowerCase();
-  if (room.IsHighPriority === true || room.isHighPriority === true || raw === "urgent") return "high";
-  if (["high", "medium", "low"].includes(raw)) return raw;
-  return Number(room.UnreadCount ?? room.unreadCount ?? 0) > 0 ? "medium" : "low";
+  if (room.IsHighPriority === true || room.isHighPriority === true) return "urgent";
+  if (["urgent", "high", "critical"].includes(raw)) return "urgent";
+  return "normal";
 }
 
 export default function SupportPriorityTag({ priority, room, isRTL = false }) {
   const key = priority || getSupportPriority(room);
-  const meta = priorityMeta[key] || priorityMeta.low;
+  const meta = priorityMeta[key] || priorityMeta.normal;
   const Icon = meta.icon;
 
   return (

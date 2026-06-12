@@ -23,6 +23,7 @@ import {
   getAppointmentStatusKey,
 } from "../../lib/appointmentStatus";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { doctorHistoryUrl, doctorMedicalRecordsUrl, doctorMessagesUrl } from "../../lib/doctorPatientRoutes";
 import { useSignalR } from "../../hooks/useSignalR";
 
 export default function PatientQueue() {
@@ -307,6 +308,44 @@ export default function PatientQueue() {
 
   const handleAction = (action, patient) => {
     if (action === "join") {
+      handleJoin(patient);
+      return;
+    }
+
+    if (action === "viewProfile") {
+      if (!patient?.patientId) {
+        toast.error(t("auto.patientIdIsMissing"));
+        return;
+      }
+      navigate(doctorMedicalRecordsUrl(patient.patientId));
+      return;
+    }
+
+    if (action === "viewHistory") {
+      if (!patient?.patientId) {
+        toast.error(t("auto.patientIdIsMissing"));
+        return;
+      }
+      navigate(doctorHistoryUrl({ tab: "records", patientId: patient.patientId }));
+      return;
+    }
+
+    if (action === "addNote") {
+      if (!patient?.bookingId) {
+        toast.error(t("errors.somethingWentWrong"));
+        return;
+      }
+      navigate(
+        doctorHistoryUrl({
+          tab: "records",
+          bookingId: patient.bookingId,
+          action: "note",
+        }),
+      );
+      return;
+    }
+
+    if (action === "message") {
       handleJoin(patient);
       return;
     }

@@ -13,7 +13,7 @@ type Action = {
 const actions: Action[] = [
   { key: "sessions",   icon: Calendar, path: "/dashboard/patient/reserve" },
   { key: "content",    icon: BookOpen, path: "/dashboard/patient/blogs"   },
-  { key: "programs",   icon: Heart,    path: "/dashboard/patient/tests"   },
+  { key: "programs",   icon: Heart,    path: "/dashboard/patient/treatment-program" },
   { key: "assessment", icon: Brain,    path: "/dashboard/patient/tests"   },
 ];
 

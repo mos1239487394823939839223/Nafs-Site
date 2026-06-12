@@ -6,11 +6,15 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import { useToast } from "../../components/ui/Toast";
 import { chatAPI, userAPI } from "../../lib/api";
 
+import { useNotifications } from "../../contexts/NotificationContext";
+import { createLocalNotification } from "../../lib/notificationUtils";
+
 export const EmergencyAction = () => {
   const { user } = useAuth();
   const { t } = useLanguage();
   const toast = useToast();
   const navigate = useNavigate();
+  const { addNotification } = useNotifications();
   const [loading, setLoading] = useState(false);
 
   const startEmergencySupport = async () => {
@@ -23,11 +27,29 @@ export const EmergencyAction = () => {
 
     setLoading(true);
     try {
-      const response = await chatAPI.openPatientSupportChat(patientId, 3, "emergency", "high");
+      const response = await chatAPI.openPatientSupportChat(patientId, 3, "emergency", "urgent", {
+        IsSensitive: true,
+        NotifySupportTeam: true,
+        RequestImmediateNotify: true,
+        CreatedAt: new Date().toISOString(),
+      });
       if (response?.IsSuccess === false) throw new Error(response?.Message);
       const data = response?.Data ?? response?.data ?? response;
       const roomId = data?.RoomId ?? data?.roomId ?? data?.Id ?? data?.id ?? data?.ChatRoomId ?? data?.chatRoomId;
       const roomParam = roomId ? `&room=${encodeURIComponent(String(roomId))}` : "";
+      addNotification(
+        createLocalNotification(
+          {
+            Type: "emergency",
+            Title: t("notifications.emergencyAlert", "Emergency alert"),
+            Body: t("patient.emergencyDashboardDesc", "Urgent support case opened"),
+            SupportCaseType: "emergency",
+            RoomId: roomId,
+            IsRead: false,
+          },
+          "patient",
+        ),
+      );
       navigate(`/dashboard/patient/messages?type=support&caseType=emergency&support=1${roomParam}`);
     } catch (error: any) {
       toast.error(error?.message || t("auto.failedToOpenSupportChat"));
@@ -51,7 +73,7 @@ export const EmergencyAction = () => {
         <span className="text-sm font-black">{t("patient.startEmergencyChat", "Emergency")}</span>
         <span className="mt-0.5 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[10px] font-bold">
           <AlertTriangle className="w-3 h-3" />
-          {t("auto.highPriority", "High Priority")}
+          {t("support.urgentPriority", "Urgent")}
         </span>
       </span>
     </button>

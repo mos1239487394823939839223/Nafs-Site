@@ -11,26 +11,26 @@ import { doctorAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { medicalAPI } from '../../lib/api'
 import { getAppointmentStatusKey } from '../../lib/appointmentStatus'
-
-export default function MedicalHistory() {
-import { useState, useEffect } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Search, FileText, User, Plus, Calendar, Clock, ChevronRight, ArrowLeft, Save, Pill, MessageSquare, Loader2 } from 'lucide-react'
-import Card, { CardHeader, CardTitle, CardContent } from '../../components/ui/Card'
-import Button from '../../components/ui/Button'
-import Badge from '../../components/ui/Badge'
-import Modal from '../../components/ui/Modal'
-import { useAuth } from '../../contexts/AuthContext'
-import { useToast } from '../../components/ui/Toast'
-import { doctorAPI } from '../../lib/api'
-import { useLanguage } from '../../contexts/LanguageContext'
-import { medicalAPI } from '../../lib/api'
-import { getAppointmentStatusKey } from '../../lib/appointmentStatus'
+import { useSearchParams, Link, useNavigate } from 'react-router-dom'
+import { doctorMessagesUrl } from '../../lib/doctorPatientRoutes'
 
 export default function MedicalHistory() {
     const { user } = useAuth()
     const toast = useToast()
     const { t } = useLanguage()
+    const navigate = useNavigate()
+    const [searchParams, setSearchParams] = useSearchParams()
+
+    const initialPatientId = searchParams.get('patientId')
+    const shouldOpenAdd = searchParams.get('add') === '1'
+    const workspaceSection = searchParams.get('section') === 'assessments' ? 'assessments' : 'records'
+
+    const setWorkspaceSection = (section) => {
+        const next = new URLSearchParams(searchParams)
+        if (section === 'records') next.delete('section')
+        else next.set('section', section)
+        setSearchParams(next, { replace: true })
+    }
 
     const [selectedPatient, setSelectedPatient] = useState(null)
     const [searchQuery, setSearchQuery] = useState('')
@@ -163,6 +163,15 @@ export default function MedicalHistory() {
             })
         }
     })
+
+    useEffect(() => {
+        if (!initialPatientId || loading) return
+        const match = myPatients.find((p) => String(p.id) === String(initialPatientId))
+        if (match) {
+            setSelectedPatient(match)
+            if (shouldOpenAdd) setIsAddModalOpen(true)
+        }
+    }, [initialPatientId, shouldOpenAdd, loading, bookings.length])
 
     const filteredPatients = myPatients.filter(p =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase())
@@ -314,6 +323,37 @@ export default function MedicalHistory() {
                                 <h1 className="text-3xl font-bold mb-2 text-text-heading">{t('doctor.medicalHistory')}</h1>
                                 <p className="text-text-muted">{t('doctor.manageClinicalRecords')}</p>
                             </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Button
+                                variant={workspaceSection === 'records' ? 'primary' : 'outline'}
+                                size="sm"
+                                onClick={() => setWorkspaceSection('records')}
+                              >
+                                {t('doctor.historyTabs.records', 'Medical records')}
+                              </Button>
+                              <Button
+                                variant={workspaceSection === 'assessments' ? 'primary' : 'outline'}
+                                size="sm"
+                                onClick={() => setWorkspaceSection('assessments')}
+                              >
+                                {t('doctor.historyTabs.assessments', 'Assessments')}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2"
+                                onClick={() => {
+                                  if (filteredPatients.length === 0) {
+                                    toast.error(t('doctor.patientsAppearHere'))
+                                    return
+                                  }
+                                  setSearchParams({ add: '1', ...(workspaceSection === 'assessments' ? { section: 'assessments' } : {}) }, { replace: true })
+                                }}
+                              >
+                                <Plus className="w-4 h-4" />
+                                {t('doctor.dashboardHome.quickTools.items.addPatient.title', 'Add patient record')}
+                              </Button>
+                            </div>
                             <div className="relative w-full md:w-80">
                                 <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-clinical-gray" />
                                 <input
@@ -378,17 +418,18 @@ export default function MedicalHistory() {
                             </div>
                             <div className="flex gap-2 w-full sm:w-auto">
                                 <Button variant="outline" className="flex-1 sm:flex-none gap-2" onClick={() => {
-                                    window.location.href = '/dashboard/doctor/messages'
+                                    navigate(doctorMessagesUrl(selectedPatient.id))
                                 }}>
                                     <MessageSquare className="w-4 h-4" /> {t('chat.message')}
                                 </Button>
                                 <Button className="flex-1 sm:flex-none gap-2" onClick={() => setIsAddModalOpen(true)}>
-                                    <Plus className="w-4 h-4" /> {t('doctor.addNote')}
+                                    <Plus className="w-4 h-4" /> {workspaceSection === 'assessments' ? t('doctor.historyTabs.assessments', 'Assessment') : t('doctor.addNote')}
                                 </Button>
                             </div>
                         </div>
 
                         {/* Session History from Bookings */}
+                        {workspaceSection === 'records' && (
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
@@ -444,14 +485,27 @@ export default function MedicalHistory() {
                                 })()}
                             </CardContent>
                         </Card>
+                        )}
 
                         {/* Clinical Notes */}
                         <div className="space-y-6">
-                            <h3 className="text-lg font-bold text-text-heading">{t('doctor.clinicalNotes')}</h3>
+                            <h3 className="text-lg font-bold text-text-heading">
+                              {workspaceSection === 'assessments'
+                                ? t('doctor.historyTabs.assessments', 'Patient assessments')
+                                : t('doctor.clinicalNotes')}
+                            </h3>
                             {historyLoading ? (
                                 <div className="text-center py-12 text-text-muted">{t('common.loading')}</div>
-                            ) : patientHistory.length > 0 ? (
-                                patientHistory.map((record) => {
+                            ) : patientHistory.filter((record) => {
+                                if (workspaceSection !== 'assessments') return true
+                                const parsed = tryParseJSON(record.examNotes)
+                                return Boolean(parsed?.assessment || parsed?.assessmentLevel || parsed?.recommendations)
+                            }).length > 0 ? (
+                                patientHistory.filter((record) => {
+                                  if (workspaceSection !== 'assessments') return true
+                                  const parsed = tryParseJSON(record.examNotes)
+                                  return Boolean(parsed?.assessment || parsed?.assessmentLevel || parsed?.recommendations)
+                                }).map((record) => {
                                     const parsed = tryParseJSON(record.examNotes)
                                     const actualNotes = parsed ? parsed.examNotes : record.examNotes
                                     const medications = parsed ? parsed.medications : record.medications

@@ -342,6 +342,7 @@ export default {
     createdAt: "Created",
     lastUpdated: "Last updated",
     waitingReply: "Waiting reply",
+    sensitiveCase: "Sensitive case",
     emergencyNewMessage: "New message in an emergency support case",
   },
 
@@ -390,6 +391,8 @@ export default {
       title: "Are you being blackmailed or threatened?",
       desc: "We're here to protect you. You can request help in complete confidentiality.",
       cta: "Request Protection",
+      privacyNotice:
+        "Your case is private. Only the dedicated support specialist (and authorized admin) can access it. We record the date and time your request is created.",
     },
     privacy: {
       title: "Your privacy matters",
@@ -739,6 +742,16 @@ export default {
     completeNotesReminder: "Complete your notes after each session",
     // Session History
     sessionHistoryDesc: "View your past sessions and records",
+    historyTabs: {
+      records: "Medical records",
+      assessments: "Patient assessments",
+      statistics: "Statistics",
+      statisticsHint:
+        "Session counts and hours are calculated from your booking history. Patient records and assessments are on their own tabs.",
+      assessmentsDesc:
+        "Document severity, clinical notes, and recommendations separately from session history.",
+      openAssessments: "Open assessments workspace",
+    },
     thisMonth: "This Month",
     exportCSV: "Export CSV",
     // Medical History
@@ -1525,9 +1538,13 @@ export default {
     bookingConfirmed: "Booking confirmed",
     bookingCancelled: "Booking cancelled",
     bookingStatusUpdated: "Booking status updated",
+    bookingRescheduled: "Booking rescheduled",
+    liveSessionStarted: "Live session started",
     newSupportMessage: "New support message",
     newTherapistMessage: "New therapist message",
     emergencyAlert: "Emergency alert",
+    urgent: "Urgent",
+    markAsRead: "Mark as read",
     categories: {
       all: "All",
       appointments: "Appointments",
@@ -1928,6 +1945,7 @@ export default {
 
   // Admin Profile
   admin: {
+    tests: "Tests",
     editDetails: "Edit Details",
     updateYourInfo: "Update your personal information",
     role: "Role",

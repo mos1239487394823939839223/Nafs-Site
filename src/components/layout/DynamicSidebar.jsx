@@ -1,7 +1,7 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth, Roles } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { chatAPI, userAPI } from "../../lib/api";
+import { chatAPI, patientAPI, userAPI } from "../../lib/api";
 import { getConfiguredBlackmailSupportUserId } from "../../lib/supportRouting";
 import { EmergencyCallCard } from "../sidebar-cards/EmergencyCallCard";
 import { BlackmailProtectionCard } from "../sidebar-cards/BlackmailProtectionCard";
@@ -42,9 +42,38 @@ export default function DynamicSidebar({ isOpen, onClose }) {
     if (onClose && window.innerWidth < 1024) onClose();
   };
 
-  const handleEmergencyClick = () => {
+  const handleEmergencyClick = async () => {
     closeOnMobile();
-    navigate("/dashboard/patient/messages?type=support&caseType=emergency&support=1");
+    try {
+      const bookingsResponse = await patientAPI.getPatientBookings(1, 20);
+      const data = bookingsResponse?.Data ?? bookingsResponse?.data ?? bookingsResponse;
+      const bookings = Array.isArray(data?.Items)
+        ? data.Items
+        : Array.isArray(data?.items)
+          ? data.items
+          : Array.isArray(data)
+            ? data
+            : [];
+      const now = Date.now();
+      const liveOrNextBooking = bookings
+        .filter((booking) => {
+          const start = new Date(booking.SessionStartTime || booking.sessionStartTime || 0).getTime();
+          const end = new Date(booking.SessionEndTime || booking.sessionEndTime || 0).getTime();
+          const status = String(booking.StatusName || booking.statusName || booking.Status || booking.status || "").toLowerCase();
+          return status.includes("progress") || (Number.isFinite(start) && (end >= now || start >= now));
+        })
+        .sort((a, b) => new Date(a.SessionStartTime || a.sessionStartTime || 0) - new Date(b.SessionStartTime || b.sessionStartTime || 0))[0];
+      const bookingId = liveOrNextBooking?.Id || liveOrNextBooking?.id || liveOrNextBooking?.BookingId || liveOrNextBooking?.bookingId;
+      if (bookingId) {
+        navigate(`/dashboard/patient/meeting/${bookingId}`);
+        return;
+      }
+      navigate("/dashboard/patient/messages?type=doctors");
+    } catch (error) {
+      console.error("Failed to start therapist contact:", error);
+      toast.error(t("errors.somethingWentWrong", "Could not start therapist contact."));
+      navigate("/dashboard/patient/messages?type=doctors");
+    }
   };
 
   const handleProtectionClick = async () => {
@@ -88,7 +117,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       { name: t("nav.mySessions"), path: "/dashboard/patient/reserve", icon: Calendar },
       { name: t("nav.doctors"), path: "/dashboard/patient/reserve?tab=available", icon: Users },
       { name: t("nav.psychologicalAssessment"), path: "/dashboard/patient/tests", icon: Brain },
-      { name: t("nav.treatmentPrograms"), path: "/dashboard/patient/tests", icon: HeartHandshake },
+      { name: t("nav.treatmentPrograms"), path: "/dashboard/patient/treatment-program", icon: HeartHandshake },
       { name: t("nav.contentLibrary"), path: "/dashboard/patient/blogs", icon: BookOpen },
       { name: t("nav.messages", "الرسائل"), path: "/dashboard/patient/messages?type=doctors", icon: MessageSquare, badge: unreadByCategory.messages || 0 },
       { name: t("common.notifications", "Notifications"), path: "/notifications", icon: Bell, badge: unreadCount },
@@ -230,7 +259,8 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       { name: t("nav.queue"), path: "/dashboard/doctor/queue", icon: Users },
       { name: t("nav.schedule"), path: "/dashboard/doctor/schedule", icon: Calendar },
       { name: t("nav.blogs"), path: "/dashboard/doctor/blogs", icon: FileText },
-      { name: t("nav.history"), path: "/dashboard/doctor/history", icon: Activity },
+      { name: t("nav.history"), path: "/dashboard/doctor/history?tab=records", icon: Activity },
+      { name: t("doctor.medicalHistory", "Medical records"), path: "/dashboard/doctor/medical-records", icon: FileText },
       { name: t("nav.messages"), path: "/dashboard/doctor/messages", icon: MessageSquare, badge: unreadByCategory.messages || 0 },
       { name: t("common.notifications", "Notifications"), path: "/notifications", icon: Bell, badge: unreadCount },
       { name: t("nav.profile"), path: "/dashboard/doctor/settings", icon: Settings },

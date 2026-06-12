@@ -1,19 +1,5 @@
-import { Activity, CalendarDays, Loader2, TrendingUp } from "lucide-react";
+import { Activity, AlertCircle, CalendarDays, Loader2, TrendingUp } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { useLanguage } from "../../contexts/LanguageContext";
-
-type Assessment = {
-  summary: string;
-  level: string;
-  recommendations: string;
-  note: string;
-  updatedAt: string;
-};
-
-import { Activity, CalendarDays, Loader2, TrendingUp, AlertCircle } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 type MoodKey = "terrible" | "bad" | "okay" | "good" | "great";
@@ -25,8 +11,7 @@ export const MoodGauge = ({
   hasCompletedSession: boolean;
   loading: boolean;
 }) => {
-  const { t, language } = useLanguage();
-  const navigate = useNavigate();
+  const { language } = useLanguage();
   const [dailyMood, setDailyMood] = useState<{ mood: MoodKey; date: string; recordedAt: string } | null>(null);
 
   const moodScores: Record<MoodKey, number> = { terrible: 20, bad: 35, okay: 55, good: 75, great: 95 };

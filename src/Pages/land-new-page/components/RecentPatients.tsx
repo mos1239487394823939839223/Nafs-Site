@@ -1,7 +1,8 @@
 import { Link } from "react-router-dom";
-import { FileClock, MessageSquare, PlayCircle } from "lucide-react";
+import { FileClock, MessageSquare, PlayCircle, User } from "lucide-react";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import { APPOINTMENT_STATUS } from "../../../lib/appointmentStatus";
+import { doctorMedicalRecordsUrl, doctorMessagesUrl, doctorHistoryUrl } from "../../../lib/doctorPatientRoutes";
 
 interface BookingDto {
   BookingId?: number | string;
@@ -130,13 +131,16 @@ export const RecentPatients = ({ patients = [], loading = false }: RecentPatient
                   </span>
 
                   <div className="flex items-center gap-1.5">
-                    <Link title={isRTL ? "عرض السجل والخطة العلاجية" : "View history and treatment plan"} to="/dashboard/doctor/history" className="grid h-9 w-9 place-items-center rounded-xl border border-[#CFE0D8] bg-white text-[#0F4C3A] hover:bg-[#EAF5F0]">
+                    <Link title={t("doctor.dashboardHome.recentPatients.viewFile")} to={doctorMedicalRecordsUrl(p.PatientId)} className="grid h-9 w-9 place-items-center rounded-xl border border-[#CFE0D8] bg-white text-[#0F4C3A] hover:bg-[#EAF5F0]">
+                      <User className="size-4" />
+                    </Link>
+                    <Link title={isRTL ? "عرض السجل" : "View history"} to={doctorHistoryUrl({ tab: "records", patientId: p.PatientId })} className="grid h-9 w-9 place-items-center rounded-xl border border-[#CFE0D8] bg-white text-[#0F4C3A] hover:bg-[#EAF5F0]">
                       <FileClock className="size-4" />
                     </Link>
-                    <Link title={isRTL ? "إرسال رسالة" : "Send message"} to={`/dashboard/doctor/messages${p.PatientId ? `?patient=${p.PatientId}` : ""}`} className="grid h-9 w-9 place-items-center rounded-xl border border-[#CFE0D8] bg-white text-[#0F4C3A] hover:bg-[#EAF5F0]">
+                    <Link title={isRTL ? "إرسال رسالة" : "Send message"} to={doctorMessagesUrl(p.PatientId, p.BookingId)} className="grid h-9 w-9 place-items-center rounded-xl border border-[#CFE0D8] bg-white text-[#0F4C3A] hover:bg-[#EAF5F0]">
                       <MessageSquare className="size-4" />
                     </Link>
-                    <Link title={isRTL ? "بدء الجلسة" : "Start session"} to="/dashboard/doctor/queue" className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#0F4C3A] px-3 text-xs font-bold text-white hover:bg-[#0A3F32]">
+                    <Link title={isRTL ? "بدء الجلسة" : "Start session"} to={doctorMessagesUrl(p.PatientId, p.BookingId)} className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#0F4C3A] px-3 text-xs font-bold text-white hover:bg-[#0A3F32]">
                       <PlayCircle className="size-4" />{isRTL ? "بدء" : "Start"}
                     </Link>
                   </div>

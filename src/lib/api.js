@@ -710,12 +710,33 @@ export const chatAPI = {
 
     const chatTypeValue =
       chatType != null && Number.isFinite(Number(chatType)) ? Number(chatType) : 2;
+    const normalizedPriority = ["urgent", "high", "critical"].includes(String(priority || "").toLowerCase())
+      ? "urgent"
+      : priority
+        ? "normal"
+        : null;
     const supportPayload = {
       ChatType: chatTypeValue,
       ...(caseType ? { CaseType: caseType, SupportCaseType: caseType } : {}),
-      ...(priority ? { Priority: priority, SupportPriority: priority, IsHighPriority: priority === "high" } : {}),
+      ...(normalizedPriority ? { Priority: normalizedPriority, SupportPriority: normalizedPriority, IsHighPriority: normalizedPriority === "urgent" } : {}),
+      CreatedAt: extraPayload.CreatedAt || new Date().toISOString(),
       ...extraPayload,
     };
+
+    const isSensitiveCase =
+      caseType === "blackmail_abuse" ||
+      caseType === "emergency" ||
+      extraPayload.IsSensitive === true ||
+      extraPayload.IsPrivate === true;
+
+    if (isSensitiveCase) {
+      supportPayload.IsSensitive = true;
+      supportPayload.NotifySupportTeam = extraPayload.NotifySupportTeam !== false;
+    }
+
+    if (caseType === "emergency") {
+      supportPayload.RequestImmediateNotify = true;
+    }
 
     try {
       const response = await api.post("/CustomerSupport/Chat", {
@@ -757,10 +778,13 @@ export const chatAPI = {
   },
 
   openBlackmailSupportChat: async (patientId, dedicatedSupportUserId = null) => {
-    return chatAPI.openPatientSupportChat(patientId, 4, "blackmail_abuse", "high", {
+    return chatAPI.openPatientSupportChat(patientId, 4, "blackmail_abuse", "urgent", {
       DedicatedSupportUserId: dedicatedSupportUserId || undefined,
       AssignedSupportUserId: dedicatedSupportUserId || undefined,
       IsPrivate: true,
+      IsSensitive: true,
+      SensitiveCase: true,
+      NotifySupportTeam: true,
       CreatedAt: new Date().toISOString(),
     });
   },
@@ -808,6 +832,65 @@ export const chatAPI = {
   markAsRead: async (roomId) => {
     const response = await api.post(`/Chat/Room/${roomId}/MarkAsRead`);
     return response.data;
+  },
+
+  updateUser: async (id, userData = {}) => {
+    const payload = {
+      Id: id,
+      UserId: id,
+      Name: userData.name || userData.Name || null,
+      Email: userData.email || userData.Email || null,
+      PhoneNumber: userData.phoneNumber || userData.PhoneNumber || null,
+      Description: userData.description || userData.Description || null,
+      Specialist: userData.specialist || userData.Specialist || null,
+      IsActive:
+        userData.isActive === undefined && userData.IsActive === undefined
+          ? undefined
+          : Boolean(userData.isActive ?? userData.IsActive),
+    };
+    const endpoints = [
+      { method: "put", url: `/Admin/User/${id}` },
+      { method: "put", url: "/Admin/UpdateUser" },
+      { method: "put", url: `/user/${id}` },
+    ];
+
+    let lastError;
+    for (const endpoint of endpoints) {
+      try {
+        const response = await api[endpoint.method](endpoint.url, payload);
+        return response.data;
+      } catch (error) {
+        lastError = error;
+        if (![404, 405].includes(Number(error?.response?.status))) break;
+      }
+    }
+    throw lastError;
+  },
+
+  updateSupportPriority: async (roomId, priority) => {
+    const isUrgent = priority === "urgent";
+    const payload = {
+      Priority: priority,
+      SupportPriority: priority,
+      IsHighPriority: isUrgent,
+    };
+    const endpoints = [
+      { method: "patch", url: `/CustomerSupport/Chat/${roomId}/Priority` },
+      { method: "patch", url: `/Chat/Room/${roomId}/Priority` },
+      { method: "post", url: `/CustomerSupport/Chat/${roomId}/Priority` },
+    ];
+
+    let lastError;
+    for (const endpoint of endpoints) {
+      try {
+        const response = await api[endpoint.method](endpoint.url, payload);
+        return response.data;
+      } catch (error) {
+        lastError = error;
+        if (![404, 405].includes(Number(error?.response?.status))) break;
+      }
+    }
+    throw lastError;
   },
 };
 

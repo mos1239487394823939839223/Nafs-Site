@@ -28,6 +28,8 @@ import {
   UserPlus,
 } from "lucide-react";
 import { customerSupportAPI, chatAPI } from "../../lib/api";
+import { useAuth } from "../../contexts/AuthContext";
+import { canStaffViewSupportRoom, isSensitiveSupportRoom } from "../../lib/supportAccess";
 import { useLanguage } from "../../contexts/LanguageContext";
 import {
   getPaymentStatusFilterOptions,
@@ -36,10 +38,11 @@ import {
 } from "../../lib/paymentStatus";
 import { getRoomCaseTypeMeta, getSupportRoomTimestamp, readLocalRoomCaseTypes, sortSupportRooms } from "../../lib/supportCaseTypes";
 import SupportCaseTag from "../../components/support/SupportCaseTag";
-import SupportPriorityTag from "../../components/support/SupportPriorityTag";
+import SupportPriorityTag, { getSupportPriority } from "../../components/support/SupportPriorityTag";
 
 export default function CustomerServiceDashboard() {
   const { t, isRTL } = useLanguage();
+  const { user, role } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
   const [activeModule, setActiveModule] = useState("manual-payments");
@@ -69,6 +72,7 @@ export default function CustomerServiceDashboard() {
   const [chatRoomsLoading, setChatRoomsLoading] = useState(false);
   const [chatRoomsSearch, setChatRoomsSearch] = useState("");
   const [chatRoomsTypeFilter, setChatRoomsTypeFilter] = useState("all");
+  const [priorityUpdatingRoomId, setPriorityUpdatingRoomId] = useState(null);
 
   const tx = (key, fallback) => {
     const value = t(key);
@@ -290,11 +294,12 @@ export default function CustomerServiceDashboard() {
           !query ||
           String(room.OtherParticipantName || room.Name || "").toLowerCase().includes(query) ||
           String(room.LastMessage || "").toLowerCase().includes(query);
-        return matchesType && matchesSearch;
+        const canView = canStaffViewSupportRoom(room, user, role, localMap);
+        return matchesType && matchesSearch && canView;
       }),
       localMap,
     );
-  }, [chatRooms, chatRoomsSearch, chatRoomsTypeFilter, isRTL]);
+  }, [chatRooms, chatRoomsSearch, chatRoomsTypeFilter, isRTL, role, user]);
 
   const moduleTabs = [
     {
@@ -332,6 +337,21 @@ export default function CustomerServiceDashboard() {
       resolved: chatRooms.filter((room) => room.IsActive === false).length,
     };
   }, [chatRooms]);
+
+  const supportTypeOverview = useMemo(() => {
+    const localMap = readLocalRoomCaseTypes();
+    const order = ["technical", "medical", "billing", "emergency", "blackmail_abuse"];
+    return order.map((key) => {
+      const sampleRoom = { SupportCaseType: key };
+      const meta = getRoomCaseTypeMeta(sampleRoom, isRTL, localMap);
+      return {
+        key,
+        label: meta.label,
+        className: meta.className,
+        count: chatRooms.filter((room) => getRoomCaseTypeMeta(room, false, localMap).key === key).length,
+      };
+    });
+  }, [chatRooms, isRTL]);
 
   const handleConfirmPayment = async (paymentItem) => {
     setActionLoadingId(paymentItem.Id);
@@ -423,6 +443,39 @@ export default function CustomerServiceDashboard() {
       toast.error(t("errors.somethingWentWrong"));
     } finally {
       setProcessingRefundId(null);
+    }
+  };
+
+  const handlePriorityChange = async (room, priority) => {
+    const roomId = room?.Id || room?.id;
+    if (!roomId) return;
+
+    const previousRooms = chatRooms;
+    const patchRoom = (item) => {
+      const itemId = item?.Id || item?.id;
+      if (String(itemId) !== String(roomId)) return item;
+      return {
+        ...item,
+        Priority: priority,
+        SupportPriority: priority,
+        IsHighPriority: priority === "urgent",
+      };
+    };
+
+    setPriorityUpdatingRoomId(roomId);
+    setChatRooms((items) => items.map(patchRoom));
+    try {
+      const response = await chatAPI.updateSupportPriority(roomId, priority);
+      if (response?.IsSuccess === false) {
+        throw new Error(response?.Message || response?.message);
+      }
+      toast.success(tx("support.priorityUpdated", "Priority updated"));
+    } catch (error) {
+      console.error("Failed to update support priority:", error);
+      setChatRooms(previousRooms);
+      toast.error(tx("support.priorityUpdateFailed", "Could not update priority"));
+    } finally {
+      setPriorityUpdatingRoomId(null);
     }
   };
 
@@ -555,6 +608,15 @@ export default function CustomerServiceDashboard() {
               <span className={`grid h-11 w-11 place-items-center rounded-2xl ${tone}`}><Icon className="h-5 w-5" /></span>
             </div>
           </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto rounded-2xl border border-border bg-background-paper p-3 shadow-sm">
+        {supportTypeOverview.map((item) => (
+          <span key={item.key} className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold ${item.className}`}>
+            {item.label}
+            <span className="rounded-full bg-white/70 px-2 py-0.5 text-[10px]">{item.count}</span>
+          </span>
         ))}
       </div>
 
@@ -1101,6 +1163,8 @@ export default function CustomerServiceDashboard() {
                 {visibleChatRooms.map((room) => {
                   const meta = getCaseTypeMeta(room);
                   const updatedAt = getSupportRoomTimestamp(room);
+                  const localMap = readLocalRoomCaseTypes();
+                  const sensitive = isSensitiveSupportRoom(room, localMap);
                   return (
                     <div
                       key={room.Id || room.id}
@@ -1114,8 +1178,10 @@ export default function CustomerServiceDashboard() {
                         }
                       }}
                       className={`p-4 rounded-[20px] flex items-center gap-4 border transition-all ${
-                        meta.priority
-                          ? "bg-red-50 border-red-300 shadow-md shadow-red-100"
+                        sensitive || meta.priority
+                          ? meta.key === "blackmail_abuse"
+                            ? "bg-rose-50 border-rose-400 shadow-md shadow-rose-100 ring-1 ring-rose-200"
+                            : "bg-red-50 border-red-300 shadow-md shadow-red-100"
                           : "bg-background-paper border-border shadow-[var(--ds-shadow-card)]"
                       } cursor-pointer hover:-translate-y-0.5 hover:border-primary/40`}
                     >
@@ -1131,6 +1197,25 @@ export default function CustomerServiceDashboard() {
                           </h4>
                           <SupportCaseTag room={room} isRTL={isRTL} localMap={readLocalRoomCaseTypes()} size="md" />
                           <SupportPriorityTag room={room} isRTL={isRTL} />
+                          <select
+                            value={getSupportPriority(room)}
+                            disabled={String(priorityUpdatingRoomId || "") === String(room.Id || room.id || "")}
+                            onClick={(event) => event.stopPropagation()}
+                            onChange={(event) => {
+                              event.stopPropagation();
+                              handlePriorityChange(room, event.target.value);
+                            }}
+                            className="h-8 rounded-lg border border-border bg-background px-2 text-[11px] font-bold text-text outline-none focus:border-primary"
+                            aria-label={tx("support.priority", "Priority")}
+                          >
+                            <option value="normal">{tx("support.normalPriority", "Normal")}</option>
+                            <option value="urgent">{tx("support.urgentPriority", "Urgent")}</option>
+                          </select>
+                          {sensitive && (
+                            <span className="rounded-full border border-rose-300 bg-rose-800 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                              {t("support.sensitiveCase", "Sensitive")}
+                            </span>
+                          )}
                           <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold ${
                             Number(room.UnreadCount) > 0
                               ? "border-amber-200 bg-amber-50 text-amber-700"

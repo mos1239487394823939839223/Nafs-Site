@@ -31,22 +31,27 @@ import { getAppointmentStatusMeta } from "../../lib/appointmentStatus";
 import {
   SESSION_DURATION_MINUTES,
   canStartPatientSession,
+  extractSlotDurationMinutes,
   findNearestAvailableFromApiSlots,
   formatDateKey as bookingFormatDateKey,
   formatNearestSlotLabel,
   getDoctorNearestSlotDate,
 } from "../../lib/patientBookingSlots";
+import { useNotifications } from "../../contexts/NotificationContext";
+import { createLocalNotification } from "../../lib/notificationUtils";
 
 const TWO_DAYS_IN_MS = 2 * 24 * 60 * 60 * 1000;
 
 export default function ReserveAppointment() {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, role } = useAuth();
+  const { addNotification } = useNotifications();
   const toast = useToast();
   const { t, isRTL, language } = useLanguage();
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const focusedBookingId = searchParams.get("bookingId");
   const initialTab =
-    searchParams.get("tab") === "status"
+    focusedBookingId || searchParams.get("tab") === "status"
       ? "status"
       : searchParams.get("tab") === "available"
       ? "available"
@@ -400,6 +405,14 @@ export default function ReserveAppointment() {
   }, [mainTab, bookingsPagination.pageIndex]);
 
   useEffect(() => {
+    if (!focusedBookingId || mainTab !== "status" || bookingsLoading) return;
+    const el = document.getElementById(`booking-${focusedBookingId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [focusedBookingId, mainTab, bookingsLoading, patientBookings]);
+
+  useEffect(() => {
     if ((mainTab !== "all" && mainTab !== "available") || step !== 2 || !selectedDoctor)
       return undefined;
     const intervalId = setInterval(() => {
@@ -411,13 +424,17 @@ export default function ReserveAppointment() {
 
   useEffect(() => {
     const nextParams = new URLSearchParams(searchParams);
+    const existingBookingId = searchParams.get("bookingId");
 
     if (mainTab === "status") {
       nextParams.set("tab", "status");
+      if (existingBookingId) nextParams.set("bookingId", existingBookingId);
     } else if (mainTab === "available") {
       nextParams.set("tab", "available");
+      nextParams.delete("bookingId");
     } else {
       nextParams.delete("tab");
+      nextParams.delete("bookingId");
     }
 
     const current = searchParams.toString();
@@ -744,16 +761,13 @@ export default function ReserveAppointment() {
             const minute = String(slotDate.getMinutes()).padStart(2, "0");
             const key = `${dateKey}-${hour}:${minute}`;
 
-            const rawDuration = Number(
-              slot.DurationMinute ?? slot.DurationMinutes ?? slot.Duration,
-            );
-            const durationMinutes =
-              Number.isFinite(rawDuration) && rawDuration > 0
-                ? rawDuration
-                : SESSION_DURATION_MINUTES;
-
             const slotEndTime =
               slot.EndTime || slot.End || slot.SessionEndTime || null;
+            const durationMinutes = extractSlotDurationMinutes(slot, {
+              startTime: slotDate,
+              endTime: slotEndTime,
+            });
+
             let endTimeKey = null;
             if (slotEndTime) {
               const endDate = new Date(slotEndTime);
@@ -1117,7 +1131,12 @@ export default function ReserveAppointment() {
 
     // Allow booking if slot is available
     if (slots[key] === "available") {
-      setBookedSlot({ date, timeKey });
+      const details = slotDetailsByKey[key];
+      setBookedSlot({
+        date,
+        timeKey,
+        durationMinutes: details?.durationMinutes ?? SESSION_DURATION_MINUTES,
+      });
       console.log("Booked slot set:", { date: dateKey, timeKey });
     }
   };
@@ -1149,10 +1168,16 @@ export default function ReserveAppointment() {
       bookingDate.setMinutes(Number.isFinite(minute) ? minute : 0);
       bookingDate.setSeconds(0);
 
+      const slotKey = `${formatDateKey(bookingDate)}-${bookedSlot.timeKey || "00:00"}`;
+      const durationMinutes =
+        Number(bookedSlot.durationMinutes) > 0
+          ? Number(bookedSlot.durationMinutes)
+          : slotDetailsByKey[slotKey]?.durationMinutes ?? SESSION_DURATION_MINUTES;
+
       const bookingRequest = {
         DoctorId: selectedDoctor.Id,
         SessionStartTime: formatDate(bookingDate),
-        DurationMinutes: SESSION_DURATION_MINUTES,
+        DurationMinutes: durationMinutes,
         PatientNotes: "Booked via Web App",
       };
 
@@ -1213,6 +1238,21 @@ export default function ReserveAppointment() {
 
         setBookingPendingReview(true);
         setStep(3);
+        const doctorLabel =
+          selectedDoctor?.Name ?? selectedDoctor?.name ?? selectedDoctor?.FullName ?? "";
+        addNotification(
+          createLocalNotification(
+            {
+              Type: "appointments",
+              Title: t("notifications.bookingCreated", "New booking created"),
+              Body: [doctorLabel, bookedSlot?.StartTime ?? bookedSlot?.startTime]
+                .filter(Boolean)
+                .join(" · "),
+              BookingId: bookingId,
+            },
+            role,
+          ),
+        );
         toast.success(
           t("auto.bookingAndPaymentRequestSubmittedSuccessfullyAndIsNowPendingReview"),
         );
@@ -1454,7 +1494,7 @@ export default function ReserveAppointment() {
       </div>
 
       {/* Tabs */}
-      <div className="sticky top-2 z-20 grid w-full grid-cols-3 gap-1 overflow-x-auto rounded-2xl border border-border bg-background-paper/95 p-1.5 shadow-[0_16px_42px_-28px_rgba(15,76,58,0.45)] backdrop-blur no-scrollbar scroll-smooth mb-6 sm:mb-8">
+      <div className="grid w-full grid-cols-3 gap-1 overflow-x-auto rounded-2xl border border-border bg-background-paper p-1.5 shadow-sm no-scrollbar scroll-smooth mb-6 sm:mb-8">
         <button
           onClick={() => { setMainTab("all"); setStep(1); setSelectedDoctor(null); setSearchParams({}); }}
           className={`min-w-max px-3 sm:px-5 md:px-8 py-3 text-[11px] sm:text-sm md:text-base font-semibold transition-all duration-300 relative whitespace-nowrap rounded-xl ${
@@ -2733,6 +2773,13 @@ export default function ReserveAppointment() {
                             >
                               {bookedSlot.date.toLocaleDateString()} -{" "}
                               {formatHourLabel(bookedSlot.timeKey)}
+                              {bookedSlot.durationMinutes ? (
+                                <span className="text-text-muted font-normal">
+                                  {" "}
+                                  ({bookedSlot.durationMinutes}{" "}
+                                  {t("common.min", "min")})
+                                </span>
+                              ) : null}
                             </p>
                           ) : (
                             <p
@@ -3388,13 +3435,20 @@ export default function ReserveAppointment() {
                   const canCancel = canCancelByStatus && Boolean(isBefore48h);
                   const canStart = canStartPatientSession(booking);
                   const bookingId = booking?.BookingId || booking?.Id;
+                  const isFocusedBooking =
+                    focusedBookingId && String(bookingId) === String(focusedBookingId);
 
                   return (
                     <Card
+                      id={`booking-${bookingId}`}
                       key={`${String(booking?.Id ?? "booking")}-${String(
                         booking?.SessionStartTime ?? bookingIndex,
                       )}-${bookingIndex}`}
-                      className="p-4 sm:p-6"
+                      className={`p-4 sm:p-6 transition-all ${
+                        isFocusedBooking
+                          ? "border-primary/60 bg-primary/5 shadow-lg shadow-primary/10 ring-2 ring-primary/20"
+                          : ""
+                      }`}
                     >
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
                         <div className="flex items-center gap-3 sm:gap-4">

@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { Clock, Play, Calendar, X as Cancel, TestTube, Eye, Timer as Duration, CreditCard as PaymentIcon } from "lucide-react";
+import { Clock, Play, Calendar, X as Cancel, TestTube, Eye, Timer as Duration, CreditCard as PaymentIcon, User, FileText, MessageSquare, History } from "lucide-react";
 import Button from "../../ui/Button";
 import Badge from "../../ui/Badge";
 import { useLanguage } from "../../../contexts/LanguageContext";
@@ -141,6 +141,50 @@ export default function QueueItem({ patient, onAction, actionLoading }) {
           isRTL ? "flex-row-reverse" : ""
         }`}
       >
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={isBusy || !patient.patientId}
+          className={`${isRTL ? "flex-row-reverse" : ""}`}
+          onClick={() => onAction("viewProfile", patient)}
+          title={t("doctor.viewProfile", "View profile")}
+        >
+          <User className="w-4 h-4" />
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={isBusy || !patient.patientId}
+          className={`${isRTL ? "flex-row-reverse" : ""}`}
+          onClick={() => onAction("viewHistory", patient)}
+          title={t("doctor.clinicalHistory", "View history")}
+        >
+          <History className="w-4 h-4" />
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={isBusy || !patient.bookingId}
+          className={`${isRTL ? "flex-row-reverse" : ""}`}
+          onClick={() => onAction("addNote", patient)}
+          title={t("doctor.addNote", "Add notes")}
+        >
+          <FileText className="w-4 h-4" />
+        </Button>
+
+        <Button
+          size="sm"
+          variant="outline"
+          disabled={isBusy || !patient.patientId}
+          className={`${isRTL ? "flex-row-reverse" : ""}`}
+          onClick={() => onAction("message", patient)}
+          title={t("chat.sendMessage", "Send message")}
+        >
+          <MessageSquare className="w-4 h-4" />
+        </Button>
+
         <Button
           size="sm"
           variant="outline"

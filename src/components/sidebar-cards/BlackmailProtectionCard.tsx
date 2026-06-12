@@ -13,6 +13,12 @@ export const BlackmailProtectionCard = ({ onClick }: { onClick?: () => void }) =
       <p className="mb-4 text-center text-xs leading-6 text-white/75">
         {t("sidebar.blackmail.desc", "نحن هنا لحمايتك. يمكنك طلب المساعدة بسرية تامة.")}
       </p>
+      <p className="mb-4 rounded-2xl border border-white/15 bg-white/5 px-3 py-2 text-center text-[10px] leading-5 text-emerald-100/90">
+        {t(
+          "sidebar.blackmail.privacyNotice",
+          "Your case is private. Only the dedicated support specialist (and authorized admin) can access it. We record the date and time your request is created.",
+        )}
+      </p>
       <button
         onClick={onClick}
         className="w-full rounded-2xl bg-[#48A868] px-4 py-3 text-sm font-bold text-white shadow-md shadow-black/10 transition-colors hover:bg-[#3f965d]"

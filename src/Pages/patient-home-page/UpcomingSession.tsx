@@ -153,7 +153,7 @@ export const UpcomingSession = ({
                 {t("patientHome.upcomingSession.enterSession")}
               </button>
               <button
-                onClick={() => navigate("/dashboard/patient/reserve")}
+                onClick={() => navigate(`/dashboard/patient/reserve?tab=status&bookingId=${encodeURIComponent(String(bookingId))}`)}
                 className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-[#DCE8E2] bg-white px-5 text-sm font-bold leading-6 text-[#4B5563] transition-colors hover:bg-[#EAF5F0]"
               >
                 <FileText className="h-4 w-4" />

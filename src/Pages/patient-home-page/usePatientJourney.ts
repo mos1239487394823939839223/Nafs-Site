@@ -235,5 +235,4 @@ export const usePatientJourney = () => {
       latestTherapistName,
     };
   }, [bookings, history, loading]);
-  }, [bookings, history, loading]);
 };

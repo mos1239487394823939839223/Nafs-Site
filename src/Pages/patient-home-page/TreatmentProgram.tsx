@@ -118,7 +118,7 @@ export const TreatmentProgram = ({
               </span>
             </div>
             <button
-              onClick={() => navigate("/dashboard/patient/tests")}
+              onClick={() => navigate("/dashboard/patient/treatment-program")}
               className="mt-5 h-12 w-full rounded-xl border border-[#DCE8E2] text-sm font-extrabold text-[#0F4C3A] transition-colors hover:bg-[#EAF5F0]"
             >
               {t("patientHome.treatmentProgram.continue")}

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Calendar as CalendarIcon, Save, Plus, Trash2, CalendarX as EventBusy, Loader2, ChevronLeft, ChevronRight, LayoutGrid, Clock, X } from "lucide-react";
+import { useSearchParams } from "react-router-dom";
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
 import Modal from "../../components/ui/Modal";
@@ -99,6 +100,7 @@ export default function Schedule() {
   const toast = useToast();
   const { user } = useAuth();
   const { t } = useLanguage();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   // Day of week mapping
   const DayOfWeekNames = [
@@ -166,6 +168,15 @@ export default function Schedule() {
 
   // Block time form
   const [isBlockModalOpen, setIsBlockModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("open") === "slot") {
+      setIsSlotModalOpen(true);
+      const next = new URLSearchParams(searchParams);
+      next.delete("open");
+      setSearchParams(next, { replace: true });
+    }
+  }, [searchParams, setSearchParams]);
   const [blockForm, setBlockForm] = useState({
     SpecificDate: "",
     StartTime: "09:00",

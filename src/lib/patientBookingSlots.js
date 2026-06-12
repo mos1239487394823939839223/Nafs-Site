@@ -1,9 +1,46 @@
 import { getAppointmentStatusKey } from "./appointmentStatus";
 
-/** Default session length for all patient bookings (minutes). */
-export const SESSION_DURATION_MINUTES = 60;
+/** Fallback when slot payload has no duration (API allows 30 or 45). */
+export const SESSION_DURATION_MINUTES = 30;
 
 const START_WINDOW_MS = 15 * 60 * 1000;
+
+const DURATION_FIELD_KEYS = [
+  "SlotDuration",
+  "slotDuration",
+  "DurationMinutes",
+  "durationMinutes",
+  "DurationMinute",
+  "Duration",
+  "duration",
+];
+
+export function extractSlotDurationMinutes(slot = {}, options = {}) {
+  for (const key of DURATION_FIELD_KEYS) {
+    const value = Number(slot?.[key]);
+    if (Number.isFinite(value) && value > 0) return value;
+  }
+
+  const start =
+    options.startTime instanceof Date
+      ? options.startTime
+      : parseSlotDate(
+          options.startTime ?? extractSlotStartTime(slot),
+        );
+  const end = parseSlotDate(
+    options.endTime ??
+      slot?.EndTime ??
+      slot?.End ??
+      slot?.SessionEndTime ??
+      slot?.SlotEnd,
+  );
+
+  if (start && end && end.getTime() > start.getTime()) {
+    return Math.round((end.getTime() - start.getTime()) / 60000);
+  }
+
+  return SESSION_DURATION_MINUTES;
+}
 
 export const extractSlotStartTime = (slot) =>
   slot?.StartTime ||
@@ -167,7 +204,12 @@ export const canStartPatientSession = (booking, now = Date.now()) => {
     ? new Date(booking.SessionEndTime).getTime()
     : NaN;
   const fallbackEnd = Number.isFinite(startTime)
-    ? startTime + SESSION_DURATION_MINUTES * 60 * 1000
+    ? startTime +
+      (Number(booking?.DurationMinutes) > 0
+        ? Number(booking.DurationMinutes)
+        : SESSION_DURATION_MINUTES) *
+        60 *
+        1000
     : NaN;
   const allowedEnd = Number.isFinite(endTime) ? endTime : fallbackEnd;
 

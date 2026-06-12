@@ -23,10 +23,11 @@ const supportCardStyles = {
 };
 
 export default function NotificationItem({ notification, onClick, onMarkAsRead, onDelete, compact = false }) {
-  const { isRTL } = useLanguage();
+  const { isRTL, t } = useLanguage();
   const style = categoryStyles[notification.category] || categoryStyles.system;
   const Icon = style.Icon;
   const date = new Date(notification.date);
+  const isEmergency = notification.category === "emergency";
   const showSupportCaseTag =
     notification.category === "support" || notification.category === "emergency";
   const supportRoom = {
@@ -56,7 +57,9 @@ export default function NotificationItem({ notification, onClick, onMarkAsRead, 
       }}
       className={`w-full text-start rounded-xl border transition-all ${
         compact ? "p-3" : "p-4"
-      } ${cardStyle} ${notification.isRead ? "opacity-70" : "ring-1 ring-current/10 shadow-sm"} cursor-pointer`}
+      } ${cardStyle} ${notification.isRead ? "opacity-70" : "ring-1 ring-current/10 shadow-sm"} ${
+        isEmergency && !notification.isRead ? "border-2 animate-pulse" : ""
+      } cursor-pointer`}
     >
       <div className="flex items-start gap-3">
         <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 ${style.className}`}>
@@ -66,6 +69,11 @@ export default function NotificationItem({ notification, onClick, onMarkAsRead, 
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0 flex flex-wrap items-center gap-2">
               <p className="font-semibold text-text-heading text-sm line-clamp-1">{notification.title}</p>
+              {isEmergency && (
+                <span className="rounded-md bg-red-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">
+                  {t("notifications.urgent", "Urgent")}
+                </span>
+              )}
               {showSupportCaseTag && (
                 <SupportCaseTag room={supportRoom} isRTL={isRTL} />
               )}
@@ -88,7 +96,7 @@ export default function NotificationItem({ notification, onClick, onMarkAsRead, 
                   className="inline-flex items-center gap-1.5 rounded-lg bg-white/70 px-2.5 py-1.5 text-[11px] font-bold text-primary hover:bg-white"
                 >
                   <Check className="h-3.5 w-3.5" />
-                  {isRTL ? "تحديد كمقروء" : "Mark as read"}
+                  {isRTL ? "تحديد كمقروء" : t("notifications.markAsRead", "Mark as read")}
                 </button>
               )}
               {onDelete && (

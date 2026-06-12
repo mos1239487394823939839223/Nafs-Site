@@ -583,6 +583,7 @@ export default {
     createdAt: "تاريخ الإنشاء",
     lastUpdated: "آخر تحديث",
     waitingReply: "بانتظار الرد",
+    sensitiveCase: "حالة حساسة",
     emergencyNewMessage: "رسالة جديدة داخل حالة دعم طارئة",
   },
 
@@ -631,6 +632,8 @@ export default {
       title: "تتعرض لابتزاز أو تهديد؟",
       desc: "نحن هنا لحمايتك. يمكنك طلب المساعدة بسرية تامة.",
       cta: "طلب حماية",
+      privacyNotice:
+        "حالتك سرية. لا يمكن الوصول إليها إلا من قبل مختص الدعم المخصص (والأدمن المصرح). نسجل تاريخ ووقت إنشاء الطلب.",
     },
     privacy: {
       title: "خصوصيتك تهمنا",
@@ -980,6 +983,15 @@ export default {
     completeNotesReminder: "أكمل ملاحظاتك بعد كل جلسة",
     // Session History
     sessionHistoryDesc: "عرض جلساتك وسجلاتك السابقة",
+    historyTabs: {
+      records: "السجلات الطبية",
+      assessments: "تقييمات المرضى",
+      statistics: "الإحصائيات",
+      statisticsHint:
+        "يتم حساب عدد الجلسات والساعات من سجل الحجوزات. السجلات والتقييمات في تبويبات منفصلة.",
+      assessmentsDesc: "توثيق الشدة والملاحظات والتوصيات بشكل منفصل عن سجل الجلسات.",
+      openAssessments: "فتح مساحة التقييمات",
+    },
     thisMonth: "هذا الشهر",
     exportCSV: "تصدير CSV",
     // Medical History
@@ -1097,6 +1109,7 @@ export default {
 
   // Admin
   admin: {
+    tests: "الاختبارات",
     userManagement: "إدارة المستخدمين",
     manageDoctorsPatients: "إدارة المعالجين والمرضى",
     addDoctor: "إضافة معالج",
@@ -1494,9 +1507,13 @@ export default {
     bookingConfirmed: "تم تأكيد الحجز",
     bookingCancelled: "تم إلغاء الحجز",
     bookingStatusUpdated: "تم تحديث حالة الحجز",
+    bookingRescheduled: "تم إعادة جدولة الحجز",
+    liveSessionStarted: "بدأت الجلسة المباشرة",
     newSupportMessage: "رسالة دعم جديدة",
     newTherapistMessage: "رسالة من المعالج",
     emergencyAlert: "تنبيه طارئ",
+    urgent: "عاجل",
+    markAsRead: "تحديد كمقروء",
     categories: {
       all: "الكل",
       appointments: "المواعيد",
@@ -1887,6 +1904,7 @@ export default {
 
   // Admin Profile
   admin: {
+    tests: "الاختبارات",
     editDetails: "تعديل البيانات",
     updateYourInfo: "تحديث معلوماتك الشخصية",
     role: "الدور",

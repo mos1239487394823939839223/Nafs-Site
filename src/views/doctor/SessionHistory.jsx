@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Download, Filter, Calendar, Loader2, ChevronLeft, ChevronRight, FileText } from "lucide-react";
+import { Download, Filter, Calendar, Loader2, ChevronLeft, ChevronRight, FileText, BarChart3, ClipboardList } from "lucide-react";
 import Button from "../../components/ui/Button";
 import SelectDropdown from "../../components/ui/SelectDropdown";
 import HistoryStats from "../../components/doctor/history/HistoryStats";
@@ -10,10 +10,14 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import Modal from "../../components/ui/Modal";
 import { useToast } from "../../components/ui/Toast";
 import { getAppointmentStatusMeta } from "../../lib/appointmentStatus";
+import { useSearchParams, Link } from "react-router-dom";
+import { doctorMedicalRecordsUrl } from "../../lib/doctorPatientRoutes";
 
 export default function SessionHistory() {
   const { t, isRTL } = useLanguage();
   const toast = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const historyTab = searchParams.get("tab") || "records";
 
   const [bookings, setBookings] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -56,6 +60,12 @@ export default function SessionHistory() {
     fetchBookings();
   }, [pageIndex, statusFilter]);
 
+  const setHistoryTab = (tab) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", tab);
+    setSearchParams(next, { replace: true });
+  };
+
   // Format booking data for display
   const formatTime = (dateTimeStr) => {
     if (!dateTimeStr) return "";
@@ -88,7 +98,8 @@ export default function SessionHistory() {
       date: formatDate(booking.SessionStartTime),
       time: formatTime(booking.SessionStartTime),
       patientName: booking.PatientName,
-      patientId: `ID-${booking.PatientId}`,
+      patientIdRaw: booking.PatientId,
+      patientId: booking.PatientId ? String(booking.PatientId) : "",
       duration: booking.DurationMinutes || 0,
       statusKey: statusInfo.key,
       outcome: statusInfo.label,
@@ -119,6 +130,24 @@ export default function SessionHistory() {
     setNoteText(session?.note || "");
     setIsNoteModalOpen(true);
   };
+
+  useEffect(() => {
+    const bookingId = searchParams.get("bookingId");
+    const action = searchParams.get("action");
+    if (action !== "note" || !bookingId || !bookings.length) return;
+    const match = bookings.find((b) => String(b.Id) === String(bookingId));
+    if (!match) return;
+    const statusInfo = getAppointmentStatusMeta(match.Status, { t, isRTL, booking: match });
+    handleOpenNoteModal({
+      id: match.Id,
+      patientName: match.PatientName,
+      patientIdRaw: match.PatientId,
+      patientId: match.PatientId ? String(match.PatientId) : "",
+      note: sessionNotes[match.Id] || "",
+      statusKey: statusInfo.key,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bookings, searchParams]);
 
   const handleSaveNote = async () => {
     if (!selectedSession?.id) return;
@@ -156,8 +185,11 @@ export default function SessionHistory() {
       setSelectedSession(session);
       setIsViewNoteModalOpen(true);
 
-      // Extract patientId from patientId field (format: "ID-123" or just the ID)
-      const patientIdValue = session.patientId?.replace(/^ID-/, '') || session.id;
+      const patientIdValue = String(session.patientIdRaw ?? session.patientId ?? "").replace(/^ID-/, "");
+      if (!patientIdValue) {
+        toast.error(t("errors.somethingWentWrong", "Something went wrong"));
+        return;
+      }
 
       const response = await medicalAPI.getPatientHistory(patientIdValue, 1, 100);
 
@@ -200,9 +232,63 @@ export default function SessionHistory() {
         </div>
       </motion.div>
 
-      {/* Stats Cards */}
-      <HistoryStats stats={stats} />
+      <div className="mb-6 flex flex-wrap gap-2">
+        {[
+          ["records", FileText, t("doctor.historyTabs.records", "Medical records")],
+          ["assessments", ClipboardList, t("doctor.historyTabs.assessments", "Patient assessments")],
+          ["statistics", BarChart3, t("doctor.historyTabs.statistics", "Statistics")],
+        ].map(([tab, Icon, label]) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setHistoryTab(tab)}
+            className={`inline-flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-bold transition-all ${
+              historyTab === tab
+                ? "border-primary bg-primary text-white shadow-md shadow-primary/20"
+                : "border-border bg-background-paper text-text-muted hover:border-primary/40 hover:text-primary"
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
+          </button>
+        ))}
+      </div>
 
+      {historyTab === "statistics" && (
+        <div className="space-y-6">
+          <HistoryStats stats={stats} />
+          <div className="rounded-2xl border border-dashed border-border bg-background-paper p-8 text-center text-sm text-text-muted">
+            {t(
+              "doctor.historyTabs.statisticsHint",
+              "Session counts and hours are calculated from your booking history. Patient records and assessments are on their own tabs.",
+            )}
+          </div>
+        </div>
+      )}
+
+      {historyTab === "assessments" && (
+        <div className="rounded-2xl border border-border bg-background-paper p-6 sm:p-8">
+          <h2 className="text-lg font-bold text-text-heading mb-2">
+            {t("doctor.historyTabs.assessments", "Patient assessments")}
+          </h2>
+          <p className="text-sm text-text-muted mb-6">
+            {t(
+              "doctor.historyTabs.assessmentsDesc",
+              "Document severity, clinical notes, and recommendations separately from session history.",
+            )}
+          </p>
+          <Link
+            to={doctorMedicalRecordsUrl(undefined, { section: "assessments" })}
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white hover:bg-primary-dark"
+          >
+            <ClipboardList className="h-4 w-4" />
+            {t("doctor.historyTabs.openAssessments", "Open assessments workspace")}
+          </Link>
+        </div>
+      )}
+
+      {historyTab === "records" && (
+        <>
       {/* Filter Bar */}
       <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-background-paper p-3 sm:p-4 rounded-xl border border-border shadow-sm">
         <div className="flex items-center gap-3 sm:gap-4">
@@ -281,6 +367,8 @@ export default function SessionHistory() {
               </Button>
             </div>
           )}
+        </>
+      )}
         </>
       )}
 

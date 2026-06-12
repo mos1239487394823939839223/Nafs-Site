@@ -1,6 +1,8 @@
 import { ArrowUpRight, Plus, Sparkles } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import heroDoctor from "../assets/hero-doctor.jpg";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import { doctorScheduleAddSlotUrl } from "../../../lib/doctorPatientRoutes";
 
 interface HeroCardProps {
   doctorName?: string;
@@ -8,6 +10,7 @@ interface HeroCardProps {
 
 export const HeroCard = ({ doctorName }: HeroCardProps) => {
   const { t, isRTL } = useLanguage();
+  const navigate = useNavigate();
 
   return (
     <section className="relative mb-7 overflow-hidden rounded-[30px] border border-[#DCE8E2] shadow-[0_18px_50px_-30px_rgba(15,76,58,0.35)]">
@@ -34,6 +37,7 @@ export const HeroCard = ({ doctorName }: HeroCardProps) => {
           <div>
             <button
               type="button"
+              onClick={() => navigate(doctorScheduleAddSlotUrl())}
               className="inline-flex items-center gap-2 rounded-2xl bg-[#0F4C3A] px-6 py-3.5 text-sm font-bold text-white shadow-lg shadow-[#0F4C3A]/20 hover:-translate-y-0.5 hover:bg-[#0A3F32]"
             >
               <Plus className="size-4" />

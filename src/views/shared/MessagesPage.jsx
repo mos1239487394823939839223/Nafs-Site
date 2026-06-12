@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth, Roles } from '../../contexts/AuthContext'
 import { chatAPI, filesAPI, MessageType, userAPI } from '../../lib/api'
@@ -11,6 +11,8 @@ const SupportAgent = Headphones
 import { useToast } from '../../components/ui/Toast'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { startChatConnection } from '../../lib/signalr'
+import { setActiveChatRoomForNotifications } from '../../lib/notificationUtils'
+import { canStaffViewSupportRoom } from '../../lib/supportAccess'
 import { getRoomCaseTypeMeta, sortSupportRooms } from '../../lib/supportCaseTypes'
 import { applySupportLifecycleToRooms, getSupportConversationStatus, readSupportArchiveMeta } from '../../lib/supportChatLifecycle'
 import SupportCaseTag from '../../components/support/SupportCaseTag'
@@ -307,6 +309,7 @@ export default function MessagesPage() {
   const { user, role } = useAuth()
   const { t, isRTL } = useLanguage()
   const toast = useToast()
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const initialRoomId = searchParams.get('room')
@@ -328,6 +331,7 @@ export default function MessagesPage() {
   const [supportRoomLoading, setSupportRoomLoading] = useState(false)
   const [directMessageOpen, setDirectMessageOpen] = useState(false)
   const [messagesLoading, setMessagesLoading] = useState(false)
+  const [messagesError, setMessagesError] = useState('')
   const [messageSending, setMessageSending] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [roomTypeFilter, setRoomTypeFilter] = useState('all')
@@ -342,7 +346,7 @@ export default function MessagesPage() {
   })
   const [ticketOpen, setTicketOpen] = useState(false)
   const [ticketSubmitting, setTicketSubmitting] = useState(false)
-  const [ticketForm, setTicketForm] = useState({ title: '', description: '', priority: 'medium', attachments: [] })
+  const [ticketForm, setTicketForm] = useState({ title: '', description: '', priority: 'normal', attachments: [] })
   const [localRoomCaseTypes, setLocalRoomCaseTypes] = useState(() => {
     try {
       const parsed = JSON.parse(localStorage.getItem(ROOM_CASE_KEY) || '{}')
@@ -472,9 +476,21 @@ export default function MessagesPage() {
   useEffect(() => {
     if (pendingRoomId && rooms.length > 0 && !activeRoom) {
       const match = rooms.find((r) => String(r.Id || r.id) === String(pendingRoomId))
-      if (match) setActiveRoom(match)
+      if (match) {
+        setActiveRoom(match)
+        return
+      }
+      setActiveRoom({
+        Id: pendingRoomId,
+        OtherParticipantName: contactType === 'support' ? t('chat.technicalTeam', 'Technical Support') : t('chat.newConversation', 'Conversation'),
+        OtherParticipantRole: contactType === 'support' ? 'support' : 'user',
+        LastMessage: '',
+        LastMessageAt: new Date().toISOString(),
+        UnreadCount: 0,
+        SupportCaseType: supportCaseType || localRoomCaseTypes[String(pendingRoomId)] || undefined,
+      })
     }
-  }, [rooms, pendingRoomId, activeRoom])
+  }, [rooms, pendingRoomId, activeRoom, contactType, localRoomCaseTypes, supportCaseType, t])
 
   useEffect(() => {
     if (activeRoom || rooms.length === 0 || pendingRoomId) return
@@ -508,6 +524,12 @@ export default function MessagesPage() {
       const normalizedRooms = enrichRoomsWithSupportMeta(
         applySupportLifecycleToRooms(incomingRooms, localRoomCaseTypes),
       )
+      const visibleRooms =
+        role === Roles.STAFF
+          ? normalizedRooms.filter((room) =>
+              canStaffViewSupportRoom(room, user, role, localRoomCaseTypes),
+            )
+          : normalizedRooms
 
       const activeRoomId = String(activeRoomRef.current?.Id || activeRoomRef.current?.id || '')
       const activeRole = String(activeRoomRef.current?.OtherParticipantRole || '').toLowerCase()
@@ -523,11 +545,11 @@ export default function MessagesPage() {
         role === Roles.PATIENT &&
         activeRoomId &&
         activeRoomKnownAsSupport &&
-        !normalizedRooms.some((room) => String(room?.Id || room?.id || '') === activeRoomId)
+        !visibleRooms.some((room) => String(room?.Id || room?.id || '') === activeRoomId)
 
       logSupportDebug('fetchRooms:result', {
         incomingCount: incomingRooms.length,
-        normalizedCount: normalizedRooms.length,
+        normalizedCount: visibleRooms.length,
         activeRoomId,
         activeRole,
         activeRoomKnownAsSupport,
@@ -548,10 +570,10 @@ export default function MessagesPage() {
             LastMessageAt: activeRoomRef.current?.LastMessageAt || new Date().toISOString(),
             UnreadCount: activeRoomRef.current?.UnreadCount || 0,
           },
-          ...normalizedRooms,
+          ...visibleRooms,
         ])
       } else {
-        setRooms(normalizedRooms)
+        setRooms(visibleRooms)
       }
     } catch (error) {
       logSupportDebug('fetchRooms:error', {
@@ -563,7 +585,7 @@ export default function MessagesPage() {
     } finally {
       setLoading(false)
     }
-  }, [enrichRoomsWithSupportMeta, localRoomCaseTypes, role, t])
+  }, [enrichRoomsWithSupportMeta, localRoomCaseTypes, role, t, user])
 
   // ── Fetch Messages ──────────────────────────────────────────────────────────
   const fetchLatestMessages = useCallback(async (roomId) => {
@@ -672,6 +694,7 @@ export default function MessagesPage() {
     const run = (async () => {
       if (!silent) setMessagesLoading(true)
       try {
+        if (!silent) setMessagesError('')
         const msgs = await fetchLatestMessages(roomKey)
         if (silent) {
           setMessages((prev) => mergeMessages(prev, msgs))
@@ -682,6 +705,7 @@ export default function MessagesPage() {
         await chatAPI.markAsRead(roomKey).catch(() => {})
       } catch (error) {
         console.error('Failed to fetch messages:', error)
+        if (!silent) setMessagesError(error?.message || t('errors.loadFailed', 'Failed to load messages'))
       } finally {
         if (!silent) setMessagesLoading(false)
       }
@@ -693,7 +717,7 @@ export default function MessagesPage() {
     } finally {
       messagesFetchInFlightRef.current.delete(roomKey)
     }
-  }, [fetchLatestMessages])
+  }, [fetchLatestMessages, t])
 
   const debouncedFetchRooms = useCallback(() => {
     if (debouncedFetchRoomsTimerRef.current) clearTimeout(debouncedFetchRoomsTimerRef.current)
@@ -833,6 +857,11 @@ export default function MessagesPage() {
 
   const activeRoomId = String(activeRoom?.Id || activeRoom?.id || '')
 
+  useEffect(() => {
+    setActiveChatRoomForNotifications(activeRoomId || null)
+    return () => setActiveChatRoomForNotifications(null)
+  }, [activeRoomId])
+
   // ── Polling fallback: catch messages SignalR might miss ─────────────────────
   useEffect(() => {
     if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current)
@@ -943,6 +972,8 @@ export default function MessagesPage() {
     ].filter((value) => value !== undefined && value !== null)
     return {
       id: room.Id || room.id,
+      bookingId: room.BookingId || room.bookingId || room.ActiveBookingId || room.activeBookingId || null,
+      rawRoom: room,
       participant: {
         name: participant.name,
         avatar: participant.image,
@@ -979,6 +1010,26 @@ export default function MessagesPage() {
       ],
     }
     : currentConversation
+
+  const handleStartMeeting = useCallback((conversation) => {
+    const bookingId =
+      conversation?.bookingId ||
+      activeRoomRef.current?.BookingId ||
+      activeRoomRef.current?.bookingId ||
+      activeRoomRef.current?.ActiveBookingId ||
+      activeRoomRef.current?.activeBookingId
+
+    if (!bookingId) {
+      toast.warning(t('chat.noLinkedBooking', 'No active booking is linked to this conversation.'))
+      return
+    }
+
+    navigate(`/dashboard/patient/meeting/${bookingId}`, {
+      state: {
+        session: activeRoomRef.current,
+      },
+    })
+  }, [navigate, t, toast])
 
   const filteredByContactType = isPatient
     ? rooms.filter((room) => {
@@ -1097,7 +1148,7 @@ export default function MessagesPage() {
     try {
       logSupportDebug('openSupportChat:start')
       const chatType = CASE_TYPE_CHAT_TYPE_MAP[supportCaseType] ?? 2
-      const priority = supportCaseType === 'emergency' || supportCaseType === 'blackmail_abuse' ? 'high' : null
+      const priority = supportCaseType === 'emergency' || supportCaseType === 'blackmail_abuse' ? 'urgent' : null
       const supportResponse = await chatAPI.openPatientSupportChat(currentUserId, chatType, supportCaseType, priority)
       logSupportDebug('openSupportChat:response', supportResponse)
       const supportSuccess = supportResponse?.IsSuccess ?? supportResponse?.isSuccess
@@ -1240,7 +1291,7 @@ export default function MessagesPage() {
     setTicketSubmitting(true)
     try {
       const sensitive = supportCaseType === 'emergency' || supportCaseType === 'blackmail_abuse'
-      const priority = sensitive ? 'high' : ticketForm.priority
+      const priority = sensitive ? 'urgent' : ticketForm.priority
       const chatType = CASE_TYPE_CHAT_TYPE_MAP[supportCaseType] ?? 2
       const response = await chatAPI.openPatientSupportChat(currentUserId, chatType, supportCaseType, priority, {
         Title: title,
@@ -1266,7 +1317,7 @@ export default function MessagesPage() {
       }
       await fetchRooms()
       setTicketOpen(false)
-      setTicketForm({ title: '', description: '', priority: 'medium', attachments: [] })
+      setTicketForm({ title: '', description: '', priority: 'normal', attachments: [] })
       toast.success(t('chat.ticketCreated', 'Support ticket created successfully.'))
     } catch (error) {
       console.error('Failed to create support ticket:', error)
@@ -1598,6 +1649,20 @@ export default function MessagesPage() {
                 <p className="text-sm text-text-muted">{t('chat.loadingMessages', 'Loading messages...')}</p>
               </div>
             </div>
+          ) : messagesError ? (
+            <div className="flex-1 flex items-center justify-center p-8 text-center">
+              <div className="max-w-sm">
+                <AlertTriangle className="mx-auto mb-3 h-10 w-10 text-amber-600" />
+                <h3 className="text-lg font-bold text-text-heading">{t('chat.messagesLoadFailed', 'Messages could not be loaded')}</h3>
+                <p className="mt-2 text-sm leading-6 text-text-muted">{messagesError}</p>
+                <button
+                  onClick={() => fetchMessages(activeRoomId, { force: true })}
+                  className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-bold text-white hover:bg-primary-dark"
+                >
+                  {t('common.retry', 'Retry')}
+                </button>
+              </div>
+            </div>
           ) : (
             <ChatWindow
               conversation={safeConversation}
@@ -1608,6 +1673,7 @@ export default function MessagesPage() {
               sending={messageSending}
               onToggleDetails={() => setShowDetailsPanel(prev => !prev)}
               showDetails={showDetailsPanel}
+              onStartMeeting={handleStartMeeting}
             />
           )
         ) : (
@@ -1731,7 +1797,7 @@ export default function MessagesPage() {
                         <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] uppercase ${
                           caseMeta.priority ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-800'
                         }`}>
-                          {caseMeta.priority ? t('support.highPriority', 'High') : t('support.normalPriority', 'Normal')}
+                          {caseMeta.priority ? t('support.urgentPriority', 'Urgent') : t('support.normalPriority', 'Normal')}
                         </span>
                       </div>
                     </div>
@@ -1833,14 +1899,13 @@ export default function MessagesPage() {
               <label className="grid gap-2 text-sm font-bold text-text-heading">
                 {t('chat.priority', 'Priority')}
                 <select
-                  value={supportCaseType === 'emergency' || supportCaseType === 'blackmail_abuse' ? 'high' : ticketForm.priority}
+                  value={supportCaseType === 'emergency' || supportCaseType === 'blackmail_abuse' ? 'urgent' : ticketForm.priority}
                   disabled={supportCaseType === 'emergency' || supportCaseType === 'blackmail_abuse'}
                   onChange={(event) => setTicketForm((prev) => ({ ...prev, priority: event.target.value }))}
                   className="h-12 rounded-xl border border-border bg-background-subtle px-3 text-sm outline-none focus:border-primary focus:ring-4 focus:ring-primary/10 disabled:opacity-70"
                 >
-                  <option value="low">{t('support.lowPriority', 'Low Priority')}</option>
-                  <option value="medium">{t('support.mediumPriority', 'Medium Priority')}</option>
-                  <option value="high">{t('support.highPriority', 'High Priority')}</option>
+                  <option value="normal">{t('support.normalPriority', 'Normal')}</option>
+                  <option value="urgent">{t('support.urgentPriority', 'Urgent')}</option>
                 </select>
               </label>
             </div>
