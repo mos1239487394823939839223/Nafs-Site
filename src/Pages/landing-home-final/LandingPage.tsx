@@ -7,7 +7,6 @@ import { Doctors } from "./components/Doctors";
 import { Assessment } from "./components/Assessment";
 import { Stats } from "./components/Stats";
 import { Testimonials } from "./components/Testimonials";
-import { FinalCTA } from "./components/FinalCTA";
 import { Footer } from "./components/Footer";
 import { ChatBubble } from "./components/ChatBubble";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -17,7 +16,7 @@ const LandingPage = () => {
   const isAr = language === "ar";
 
   return (
-    <div dir={isAr ? "rtl" : "ltr"} className="landing-shell min-h-screen overflow-hidden bg-background">
+    <div dir={isAr ? "rtl" : "ltr"} className="landing-shell min-h-screen overflow-hidden bg-white">
       <Navbar />
       <Hero />
       <main>
@@ -28,7 +27,6 @@ const LandingPage = () => {
         <Assessment />
         <Stats />
         <Testimonials />
-        <FinalCTA />
       </main>
       <Footer />
       <ChatBubble />

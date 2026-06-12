@@ -1,107 +1,116 @@
 import { Logo } from "./Logo";
-import { Phone, Mail, MapPin } from "lucide-react";
+import { Mail, MapPin, Phone } from "lucide-react";
 import { useLanguage } from "../../../contexts/LanguageContext";
 
-const IconInstagram = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4">
-    <rect width="20" height="20" x="2" y="2" rx="5" ry="5" /><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" /><line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
-  </svg>
-);
-const IconTwitterX = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L2.25 2.25h6.888l4.261 5.632 4.845-5.632zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-  </svg>
-);
-const IconFacebook = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-  </svg>
-);
-const IconLinkedin = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="h-4 w-4">
-    <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 0 1-2.063-2.065 2.064 2.064 0 1 1 2.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-  </svg>
-);
+const socialIcons = [
+  {
+    label: "Instagram",
+    path: (
+      <>
+        <rect width="20" height="20" x="2" y="2" rx="5" ry="5" />
+        <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+        <line x1="17.5" x2="17.51" y1="6.5" y2="6.5" />
+      </>
+    ),
+  },
+  {
+    label: "Twitter",
+    path: <path d="M4 4l11.7 16h4.1L8.1 4H4zm15.8 0L4 20h3.2L23 4h-3.2z" />,
+  },
+  {
+    label: "Facebook",
+    path: <path d="M14 8h3V4h-3c-3 0-5 2-5 5v3H6v4h3v4h4v-4h3l1-4h-4V9c0-.6.4-1 1-1z" />,
+  },
+  {
+    label: "LinkedIn",
+    path: (
+      <>
+        <path d="M6.5 10H3v10h3.5V10zM4.75 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4z" />
+        <path d="M10 10h3.4v1.4h.1c.5-.9 1.7-1.8 3.4-1.8 3.6 0 4.1 2.3 4.1 5.3V20h-3.5v-4.6c0-1.1 0-2.5-1.6-2.5s-1.9 1.2-1.9 2.4V20H10V10z" />
+      </>
+    ),
+  },
+];
 
 export const Footer = () => {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const isAr = language === "ar";
-
-  const quickLinks = [
-    { key: "landing.footer.home", href: "#home" },
-    { key: "landing.footer.services", href: "#services" },
-    { key: "landing.footer.doctors", href: "#doctors" },
-    { key: "landing.footer.articles", href: "#" },
-  ];
-  const supportLinks = [
-    { key: "landing.footer.faq", href: "#" },
-    { key: "landing.footer.privacy", href: "#" },
-    { key: "landing.footer.terms", href: "#" },
-    { key: "landing.footer.contactUs", href: "#" },
-  ];
+  const quickLinks = isAr ? ["الرئيسية", "الخدمات", "الدكاترة", "المقالات"] : ["Home", "Services", "Doctors", "Articles"];
+  const supportLinks = isAr
+    ? ["الأسئلة الشائعة", "سياسة الخصوصية", "الشروط والأحكام"]
+    : ["FAQ", "Privacy policy", "Terms and conditions"];
 
   return (
-  <footer dir={isAr ? "rtl" : "ltr"} className="border-t border-white/10 bg-[#092F26] text-white">
-    <div className="container mx-auto grid gap-8 px-4 py-14 sm:grid-cols-2 md:grid-cols-[1fr_1fr_1fr_1.35fr] md:py-16">
-      {/* Contact */}
-      <div className="text-start sm:text-end">
-        <h4 className="mb-4 text-base font-black text-white">{t("landing.footer.contact")}</h4>
-        <ul className="space-y-3 text-sm text-white/60">
-          <li className="flex items-center sm:justify-end gap-2">
-            <Phone className="h-4 w-4 text-brand sm:hidden" />
-            <span>{t("landing.footer.phone")}</span>
-            <Phone className="h-4 w-4 text-brand hidden sm:inline" />
-          </li>
-          <li className="flex items-center sm:justify-end gap-2">
-            <Mail className="h-4 w-4 text-brand sm:hidden" />
-            <span className="break-all">{t("landing.footer.email")}</span>
-            <Mail className="h-4 w-4 text-brand hidden sm:inline" />
-          </li>
-          <li className="flex items-center sm:justify-end gap-2">
-            <MapPin className="h-4 w-4 text-brand sm:hidden" />
-            <span>{t("landing.footer.location")}</span>
-            <MapPin className="h-4 w-4 text-brand hidden sm:inline" />
-          </li>
-        </ul>
-      </div>
-      {/* Support */}
-      <div className="text-start sm:text-end">
-        <h4 className="mb-4 text-base font-black text-white">{t("landing.footer.supportHelp")}</h4>
-        <ul className="space-y-3 text-sm text-white/60">
-          {supportLinks.map(({ key, href }) => (
-            <li key={key}><a href={href} className="transition hover:text-emerald-200">{t(key)}</a></li>
-          ))}
-        </ul>
-      </div>
-      {/* Quick links */}
-      <div className="text-start sm:text-end">
-        <h4 className="mb-4 text-base font-black text-white">{t("landing.footer.quickLinks")}</h4>
-        <ul className="space-y-3 text-sm text-white/60">
-          {quickLinks.map(({ key, href }) => (
-            <li key={key}><a href={href} className="transition hover:text-emerald-200">{t(key)}</a></li>
-          ))}
-        </ul>
-      </div>
-      {/* Brand */}
-      <div className="text-start sm:text-end">
-        <Logo />
-        <p className="mt-4 text-sm font-medium leading-7 text-white/60">
-          {t("landing.footer.tagline")}
-        </p>
-        <div className="mt-4 flex items-center gap-3 justify-start sm:justify-end">
-          <a href="#" aria-label="Instagram" className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-white/70 hover:-translate-y-1 hover:bg-white hover:text-[#0F4C3A]"><IconInstagram /></a>
-          <a href="#" aria-label="Twitter" className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-white/70 hover:-translate-y-1 hover:bg-white hover:text-[#0F4C3A]"><IconTwitterX /></a>
-          <a href="#" aria-label="Facebook" className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-white/70 hover:-translate-y-1 hover:bg-white hover:text-[#0F4C3A]"><IconFacebook /></a>
-          <a href="#" aria-label="LinkedIn" className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-white/70 hover:-translate-y-1 hover:bg-white hover:text-[#0F4C3A]"><IconLinkedin /></a>
+    <footer dir={isAr ? "rtl" : "ltr"} className="border-t border-[#E8EEE9] bg-white">
+      <div className="container mx-auto grid gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-[1.35fr_1fr_1fr_1fr]">
+        <div className="text-start">
+          <Logo />
+          <p className="mt-4 max-w-xs text-sm font-semibold leading-7 text-[#63776F]">
+            {isAr
+              ? "نفس منصة دعم نفسي تساعدك على فهم نفسك والتحدث مع متخصصين في بيئة آمنة."
+              : "Nafas is a mental support platform for understanding yourself and speaking with specialists in a safe space."}
+          </p>
+          <div className="mt-5 flex gap-3">
+            {socialIcons.map((icon) => (
+              <a
+                key={icon.label}
+                href="#"
+                className="grid h-9 w-9 place-items-center rounded-full border border-[#E4ECE8] text-[#7AA797] hover:bg-[#F7FAF8] hover:text-[#0F6A52]"
+                aria-label={icon.label}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill={icon.label === "Instagram" ? "none" : "currentColor"}
+                  stroke={icon.label === "Instagram" ? "currentColor" : "none"}
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="h-4 w-4"
+                >
+                  {icon.path}
+                </svg>
+              </a>
+            ))}
+          </div>
+        </div>
+
+        <div className="text-start">
+          <h4 className="mb-4 text-base font-black text-[#17483A]">{isAr ? "روابط سريعة" : "Quick links"}</h4>
+          <ul className="space-y-3 text-sm font-semibold text-[#63776F]">
+            {quickLinks.map((link) => (
+              <li key={link}>
+                <a href="#" className="hover:text-[#0F6A52]">{link}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="text-start">
+          <h4 className="mb-4 text-base font-black text-[#17483A]">{isAr ? "الدعم والمساعدة" : "Support"}</h4>
+          <ul className="space-y-3 text-sm font-semibold text-[#63776F]">
+            {supportLinks.map((link) => (
+              <li key={link}>
+                <a href="#" className="hover:text-[#0F6A52]">{link}</a>
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="text-start">
+          <h4 className="mb-4 text-base font-black text-[#17483A]">{isAr ? "تواصل معنا" : "Contact us"}</h4>
+          <ul className="space-y-3 text-sm font-semibold text-[#63776F]">
+            <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-[#7AA797]" />010 1234 5678</li>
+            <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-[#7AA797]" />info@nafas.com</li>
+            <li className="flex items-center gap-2"><MapPin className="h-4 w-4 text-[#7AA797]" />{isAr ? "القاهرة، مصر" : "Cairo, Egypt"}</li>
+          </ul>
         </div>
       </div>
-    </div>
-    <div className="border-t border-white/10">
-      <p className="container mx-auto px-4 py-5 text-center text-xs text-white/45">
-        {t("landing.footer.rights")}
-      </p>
-    </div>
-  </footer>
+      <div className="border-t border-[#E8EEE9]">
+        <p className="container mx-auto px-4 py-5 text-center text-xs font-semibold text-[#7D8E87]">
+          {isAr ? "جميع الحقوق محفوظة © 2026 نفس" : "All rights reserved © 2026 Nafas"}
+        </p>
+      </div>
+    </footer>
   );
 };
-
