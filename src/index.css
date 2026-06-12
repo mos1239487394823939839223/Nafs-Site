@@ -466,10 +466,7 @@ a {
   --landing-ink: #153c30;
   --landing-muted: #647d73;
   --landing-line: rgba(15, 76, 58, 0.12);
-  background:
-    radial-gradient(circle at 8% 15%, rgba(124, 201, 161, 0.10), transparent 24rem),
-    radial-gradient(circle at 92% 42%, rgba(215, 154, 22, 0.08), transparent 22rem),
-    var(--color-background);
+  background: #ffffff;
 }
 .landing-section-title { color: var(--landing-ink); font-weight: 900; letter-spacing: -0.035em; line-height: 1.18; }
 .landing-card { border: 1px solid var(--landing-line); background: rgba(255,255,255,.86); box-shadow: 0 24px 60px -44px rgba(15,76,58,.45); backdrop-filter: blur(12px); }

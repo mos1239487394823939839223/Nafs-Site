@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { LockKeyhole, PhoneCall, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import { landingBtnMd } from "../landingButtonStyles";
 
 export const EmergencyBand = () => {
   const navigate = useNavigate();
@@ -11,13 +12,13 @@ export const EmergencyBand = () => {
     {
       icon: LockKeyhole,
       title: isAr ? "شعرت بخطر؟" : "Feeling unsafe?",
-      desc: isAr ? "لا تتردد. اطلب المساعدة الآن وسنساندك أولًا." : "Do not hesitate. Ask for support and we will help you first.",
+      desc: isAr ? "لا تتردد، اطلب المساعدة الآن، سلامتك أولاً." : "Do not hesitate. Ask for help now — your safety comes first.",
       cta: isAr ? "طلب مساعدة" : "Ask for help",
       primary: false,
     },
     {
       icon: PhoneCall,
-      title: isAr ? "اتصل للطوارئ" : "Emergency call",
+      title: isAr ? "اتصل للطوارئ!" : "Emergency call",
       desc: isAr ? "تحدث مع مختص فورًا بشكل سري وآمن." : "Speak with a specialist immediately, privately and safely.",
       cta: isAr ? "اتصال طارئ" : "Emergency call",
       primary: true,
@@ -33,7 +34,8 @@ export const EmergencyBand = () => {
 
   return (
     <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-12 md:py-16">
-      <div className="rounded-md bg-[#F5F9F6] px-5 py-10 md:px-10">
+      <div className="mx-auto w-full max-w-6xl rounded-md border border-[#E8EEE9] bg-[#F5F7F2] px-5 py-10 md:px-10">
+ 
         <h2 className="text-center text-2xl font-black text-[#17483A] md:text-3xl">
           {isAr ? "محتاجة مساعدة الآن؟ نحن هنا من أجلك" : "Need help now? We are here for you"}
         </h2>
@@ -42,24 +44,32 @@ export const EmergencyBand = () => {
           {items.map(({ icon: Icon, title, desc, cta, primary }) => (
             <article
               key={title}
-              className={`rounded-md border bg-white p-7 text-center ${
-                primary ? "border-[#D6E3DD] shadow-[0_16px_38px_-32px_rgba(15,76,58,.4)]" : "border-transparent bg-transparent"
+              dir={isAr ? "rtl" : "ltr"}
+              className={`rounded-md p-7 ${
+                primary
+                  ? "border border-[#D6E3DD] bg-white shadow-[0_16px_38px_-32px_rgba(15,76,58,.4)]"
+                  : ""
               }`}
             >
-              <Icon className="mx-auto h-12 w-12 text-[#7AA797]" strokeWidth={1.7} />
-              <h3 className="mt-5 text-lg font-black text-[#17483A]">{title}</h3>
-              <p className="mx-auto mt-3 max-w-[230px] text-sm font-semibold leading-7 text-[#63776F]">{desc}</p>
-              <Button
-                onClick={() => navigate("/auth/login")}
-                variant={primary ? "default" : "outline"}
-                className={`mt-6 h-11 rounded-md px-8 font-bold ${
-                  primary
-                    ? "bg-[#0F6A52] text-white shadow-none hover:bg-[#0B5643]"
-                    : "border-[#C9D9D1] bg-white text-[#17483A] hover:bg-[#F7FAF8]"
-                }`}
-              >
-                {cta}
-              </Button>
+              <div className="flex items-center gap-6 md:gap-8">
+                <Icon
+                  className="h-12 w-12 shrink-0 text-[#7AA797] md:h-14 md:w-14"
+                  strokeWidth={1.5}
+                />
+                <div className="min-w-0 flex-1 text-start">
+                  <h3 className="text-lg font-black leading-snug text-[#17483A]">{title}</h3>
+                  <p className="mt-2 text-sm font-semibold leading-7 text-[#63776F]">{desc}</p>
+                </div>
+              </div>
+              <div className="mt-6 flex justify-center">
+                <Button
+                  onClick={() => navigate("/auth/login")}
+                  variant="outline"
+                  className={landingBtnMd}
+                >
+                  {cta}
+                </Button>
+              </div>
             </article>
           ))}
         </div>

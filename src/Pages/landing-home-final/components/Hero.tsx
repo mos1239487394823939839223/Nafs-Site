@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import { heroBg } from "../assets";
+import { landingBtnLg } from "../landingButtonStyles";
 
 export const Hero = () => {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ export const Hero = () => {
   return (
     <section
       id="home"
-      className="relative overflow-hidden bg-[#F7FAF8] pb-[52px]"
+      className="relative overflow-hidden bg-white pb-[52px]"
       style={{
         backgroundImage: `url(${heroBg})`,
         backgroundSize: "cover",
@@ -24,8 +25,8 @@ export const Hero = () => {
         aria-hidden
         className={`pointer-events-none absolute inset-0 ${
           isAr
-            ? "bg-gradient-to-l  via-[#F7FAF8]/60 to-[#F7FAF8]/95"
-            : "bg-gradient-to-r  via-[#F7FAF8]/60 to-[#F7FAF8]/95"
+            ? "bg-gradient-to-l  via-white/60 to-white/95"
+            : "bg-gradient-to-r  via-white/60 to-white/95"
         }`}
       />
 
@@ -37,7 +38,7 @@ export const Hero = () => {
       */}
       <div
         dir="ltr"
-        className="relative mx-auto grid max-w-screen-xl grid-cols-1 min-h-[420px] items-center lg:grid-cols-2"
+        className="relative mx-auto grid max-w-screen-xl grid-cols-1 min-h-[500px] items-center lg:grid-cols-2"
       >
         {/* ── TEXT COLUMN – left side ── */}
         <div
@@ -73,14 +74,15 @@ export const Hero = () => {
           >
             <Button
               onClick={() => navigate("/auth/role-selection")}
-              className="h-12 rounded-xl bg-[#0F5C43] px-8 text-[15px] font-bold text-white shadow-none hover:bg-[#0b4e38]"
+              variant="outline"
+              className={landingBtnLg}
             >
               {isAr ? "احجز جلسة الآن" : "Book a Session"}
             </Button>
             <Button
               onClick={() => navigate("/auth/login")}
               variant="outline"
-              className="h-12 rounded-xl border-[#0F5C43] bg-white px-8 text-[15px] font-bold text-[#0F5C43] hover:bg-[#EDF4F1]"
+              className={landingBtnLg}
             >
               {isAr ? "تقييم نفسي مجاني" : "Free Assessment"}
             </Button>
@@ -88,7 +90,7 @@ export const Hero = () => {
         </div>
 
         {/* ── RIGHT COLUMN – transparent, image shows through background ── */}
-        <div className="hidden lg:block min-h-[420px]" />
+        <div className="hidden lg:block min-h-[500px]" />
       </div>
     </section>
   );

@@ -1,4 +1,5 @@
 export { default as assessmentIllustration } from "./assessment-illustration.jpg";
+export { default as assessmentSkill } from "./assessment-skill2.png";
 export { default as heroBg } from "./hero-bg.png";
 export { default as heroArmchair } from "./hero-armchair.jpg";
 export { default as doctor1 } from "./doctor-1.jpg";

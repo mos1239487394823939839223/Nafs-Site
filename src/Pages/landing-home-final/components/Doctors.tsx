@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import { patientAPI } from "../../../lib/api";
 import { doctor1, doctor2, doctor3, doctor4 } from "../assets";
+import { landingBtnBlock } from "../landingButtonStyles";
 
 interface DoctorDto {
   Id: number;
@@ -63,15 +64,15 @@ export const Doctors = () => {
           {visibleDoctors.map((doc) => {
             const specialty = Array.isArray(doc.Specialist) ? doc.Specialist.join(" | ") : doc.Specialist || "";
             return (
-              <article key={doc.Id} className="overflow-hidden rounded-md border border-[#E4ECE8] bg-white text-center">
-                <div className="h-44 bg-[#F1F5F2]">
+              <article key={doc.Id} className="overflow-hidden rounded-xl border border-[#E4ECE8] bg-white text-center">
+                <div className="h-52 bg-neutral-100">
                   {doc.Image ? (
                     <img src={doc.Image} alt={doc.Name} className="h-full w-full object-cover" />
                   ) : (
                     <span className="grid h-full place-items-center text-3xl font-black text-[#0F6A52]">{doc.Name?.charAt(0) || "د"}</span>
                   )}
                 </div>
-                <div className="p-5">
+                <div className="p-5 rounded-t-xl">
                   <h3 className="text-base font-black text-[#17483A]">{doc.Name}</h3>
                   <p className="mt-2 min-h-5 text-sm font-semibold text-[#63776F]">{specialty}</p>
                   <div className="mt-3 flex items-center justify-center gap-1 text-sm font-bold text-[#17483A]">
@@ -84,11 +85,12 @@ export const Doctors = () => {
                   <Button
                     onClick={() => navigate("/auth/login")}
                     variant="outline"
-                    className="mt-4 h-10 w-full rounded-md border-[#AFC6BC] bg-white font-bold text-[#17483A] hover:bg-[#F7FAF8]"
+                    className={`mt-4 ${landingBtnBlock}`}
                   >
                     {isAr ? "احجز الآن" : "Book now"}
                   </Button>
                 </div>
+           
               </article>
             );
           })}

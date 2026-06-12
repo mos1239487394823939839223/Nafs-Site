@@ -19,7 +19,7 @@ const LandingPage = () => {
     <div dir={isAr ? "rtl" : "ltr"} className="landing-shell min-h-screen overflow-hidden bg-white">
       <Navbar />
       <Hero />
-      <main>
+      <main className="bg-white">
         <Journey />
         <EmergencyBand />
         <Services />

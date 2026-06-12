@@ -1,4 +1,4 @@
-import { Quote, Star } from "lucide-react";
+import { Quote } from "lucide-react";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import { testimonial1 as t1, testimonial2 as t2, testimonial3 as t3 } from "../assets";
 
@@ -19,35 +19,44 @@ export const Testimonials = () => {
 
   return (
     <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-12 md:py-16">
-      <h2 className="text-center text-3xl font-black text-[#17483A]">{isAr ? "ماذا يقول عملاؤنا" : "What our clients say"}</h2>
+      <h2 className="text-center text-3xl font-black text-[#17483A]">
+        {isAr ? "ماذا يقول عملاؤنا" : "What our clients say"}
+      </h2>
 
       <div className="mt-8 grid gap-6 md:grid-cols-3">
         {items.map((item) => (
-          <article key={item.name} className="rounded-md border border-[#E4ECE8] bg-white p-7">
-            <div className="flex items-center justify-between">
-              <Quote className="h-7 w-7 text-[#9FBDAF]" />
-              <div className="flex gap-0.5 text-[#F6C453]">
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <Star key={index} className="h-3.5 w-3.5 fill-current" />
-                ))}
-              </div>
-            </div>
-            <p className="mt-5 min-h-[82px] text-sm font-semibold leading-8 text-[#40584F]">{item.quote}</p>
+          <article
+            key={item.name}
+            className="flex min-h-[220px] flex-col rounded-xl border border-[#E4ECE8] bg-white p-7"
+          >
+            <Quote
+              className={`h-8 w-8 shrink-0 text-[#9FBDAF] ${isAr ? "ms-auto" : "me-auto"}`}
+              strokeWidth={1.5}
+            />
+
+            <p className="mt-4 flex-1 text-start text-sm font-semibold leading-8 text-[#40584F]">
+              {item.quote}
+            </p>
+
             <div className="mt-6 flex items-center justify-between gap-4">
-              <div>
+              <img
+                src={item.image}
+                alt={item.name}
+                className="h-16 w-16 shrink-0 rounded-full object-cover md:h-[4.5rem] md:w-[4.5rem]"
+              />
+              <div className="min-w-0 text-start">
                 <p className="text-sm font-black text-[#17483A]">{item.name}</p>
                 <p className="mt-1 text-xs font-semibold text-[#63776F]">{item.role}</p>
               </div>
-              <img src={item.image} alt={item.name} className="h-12 w-12 rounded-full object-cover" />
             </div>
           </article>
         ))}
       </div>
 
       <div className="mt-7 flex justify-center gap-2">
-        <span className="h-2 w-2 rounded-full border border-[#9FBDAF]" />
-        <span className="h-2 w-2 rounded-full bg-[#0F6A52]" />
-        <span className="h-2 w-2 rounded-full border border-[#9FBDAF]" />
+        <span className="h-2 w-2 rounded-full border border-[#9FBDAF]" aria-hidden />
+        <span className="h-2 w-2 rounded-full bg-[#0F5C43]" aria-hidden />
+        <span className="h-2 w-2 rounded-full border border-[#9FBDAF]" aria-hidden />
       </div>
     </section>
   );

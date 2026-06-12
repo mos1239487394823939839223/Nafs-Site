@@ -4,13 +4,14 @@ import { Logo } from "./Logo";
 import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import { landingBtnNav, landingBtnNavPrimary } from "../landingButtonStyles";
 
 const links = [
-  { href: "#home",    ar: "الرئيسية", en: "Home"        },
-  { href: "#services", ar: "الخدمات",  en: "Services"    },
-  { href: "#doctors",  ar: "الدكاترة", en: "Doctors"     },
-  { href: "#about",   ar: "عن نفس",  en: "About Nafas"  },
-  { href: "#pricing", ar: "الأسعار",  en: "Pricing"     },
+  { href: "#home", ar: "الرئيسية", en: "Home" },
+  { href: "#services", ar: "الخدمات", en: "Services" },
+  { href: "#doctors", ar: "الدكاترة", en: "Doctors" },
+  { href: "#about", ar: "عن نفس", en: "About Nafas" },
+  { href: "#pricing", ar: "الأسعار", en: "Pricing" },
 ];
 
 export const Navbar = () => {
@@ -20,20 +21,33 @@ export const Navbar = () => {
   const isAr = language === "ar";
 
   return (
-    <header
-      dir={isAr ? "rtl" : "ltr"}
-      className="sticky top-0 z-50 border-b border-[#E8EEE9] bg-white/95 backdrop-blur"
-    >
-      {/* ── Desktop nav ─────────────────────────────────────── */}
-      <nav className="container mx-auto flex h-14 items-center justify-between gap-4 px-4">
-        <Logo />
+    <header dir="ltr" className="sticky top-0 z-50 border-b border-[#E8EEE9] bg-white/95 backdrop-blur">
+      <nav className="container mx-auto grid h-[4.25rem] grid-cols-[1fr_auto] items-center gap-3 px-4 md:h-[4.75rem] lg:grid-cols-[auto_1fr_auto] lg:gap-6 lg:px-6">
+        {/* Left: CTAs (desktop) */}
+        <div className="hidden items-center gap-2 lg:flex">
+          <Button
+            variant="outline"
+            size="sm"
+            className={landingBtnNav}
+            onClick={() => navigate("/auth/login")}
+          >
+            {isAr ? "تسجيل الدخول" : "Login"}
+          </Button>
+          <Button size="sm" className={landingBtnNavPrimary} onClick={() => navigate("/auth/role-selection")}>
+            {isAr ? "احجز جلسة الآن" : "Book now"}
+          </Button>
+        </div>
 
-        <ul className="hidden items-center gap-6 lg:flex">
+        {/* Center-right: nav links (closer to logo) */}
+        <ul
+          dir={isAr ? "rtl" : "ltr"}
+          className="hidden items-center justify-end gap-6 lg:flex lg:pe-6 xl:pe-10"
+        >
           {links.map((link) => (
             <li key={link.href}>
               <a
                 href={link.href}
-                className="text-[13px] font-semibold text-[#2F5147] transition hover:text-[#0F4C3A]"
+                className="text-sm font-semibold text-[#2F5147] transition hover:text-[#0F4C3A]"
               >
                 {isAr ? link.ar : link.en}
               </a>
@@ -41,44 +55,28 @@ export const Navbar = () => {
           ))}
         </ul>
 
-        <div className="hidden items-center gap-2 lg:flex">
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 rounded-md border-[#C8D9D1] bg-white px-4 text-[13px] font-semibold text-[#2F5147] hover:bg-[#F7FAF8]"
-            onClick={() => navigate("/auth/login")}
+        {/* Right: logo + mobile menu */}
+        <div className="col-start-2 flex items-center justify-end gap-3 lg:col-start-3">
+          <button
+            onClick={() => setMenuOpen(!menuOpen)}
+            className="grid h-10 w-10 place-items-center rounded-md border border-[#DDE7E2] bg-white text-[#0F4C3A] lg:hidden"
+            aria-label={isAr ? "فتح القائمة" : "Open menu"}
           >
-            {isAr ? "تسجيل الدخول" : "Login"}
-          </Button>
-          <Button
-            size="sm"
-            className="h-8 rounded-md bg-[#0F5C43] px-4 text-[13px] font-semibold text-white shadow-none hover:bg-[#0B4E38]"
-            onClick={() => navigate("/auth/role-selection")}
-          >
-            {isAr ? "احجز جلسة الآن" : "Book now"}
-          </Button>
+            {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+          <Logo className="[&>span:first-child]:h-10 [&>span:first-child]:w-10 [&>span:last-child]:text-xl" />
         </div>
-
-        {/* Mobile hamburger */}
-        <button
-          onClick={() => setMenuOpen(!menuOpen)}
-          className="grid h-9 w-9 place-items-center rounded-md border border-[#DDE7E2] bg-white text-[#0F4C3A] lg:hidden"
-          aria-label={isAr ? "فتح القائمة" : "Open menu"}
-        >
-          {menuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-        </button>
       </nav>
 
-      {/* ── Mobile menu ──────────────────────────────────────── */}
       {menuOpen && (
-        <div className="border-t border-[#E8EEE9] bg-white p-4 lg:hidden">
+        <div dir={isAr ? "rtl" : "ltr"} className="border-t border-[#E8EEE9] bg-white p-4 lg:hidden">
           <div className="container mx-auto space-y-1">
             {links.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
-                className="block rounded-md px-4 py-2.5 text-[13px] font-semibold text-[#2F5147] hover:bg-[#F7FAF8]"
+                className="block rounded-md px-4 py-2.5 text-sm font-semibold text-[#2F5147] hover:bg-neutral-50"
               >
                 {isAr ? link.ar : link.en}
               </a>
@@ -88,15 +86,11 @@ export const Navbar = () => {
                 size="sm"
                 onClick={() => navigate("/auth/login")}
                 variant="outline"
-                className="rounded-md text-[13px]"
+                className={landingBtnNav}
               >
                 {isAr ? "تسجيل الدخول" : "Login"}
               </Button>
-              <Button
-                size="sm"
-                onClick={() => navigate("/auth/role-selection")}
-                className="rounded-md bg-[#0F5C43] text-[13px] text-white"
-              >
+              <Button size="sm" className={landingBtnNavPrimary} onClick={() => navigate("/auth/role-selection")}>
                 {isAr ? "احجز الآن" : "Book now"}
               </Button>
             </div>
