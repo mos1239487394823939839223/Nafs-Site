@@ -5,6 +5,7 @@ import { EmergencyBand } from "./components/EmergencyBand";
 import { Services } from "./components/Services";
 import { Doctors } from "./components/Doctors";
 import { Assessment } from "./components/Assessment";
+import { HowItWorks } from "./components/HowItWorks";
 import { Stats } from "./components/Stats";
 import { Testimonials } from "./components/Testimonials";
 import { Footer } from "./components/Footer";
@@ -24,6 +25,7 @@ const LandingPage = () => {
         <EmergencyBand />
         <Services />
         <Doctors />
+        <HowItWorks />
         <Assessment />
         <Stats />
         <Testimonials />

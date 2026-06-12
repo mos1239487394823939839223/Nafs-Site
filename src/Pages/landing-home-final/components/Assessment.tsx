@@ -11,22 +11,23 @@ export const Assessment = () => {
 
   return (
     <section className="container mx-auto px-4 py-10 md:py-14">
-      <div className="overflow-hidden rounded-xl border border-[#E8EEE9] bg-[#eff4ee] p-6 md:p-8 lg:p-10">
+      <div className="overflow-hidden rounded-xl border border-[#E8EEE9] bg-[#eff4ee] ">
         <div
           dir="ltr"
           className="grid items-center gap-8 md:grid-cols-2 md:gap-10 lg:gap-14"
         >
           {/* Illustration — physical left */}
-          <div className="flex min-h-[280px] items-center justify-center rounded-lg bg-[#EFF4EE] px-4 py-6 md:min-h-[320px]">
+          <div className="flex items-center justify-center overflow-hidden rounded-s-xl bg-[#EFF4EE]">
             <img
               src={assessmentSkill}
               alt={isAr ? "استبيان تقييم نفسي" : "Mental health assessment clipboard"}
-              className="h-full max-h-[280px] w-full object-contain md:max-h-[320px]"
+              className="h-full w-full object-cover"
+              style={{ minHeight: "260px", maxHeight: "360px" }}
             />
           </div>
 
           {/* Copy — physical right */}
-          <div dir={isAr ? "rtl" : "ltr"} className="text-center">
+          <div dir={isAr ? "rtl" : "ltr"} className="px-8 py-10 text-start lg:px-10 lg:py-12">
             <h2 className="text-2xl font-black leading-tight text-[#17483A] md:text-[2rem] lg:text-4xl">
               {isAr ? "اعرف حالتك النفسية في دقائق" : "Understand your mental state in minutes"}
             </h2>

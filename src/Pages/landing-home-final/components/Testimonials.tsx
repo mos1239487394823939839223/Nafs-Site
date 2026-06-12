@@ -23,7 +23,7 @@ export const Testimonials = () => {
         {isAr ? "ماذا يقول عملاؤنا" : "What our clients say"}
       </h2>
 
-      <div className="mt-8 grid gap-6 md:grid-cols-3">
+      <div className="mt-8 grid gap-12 md:grid-cols-3">
         {items.map((item) => (
           <article
             key={item.name}

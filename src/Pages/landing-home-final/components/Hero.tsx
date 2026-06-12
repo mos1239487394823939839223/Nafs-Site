@@ -38,7 +38,7 @@ export const Hero = () => {
       */}
       <div
         dir="ltr"
-        className="relative mx-auto grid max-w-screen-xl grid-cols-1 min-h-[500px] items-center lg:grid-cols-2"
+        className="relative mx-auto grid max-w-screen-xl grid-cols-1 min-h-[580px] items-center lg:grid-cols-2 lg:min-h-[640px]"
       >
         {/* ── TEXT COLUMN – left side ── */}
         <div
@@ -90,7 +90,7 @@ export const Hero = () => {
         </div>
 
         {/* ── RIGHT COLUMN – transparent, image shows through background ── */}
-        <div className="hidden lg:block min-h-[500px]" />
+        <div className="hidden lg:block min-h-[640px]" />
       </div>
     </section>
   );

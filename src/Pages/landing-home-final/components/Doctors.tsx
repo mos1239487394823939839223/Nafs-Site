@@ -65,14 +65,16 @@ export const Doctors = () => {
             const specialty = Array.isArray(doc.Specialist) ? doc.Specialist.join(" | ") : doc.Specialist || "";
             return (
               <article key={doc.Id} className="overflow-hidden rounded-xl border border-[#E4ECE8] bg-white text-center">
-                <div className="h-52 bg-neutral-100">
+                <div className="relative h-72 bg-neutral-100">
                   {doc.Image ? (
-                    <img src={doc.Image} alt={doc.Name} className="h-full w-full object-cover" />
+                    <img src={doc.Image} alt={doc.Name} className="h-full w-full object-cover object-top" />
                   ) : (
                     <span className="grid h-full place-items-center text-3xl font-black text-[#0F6A52]">{doc.Name?.charAt(0) || "د"}</span>
                   )}
+                  {/* White curved overlap */}
+                  <div className="absolute inset-x-0 bottom-0 h-6 rounded-t-[1.75rem] bg-white" />
                 </div>
-                <div className="p-5 rounded-t-xl">
+                <div className="relative -mt-1 p-5 pt-3">
                   <h3 className="text-base font-black text-[#17483A]">{doc.Name}</h3>
                   <p className="mt-2 min-h-5 text-sm font-semibold text-[#63776F]">{specialty}</p>
                   <div className="mt-3 flex items-center justify-center gap-1 text-sm font-bold text-[#17483A]">
