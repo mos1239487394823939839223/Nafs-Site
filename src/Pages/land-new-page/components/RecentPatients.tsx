@@ -52,14 +52,14 @@ export const RecentPatients = ({ patients = [], loading = false }: RecentPatient
   const { t, isRTL } = useLanguage();
 
   return (
-    <section className="rounded-[26px] border border-[#DCE8E2] bg-white p-5 shadow-[0_14px_40px_-30px_rgba(15,76,58,0.4)] sm:p-7">
+    <section className="rounded-[26px] border border-border bg-background-paper p-5 shadow-card sm:p-7">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-extrabold text-[#1F2D2A]">
+        <h2 className="text-xl font-extrabold text-text-heading">
           {t("doctor.dashboardHome.recentPatients.title")}
         </h2>
         <Link
           to="/dashboard/doctor/history"
-          className="rounded-xl bg-[#EAF5F0] px-3 py-2 text-xs font-bold text-[#2D7A61] hover:bg-[#DCEFE5]"
+          className="rounded-xl bg-background-subtle px-3 py-2 text-xs font-bold text-secondary hover:bg-background"
         >
           {t("doctor.dashboardHome.recentPatients.viewAll")}
         </Link>
@@ -99,7 +99,7 @@ export const RecentPatients = ({ patients = [], loading = false }: RecentPatient
             return (
               <div
                 key={p.BookingId ?? i}
-                className="flex flex-wrap items-center gap-4 rounded-[20px] border border-transparent bg-[#FBFDFC] p-4 transition-all hover:border-[#DCE8E2] hover:bg-[#F1F8F4] sm:p-5"
+                className="flex flex-wrap items-center gap-4 rounded-[20px] border border-transparent bg-background p-4 transition-all hover:border-border hover:bg-background-subtle sm:p-5"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <img
@@ -108,17 +108,17 @@ export const RecentPatients = ({ patients = [], loading = false }: RecentPatient
                     className="size-12 shrink-0 rounded-2xl object-cover ring-4 ring-white sm:size-14"
                   />
                   <div className="min-w-0">
-                    <p className="truncate font-extrabold text-[#1F2D2A]">
+                    <p className="truncate font-extrabold text-text-heading">
                       {p.PatientName as string ?? ""}
                     </p>
-                    <p className="mt-1 truncate text-xs font-medium text-[#71857C]">
+                    <p className="mt-1 truncate text-xs font-medium text-text-light">
                       {`${t("doctor.dashboardHome.recentPatients.lastSession")} ${date}`}
                     </p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-2 sm:gap-3 ms-auto sm:ms-0">
-                  <span dir="ltr" className="hidden whitespace-nowrap text-xs font-semibold text-[#71857C] sm:inline sm:text-sm">{date}</span>
+                  <span dir="ltr" className="hidden whitespace-nowrap text-xs font-semibold text-text-light sm:inline sm:text-sm">{date}</span>
 
                   <span
                     className={`rounded-full px-3 py-1.5 text-xs font-bold ${
@@ -131,16 +131,16 @@ export const RecentPatients = ({ patients = [], loading = false }: RecentPatient
                   </span>
 
                   <div className="flex items-center gap-1.5">
-                    <Link title={t("doctor.dashboardHome.recentPatients.viewFile")} to={doctorMedicalRecordsUrl(p.PatientId)} className="grid h-9 w-9 place-items-center rounded-xl border border-[#CFE0D8] bg-white text-[#0F4C3A] hover:bg-[#EAF5F0]">
+                    <Link title={t("doctor.dashboardHome.recentPatients.viewFile")} to={doctorMedicalRecordsUrl(p.PatientId)} className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-background-paper text-primary hover:bg-background-subtle">
                       <User className="size-4" />
                     </Link>
-                    <Link title={isRTL ? "عرض السجل" : "View history"} to={doctorHistoryUrl({ tab: "records", patientId: p.PatientId })} className="grid h-9 w-9 place-items-center rounded-xl border border-[#CFE0D8] bg-white text-[#0F4C3A] hover:bg-[#EAF5F0]">
+                    <Link title={isRTL ? "عرض السجل" : "View history"} to={doctorHistoryUrl({ tab: "records", patientId: p.PatientId })} className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-background-paper text-primary hover:bg-background-subtle">
                       <FileClock className="size-4" />
                     </Link>
-                    <Link title={isRTL ? "إرسال رسالة" : "Send message"} to={doctorMessagesUrl(p.PatientId, p.BookingId)} className="grid h-9 w-9 place-items-center rounded-xl border border-[#CFE0D8] bg-white text-[#0F4C3A] hover:bg-[#EAF5F0]">
+                    <Link title={isRTL ? "إرسال رسالة" : "Send message"} to={doctorMessagesUrl(p.PatientId, p.BookingId)} className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-background-paper text-primary hover:bg-background-subtle">
                       <MessageSquare className="size-4" />
                     </Link>
-                    <Link title={isRTL ? "بدء الجلسة" : "Start session"} to={doctorMessagesUrl(p.PatientId, p.BookingId)} className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-xl bg-[#0F4C3A] px-3 text-xs font-bold text-white hover:bg-[#0A3F32]">
+                    <Link title={isRTL ? "بدء الجلسة" : "Start session"} to={doctorMessagesUrl(p.PatientId, p.BookingId)} className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-xl bg-primary px-3 text-xs font-bold text-white hover:bg-primary-dark">
                       <PlayCircle className="size-4" />{isRTL ? "بدء" : "Start"}
                     </Link>
                   </div>

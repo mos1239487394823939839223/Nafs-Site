@@ -54,14 +54,14 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
   };
 
   return (
-    <section className="mb-7 rounded-[26px] border border-[#DCE8E2] bg-white p-5 shadow-[0_14px_40px_-30px_rgba(15,76,58,0.4)] sm:p-7">
+    <section className="mb-7 rounded-[26px] border border-border bg-background-paper p-5 shadow-card sm:p-7">
       <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-extrabold text-[#1F2D2A]">
+        <h2 className="text-xl font-extrabold text-text-heading">
           {t("doctor.dashboardHome.schedule.title")}
         </h2>
         <Link
           to="/dashboard/doctor/schedule"
-          className="rounded-xl bg-[#EAF5F0] px-3 py-2 text-xs font-bold text-[#2D7A61] hover:bg-[#DCEFE5]"
+          className="rounded-xl bg-background-subtle px-3 py-2 text-xs font-bold text-secondary hover:bg-background"
         >
           {t("doctor.dashboardHome.schedule.viewFull")}
         </Link>
@@ -86,12 +86,12 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
       )}
 
       {!loading && bookings.length === 0 && (
-        <div className="rounded-[22px] border border-dashed border-[#CFE0D8] bg-[#FBFDFC] px-5 py-12 text-center">
-          <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-[#EAF5F0] text-[#2D7A61]">
+        <div className="rounded-[22px] border border-dashed border-border bg-background px-5 py-12 text-center">
+          <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-background-subtle text-secondary">
             <CalendarDays className="size-6" />
           </span>
-          <p className="font-extrabold text-[#1F2D2A]">{t("doctor.dashboardHome.schedule.noSessions")}</p>
-          <p className="mt-2 text-xs font-medium text-[#71857C]">
+          <p className="font-extrabold text-text-heading">{t("doctor.dashboardHome.schedule.noSessions")}</p>
+          <p className="mt-2 text-xs font-medium text-text-light">
             {isRTL ? "لا توجد جلسات مجدولة اليوم. راجع الجدول الكامل للجلسات القادمة." : "Your day is clear. Review the full calendar for upcoming sessions."}
           </p>
         </div>
@@ -118,13 +118,13 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
                 key={String(bookingId ?? i)}
                 className={`group relative flex flex-col gap-4 rounded-[20px] border p-4 transition-all hover:shadow-sm sm:p-5 ${
                   isPrimary
-                    ? "border-[#2D7A61] bg-[#EAF5F0] shadow-md shadow-[#0F4C3A]/10"
+                    ? "border-secondary bg-background-subtle shadow-md shadow-primary/10"
                     : isUpcoming
                       ? "border-violet-200 bg-violet-50/40"
-                      : "border-[#E4EEE9] bg-[#FBFDFC]"
+                      : "border-border bg-background"
                 }`}
               >
-                <span className={`absolute bottom-4 start-0 top-4 w-1 rounded-full ${isPrimary ? "bg-[#0F4C3A]" : isUpcoming ? "bg-violet-400" : "bg-[#CFE0D8]"}`} />
+                <span className={`absolute bottom-4 start-0 top-4 w-1 rounded-full ${isPrimary ? "bg-primary" : isUpcoming ? "bg-violet-400" : "bg-border"}`} />
                 <div className="flex flex-wrap items-center gap-4">
                   <div className="flex min-w-0 flex-1 items-center gap-3">
                     <img
@@ -133,10 +133,10 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
                       className="size-12 shrink-0 rounded-2xl object-cover ring-4 ring-white sm:size-14"
                     />
                     <div className="min-w-0">
-                      <p className="truncate text-sm font-extrabold text-[#1F2D2A] sm:text-base">
+                      <p className="truncate text-sm font-extrabold text-text-heading sm:text-base">
                         {b.PatientName as string ?? ""}
                       </p>
-                      <p className="mt-1 truncate text-xs font-medium text-[#71857C]">
+                      <p className="mt-1 truncate text-xs font-medium text-text-light">
                         {t("doctor.dashboardHome.schedule.sessionTypes.individual")}
                       </p>
                       <span
@@ -157,8 +157,8 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
 
                   <div className="flex items-center gap-2 sm:gap-3 ms-auto">
                     {timeLabel && (
-                      <div className="flex items-center gap-2 rounded-xl bg-white px-3 py-2 text-xs font-semibold text-[#60766C] shadow-sm sm:text-sm">
-                        <Clock className="size-4 text-[#2D7A61]" />
+                      <div className="flex items-center gap-2 rounded-xl bg-background-paper px-3 py-2 text-xs font-semibold text-text-light shadow-sm sm:text-sm">
+                        <Clock className="size-4 text-secondary" />
                         <span dir="ltr">{timeLabel}</span>
                       </div>
                     )}
@@ -168,8 +168,8 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
                       onClick={() => startSession(b)}
                       className={`rounded-xl px-4 py-2.5 text-xs font-bold transition-all sm:px-5 sm:text-sm ${
                         isPrimary
-                          ? "bg-[#0F4C3A] text-white shadow-md shadow-[#0F4C3A]/15 hover:bg-[#0A3F32]"
-                          : "border border-[#CFE0D8] bg-white text-[#0F4C3A] hover:bg-[#EAF5F0]"
+                          ? "bg-primary text-white shadow-md shadow-primary/15 hover:bg-primary-dark"
+                          : "border border-border bg-background-paper text-primary hover:bg-background-subtle"
                       }`}
                     >
                       <Video className="me-1 inline size-4" />
@@ -179,11 +179,11 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
                 </div>
 
                 {patientId && (
-                  <div className="flex flex-wrap items-center gap-2 border-t border-[#E4EEE9] pt-3">
+                  <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
                     <Link
                       to={doctorMedicalRecordsUrl(patientId)}
                       title={t("doctor.viewProfile", "View profile")}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-[#CFE0D8] bg-white px-3 py-2 text-[11px] font-bold text-[#0F4C3A] hover:bg-[#EAF5F0]"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background-paper px-3 py-2 text-[11px] font-bold text-primary hover:bg-background-subtle"
                     >
                       <User className="size-3.5" />
                       {t("doctor.viewProfile", "View profile")}
@@ -191,28 +191,28 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
                     <button
                       type="button"
                       onClick={() => startSession(b)}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-[#CFE0D8] bg-white px-3 py-2 text-[11px] font-bold text-[#0F4C3A] hover:bg-[#EAF5F0]"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background-paper px-3 py-2 text-[11px] font-bold text-primary hover:bg-background-subtle"
                     >
                       <Play className="size-3.5" />
                       {t("doctor.joinNow", "Start session")}
                     </button>
                     <Link
                       to={doctorHistoryUrl({ tab: "records", bookingId, action: "note" })}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-[#CFE0D8] bg-white px-3 py-2 text-[11px] font-bold text-[#0F4C3A] hover:bg-[#EAF5F0]"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background-paper px-3 py-2 text-[11px] font-bold text-primary hover:bg-background-subtle"
                     >
                       <FileText className="size-3.5" />
                       {t("doctor.addNote", "Add notes")}
                     </Link>
                     <Link
                       to={doctorHistoryUrl({ tab: "records", patientId })}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-[#CFE0D8] bg-white px-3 py-2 text-[11px] font-bold text-[#0F4C3A] hover:bg-[#EAF5F0]"
+                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background-paper px-3 py-2 text-[11px] font-bold text-primary hover:bg-background-subtle"
                     >
                       <CalendarDays className="size-3.5" />
                       {t("doctor.clinicalHistory", "View history")}
                     </Link>
                     <Link
                       to={doctorMessagesUrl(patientId, bookingId)}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-[#0F4C3A] px-3 py-2 text-[11px] font-bold text-white hover:bg-[#0A3F32]"
+                      className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-[11px] font-bold text-white hover:bg-primary-dark"
                     >
                       <MessageSquare className="size-3.5" />
                       {t("chat.sendMessage", "Send message")}

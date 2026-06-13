@@ -59,31 +59,31 @@ export const MoodGauge = ({
     : "";
 
   return (
-    <section className="flex h-full flex-col rounded-[24px] border border-[#DCE8E2] bg-white p-6 shadow-[0_16px_42px_-28px_rgba(15,76,58,0.4)]">
+    <section className="flex h-full flex-col rounded-[24px] border border-border bg-background-paper p-6 shadow-card">
       <div className="mb-6 flex items-center justify-between gap-3">
          <div className="text-start">
-           <p className="text-xs font-bold uppercase tracking-wider text-[#2D7A61]">
+           <p className="text-xs font-bold uppercase tracking-wider text-secondary">
              {language === "ar" ? "الاختبار اليومي" : "Daily Test"}
            </p>
-           <h3 className="mt-1 text-xl font-black text-[#1F2D2A]">
+           <h3 className="mt-1 text-xl font-black text-text-heading">
              {language === "ar" ? "حالتك اليوم" : "Your Mood Today"}
            </h3>
          </div>
-         <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[#EAF5F0] text-[#0F4C3A]">
+         <span className="grid h-12 w-12 place-items-center rounded-2xl bg-background-subtle text-primary">
            <Activity className="h-6 w-6" />
          </span>
       </div>
 
       {loading ? (
-        <Loader2 className="mx-auto my-14 h-7 w-7 animate-spin text-[#2F855A]" />
+        <Loader2 className="mx-auto my-14 h-7 w-7 animate-spin text-secondary" />
       ) : !dailyMood ? (
         <div className="flex flex-1 flex-col justify-between">
-          <div className="my-6 rounded-2xl border border-dashed border-[#DCE8E2] bg-[#F7FAF8] p-6 text-center">
-            <AlertCircle className="mx-auto h-10 w-10 text-[#2D7A61] opacity-65" />
-            <h4 className="mt-3 text-base font-bold text-[#1F2D2A]">
+          <div className="my-6 rounded-2xl border border-dashed border-border bg-background p-6 text-center">
+            <AlertCircle className="mx-auto h-10 w-10 text-secondary opacity-65" />
+            <h4 className="mt-3 text-base font-bold text-text-heading">
               {language === "ar" ? "لا توجد نتائج للاختبار اليومي بعد" : "No daily test results yet"}
             </h4>
-            <p className="mt-2 text-xs leading-5 text-[#60766C]">
+            <p className="mt-2 text-xs leading-5 text-text-light">
               {language === "ar" 
                 ? "لم تقم بتسجيل حالتك النفسية اليوم بعد. إبدأ التقييم اليومي لمعرفة حالتك." 
                 : "You haven't recorded your daily mental health state yet. Start the test to see your state."}
@@ -94,7 +94,7 @@ export const MoodGauge = ({
               const el = document.getElementById("mood-check-in-section") || document.querySelector("main");
               el?.scrollIntoView({ behavior: "smooth" });
             }}
-            className="h-12 w-full rounded-xl bg-[#0F4C3A] text-sm font-extrabold text-white transition-all hover:bg-[#12372A]"
+            className="h-12 w-full rounded-xl bg-primary text-sm font-extrabold text-white transition-all hover:bg-primary-dark"
           >
             {language === "ar" ? "ابدأ التقييم اليومي" : "Start Daily Assessment"}
           </button>
@@ -105,24 +105,24 @@ export const MoodGauge = ({
             <div
               className="mx-auto grid h-36 w-36 place-items-center rounded-full"
               style={{
-                background: `conic-gradient(#0F4C3A ${percent * 3.6}deg, #EAF5F0 0deg)`,
+                background: `conic-gradient(var(--color-primary) ${percent * 3.6}deg, var(--color-background-subtle) 0deg)`,
               }}
             >
               <div className="grid h-24 w-24 place-items-center rounded-full bg-white shadow-inner">
                 <div className="text-center">
-                  <p className="text-3xl font-black text-[#1F2D2A]">{percent}%</p>
-                  <p className="max-w-[80px] text-xs font-bold text-[#2D7A61]">{moodLabel}</p>
+                  <p className="text-3xl font-black text-text-heading">{percent}%</p>
+                  <p className="max-w-[80px] text-xs font-bold text-secondary">{moodLabel}</p>
                 </div>
               </div>
             </div>
             <div className="text-start">
-              <p className="text-sm leading-6 text-[#60766C]">
+              <p className="text-sm leading-6 text-text-light">
                 {language === "ar" 
                   ? `أخر نتيجة اختبار مسجلة هي: ${moodLabel}. استمر في مراجعة حالتك النفسية يومياً.` 
                   : `Your latest recorded test result is: ${moodLabel}. Keep tracking your mental health daily.`}
               </p>
-              <div className="mt-4 flex items-center gap-2 text-xs font-bold text-[#6B8278]">
-                <CalendarDays className="h-4 w-4 text-[#2D7A61]" />
+              <div className="mt-4 flex items-center gap-2 text-xs font-bold text-text-light">
+                <CalendarDays className="h-4 w-4 text-secondary" />
                 <span>
                   {language === "ar" ? "آخر تحديث: " : "Last updated: "}
                   {new Date(dailyMood.recordedAt).toLocaleString(language === "ar" ? "ar-EG" : "en-US")}
@@ -131,14 +131,14 @@ export const MoodGauge = ({
             </div>
           </div>
 
-          <div className="mt-6 rounded-2xl bg-[#F7FAF8] p-4">
-            <div className="mb-3 flex items-center justify-between text-xs font-bold text-[#60766C]">
+          <div className="mt-6 rounded-2xl bg-background p-4">
+            <div className="mb-3 flex items-center justify-between text-xs font-bold text-text-light">
               <span>{language === "ar" ? "تطور نتائجك اليومية" : "Your daily progress"}</span>
-              <span className="inline-flex items-center gap-1 text-[#2D7A61]"><TrendingUp className="h-4 w-4" /> +8%</span>
+              <span className="inline-flex items-center gap-1 text-secondary"><TrendingUp className="h-4 w-4" /> +8%</span>
             </div>
             <div className="flex h-12 items-end gap-2">
               {[42, 48, 45, 57, 62, 68, percent].map((value, index) => (
-                <span key={index} className="flex-1 rounded-t-lg bg-[#2D7A61]/20 last:bg-[#0F4C3A]" style={{ height: `${Math.max(20, value)}%` }} />
+                <span key={index} className="flex-1 rounded-t-lg bg-secondary/20 last:bg-primary" style={{ height: `${Math.max(20, value)}%` }} />
               ))}
             </div>
           </div>
@@ -159,7 +159,7 @@ export const MoodGauge = ({
               const el = document.getElementById("mood-check-in-section") || document.querySelector("main");
               el?.scrollIntoView({ behavior: "smooth" });
             }}
-            className="mt-5 h-12 w-full rounded-xl border border-[#DCE8E2] text-sm font-extrabold text-[#0F4C3A] transition-colors hover:bg-[#EAF5F0]"
+            className="mt-5 h-12 w-full rounded-xl border border-border text-sm font-extrabold text-primary transition-colors hover:bg-background-subtle"
           >
             {language === "ar" ? "تحديث حالة اليوم" : "Update Today's Status"}
           </button>

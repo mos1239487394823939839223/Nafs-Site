@@ -41,11 +41,11 @@ export const Footer = () => {
     : ["FAQ", "Privacy policy", "Terms and conditions"];
 
   return (
-    <footer dir={isAr ? "rtl" : "ltr"} className="border-t border-[#E8EEE9] bg-white">
+    <footer dir={isAr ? "rtl" : "ltr"} className="border-t border-border bg-background-paper">
       <div className="container mx-auto grid gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-[1.35fr_1fr_1fr_1fr]">
         <div className="text-start">
           <Logo />
-          <p className="mt-4 max-w-xs text-sm font-semibold leading-7 text-[#63776F]">
+          <p className="mt-4 max-w-xs text-sm font-semibold leading-7 text-text-light">
             {isAr
               ? "نفس منصة دعم نفسي تساعدك على فهم نفسك والتحدث مع متخصصين في بيئة آمنة."
               : "Nafas is a mental support platform for understanding yourself and speaking with specialists in a safe space."}
@@ -55,7 +55,7 @@ export const Footer = () => {
               <a
                 key={icon.label}
                 href="#"
-                className="grid h-9 w-9 place-items-center rounded-full border border-[#E4ECE8] text-[#7AA797] hover:bg-[#F7FAF8] hover:text-[#0F6A52]"
+                className="grid h-9 w-9 place-items-center rounded-full border border-border text-text-light hover:bg-background hover:text-primary"
                 aria-label={icon.label}
               >
                 <svg
@@ -76,38 +76,38 @@ export const Footer = () => {
         </div>
 
         <div className="text-start">
-          <h4 className="mb-4 text-base font-black text-[#17483A]">{isAr ? "روابط سريعة" : "Quick links"}</h4>
-          <ul className="space-y-3 text-sm font-semibold text-[#63776F]">
+          <h4 className="mb-4 text-base font-black text-text-heading">{isAr ? "روابط سريعة" : "Quick links"}</h4>
+          <ul className="space-y-3 text-sm font-semibold text-text-light">
             {quickLinks.map((link) => (
               <li key={link}>
-                <a href="#" className="hover:text-[#0F6A52]">{link}</a>
+                <a href="#" className="hover:text-primary">{link}</a>
               </li>
             ))}
           </ul>
         </div>
 
         <div className="text-start">
-          <h4 className="mb-4 text-base font-black text-[#17483A]">{isAr ? "الدعم والمساعدة" : "Support"}</h4>
-          <ul className="space-y-3 text-sm font-semibold text-[#63776F]">
+          <h4 className="mb-4 text-base font-black text-text-heading">{isAr ? "الدعم والمساعدة" : "Support"}</h4>
+          <ul className="space-y-3 text-sm font-semibold text-text-light">
             {supportLinks.map((link) => (
               <li key={link}>
-                <a href="#" className="hover:text-[#0F6A52]">{link}</a>
+                <a href="#" className="hover:text-primary">{link}</a>
               </li>
             ))}
           </ul>
         </div>
 
         <div className="text-start">
-          <h4 className="mb-4 text-base font-black text-[#17483A]">{isAr ? "تواصل معنا" : "Contact us"}</h4>
-          <ul className="space-y-3 text-sm font-semibold text-[#63776F]">
-            <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-[#7AA797]" />010 1234 5678</li>
-            <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-[#7AA797]" />info@nafas.com</li>
-            <li className="flex items-center gap-2"><MapPin className="h-4 w-4 text-[#7AA797]" />{isAr ? "القاهرة، مصر" : "Cairo, Egypt"}</li>
+          <h4 className="mb-4 text-base font-black text-text-heading">{isAr ? "تواصل معنا" : "Contact us"}</h4>
+          <ul className="space-y-3 text-sm font-semibold text-text-light">
+            <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-text-light" />010 1234 5678</li>
+            <li className="flex items-center gap-2"><Mail className="h-4 w-4 text-text-light" />info@nafas.com</li>
+            <li className="flex items-center gap-2"><MapPin className="h-4 w-4 text-text-light" />{isAr ? "القاهرة، مصر" : "Cairo, Egypt"}</li>
           </ul>
         </div>
       </div>
-      <div className="border-t border-[#E8EEE9]">
-        <p className="container mx-auto px-4 py-5 text-center text-xs font-semibold text-[#7D8E87]">
+      <div className="border-t border-border">
+        <p className="container mx-auto px-4 py-5 text-center text-xs font-semibold text-text-light">
           {isAr ? "جميع الحقوق محفوظة © 2026 نفس" : "All rights reserved © 2026 Nafas"}
         </p>
       </div>

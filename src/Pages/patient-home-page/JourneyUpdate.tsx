@@ -18,20 +18,20 @@ export const JourneyUpdate = ({
   if (!hasCompletedSession) return null;
 
   return (
-    <section className="rounded-[24px] border border-[#DCE8E2] bg-white p-6 shadow-[0_16px_42px_-28px_rgba(15,76,58,0.4)]">
+    <section className="rounded-[24px] border border-border bg-background-paper p-6 shadow-card">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex min-w-0 items-center gap-4">
-          <img src={doctorAvatar} alt="" className="h-14 w-14 shrink-0 rounded-full object-cover ring-4 ring-[#EAF5EE]" />
+          <img src={doctorAvatar} alt="" className="h-14 w-14 shrink-0 rounded-full object-cover ring-4 ring-background-subtle" />
           <div className="min-w-0 text-start">
-            <div className="mb-1 inline-flex items-center gap-2 rounded-full bg-[#EAF5EE] px-3 py-1 text-xs font-bold text-[#2F855A]">
+            <div className="mb-1 inline-flex items-center gap-2 rounded-full bg-background-subtle px-3 py-1 text-xs font-bold text-secondary">
               <NotebookPen className="h-3.5 w-3.5" />
               {t("patientHome.journeyUpdate.latestBadge")}
             </div>
-            <h3 className="text-lg font-black text-[#12372A]">{t("patientHome.journeyUpdate.title")}</h3>
-            <p className="mt-1 text-sm leading-6 text-[#60766C]">
+            <h3 className="text-lg font-black text-text-heading">{t("patientHome.journeyUpdate.title")}</h3>
+            <p className="mt-1 text-sm leading-6 text-text-light">
               {update || t("patientHome.journeyUpdate.awaiting")}
             </p>
-            <p className="mt-2 text-xs font-bold text-[#2F855A]" dir="auto">
+            <p className="mt-2 text-xs font-bold text-secondary" dir="auto">
               <span dir="auto">{therapistName}</span>
               <span className="mx-1" aria-hidden>
                 ·
@@ -43,7 +43,7 @@ export const JourneyUpdate = ({
 
         <button
           onClick={() => navigate("/dashboard/patient/messages")}
-          className="inline-flex h-12 shrink-0 items-center justify-center gap-2 self-stretch rounded-2xl bg-[#0F4C3A] px-5 text-sm font-extrabold text-white transition-colors hover:bg-[#0A3F32] sm:self-center"
+          className="inline-flex h-12 shrink-0 items-center justify-center gap-2 self-stretch rounded-2xl bg-primary px-5 text-sm font-extrabold text-white transition-colors hover:bg-primary-dark sm:self-center"
         >
           <MessageCircle className="h-4 w-4" />
           {t("patientHome.journeyUpdate.messageTherapist")}

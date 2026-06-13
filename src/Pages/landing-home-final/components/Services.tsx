@@ -38,13 +38,13 @@ export const Services = () => {
 
   return (
     <section id="services" dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-12 md:py-16">
-      <h2 className="text-center text-3xl font-black text-[#17483A]">{isAr ? "خدماتنا" : "Our services"}</h2>
+      <h2 className="text-center text-3xl font-black text-text-heading">{isAr ? "خدماتنا" : "Our services"}</h2>
       <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
         {services.map(({ icon: Icon, title, desc }) => (
-          <article key={title} className="min-h-[190px] rounded-xl border border-[#E4ECE8] bg-white p-6 text-center">
-            <Icon className="mx-auto h-12 w-12 text-[#7AA797]" strokeWidth={1.7} />
-            <h3 className="mt-5 text-base font-black text-[#17483A]">{title}</h3>
-            <p className="mt-3 text-sm font-semibold leading-7 text-[#63776F]">{desc}</p>
+          <article key={title} className="min-h-[190px] rounded-[20px] border border-border bg-background-paper p-6 text-center">
+            <Icon className="mx-auto h-12 w-12 text-text-light" strokeWidth={1.7} />
+            <h3 className="mt-5 text-base font-black text-text-heading">{title}</h3>
+            <p className="mt-3 text-sm font-semibold leading-7 text-text-light">{desc}</p>
           </article>
         ))}
       </div>

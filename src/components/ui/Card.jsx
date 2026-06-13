@@ -22,8 +22,7 @@ const Card = React.forwardRef(({ className, hover = false, children, sx, onClick
       ...(hover && {
         cursor: 'pointer',
         '&:hover': {
-          elevation: 8,
-          boxShadow: (theme) => `0 20px 25px -5px ${theme.palette.primary.main}0D`,
+          boxShadow: 'var(--ds-shadow-hover)',
           transform: 'translateY(-4px)',
           borderColor: (theme) => `${theme.palette.primary.main}4D`,
         },

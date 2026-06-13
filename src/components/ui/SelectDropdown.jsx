@@ -117,14 +117,14 @@ export default function SelectDropdown({
         className={`
           w-full flex items-center justify-between gap-3 rounded-xl border
           bg-background transition-all duration-200
-          focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary
+          focus:outline-none focus:ring-2 focus:ring-secondary/40 focus:border-secondary
           disabled:opacity-60 disabled:cursor-not-allowed
           ${sizeClasses}
           ${error
             ? 'border-red-400 focus:ring-red-300'
             : open
-              ? 'border-primary ring-2 ring-primary/20'
-              : 'border-border hover:border-primary/60'
+              ? 'border-secondary ring-2 ring-secondary/20'
+              : 'border-border hover:border-secondary/60'
           }
         `}
       >
@@ -132,7 +132,7 @@ export default function SelectDropdown({
           {selected ? selected.label : placeholder}
         </span>
         <ChevronDown
-          className={`w-4 h-4 text-text-muted flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180 text-primary' : ''}`}
+          className={`w-4 h-4 text-text-muted flex-shrink-0 transition-transform duration-200 ${open ? 'rotate-180 text-secondary' : ''}`}
           style={{ width: 18, height: 18 }}
         />
       </button>
@@ -163,7 +163,7 @@ export default function SelectDropdown({
                     w-full flex items-center gap-3 px-4 py-2.5 text-sm text-start
                     transition-colors duration-150
                     ${isSelected
-                      ? 'bg-primary/10 text-primary font-semibold'
+                      ? 'bg-secondary/10 text-secondary font-semibold'
                       : 'text-text-heading hover:bg-background-subtle'
                     }
                   `}
@@ -171,7 +171,7 @@ export default function SelectDropdown({
                   {opt.icon && <span className="flex-shrink-0">{opt.icon}</span>}
                   <span className="flex-1">{opt.label}</span>
                   {isSelected && (
-                    <Check style={{ width: 16, height: 16 }} className="text-primary flex-shrink-0" />
+                    <Check style={{ width: 16, height: 16 }} className="text-secondary flex-shrink-0" />
                   )}
                 </button>
               )

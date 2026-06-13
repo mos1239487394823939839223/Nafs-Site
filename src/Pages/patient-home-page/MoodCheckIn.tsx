@@ -52,18 +52,18 @@ export const MoodCheckIn = () => {
   };
 
   return (
-    <section className="rounded-[26px] border border-[#DCE8E2] bg-[linear-gradient(135deg,#FFFFFF_0%,#F7FAF8_100%)] p-5 text-center shadow-[0_16px_42px_-28px_rgba(15,76,58,0.4)] md:p-7">
+    <section className="rounded-[26px] border border-border bg-[linear-gradient(135deg,var(--color-background-paper)_0%,var(--color-background)_100%)] p-5 text-center shadow-card md:p-7">
       <div className="flex flex-col items-center justify-between gap-3 sm:flex-row sm:text-start">
         <div>
-      <h3 className="text-xl font-black text-[#12372A]">
+      <h3 className="text-xl font-black text-text-heading">
         {t("patientHome.moodCheckIn.title", "كيف تشعر اليوم؟")}
       </h3>
-      <p className="mt-2 text-sm font-medium text-[#6B7F75]">
+      <p className="mt-2 text-sm font-medium text-text-light">
         {t("patientHome.moodCheckIn.subtitle", "شاركنا مشاعرك لمساعدتك بشكل أفضل")}
       </p>
         </div>
         {saved && (
-          <span className="inline-flex items-center gap-2 rounded-full bg-[#EAF5F0] px-4 py-2 text-xs font-bold text-[#0F4C3A]">
+          <span className="inline-flex items-center gap-2 rounded-full bg-background-subtle px-4 py-2 text-xs font-bold text-primary">
             <CheckCircle2 className="h-4 w-4" />
             {language === "ar" ? "تم تسجيل حالة اليوم" : "Today's mood recorded"}
           </span>
@@ -79,10 +79,10 @@ export const MoodCheckIn = () => {
               key={mood.key}
               type="button"
               onClick={() => saveMood(mood.key)}
-              className={`group min-h-[104px] rounded-2xl border bg-white px-3 py-4 text-center shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-[#B8D5C9] hover:shadow-lg ${
+              className={`group min-h-[104px] rounded-2xl border bg-background-paper px-3 py-4 text-center shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-secondary/35 hover:shadow-lg ${
                 isSelected
-                  ? `border-[#0F4C3A] ring-4 ${mood.ring}`
-                  : "border-[#DCE8E2]"
+                  ? `border-primary ring-4 ${mood.ring}`
+                  : "border-border"
               }`}
               aria-pressed={isSelected}
             >
@@ -91,7 +91,7 @@ export const MoodCheckIn = () => {
               >
                 {mood.emoji}
               </span>
-              <span className="mt-3 block text-sm font-bold text-[#12372A]">
+              <span className="mt-3 block text-sm font-bold text-text-heading">
                 {t(mood.labelKey)}
               </span>
             </button>

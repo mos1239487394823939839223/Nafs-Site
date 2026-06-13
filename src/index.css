@@ -15,50 +15,82 @@ html {
 
   /* Nafas landing design tokens (HSL bare values for Tailwind opacity modifiers) */
   /* Mapped to the main project color system */
-  --brand: 162 67% 18%;           /* #0F4C3A - primary */
+  --brand: 151 74% 20%;           /* #0E5A3C - primary */
   --brand-foreground: 0 0% 100%;  /* white */
   --brand-soft: 153 34% 87%;      /* #D4EAE0 - secondary-light */
-  --brand-muted: 160 46% 33%;     /* #2D7A61 - primary-light */
+  --brand-muted: 151 51% 36%;     /* #2D8C63 - secondary */
   --cream: 144 33% 97%;           /* #F5FAF7 - background */
   --cream-deep: 142 29% 95%;      /* #EDF5F0 - background-subtle */
   --background: 144 33% 97%;      /* #F5FAF7 */
-  --border: 149 26% 83%;          /* #C8DFD3 */
-  --foreground: 150 15% 21%;      /* #2D3D35 */
+  --border: 216 11% 91%;          /* #E5E7EB */
+  --foreground: 0 0% 11%;         /* #1B1B1B */
 
   /* Color System - Light Mode (Default) */
-  --color-primary: #0F4C3A;
-  --color-primary-light: #2D7A61;
-  --color-primary-dark: #0A3F32;
+  --color-primary: #0E5A3C;
+  --color-primary-light: #2D8C63;
+  --color-primary-dark: #0B4B32;
 
-  --color-secondary: #2D7A61;
-  --color-secondary-light: #D4EAE0;
-  --color-secondary-dark: #0F4C3A;
+  --color-secondary: #2D8C63;
+  --color-secondary-light: #EAF5EF;
+  --color-secondary-dark: #0E5A3C;
 
   --color-background: #F5FAF7;
   --color-background-paper: #FFFFFF;
-  --color-background-subtle: #EDF5F0;
+  --color-background-subtle: #F8F9F8;
 
-  --color-border: #C8DFD3;
-  --color-border-light: #E0EFE7;
-  --color-border-dark: #8FBDAA;
+  --color-border: #E5E7EB;
+  --color-border-light: #EEF1F3;
+  --color-border-dark: #B9C0C6;
 
-  --color-text: #2D3D35;
-  --color-text-light: #2D7A61;
+  --color-text: #1B1B1B;
+  --color-text-light: #6F6F6F;
   --color-text-heading: #1A2B23;
 
+  /* Provided design-system token aliases */
+  --primary: #0E5A3C;
+  --primary-hover: #0B4B32;
+  --secondary-accent: #2D8C63;
+  --light-green: #EAF5EF;
+  --bg: #F5FAF7;
+  --section-bg: #F8F9F8;
+  --token-border: #E5E7EB;
+  --token-text: #1B1B1B;
+  --text-secondary: #6F6F6F;
+  --muted: #9B9B9B;
+  --token-warning: #F4B400;
+  --token-error: #E53935;
+  --token-success: #4CAF50;
+
   /* Shared design-system tokens */
-  --ds-primary: #0F4C3A;
-  --ds-primary-hover: #0A3F32;
-  --ds-secondary: #2D7A61;
-  --ds-success: #16835F;
-  --ds-warning: #D79A16;
-  --ds-error: #C83D4D;
+  --ds-primary: #0E5A3C;
+  --ds-primary-hover: #0B4B32;
+  --ds-secondary: #2D8C63;
+  --ds-success: #4CAF50;
+  --ds-warning: #F4B400;
+  --ds-error: #E53935;
   --ds-info: #3977C3;
   --ds-radius-control: 12px;
   --ds-radius-card: 20px;
   --ds-radius-panel: 26px;
   --ds-shadow-card: 0 12px 35px -28px rgba(15, 76, 58, 0.45);
   --ds-shadow-elevated: 0 18px 50px -30px rgba(15, 76, 58, 0.38);
+  --ds-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.08);
+
+  /* Typography scale */
+  --font-h1-desktop: 48px;
+  --font-h1-mobile: 34px;
+  --font-h2-desktop: 36px;
+  --font-h2-mobile: 28px;
+  --font-h3-desktop: 28px;
+  --font-h3-mobile: 22px;
+  --font-body-lg-desktop: 18px;
+  --font-body-lg-mobile: 16px;
+  --font-body-desktop: 16px;
+  --font-body-mobile: 15px;
+  --font-small-desktop: 14px;
+  --font-small-mobile: 13px;
+  --font-button-desktop: 16px;
+  --font-button-mobile: 15px;
 
   /* App Defaults */
   color-scheme: light;
@@ -129,6 +161,47 @@ body {
   /* prevent words breaking layout on small screens */
   overflow-wrap: break-word;
   word-wrap: break-word;
+  font-size: var(--font-body-desktop);
+  line-height: 1.625;
+  color: var(--token-text);
+  background-color: var(--bg);
+}
+
+h1,
+.ds-h1 {
+  font-size: var(--font-h1-desktop);
+  line-height: 1.25;
+  font-weight: 700;
+}
+
+h2,
+.ds-h2 {
+  font-size: var(--font-h2-desktop);
+  line-height: 1.277;
+  font-weight: 700;
+}
+
+h3,
+.ds-h3 {
+  font-size: var(--font-h3-desktop);
+  line-height: 1.286;
+  font-weight: 600;
+}
+
+p,
+label,
+input,
+textarea,
+select,
+button {
+  font-size: var(--font-body-desktop);
+  line-height: 1.625;
+}
+
+small,
+.helper-text {
+  font-size: var(--font-small-desktop);
+  line-height: 1.571;
 }
 
 #root {
@@ -159,6 +232,38 @@ svg {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     max-width: 100%;
+  }
+
+  h1,
+  .ds-h1 {
+    font-size: var(--font-h1-mobile);
+    line-height: 1.294;
+  }
+
+  h2,
+  .ds-h2 {
+    font-size: var(--font-h2-mobile);
+    line-height: 1.286;
+  }
+
+  h3,
+  .ds-h3 {
+    font-size: var(--font-h3-mobile);
+    line-height: 1.364;
+  }
+
+  p,
+  label,
+  input,
+  textarea,
+  select,
+  button {
+    font-size: var(--font-body-mobile);
+  }
+
+  small,
+  .helper-text {
+    font-size: var(--font-small-mobile);
   }
 }
 

@@ -21,14 +21,14 @@ export const Stats = () => {
             className="flex items-center justify-center gap-4 md:gap-5"
           >
             <Icon
-              className="h-11 w-11 shrink-0 text-[#7AA797] md:h-12 md:w-12"
+              className="h-11 w-11 shrink-0 text-text-light md:h-12 md:w-12"
               strokeWidth={1.6}
             />
             <div className="text-start">
-              <p className="text-2xl font-black leading-none text-[#0F4C3A] md:text-[1.75rem]">
+              <p className="text-2xl font-black leading-none text-primary md:text-[1.75rem]">
                 {value}
               </p>
-              <p className="mt-1.5 text-sm font-bold text-[#63776F]">{label}</p>
+              <p className="mt-1.5 text-sm font-bold text-text-light">{label}</p>
             </div>
           </div>
         ))}

@@ -40,7 +40,7 @@ function TabsList({ children, className, _currentValue, _onValueChange, sx }) {
       sx={{
         minHeight: 48,
         bgcolor: 'action.hover',
-        borderRadius: '12px',
+        borderRadius: 'var(--ds-radius-control)',
         p: 0.5,
         '& .MuiTabs-indicator': {
           borderRadius: '8px',

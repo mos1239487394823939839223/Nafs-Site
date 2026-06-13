@@ -51,7 +51,7 @@ export default {
                 },
                 // shadcn/ui semantic colors
                 destructive: {
-                    DEFAULT: '#ef4444',
+                    DEFAULT: 'var(--ds-error)',
                     foreground: '#ffffff',
                 },
                 muted: {

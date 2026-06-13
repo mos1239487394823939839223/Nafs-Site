@@ -21,8 +21,8 @@ export const Navbar = () => {
   const isAr = language === "ar";
 
   return (
-    <header dir="ltr" className="sticky top-0 z-50 border-b border-[#E8EEE9] bg-white/95 backdrop-blur">
-      <nav className="container mx-auto grid h-[4.25rem] grid-cols-[1fr_auto] items-center gap-3 px-4 md:h-[4.75rem] lg:grid-cols-[auto_1fr_auto] lg:gap-6 lg:px-6">
+    <header dir="ltr" className="sticky top-0 z-50 border-b border-border bg-background-paper/95 backdrop-blur">
+      <nav className="container mx-auto grid h-[68px] grid-cols-[1fr_auto] items-center gap-3 px-4 md:h-[76px] lg:grid-cols-[auto_1fr_auto] lg:gap-6 lg:px-6">
         {/* Left: CTAs (desktop) */}
         <div className="hidden items-center gap-2 lg:flex">
           <Button
@@ -47,7 +47,7 @@ export const Navbar = () => {
             <li key={link.href}>
               <a
                 href={link.href}
-                className="text-sm font-semibold text-[#2F5147] transition hover:text-[#0F4C3A]"
+                className="text-sm font-semibold text-text transition hover:text-primary"
               >
                 {isAr ? link.ar : link.en}
               </a>
@@ -59,7 +59,7 @@ export const Navbar = () => {
         <div className="col-start-2 flex items-center justify-end gap-3 lg:col-start-3">
           <button
             onClick={() => setMenuOpen(!menuOpen)}
-            className="grid h-10 w-10 place-items-center rounded-md border border-[#DDE7E2] bg-white text-[#0F4C3A] lg:hidden"
+            className="grid h-10 w-10 place-items-center rounded-xl border border-border bg-background-paper text-primary lg:hidden"
             aria-label={isAr ? "فتح القائمة" : "Open menu"}
           >
             {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -69,14 +69,14 @@ export const Navbar = () => {
       </nav>
 
       {menuOpen && (
-        <div dir={isAr ? "rtl" : "ltr"} className="border-t border-[#E8EEE9] bg-white p-4 lg:hidden">
+        <div dir={isAr ? "rtl" : "ltr"} className="border-t border-border bg-background-paper p-4 lg:hidden">
           <div className="container mx-auto space-y-1">
             {links.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
                 onClick={() => setMenuOpen(false)}
-                className="block rounded-md px-4 py-2.5 text-sm font-semibold text-[#2F5147] hover:bg-neutral-50"
+                className="block rounded-xl px-4 py-2.5 text-sm font-semibold text-text hover:bg-background-subtle"
               >
                 {isAr ? link.ar : link.en}
               </a>

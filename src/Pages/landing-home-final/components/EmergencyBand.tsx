@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button";
+import { Button } from "../../../components/ui/button";
 import { LockKeyhole, PhoneCall, ShieldCheck } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../../contexts/LanguageContext";
@@ -34,9 +34,9 @@ export const EmergencyBand = () => {
 
   return (
     <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-12 md:py-16">
-      <div className="mx-auto w-full max-w-6xl rounded-md border border-[#E8EEE9] bg-[#F5F7F2] px-5 py-10 md:px-10">
+      <div className="mx-auto w-full max-w-6xl rounded-[20px] border border-border bg-section-bg px-5 py-10 md:px-10">
  
-        <h2 className="text-center text-2xl font-black text-[#17483A] md:text-3xl">
+        <h2 className="text-center text-2xl font-black text-text-heading md:text-3xl">
           {isAr ? "محتاجة مساعدة الآن؟ نحن هنا من أجلك" : "Need help now? We are here for you"}
         </h2>
 
@@ -47,18 +47,18 @@ export const EmergencyBand = () => {
               dir={isAr ? "rtl" : "ltr"}
               className={`rounded-md p-7 ${
                 primary
-                  ? "border border-[#D6E3DD] bg-white shadow-[0_16px_38px_-32px_rgba(15,76,58,.4)]"
+                  ? "border border-border bg-background-paper shadow-card"
                   : ""
               }`}
             >
               <div className="flex items-center gap-6 md:gap-8">
                 <Icon
-                  className="h-12 w-12 shrink-0 text-[#7AA797] md:h-14 md:w-14"
+                  className="h-12 w-12 shrink-0 text-text-light md:h-14 md:w-14"
                   strokeWidth={1.5}
                 />
                 <div className="min-w-0 flex-1 text-start">
-                  <h3 className="text-lg font-black leading-snug text-[#17483A]">{title}</h3>
-                  <p className="mt-2 text-sm font-semibold leading-7 text-[#63776F]">{desc}</p>
+                  <h3 className="text-lg font-black leading-snug text-text-heading">{title}</h3>
+                  <p className="mt-2 text-sm font-semibold leading-7 text-text-light">{desc}</p>
                 </div>
               </div>
               <div className="mt-6 flex justify-center">

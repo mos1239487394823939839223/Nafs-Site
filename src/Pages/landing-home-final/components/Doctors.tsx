@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "../../../components/ui/button";
 import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../../contexts/LanguageContext";
@@ -45,18 +45,18 @@ export const Doctors = () => {
   return (
     <section id="doctors" dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-12 md:py-16">
       <div className="mb-7 flex items-end justify-between gap-4">
-        <a href="/auth/login" className="text-sm font-bold text-[#0F6A52] hover:underline">
+        <a href="/auth/login" className="text-sm font-bold text-primary hover:underline">
           {isAr ? "عرض جميع الدكاترة" : "View all doctors"}
         </a>
-        <h2 className="text-center text-3xl font-black text-[#17483A]">{isAr ? "اختر دكتورك المناسب" : "Choose the right doctor"}</h2>
+        <h2 className="text-center text-3xl font-black text-text-heading">{isAr ? "اختر دكتورك المناسب" : "Choose the right doctor"}</h2>
         <span className="hidden w-[120px] md:block" />
       </div>
 
       <div className="relative">
-        <button className="absolute -start-8 top-1/2 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-[#E4ECE8] bg-white text-[#7AA797] md:grid">
+        <button className="absolute -start-8 top-1/2 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-border bg-background-paper text-text-light md:grid">
           <ChevronLeft className="h-5 w-5 rtl:rotate-180" />
         </button>
-        <button className="absolute -end-8 top-1/2 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-[#E4ECE8] bg-white text-[#7AA797] md:grid">
+        <button className="absolute -end-8 top-1/2 hidden h-10 w-10 -translate-y-1/2 place-items-center rounded-full border border-border bg-background-paper text-text-light md:grid">
           <ChevronRight className="h-5 w-5 rtl:rotate-180" />
         </button>
 
@@ -64,24 +64,24 @@ export const Doctors = () => {
           {visibleDoctors.map((doc) => {
             const specialty = Array.isArray(doc.Specialist) ? doc.Specialist.join(" | ") : doc.Specialist || "";
             return (
-              <article key={doc.Id} className="overflow-hidden rounded-xl border border-[#E4ECE8] bg-white text-center">
+              <article key={doc.Id} className="overflow-hidden rounded-[20px] border border-border bg-background-paper text-center">
                 <div className="relative h-72 bg-neutral-100">
                   {doc.Image ? (
                     <img src={doc.Image} alt={doc.Name} className="h-full w-full object-cover object-top" />
                   ) : (
-                    <span className="grid h-full place-items-center text-3xl font-black text-[#0F6A52]">{doc.Name?.charAt(0) || "د"}</span>
+                    <span className="grid h-full place-items-center text-3xl font-black text-primary">{doc.Name?.charAt(0) || "د"}</span>
                   )}
                   {/* White curved overlap */}
                   <div className="absolute inset-x-0 bottom-0 h-6 rounded-t-[1.75rem] bg-white" />
                 </div>
                 <div className="relative -mt-1 p-5 pt-3">
-                  <h3 className="text-base font-black text-[#17483A]">{doc.Name}</h3>
-                  <p className="mt-2 min-h-5 text-sm font-semibold text-[#63776F]">{specialty}</p>
-                  <div className="mt-3 flex items-center justify-center gap-1 text-sm font-bold text-[#17483A]">
+                  <h3 className="text-base font-black text-text-heading">{doc.Name}</h3>
+                  <p className="mt-2 min-h-5 text-sm font-semibold text-text-light">{specialty}</p>
+                  <div className="mt-3 flex items-center justify-center gap-1 text-sm font-bold text-text-heading">
                     <span>{Number(doc.Rate || 4.8).toFixed(1)}</span>
-                    <Star className="h-4 w-4 fill-[#F6C453] text-[#F6C453]" />
+                    <Star className="h-4 w-4 fill-[var(--token-warning)] text-[var(--token-warning)]" />
                   </div>
-                  <p className="mt-3 text-sm font-semibold text-[#63776F]">
+                  <p className="mt-3 text-sm font-semibold text-text-light">
                     {doc.SessionPrice || 350} {isAr ? "جنيه للجلسة" : "EGP per session"}
                   </p>
                   <Button

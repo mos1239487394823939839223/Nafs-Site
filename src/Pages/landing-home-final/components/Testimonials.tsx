@@ -19,7 +19,7 @@ export const Testimonials = () => {
 
   return (
     <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-12 md:py-16">
-      <h2 className="text-center text-3xl font-black text-[#17483A]">
+      <h2 className="text-center text-3xl font-black text-text-heading">
         {isAr ? "ماذا يقول عملاؤنا" : "What our clients say"}
       </h2>
 
@@ -27,14 +27,14 @@ export const Testimonials = () => {
         {items.map((item) => (
           <article
             key={item.name}
-            className="flex min-h-[220px] flex-col rounded-xl border border-[#E4ECE8] bg-white p-7"
+            className="flex min-h-[220px] flex-col rounded-[20px] border border-border bg-background-paper p-7"
           >
             <Quote
-              className={`h-8 w-8 shrink-0 text-[#9FBDAF] ${isAr ? "ms-auto" : "me-auto"}`}
+              className={`h-8 w-8 shrink-0 text-text-light ${isAr ? "ms-auto" : "me-auto"}`}
               strokeWidth={1.5}
             />
 
-            <p className="mt-4 flex-1 text-start text-sm font-semibold leading-8 text-[#40584F]">
+            <p className="mt-4 flex-1 text-start text-sm font-semibold leading-8 text-text">
               {item.quote}
             </p>
 
@@ -45,8 +45,8 @@ export const Testimonials = () => {
                 className="h-16 w-16 shrink-0 rounded-full object-cover md:h-[4.5rem] md:w-[4.5rem]"
               />
               <div className="min-w-0 text-start">
-                <p className="text-sm font-black text-[#17483A]">{item.name}</p>
-                <p className="mt-1 text-xs font-semibold text-[#63776F]">{item.role}</p>
+                <p className="text-sm font-black text-text-heading">{item.name}</p>
+                <p className="mt-1 text-xs font-semibold text-text-light">{item.role}</p>
               </div>
             </div>
           </article>
@@ -54,9 +54,9 @@ export const Testimonials = () => {
       </div>
 
       <div className="mt-7 flex justify-center gap-2">
-        <span className="h-2 w-2 rounded-full border border-[#9FBDAF]" aria-hidden />
-        <span className="h-2 w-2 rounded-full bg-[#0F5C43]" aria-hidden />
-        <span className="h-2 w-2 rounded-full border border-[#9FBDAF]" aria-hidden />
+        <span className="h-2 w-2 rounded-full border border-text-light" aria-hidden />
+        <span className="h-2 w-2 rounded-full bg-primary" aria-hidden />
+        <span className="h-2 w-2 rounded-full border border-text-light" aria-hidden />
       </div>
     </section>
   );

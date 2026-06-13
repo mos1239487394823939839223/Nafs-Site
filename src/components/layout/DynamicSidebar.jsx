@@ -167,7 +167,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
           <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onClose} />
         )}
         <aside
-          className={`fixed start-0 top-0 z-50 h-full w-[86vw] max-w-[280px] border-e border-white/10 bg-gradient-to-b from-[#0F4C3A] via-[#0D5A43] to-[#0A3F32] text-white shadow-2xl shadow-black/25 transform transition-transform duration-300 ease-in-out ${
+          className={`fixed start-0 top-0 z-50 h-full w-[86vw] max-w-[280px] border-e border-white/10 bg-gradient-to-b from-primary via-secondary to-primary-dark text-white shadow-2xl shadow-black/25 transform transition-transform duration-300 ease-in-out ${
             isOpen
               ? "translate-x-0"
               : isRTL
@@ -181,7 +181,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                 <>
                   <div className="flex items-center gap-2">
                     <span className="text-3xl font-black tracking-tight">nafas</span>
-                    <span className="grid h-9 w-9 place-items-center rounded-2xl bg-gradient-to-br from-[#7ACB88] to-[#2F855A]">
+                    <span className="grid h-9 w-9 place-items-center rounded-2xl bg-gradient-to-br from-secondary to-primary">
                       <HeartHandshake className="h-5 w-5 text-white" />
                     </span>
                   </div>
@@ -206,7 +206,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
               </button>
               <div className="flex items-center gap-2">
                 <span className="text-3xl font-black tracking-tight">nafas</span>
-                <span className="grid h-9 w-9 place-items-center rounded-2xl bg-gradient-to-br from-[#7ACB88] to-[#2F855A]">
+                <span className="grid h-9 w-9 place-items-center rounded-2xl bg-gradient-to-br from-secondary to-primary">
                   <HeartHandshake className="h-5 w-5 text-white" />
                 </span>
               </div>
@@ -293,7 +293,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
           <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onClose} />
         )}
         <aside
-          className={`fixed start-0 top-0 z-50 h-full w-[88vw] max-w-[292px] border-e border-white/10 bg-gradient-to-b from-[#0F4C3A] via-[#0D5A43] to-[#0A3F32] text-white shadow-2xl shadow-[#0A3F32]/25 transform transition-transform duration-300 ease-in-out ${
+          className={`fixed start-0 top-0 z-50 h-full w-[88vw] max-w-[292px] border-e border-white/10 bg-gradient-to-b from-primary via-secondary to-primary-dark text-white shadow-2xl shadow-primary/25 transform transition-transform duration-300 ease-in-out ${
             isOpen
               ? "translate-x-0"
               : isRTL
@@ -304,7 +304,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
           <div className="flex h-full flex-col overflow-hidden">
             <div className="flex items-center justify-between px-5 pb-5 pt-7">
               <div className="flex items-center gap-3">
-                <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-[#75D59A] to-[#2D9A68] shadow-lg shadow-black/15">
+                <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-secondary to-primary shadow-lg shadow-black/15">
                   <HeartHandshake className="h-6 w-6 text-white" />
                 </span>
                 <div>
@@ -337,7 +337,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                         className={({ isActive }) =>
                           `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all relative ${
                             isActive
-                              ? "bg-[#2D7A61] text-white shadow-sm ring-1 ring-white/10 font-bold"
+                              ? "bg-secondary text-white shadow-sm ring-1 ring-white/10 font-bold"
                               : "text-white/75 hover:bg-white/8 hover:text-white"
                           }`
                         }

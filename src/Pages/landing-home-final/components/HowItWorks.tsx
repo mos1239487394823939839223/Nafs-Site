@@ -47,7 +47,7 @@ export const HowItWorks = () => {
 
   return (
     <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-12 md:py-16">
-      <h2 className="text-center text-3xl font-black text-[#17483A]">
+      <h2 className="text-center text-3xl font-black text-text-heading">
         {isAr ? "كيف تبدأ رحلتك؟" : "How do you start your journey?"}
       </h2>
 
@@ -60,26 +60,26 @@ export const HowItWorks = () => {
             top: "92px",
             left: "calc(100% / 6)",
             width: "calc(100% * 4 / 6)",
-            borderTop: "2px dashed #C5D9CE",
+            borderTop: "2px dashed var(--token-border)",
           }}
         />
 
         {STEPS.map(({ num, icon: Icon, titleAr, descAr, titleEn, descEn }) => (
           <div key={num} className="relative z-10 flex flex-col items-center text-center">
             {/* Step number badge */}
-            <span className="mb-4 flex h-8 w-8 items-center justify-center rounded-full bg-[#0F5C43] text-sm font-black text-white">
+            <span className="mb-4 flex h-8 w-8 items-center justify-center rounded-full bg-primary text-sm font-black text-white">
               {num}
             </span>
 
             {/* Icon box */}
-            <div className="flex h-[88px] w-[88px] items-center justify-center rounded-2xl border border-[#D8E9DF] bg-white shadow-[0_4px_16px_-6px_rgba(15,76,58,0.14)]">
-              <Icon className="h-9 w-9 text-[#7FAE97]" strokeWidth={1.5} />
+            <div className="flex h-[88px] w-[88px] items-center justify-center rounded-2xl border border-border bg-background-paper shadow-card">
+              <Icon className="h-9 w-9 text-text-light" strokeWidth={1.5} />
             </div>
 
-            <h3 className="mt-5 text-base font-black text-[#17483A]">
+            <h3 className="mt-5 text-base font-black text-text-heading">
               {isAr ? titleAr : titleEn}
             </h3>
-            <p className="mx-auto mt-2 max-w-[200px] text-sm font-semibold leading-7 text-[#63776F]">
+            <p className="mx-auto mt-2 max-w-[200px] text-sm font-semibold leading-7 text-text-light">
               {isAr ? descAr : descEn}
             </p>
           </div>

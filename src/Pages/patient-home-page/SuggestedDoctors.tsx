@@ -80,7 +80,7 @@ export const SuggestedDoctors = () => {
           onClick={() => setScroll(Math.max(0, scroll - 1))}
           disabled={scroll === 0}
           aria-label="previous"
-          className="absolute start-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#F3F4F6] bg-white text-[#9CA3AF] shadow-sm transition-colors hover:bg-[#F8FAF8] disabled:opacity-40 md:flex"
+          className="absolute start-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background-paper text-text-light shadow-sm transition-colors hover:bg-background disabled:opacity-40 md:flex"
         >
           <ChevronLeft className="h-5 w-5 rtl:rotate-180" />
         </button>
@@ -89,7 +89,7 @@ export const SuggestedDoctors = () => {
           onClick={() => setScroll(Math.min(maxScroll, scroll + 1))}
           disabled={scroll >= maxScroll}
           aria-label="next"
-          className="absolute end-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-[#F3F4F6] bg-white text-[#9CA3AF] shadow-sm transition-colors hover:bg-[#F8FAF8] disabled:opacity-40 md:flex"
+          className="absolute end-0 top-1/2 z-10 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full border border-border bg-background-paper text-text-light shadow-sm transition-colors hover:bg-background disabled:opacity-40 md:flex"
         >
           <ChevronRight className="h-5 w-5 rtl:rotate-180" />
         </button>
@@ -103,7 +103,7 @@ export const SuggestedDoctors = () => {
               ? skeletonCards.map((_, index) => (
                   <div
                     key={index}
-                    className="flex animate-pulse flex-col items-center rounded-2xl border border-[#F3F4F6] bg-white px-[21px] py-8 shadow-sm"
+                    className="flex animate-pulse flex-col items-center rounded-2xl border border-border bg-background-paper px-[21px] py-8 shadow-sm"
                     style={{ height: CARD_HEIGHT, minHeight: CARD_HEIGHT, maxHeight: CARD_HEIGHT }}
                   >
                     <div className="rounded-full bg-muted" style={avatarStyle} />
@@ -119,11 +119,11 @@ export const SuggestedDoctors = () => {
               : doctors.map((doctor) => (
                   <article
                     key={doctor.Id}
-                    className="flex flex-col items-center rounded-[24px] border border-[#DCE8E2] bg-white px-[21px] py-8 text-center shadow-[0_16px_42px_-28px_rgba(15,76,58,0.4)] transition-all hover:-translate-y-1 hover:border-[#2D7A61]/40 hover:shadow-[0_22px_55px_-28px_rgba(15,76,58,0.5)]"
+                    className="flex flex-col items-center rounded-[24px] border border-border bg-background-paper px-[21px] py-8 text-center shadow-card transition-all hover:-translate-y-1 hover:border-secondary/40 hover:shadow-[0_22px_55px_-28px_rgba(15,76,58,0.5)]"
                     style={{ height: CARD_HEIGHT, minHeight: CARD_HEIGHT, maxHeight: CARD_HEIGHT }}
                   >
                     <div
-                      className="overflow-hidden rounded-full bg-[#F9FAFB]"
+                      className="overflow-hidden rounded-full bg-background"
                       style={{ ...avatarStyle, flex: `0 0 ${AVATAR_SIZE}px` }}
                     >
                       {doctor.Image ? (
@@ -146,23 +146,23 @@ export const SuggestedDoctors = () => {
 
                     <div className="flex min-h-0 flex-1 flex-col items-center pt-5">
                       <h4
-                        className="w-full truncate text-center text-base font-bold leading-6 text-[#1F2937]"
+                        className="w-full truncate text-center text-base font-bold leading-6 text-text-heading"
                         dir="auto"
                       >
                         {doctor.Name}
                       </h4>
                       {doctor.Specialist && doctor.Specialist.length > 0 && (
-                        <p className="w-full truncate text-center text-xs leading-4 text-[#6B7280]" dir="auto">
+                        <p className="w-full truncate text-center text-xs leading-4 text-text-light" dir="auto">
                           {doctor.Specialist[0]}
                         </p>
                       )}
 
                       <div className="mt-2 flex items-center justify-center gap-1 text-sm leading-5">
-                        <Star className="h-3 w-3 fill-[#FACC15] text-[#FACC15]" />
-                        <span className="font-medium text-[#374151]">{Number(doctor.Rate || 0).toFixed(1)}</span>
+                        <Star className="h-3 w-3 fill-[var(--token-warning)] text-[var(--token-warning)]" />
+                        <span className="font-medium text-text">{Number(doctor.Rate || 0).toFixed(1)}</span>
                       </div>
 
-                      <p className="pb-4 pt-2 text-xs font-bold leading-4 text-[#374151]">
+                      <p className="pb-4 pt-2 text-xs font-bold leading-4 text-text">
                         {doctor.SessionPrice && doctor.SessionPrice > 0
                           ? `${doctor.SessionPrice} ${t("patientHome.suggestedDoctors.perSession")}`
                           : `300 ${t("patientHome.suggestedDoctors.perSession")}`}
@@ -170,7 +170,7 @@ export const SuggestedDoctors = () => {
 
                       <button
                         onClick={() => navigate(`/dashboard/patient/reserve?doctorId=${doctor.Id}`)}
-                        className="mt-auto h-10 w-full rounded-xl border border-[#E5E7EB] text-sm font-medium leading-5 text-[#374151] transition-colors hover:border-[#2B7A5F] hover:bg-[#F0FDF4] hover:text-[#2B7A5F]"
+                        className="mt-auto h-10 w-full rounded-xl border border-border text-sm font-medium leading-5 text-text transition-colors hover:border-secondary hover:bg-background-subtle hover:text-secondary"
                       >
                         {t("patientHome.suggestedDoctors.bookNow")}
                       </button>

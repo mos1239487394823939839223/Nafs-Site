@@ -102,6 +102,36 @@ export function createAppTheme(mode = 'light', direction = 'ltr') {
 
     const palette = isLight ? lightPalette : darkPalette
 
+    const typographyScale = {
+        h1: {
+            fontWeight: 700,
+            fontSize: '2.125rem',
+            lineHeight: 44 / 34,
+            '@media (min-width:600px)': {
+                fontSize: '3rem',
+                lineHeight: 60 / 48,
+            },
+        },
+        h2: {
+            fontWeight: 700,
+            fontSize: '1.75rem',
+            lineHeight: 36 / 28,
+            '@media (min-width:600px)': {
+                fontSize: '2.25rem',
+                lineHeight: 46 / 36,
+            },
+        },
+        h3: {
+            fontWeight: 600,
+            fontSize: '1.375rem',
+            lineHeight: 30 / 22,
+            '@media (min-width:600px)': {
+                fontSize: '1.75rem',
+                lineHeight: 36 / 28,
+            },
+        },
+    }
+
     return createTheme({
         direction,
         palette: {
@@ -110,21 +140,7 @@ export function createAppTheme(mode = 'light', direction = 'ltr') {
         },
         typography: {
             fontFamily: "'Inter', 'Almarai', system-ui, Avenir, Helvetica, Arial, sans-serif",
-            h1: {
-                fontWeight: 700,
-                fontSize: '2.25rem',
-                lineHeight: 1.2,
-            },
-            h2: {
-                fontWeight: 700,
-                fontSize: '1.875rem',
-                lineHeight: 1.3,
-            },
-            h3: {
-                fontWeight: 600,
-                fontSize: '1.5rem',
-                lineHeight: 1.4,
-            },
+            ...typographyScale,
             h4: {
                 fontWeight: 600,
                 fontSize: '1.25rem',
@@ -142,7 +158,29 @@ export function createAppTheme(mode = 'light', direction = 'ltr') {
             },
             button: {
                 textTransform: 'none',
-                fontWeight: 500,
+                fontWeight: 600,
+                fontSize: '0.9375rem',
+                lineHeight: 24 / 15,
+                '@media (min-width:600px)': {
+                    fontSize: '1rem',
+                    lineHeight: 1.5,
+                },
+            },
+            body1: {
+                fontSize: '0.9375rem',
+                lineHeight: 26 / 15,
+                '@media (min-width:600px)': {
+                    fontSize: '1rem',
+                    lineHeight: 26 / 16,
+                },
+            },
+            body2: {
+                fontSize: '0.8125rem',
+                lineHeight: 22 / 13,
+                '@media (min-width:600px)': {
+                    fontSize: '0.875rem',
+                    lineHeight: 22 / 14,
+                },
             },
         },
         shape: {
@@ -157,17 +195,17 @@ export function createAppTheme(mode = 'light', direction = 'ltr') {
                     root: {
                         borderRadius: designTokens.radius.control,
                         padding: '8px 20px',
-                        fontSize: '0.875rem',
-                        fontWeight: 500,
+                        fontSize: '0.9375rem',
+                        fontWeight: 600,
                         transition: 'all 0.2s ease',
                         '&:active': {
                             transform: 'scale(0.98)',
                         },
                     },
                     sizeLarge: {
-                        height: 52,
+                        height: 48,
                         padding: '8px 32px',
-                        fontSize: '1rem',
+                        fontSize: '0.9375rem',
                     },
                     sizeMedium: {
                         height: 48,

@@ -42,8 +42,11 @@ const Input = React.forwardRef(
           '& .MuiOutlinedInput-root': {
             minHeight: 48,
             borderRadius: 'var(--ds-radius-control)',
+            '&.Mui-disabled': {
+              opacity: 0.5,
+            },
             '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
-              boxShadow: '0 0 0 4px rgba(45,122,97,0.16)',
+              boxShadow: '0 0 0 2px rgba(45,140,99,0.35)',
             },
           },
           '& .MuiOutlinedInput-input': {
@@ -127,6 +130,12 @@ export function Textarea({ label, error, className, rows = 3, value, onChange, n
       sx={{
         '& .MuiOutlinedInput-root': {
           borderRadius: 'var(--ds-radius-control)',
+          '&.Mui-disabled': {
+            opacity: 0.5,
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            boxShadow: '0 0 0 2px rgba(45,140,99,0.35)',
+          },
         },
         ...sx,
       }}

@@ -72,7 +72,7 @@ export default function Header({ onMenuClick }) {
       <div className="flex items-center gap-2">
         <button
           onClick={onMenuClick}
-          className="lg:hidden grid h-10 w-10 place-items-center rounded-2xl border border-[#E5E7EB] bg-white text-[#12372A] shadow-sm"
+          className="lg:hidden grid h-10 w-10 place-items-center rounded-2xl border border-border bg-background-paper text-text-heading shadow-sm"
           aria-label="Open menu"
         >
           <Menu className="h-5 w-5" />
@@ -80,7 +80,7 @@ export default function Header({ onMenuClick }) {
         <div className="relative">
           <button
             onClick={() => { setShowLang(v => !v); setShowTheme(false); setShowNotifications(false) }}
-            className="grid h-11 w-11 place-items-center rounded-2xl border border-transparent bg-transparent text-[#12372A] transition-colors hover:border-[#E5E7EB] hover:bg-white"
+            className="grid h-11 w-11 place-items-center rounded-2xl border border-transparent bg-transparent text-text-heading transition-colors hover:border-border hover:bg-background-paper"
             title={t('settings.language')}
             aria-label={t('settings.language')}
           >
@@ -94,7 +94,7 @@ export default function Header({ onMenuClick }) {
         <div className="relative">
           <button
             onClick={() => { setShowTheme(v => !v); setShowLang(false); setShowNotifications(false) }}
-            className="grid h-11 w-11 place-items-center rounded-2xl border border-transparent bg-transparent text-[#12372A] transition-colors hover:border-[#E5E7EB] hover:bg-white"
+            className="grid h-11 w-11 place-items-center rounded-2xl border border-transparent bg-transparent text-text-heading transition-colors hover:border-border hover:bg-background-paper"
             title={t('common.theme') || 'Theme'}
             aria-label={t('common.theme') || 'Theme'}
           >
@@ -108,12 +108,12 @@ export default function Header({ onMenuClick }) {
         <div className="relative">
           <button
             onClick={() => { setShowNotifications(v => !v); setShowLang(false); setShowTheme(false) }}
-            className="grid h-11 w-11 place-items-center rounded-2xl border border-transparent bg-transparent text-[#12372A] transition-colors hover:border-[#E5E7EB] hover:bg-white"
+            className="grid h-11 w-11 place-items-center rounded-2xl border border-transparent bg-transparent text-text-heading transition-colors hover:border-border hover:bg-background-paper"
             aria-label={t('common.notifications') || 'Notifications'}
           >
             <Bell className="h-6 w-6" />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -end-1 min-w-5 h-5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full border-2 border-[#F8FAF8] flex items-center justify-center">
+              <span className="absolute -top-1 -end-1 min-w-5 h-5 px-1 bg-red-500 text-white text-[10px] font-bold rounded-full border-2 border-background-paper flex items-center justify-center">
                 {unreadCount > 99 ? '99+' : unreadCount}
               </span>
             )}
@@ -153,16 +153,16 @@ export default function Header({ onMenuClick }) {
       <div className="flex items-center gap-3 min-w-0">
         <UserAvatar name={displayName} src={avatarSrc} size="lg" />
         <div className="min-w-0 text-start">
-          <p className="truncate text-lg font-black text-[#12372A]" dir="auto">
+          <p className="truncate text-lg font-black text-text-heading" dir="auto">
             {t('patientHome.header.welcome')}, {firstName} 👋
           </p>
-          <p className="text-sm font-medium text-[#557568]">{t('patientHome.header.feelingToday')}</p>
+          <p className="text-sm font-medium text-text-light">{t('patientHome.header.feelingToday')}</p>
         </div>
       </div>
     )
 
     return (
-      <header className="bg-[#F8FAF8] px-4 py-5">
+      <header className="bg-background px-4 py-5">
         <div className="mx-auto flex w-full max-w-[1240px] items-center justify-between gap-4">
           {isRTL ? (
             <>
@@ -182,22 +182,22 @@ export default function Header({ onMenuClick }) {
 
   if (role === Roles.DOCTOR) {
     return (
-      <header className="bg-[#F7FAF8] px-3 py-4 sm:px-5 md:px-7 md:py-5">
+      <header className="bg-background px-3 py-4 sm:px-5 md:px-7 md:py-5">
         <div className="flex items-center justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
             <button
               onClick={onMenuClick}
-              className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-[#DCE8E2] bg-white text-[#0F4C3A] shadow-sm lg:hidden"
+              className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-border bg-background-paper text-primary shadow-sm lg:hidden"
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5" />
             </button>
             <UserAvatar name={displayName} src={avatarSrc} size="lg" />
             <div className="min-w-0 text-start">
-              <p className="truncate text-base font-extrabold text-[#1F2D2A] sm:text-lg">
+              <p className="truncate text-base font-extrabold text-text-heading sm:text-lg">
                 {isRTL ? `أهلاً د. ${firstName}` : `Welcome, Dr. ${firstName}`}
               </p>
-              <p className="mt-0.5 truncate text-xs font-medium text-[#6B8278] sm:text-sm">
+              <p className="mt-0.5 truncate text-xs font-medium text-text-light sm:text-sm">
                 {isRTL ? "كيف يبدو يومك؟" : "Here is how your day is looking."}
               </p>
             </div>
@@ -207,7 +207,7 @@ export default function Header({ onMenuClick }) {
             <div className="relative">
               <button
                 onClick={() => { setShowNotifications(v => !v); setShowLang(false); setShowTheme(false) }}
-                className="relative grid h-11 w-11 place-items-center rounded-2xl border border-[#DCE8E2] bg-white text-[#0F4C3A] shadow-sm hover:bg-[#EAF5F0]"
+                className="relative grid h-11 w-11 place-items-center rounded-2xl border border-border bg-background-paper text-primary shadow-sm hover:bg-background-subtle"
               >
                 <Bell className="h-5 w-5" />
                 {unreadCount > 0 && (
@@ -247,7 +247,7 @@ export default function Header({ onMenuClick }) {
             <div className="relative hidden sm:block">
               <button
                 onClick={() => { setShowLang(v => !v); setShowTheme(false); setShowNotifications(false) }}
-                className="grid h-11 w-11 place-items-center rounded-2xl border border-[#DCE8E2] bg-white text-[#0F4C3A] shadow-sm hover:bg-[#EAF5F0]"
+                className="grid h-11 w-11 place-items-center rounded-2xl border border-border bg-background-paper text-primary shadow-sm hover:bg-background-subtle"
               >
                 <Globe className="h-5 w-5" />
               </button>
@@ -259,7 +259,7 @@ export default function Header({ onMenuClick }) {
             <div className="relative hidden sm:block">
               <button
                 onClick={() => { setShowTheme(v => !v); setShowLang(false); setShowNotifications(false) }}
-                className="grid h-11 w-11 place-items-center rounded-2xl border border-[#DCE8E2] bg-white text-[#0F4C3A] shadow-sm hover:bg-[#EAF5F0]"
+                className="grid h-11 w-11 place-items-center rounded-2xl border border-border bg-background-paper text-primary shadow-sm hover:bg-background-subtle"
               >
                 <ThemeIcon className="h-5 w-5" />
               </button>
