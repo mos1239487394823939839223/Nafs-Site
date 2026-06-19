@@ -3,6 +3,7 @@ import Snackbar from '@mui/material/Snackbar'
 import MuiAlert from '@mui/material/Alert'
 import Slide from '@mui/material/Slide'
 import React from 'react'
+import { useLanguage } from '../../contexts/LanguageContext'
 
 const ToastContext = createContext()
 
@@ -18,12 +19,9 @@ const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} variant="filled" ref={ref} {...props} />
 })
 
-function SlideTransition(props) {
-  return <Slide {...props} direction="left" />
-}
-
 export function ToastProvider({ children }) {
   const [toasts, setToasts] = useState([])
+  const { isRTL } = useLanguage()
 
   const addToast = useCallback((message, type = 'info', duration = 3000) => {
     const id = Date.now()
@@ -42,36 +40,48 @@ export function ToastProvider({ children }) {
   return (
     <ToastContext.Provider value={{ success, error, warning, info }}>
       {children}
-      {toasts.map((toast, index) => (
-        <Snackbar
-          key={toast.id}
-          open={true}
-          autoHideDuration={toast.duration > 0 ? toast.duration : null}
-          onClose={() => removeToast(toast.id)}
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-          TransitionComponent={SlideTransition}
-          sx={{
-            mt: index * 8,
-            zIndex: 9999,
-          }}
-        >
-          <Alert
+      {toasts.map((toast, index) => {
+        // Dynamic direction and anchor based on language setting (RTL/LTR)
+        const direction = isRTL ? 'right' : 'left'
+        const horizontalAnchor = isRTL ? 'left' : 'right'
+
+        // Clean up message if it has a leading dot
+        let cleanMessage = toast.message
+        if (typeof cleanMessage === 'string' && cleanMessage.startsWith('.')) {
+          cleanMessage = cleanMessage.substring(1)
+        }
+
+        return (
+          <Snackbar
+            key={toast.id}
+            open={true}
+            autoHideDuration={toast.duration > 0 ? toast.duration : null}
             onClose={() => removeToast(toast.id)}
-            severity={toast.type}
+            anchorOrigin={{ vertical: 'top', horizontal: horizontalAnchor }}
+            TransitionComponent={(props) => <Slide {...props} direction={direction} />}
             sx={{
-              minWidth: 320,
-              maxWidth: 'md',
-              borderRadius: '12px',
-              boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
-              backdropFilter: 'blur(12px)',
-              fontWeight: 500,
-              fontSize: '0.875rem',
+              mt: index * 8,
+              zIndex: 9999,
             }}
           >
-            {toast.message}
-          </Alert>
-        </Snackbar>
-      ))}
+            <Alert
+              onClose={() => removeToast(toast.id)}
+              severity={toast.type}
+              sx={{
+                minWidth: 320,
+                maxWidth: 'md',
+                borderRadius: '12px',
+                boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)',
+                backdropFilter: 'blur(12px)',
+                fontWeight: 500,
+                fontSize: '0.875rem',
+              }}
+            >
+              {cleanMessage}
+            </Alert>
+          </Snackbar>
+        )
+      })}
     </ToastContext.Provider>
   )
 }

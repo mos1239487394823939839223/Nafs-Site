@@ -391,8 +391,14 @@ export default function UserManagement() {
     const [staffModalOpen, setStaffModalOpen] = useState(false)
     const [activeTab, setActiveTab] = useState('doctors')
     const [searchTerm, setSearchTerm] = useState('')
+    const [sortBy, setSortBy] = useState('name')
+    const [statusFilter, setStatusFilter] = useState('all')
     const [loading, setLoading] = useState(false)
     const [submitting, setSubmitting] = useState(false)
+    const [detailsUser, setDetailsUser] = useState(null)
+    const [editUser, setEditUser] = useState(null)
+    const [editForm, setEditForm] = useState({ name: '', email: '', phoneNumber: '', specialist: '', isActive: true })
+    const [editSubmitting, setEditSubmitting] = useState(false)
     const [resetModalOpen, setResetModalOpen] = useState(false)
     const [resetTarget, setResetTarget] = useState(null)
     const [resetPasswordValue, setResetPasswordValue] = useState('')
@@ -638,28 +644,110 @@ export default function UserManagement() {
         toast.success(t('success.saved', 'Saved successfully'))
     }
 
+    const getUserId = (item) => item?.Id || item?.ID || item?.id || item?.UserId || item?.userId
+    const getUserSpecialistText = (item) => {
+        const specialist = item?.Specialist || item?.specialist || item?.Speciality || item?.speciality || []
+        return Array.isArray(specialist) ? specialist.join(', ') : String(specialist || '')
+    }
+    const getActiveFlag = (item) => item?.IsActive ?? item?.isActive ?? true
+
+    const openDetailsModal = (userItem) => {
+        setDetailsUser(userItem)
+    }
+
+    const openEditModal = (userItem) => {
+        setEditUser(userItem)
+        setEditForm({
+            name: userItem?.Name || userItem?.name || '',
+            email: userItem?.Email || userItem?.email || '',
+            phoneNumber: userItem?.PhoneNumber || userItem?.phoneNumber || '',
+            specialist: getUserSpecialistText(userItem),
+            isActive: getActiveFlag(userItem) !== false,
+        })
+    }
+
+    const handleEditUserSubmit = async () => {
+        const userId = getUserId(editUser)
+        if (!userId || !editForm.name.trim() || !validateEmail(editForm.email)) {
+            toast.error(t('errors.fillRequired'))
+            return
+        }
+
+        setEditSubmitting(true)
+        const payload = {
+            name: editForm.name.trim(),
+            email: editForm.email.trim(),
+            phoneNumber: editForm.phoneNumber.trim() || null,
+            specialist: editForm.specialist.trim() ? editForm.specialist.split(',').map((item) => item.trim()).filter(Boolean) : null,
+            isActive: editForm.isActive,
+        }
+
+        try {
+            const response = activeTab === 'doctors'
+                ? await adminAPI.updateDoctor(userId, payload)
+                : await adminAPI.updateUser(userId, payload)
+            if (response?.IsSuccess === false) {
+                throw new Error(response?.Message || response?.message)
+            }
+            toast.success(t('success.updated', 'Updated successfully'))
+            setEditUser(null)
+            if (activeTab === 'doctors') await fetchDoctors()
+            else if (activeTab === 'patients') await fetchPatients()
+            else await fetchSupportStaff()
+        } catch (error) {
+            console.error('Failed to update user:', error)
+            toast.error(extractErrorMessage(error, t('errors.somethingWentWrong')))
+        } finally {
+            setEditSubmitting(false)
+        }
+    }
+
+    const getSessionsCount = (item) => Number(item.SessionsCount ?? item.sessionsCount ?? item.SessionCount ?? item.sessionCount ?? item.CompletedSessions ?? item.completedSessions ?? 0)
+    const getPatientsCount = (item) => Number(item.PatientsCount ?? item.patientsCount ?? item.PatientCount ?? item.patientCount ?? 0)
+    const getOpenCasesCount = (item) => Number(item.OpenCasesCount ?? item.openCasesCount ?? item.ActiveCases ?? item.activeCases ?? 0)
+    const getClosedCasesCount = (item) => Number(item.ClosedCasesCount ?? item.closedCasesCount ?? item.ResolvedCases ?? item.resolvedCases ?? 0)
+    const getTreatmentProgram = (item) => item.TreatmentProgram || item.treatmentProgram || item.ProgramName || item.programName || '—'
+
+    const sortItems = useCallback((items) => {
+        return [...items].sort((a, b) => {
+            if (sortBy === 'status') return Number(b.IsActive !== false) - Number(a.IsActive !== false)
+            if (sortBy === 'sessions') return getSessionsCount(b) - getSessionsCount(a)
+            if (sortBy === 'patients') return getPatientsCount(b) - getPatientsCount(a)
+            if (sortBy === 'openCases') return getOpenCasesCount(b) - getOpenCasesCount(a)
+            const aName = String(a.Name || a.name || a.Email || a.email || '').toLowerCase()
+            const bName = String(b.Name || b.name || b.Email || b.email || '').toLowerCase()
+            return aName.localeCompare(bName)
+        })
+    }, [sortBy])
+
     const filteredDoctors = useMemo(() =>
-        doctors.filter(d => {
+        sortItems(doctors.filter(d => {
             const name = (d.Name || d.name || '').toLowerCase()
             const email = (d.Email || d.email || '').toLowerCase()
-            return name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase())
-        }), [doctors, searchTerm]
+            const matchesSearch = name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase())
+            const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? getActiveFlag(d) !== false : getActiveFlag(d) === false)
+            return matchesSearch && matchesStatus
+        })), [doctors, searchTerm, sortItems, statusFilter]
     )
 
     const filteredPatients = useMemo(() =>
-        patients.filter(p => {
+        sortItems(patients.filter(p => {
             const name = (p.Name || p.name || '').toLowerCase()
             const email = (p.Email || p.email || '').toLowerCase()
-            return name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase())
-        }), [patients, searchTerm]
+            const matchesSearch = name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase())
+            const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? getActiveFlag(p) !== false : getActiveFlag(p) === false)
+            return matchesSearch && matchesStatus
+        })), [patients, searchTerm, sortItems, statusFilter]
     )
 
     const filteredSupportStaff = useMemo(() =>
-        supportStaff.filter(s => {
+        sortItems(supportStaff.filter(s => {
             const name = (s.Name || s.name || '').toLowerCase()
             const email = (s.Email || s.email || '').toLowerCase()
-            return name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase())
-        }), [supportStaff, searchTerm]
+            const matchesSearch = name.includes(searchTerm.toLowerCase()) || email.includes(searchTerm.toLowerCase())
+            const matchesStatus = statusFilter === 'all' || (statusFilter === 'active' ? getActiveFlag(s) !== false : getActiveFlag(s) === false)
+            return matchesSearch && matchesStatus
+        })), [supportStaff, searchTerm, sortItems, statusFilter]
     )
 
     const doctorsStats = useMemo(() => {
@@ -732,7 +820,7 @@ export default function UserManagement() {
                 {/* Tabs */}
                 <Card className="border border-border shadow-sm">
                     <CardContent className="space-y-5">
-                        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSearchTerm('') }}>
+                        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSearchTerm(''); setSortBy('name'); setStatusFilter('all') }}>
                             <TabsList className="w-full sm:w-auto bg-background-subtle rounded-xl p-1">
                         <TabsTrigger value="doctors">
                             <Stethoscope className="w-4 h-4" />
@@ -758,29 +846,51 @@ export default function UserManagement() {
                             </TabsList>
 
                             {/* Search Bar */}
-                            <div className="relative">
-                        <Search className={`absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light`} />
-                        <input
-                            type="text"
-                            placeholder={`${t('common.search')} ${
-                                activeTab === 'doctors'
-                                    ? t('admin.doctors')
-                                    : activeTab === 'support'
-                                        ? t('admin.customerSupport', 'Customer Support')
-                                        : t('admin.patients', 'Patients')
-                            }...`}
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className={`w-full sm:max-w-sm h-10 ${t("auto.ps10Pe10")} rounded-xl border border-border-light bg-background-subtle/50 text-sm text-text placeholder:text-text-light/50 hover:bg-background-subtle hover:border-border-dark focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-background transition-all`}
-                        />
-                        {searchTerm && (
-                            <button
-                                onClick={() => setSearchTerm('')}
-                                className={`absolute end-3 top-1/2 -translate-y-1/2 text-text-light hover:text-text transition-colors`}
-                            >
-                                <X className="w-4 h-4" />
-                            </button>
-                        )}
+                            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_220px]">
+                                <div className="relative">
+                                    <Search className={`absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light`} />
+                                    <input
+                                        type="text"
+                                        placeholder={`${t('common.search')} ${
+                                            activeTab === 'doctors'
+                                                ? t('admin.doctors')
+                                                : activeTab === 'support'
+                                                    ? t('admin.customerSupport', 'Customer Support')
+                                                    : t('admin.patients', 'Patients')
+                                        }...`}
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className={`w-full h-10 ${t("auto.ps10Pe10")} rounded-xl border border-border-light bg-background-subtle/50 text-sm text-text placeholder:text-text-light/50 hover:bg-background-subtle hover:border-border-dark focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-background transition-all`}
+                                    />
+                                    {searchTerm && (
+                                        <button
+                                            onClick={() => setSearchTerm('')}
+                                            className={`absolute end-3 top-1/2 -translate-y-1/2 text-text-light hover:text-text transition-colors`}
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
+                                <select
+                                    value={statusFilter}
+                                    onChange={(event) => setStatusFilter(event.target.value)}
+                                    className="h-10 rounded-xl border border-border-light bg-background-subtle/50 px-3 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                >
+                                    <option value="all">{t('common.allStatuses', 'All statuses')}</option>
+                                    <option value="active">{t('common.active')}</option>
+                                    <option value="inactive">{t('common.inactive')}</option>
+                                </select>
+                                <select
+                                    value={sortBy}
+                                    onChange={(event) => setSortBy(event.target.value)}
+                                    className="h-10 rounded-xl border border-border-light bg-background-subtle/50 px-3 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                                >
+                                    <option value="name">{t('common.name')}</option>
+                                    <option value="status">{t('common.status')}</option>
+                                    {activeTab === 'doctors' && <option value="patients">{t('admin.patientCount', 'Patients count')}</option>}
+                                    {activeTab === 'patients' && <option value="sessions">{t('admin.sessionsCount', 'Sessions count')}</option>}
+                                    {activeTab === 'support' && <option value="openCases">{t('admin.openCases', 'Open cases')}</option>}
+                                </select>
                             </div>
 
                     {/* Doctors Tab */}
@@ -824,7 +934,17 @@ export default function UserManagement() {
                                                 <button onClick={() => openDoctorFinancePage(doctor)}
                                                     className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
                                                     <Eye className="w-4 h-4 text-secondary" />
+                                                    {t('admin.finance', 'Finance')}
+                                                </button>
+                                                <button onClick={() => openDetailsModal(doctor)}
+                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
+                                                    <FileText className="w-4 h-4 text-primary" />
                                                     {t('common.view')}
+                                                </button>
+                                                <button onClick={() => openEditModal(doctor)}
+                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
+                                                    <User className="w-4 h-4 text-primary" />
+                                                    {t('common.edit', 'Edit')}
                                                 </button>
                                                 <button onClick={() => handleToggleDoctor(doctor.Id || doctor.id)}
                                                     className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
@@ -851,7 +971,9 @@ export default function UserManagement() {
                                                 <TableHead>{t('common.specialty')}</TableHead>
                                                 <TableHead>{t('common.email')}</TableHead>
                                                 <TableHead>{t('common.phone')}</TableHead>
+                                                <TableHead>{t('admin.patientCount', 'Patients')}</TableHead>
                                                 <TableHead>{t('common.status')}</TableHead>
+                                                <TableHead>{t('admin.accountStatus', 'Account')}</TableHead>
                                                 <TableHead className="text-center">{t('common.actions')}</TableHead>
                                             </TableRow>
                                         </TableHeader>
@@ -874,10 +996,16 @@ export default function UserManagement() {
                                                         </TableCell>
                                                         <TableCell className="text-text-muted max-w-[180px] truncate">{doctor.Email || doctor.email}</TableCell>
                                                         <TableCell className="text-text-muted whitespace-nowrap">{doctor.PhoneNumber || doctor.phoneNumber || '—'}</TableCell>
+                                                        <TableCell className="font-semibold text-text-heading">{getPatientsCount(doctor)}</TableCell>
                                                         <TableCell>
                                                             <Badge variant={doctor.IsActive !== false ? 'success' : 'default'}>
                                                                 <Activity className="w-3 h-3" />
                                                                 {doctor.IsActive !== false ? t('common.active') : t('common.inactive')}
+                                                            </Badge>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            <Badge variant={doctor.AccountStatus === 'Suspended' ? 'danger' : 'secondary'}>
+                                                                {doctor.AccountStatus || doctor.accountStatus || (doctor.IsActive !== false ? t('common.active') : t('common.inactive'))}
                                                             </Badge>
                                                         </TableCell>
                                                         <TableCell className="text-center">
@@ -887,7 +1015,19 @@ export default function UserManagement() {
                                                                         className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
                                                                         <Eye className="w-4 h-4 text-secondary" />
                                                                     </button>
+                                                                </TooltipTrigger><TooltipContent>{t('admin.finance', 'Finance')}</TooltipContent></Tooltip>
+                                                                <Tooltip><TooltipTrigger asChild>
+                                                                    <button onClick={() => openDetailsModal(doctor)}
+                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
+                                                                        <FileText className="w-4 h-4 text-primary" />
+                                                                    </button>
                                                                 </TooltipTrigger><TooltipContent>{t('common.view')}</TooltipContent></Tooltip>
+                                                                <Tooltip><TooltipTrigger asChild>
+                                                                    <button onClick={() => openEditModal(doctor)}
+                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
+                                                                        <User className="w-4 h-4 text-primary" />
+                                                                    </button>
+                                                                </TooltipTrigger><TooltipContent>{t('common.edit', 'Edit')}</TooltipContent></Tooltip>
                                                                 <Tooltip><TooltipTrigger asChild>
                                                                     <button onClick={() => handleToggleDoctor(doctor.Id || doctor.id)}
                                                                         className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
@@ -908,7 +1048,7 @@ export default function UserManagement() {
                                                 ))
                                             ) : (
                                                 <TableRow hover={false}>
-                                                    <TableCell colSpan={6} className="text-center py-12">
+                                                    <TableCell colSpan={8} className="text-center py-12">
                                                         <div className="flex flex-col items-center gap-3">
                                                             <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
                                                                 <Stethoscope className="w-7 h-7 text-text-muted" />
@@ -962,6 +1102,16 @@ export default function UserManagement() {
                                                 </Badge>
                                             </div>
                                             <div className="flex items-center gap-2 pt-1 border-t border-border">
+                                                <button onClick={() => openDetailsModal(patient)}
+                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
+                                                    <FileText className="w-4 h-4 text-primary" />
+                                                    {t('common.view')}
+                                                </button>
+                                                <button onClick={() => openEditModal(patient)}
+                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
+                                                    <User className="w-4 h-4 text-primary" />
+                                                    {t('common.edit', 'Edit')}
+                                                </button>
                                                 <button onClick={() => openResetPasswordModal(patient)}
                                                     className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
                                                     <Lock className="w-4 h-4 text-primary" />
@@ -980,7 +1130,8 @@ export default function UserManagement() {
                                                 <TableHead>{t('common.name')}</TableHead>
                                                 <TableHead>{t('common.email')}</TableHead>
                                                 <TableHead>{t('common.phone')}</TableHead>
-                                                <TableHead>{t('common.role')}</TableHead>
+                                                <TableHead>{t('admin.sessionsCount', 'Sessions')}</TableHead>
+                                                <TableHead>{t('patientHome.treatmentProgram.label', 'Treatment Program')}</TableHead>
                                                 <TableHead>{t('common.status')}</TableHead>
                                                 <TableHead className="text-center">{t('common.actions')}</TableHead>
                                             </TableRow>
@@ -997,24 +1148,34 @@ export default function UserManagement() {
                                                         </TableCell>
                                                         <TableCell className="text-text-muted max-w-[180px] truncate">{patient.Email || patient.email}</TableCell>
                                                         <TableCell className="text-text-muted whitespace-nowrap">{patient.PhoneNumber || patient.phoneNumber || '—'}</TableCell>
-                                                        <TableCell>
-                                                            <Badge variant="primary">
-                                                                <ShieldCheck className="w-3 h-3" />
-                                                                {patient.RoleName || patient.roleName || '—'}
-                                                            </Badge>
-                                                        </TableCell>
+                                                        <TableCell className="font-semibold text-text-heading">{getSessionsCount(patient)}</TableCell>
+                                                        <TableCell className="max-w-[180px] truncate text-text-muted">{getTreatmentProgram(patient)}</TableCell>
                                                         <TableCell>
                                                             <Badge variant={patient.IsActive !== false ? 'success' : 'default'}>
                                                                 {patient.IsActive !== false ? t('common.active') : t('common.inactive')}
                                                             </Badge>
                                                         </TableCell>
                                                         <TableCell className="text-center">
-                                                            <Tooltip><TooltipTrigger asChild>
-                                                                <button onClick={() => openResetPasswordModal(patient)}
-                                                                    className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
-                                                                    <Lock className="w-4 h-4 text-primary" />
-                                                                </button>
-                                                            </TooltipTrigger><TooltipContent>{t('auth.resetPassword')}</TooltipContent></Tooltip>
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <Tooltip><TooltipTrigger asChild>
+                                                                    <button onClick={() => openDetailsModal(patient)}
+                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
+                                                                        <FileText className="w-4 h-4 text-primary" />
+                                                                    </button>
+                                                                </TooltipTrigger><TooltipContent>{t('common.view')}</TooltipContent></Tooltip>
+                                                                <Tooltip><TooltipTrigger asChild>
+                                                                    <button onClick={() => openEditModal(patient)}
+                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
+                                                                        <User className="w-4 h-4 text-primary" />
+                                                                    </button>
+                                                                </TooltipTrigger><TooltipContent>{t('common.edit', 'Edit')}</TooltipContent></Tooltip>
+                                                                <Tooltip><TooltipTrigger asChild>
+                                                                    <button onClick={() => openResetPasswordModal(patient)}
+                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
+                                                                        <Lock className="w-4 h-4 text-primary" />
+                                                                    </button>
+                                                                </TooltipTrigger><TooltipContent>{t('auth.resetPassword')}</TooltipContent></Tooltip>
+                                                            </div>
                                                         </TableCell>
                                                     </TableRow>
                                                 ))
@@ -1120,6 +1281,16 @@ export default function UserManagement() {
                                                 )}
                                             </div>
                                             <div className="flex items-center gap-2 pt-1 border-t border-border">
+                                                <button onClick={() => openDetailsModal(staff)}
+                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
+                                                    <FileText className="w-4 h-4 text-primary" />
+                                                    {t('common.view')}
+                                                </button>
+                                                <button onClick={() => openEditModal(staff)}
+                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
+                                                    <User className="w-4 h-4 text-primary" />
+                                                    {t('common.edit', 'Edit')}
+                                                </button>
                                                 <button onClick={() => openResetPasswordModal(staff)}
                                                     className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
                                                     <Lock className="w-4 h-4 text-primary" />
@@ -1139,6 +1310,8 @@ export default function UserManagement() {
                                                 <TableHead>{t('common.email')}</TableHead>
                                                 <TableHead>{t('common.phone')}</TableHead>
                                                 <TableHead>{t('common.role')}</TableHead>
+                                                <TableHead>{t('admin.openCases', 'Open cases')}</TableHead>
+                                                <TableHead>{t('admin.closedCases', 'Closed cases')}</TableHead>
                                                 <TableHead>{t('common.status')}</TableHead>
                                                 <TableHead className="text-center">{t('common.actions')}</TableHead>
                                             </TableRow>
@@ -1162,24 +1335,40 @@ export default function UserManagement() {
                                                                 <Badge variant="secondary"><Headphones className="w-3 h-3" />{t('admin.customerSupport', 'Customer Support')}</Badge>
                                                             )}
                                                         </TableCell>
+                                                        <TableCell className="font-semibold text-text-heading">{getOpenCasesCount(staff)}</TableCell>
+                                                        <TableCell className="font-semibold text-text-heading">{getClosedCasesCount(staff)}</TableCell>
                                                         <TableCell>
                                                             <Badge variant={staff.IsActive !== false ? 'success' : 'default'}>
                                                                 {staff.IsActive !== false ? t('common.active') : t('common.inactive')}
                                                             </Badge>
                                                         </TableCell>
                                                         <TableCell className="text-center">
-                                                            <Tooltip><TooltipTrigger asChild>
-                                                                <button onClick={() => openResetPasswordModal(staff)}
-                                                                    className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
-                                                                    <Lock className="w-4 h-4 text-primary" />
-                                                                </button>
-                                                            </TooltipTrigger><TooltipContent>{t('auth.resetPassword')}</TooltipContent></Tooltip>
+                                                            <div className="flex items-center justify-center gap-1">
+                                                                <Tooltip><TooltipTrigger asChild>
+                                                                    <button onClick={() => openDetailsModal(staff)}
+                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
+                                                                        <FileText className="w-4 h-4 text-primary" />
+                                                                    </button>
+                                                                </TooltipTrigger><TooltipContent>{t('common.view')}</TooltipContent></Tooltip>
+                                                                <Tooltip><TooltipTrigger asChild>
+                                                                    <button onClick={() => openEditModal(staff)}
+                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
+                                                                        <User className="w-4 h-4 text-primary" />
+                                                                    </button>
+                                                                </TooltipTrigger><TooltipContent>{t('common.edit', 'Edit')}</TooltipContent></Tooltip>
+                                                                <Tooltip><TooltipTrigger asChild>
+                                                                    <button onClick={() => openResetPasswordModal(staff)}
+                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
+                                                                        <Lock className="w-4 h-4 text-primary" />
+                                                                    </button>
+                                                                </TooltipTrigger><TooltipContent>{t('auth.resetPassword')}</TooltipContent></Tooltip>
+                                                            </div>
                                                         </TableCell>
                                                     </TableRow>
                                                 ))
                                             ) : (
                                                 <TableRow hover={false}>
-                                                    <TableCell colSpan={6} className="text-center py-12">
+                                                    <TableCell colSpan={8} className="text-center py-12">
                                                         <div className="flex flex-col items-center gap-3">
                                                             <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
                                                                 <Headphones className="w-7 h-7 text-text-muted" />
@@ -1364,6 +1553,109 @@ export default function UserManagement() {
                                 </Button>
                             </DialogFooter>
                         </form>
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog open={Boolean(detailsUser)} onOpenChange={(open) => !open && setDetailsUser(null)}>
+                    <DialogContent maxWidth="sm">
+                        <DialogHeader>
+                            <DialogTitle>{t('common.view', 'View')} {detailsUser?.Name || detailsUser?.name || ''}</DialogTitle>
+                            <DialogDescription>
+                                {t('admin.userDetails', 'User details and role-specific summary.')}
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        {detailsUser && (
+                            <div className="space-y-3">
+                                {[
+                                    [t('common.name'), detailsUser.Name || detailsUser.name || '—'],
+                                    [t('common.email'), detailsUser.Email || detailsUser.email || '—'],
+                                    [t('common.phone'), detailsUser.PhoneNumber || detailsUser.phoneNumber || '—'],
+                                    [t('common.status'), getActiveFlag(detailsUser) !== false ? t('common.active') : t('common.inactive')],
+                                    activeTab === 'doctors' ? [t('common.specialty'), getUserSpecialistText(detailsUser) || '—'] : null,
+                                    activeTab === 'doctors' ? [t('admin.patientCount', 'Patients'), getPatientsCount(detailsUser)] : null,
+                                    activeTab === 'patients' ? [t('admin.sessionsCount', 'Sessions'), getSessionsCount(detailsUser)] : null,
+                                    activeTab === 'patients' ? [t('patientHome.treatmentProgram.label', 'Treatment Program'), getTreatmentProgram(detailsUser)] : null,
+                                    activeTab === 'support' ? [t('admin.openCases', 'Open cases'), getOpenCasesCount(detailsUser)] : null,
+                                    activeTab === 'support' ? [t('admin.closedCases', 'Closed cases'), getClosedCasesCount(detailsUser)] : null,
+                                ].filter(Boolean).map(([label, value]) => (
+                                    <div key={label} className="flex items-center justify-between gap-4 rounded-xl border border-border bg-background-subtle px-4 py-3 text-sm">
+                                        <span className="font-medium text-text-muted">{label}</span>
+                                        <span className="text-end font-semibold text-text-heading" dir="auto">{value}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        <DialogFooter>
+                            <Button variant="ghost" onClick={() => setDetailsUser(null)}>
+                                {t('common.close', 'Close')}
+                            </Button>
+                            {detailsUser && (
+                                <Button onClick={() => { openEditModal(detailsUser); setDetailsUser(null) }}>
+                                    {t('common.edit', 'Edit')}
+                                </Button>
+                            )}
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
+                <Dialog open={Boolean(editUser)} onOpenChange={(open) => !open && setEditUser(null)}>
+                    <DialogContent maxWidth="sm">
+                        <DialogHeader>
+                            <DialogTitle>{t('common.edit', 'Edit')} {editUser?.Name || editUser?.name || ''}</DialogTitle>
+                            <DialogDescription>
+                                {t('admin.roleBasedEditNotice', 'Only fields allowed for this role are editable.')}
+                            </DialogDescription>
+                        </DialogHeader>
+
+                        <div className="space-y-4">
+                            <Input
+                                label={t('common.fullName')}
+                                value={editForm.name}
+                                onChange={(event) => setEditForm((prev) => ({ ...prev, name: event.target.value }))}
+                                icon={User}
+                            />
+                            <Input
+                                label={t('common.emailAddress')}
+                                type="email"
+                                value={editForm.email}
+                                onChange={(event) => setEditForm((prev) => ({ ...prev, email: event.target.value }))}
+                                icon={Mail}
+                            />
+                            <Input
+                                label={t('common.phoneNumber')}
+                                value={editForm.phoneNumber}
+                                onChange={(event) => setEditForm((prev) => ({ ...prev, phoneNumber: event.target.value }))}
+                                icon={Phone}
+                            />
+                            {activeTab === 'doctors' && (
+                                <Input
+                                    label={t('common.specialty')}
+                                    value={editForm.specialist}
+                                    onChange={(event) => setEditForm((prev) => ({ ...prev, specialist: event.target.value }))}
+                                    icon={Stethoscope}
+                                />
+                            )}
+                            <label className="flex items-center justify-between rounded-xl border border-border bg-background-subtle px-4 py-3 text-sm font-semibold text-text-heading">
+                                {t('common.active')}
+                                <input
+                                    type="checkbox"
+                                    checked={editForm.isActive}
+                                    onChange={(event) => setEditForm((prev) => ({ ...prev, isActive: event.target.checked }))}
+                                    className="h-4 w-4 accent-primary"
+                                />
+                            </label>
+                        </div>
+
+                        <DialogFooter>
+                            <Button variant="ghost" onClick={() => setEditUser(null)}>
+                                {t('common.cancel')}
+                            </Button>
+                            <Button onClick={handleEditUserSubmit} isLoading={editSubmitting}>
+                                {t('common.save', 'Save')}
+                            </Button>
+                        </DialogFooter>
                     </DialogContent>
                 </Dialog>
 

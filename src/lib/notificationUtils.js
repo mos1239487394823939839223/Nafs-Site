@@ -1,4 +1,105 @@
+import { Roles } from "../contexts/AuthContext";
+
 const text = (value) => String(value ?? "").trim();
+
+export function getIncomingRoomId(msg) {
+  return text(
+    msg?.RoomId ?? msg?.roomId ?? msg?.ActiveRoom ?? msg?.activeRoom ?? msg?.ChatRoomId ?? msg?.chatRoomId,
+  );
+}
+
+export function getIncomingMessageId(msg) {
+  const id = msg?.Id ?? msg?.id ?? msg?.MessageId ?? msg?.messageId;
+  return id !== undefined && id !== null ? String(id) : "";
+}
+
+let activeChatRoomForNotifications = null;
+
+/** When the user is viewing a chat room, suppress message notifications for that room. */
+export function setActiveChatRoomForNotifications(roomId) {
+  activeChatRoomForNotifications = roomId ? String(roomId) : null;
+}
+
+export function shouldPushChatNotification(roomId) {
+  const id = String(roomId || "");
+  if (!id) return true;
+  return id !== activeChatRoomForNotifications;
+}
+
+export function messageFromCurrentUser(msg, user) {
+  if (msg?.sender === "current-user" || msg?.IsMine === true || msg?.isMine === true) return true;
+  if (msg?.sender === "other") return false;
+
+  const currentUserId = text(user?.Id ?? user?.id ?? user?.UserId ?? user?.userId);
+  const senderId = text(msg?.SenderId ?? msg?.senderId ?? msg?.FromUserId ?? msg?.fromUserId);
+  if (currentUserId && senderId) return currentUserId === senderId;
+
+  const currentUserName = text(user?.Name ?? user?.name ?? user?.UserName ?? user?.Username);
+  const senderName = text(msg?.SenderName ?? msg?.senderName ?? msg?.From ?? msg?.from);
+  if (currentUserName && senderName) return currentUserName === senderName;
+
+  return false;
+}
+
+export function isChatMessagePayload(payload = {}) {
+  if (payload?.notification || payload?.Notification) return false;
+  return Boolean(getIncomingRoomId(payload) || text(payload?.Content ?? payload?.content ?? payload?.Text ?? payload?.text));
+}
+
+export function extractRelatedEntities(item = {}) {
+  return {
+    bookingId: text(item.BookingId ?? item.bookingId ?? item.AppointmentId ?? item.appointmentId),
+    messageId: text(item.MessageId ?? item.messageId ?? item.ChatMessageId ?? item.chatMessageId),
+    roomId: text(item.RoomId ?? item.roomId ?? item.ChatRoomId ?? item.chatRoomId),
+    supportCaseId: text(
+      item.SupportCaseId ??
+        item.supportCaseId ??
+        item.CaseId ??
+        item.caseId ??
+        item.TicketId ??
+        item.ticketId,
+    ),
+    emergencyCaseId: text(item.EmergencyCaseId ?? item.emergencyCaseId),
+  };
+}
+
+function isSupportPayload(item = {}) {
+  const raw = [
+    item.Type,
+    item.type,
+    item.NotificationType,
+    item.notificationType,
+    item.SupportCaseType,
+    item.supportCaseType,
+    item.CaseType,
+    item.caseType,
+    item.Title,
+    item.title,
+    item.Body,
+    item.body,
+  ]
+    .map(text)
+    .join(" ")
+    .toLowerCase();
+
+  if (item.IsSupport === true || item.isSupport === true) return true;
+  if (/blackmail|abuse|bullying|ابتزاز|عنف/.test(raw)) return true;
+  if (/emergency|urgent|طارئ|عاجل/.test(raw)) return true;
+  return /support|ticket|دعم/.test(raw);
+}
+
+function messagesBasePath(role) {
+  if (role === Roles.PATIENT) return "/dashboard/patient/messages";
+  if (role === Roles.DOCTOR) return "/dashboard/doctor/messages";
+  if (role === Roles.STAFF) return "/dashboard/staff/messages";
+  return "/admin/messages";
+}
+
+function appointmentsBasePath(role) {
+  if (role === Roles.PATIENT) return "/dashboard/patient/reserve";
+  if (role === Roles.DOCTOR) return "/dashboard/doctor/queue";
+  return "/admin/bookings";
+}
 
 export const NOTIFICATION_CATEGORIES = [
   "all",
@@ -21,48 +122,185 @@ export function getNotificationCategory(item = {}) {
     item.title,
     item.Body,
     item.body,
-  ].map(text).join(" ").toLowerCase();
+  ]
+    .map(text)
+    .join(" ")
+    .toLowerCase();
 
   if (/blackmail|abuse|bullying|ابتزاز|عنف/.test(raw)) return "emergency";
-
-  if (/emergency|urgent|طارئ|عاجل/.test(raw)) return "emergency";
-  if (/message|chat|رسالة|محادثة/.test(raw)) return "messages";
+  if (/emergency|urgent|طارئ|عاجل|high priority/.test(raw)) return "emergency";
+  if (/message|chat|رسالة|محادثة/.test(raw)) return isSupportPayload(item) ? "support" : "messages";
   if (/support|ticket|refund|payment|دعم|طلب|استرداد|دفع/.test(raw)) return "support";
-  if (/booking|appointment|session|موعد|حجز|جلسة/.test(raw)) return "appointments";
+  if (/booking|appointment|session|reminder|موعد|حجز|جلسة|تذكير/.test(raw)) return "appointments";
   return "system";
 }
 
 export function getNotificationActionUrl(item = {}, role = "patient") {
   const direct = text(item.ActionUrl ?? item.actionUrl ?? item.Url ?? item.url ?? item.Link ?? item.link);
-  if (direct) return direct;
+  if (direct.startsWith("/")) return direct;
 
+  const related = extractRelatedEntities(item);
   const category = getNotificationCategory(item);
+  const params = new URLSearchParams();
+
   if (category === "messages" || category === "support" || category === "emergency") {
-    const roomId = text(item.RoomId ?? item.roomId ?? item.ChatRoomId ?? item.chatRoomId);
-    const suffix = roomId ? `?room=${encodeURIComponent(roomId)}` : "";
-    if (role === "patient") return `/dashboard/patient/messages${suffix}`;
-    if (role === "doctor") return `/dashboard/doctor/messages${suffix}`;
-    if (role === "staff") return `/dashboard/staff/messages${suffix}`;
-    return `/admin/messages${suffix}`;
+    if (related.roomId) params.set("room", related.roomId);
+    if (isSupportPayload(item)) {
+      params.set("type", "support");
+      const caseType = text(item.SupportCaseType ?? item.supportCaseType ?? item.CaseType ?? item.caseType);
+      if (caseType) params.set("caseType", caseType);
+      params.set("support", "1");
+    } else {
+      params.set("type", "doctors");
+    }
+    const query = params.toString();
+    return query ? `${messagesBasePath(role)}?${query}` : messagesBasePath(role);
   }
+
   if (category === "appointments") {
-    if (role === "patient") return "/dashboard/patient/reserve";
-    if (role === "doctor") return "/dashboard/doctor/queue";
-    if (role === "admin") return "/admin/bookings";
+    if (role === Roles.PATIENT) {
+      if (related.bookingId && /10m|start|now|join|meeting/i.test(text(item.Title ?? item.title))) {
+        return `/dashboard/patient/meeting/${encodeURIComponent(related.bookingId)}`;
+      }
+      params.set("tab", "status");
+      if (related.bookingId) params.set("bookingId", related.bookingId);
+      return `${appointmentsBasePath(role)}?${params.toString()}`;
+    }
+    if (related.bookingId) params.set("bookingId", related.bookingId);
+    const query = params.toString();
+    return query ? `${appointmentsBasePath(role)}?${query}` : appointmentsBasePath(role);
   }
+
   return "";
+}
+
+export function getNotificationType(item = {}) {
+  const explicit = text(item.Type ?? item.type ?? item.NotificationType ?? item.notificationType);
+  if (explicit) return explicit.toLowerCase();
+  return getNotificationCategory(item);
 }
 
 export function normalizeNotification(item = {}, role = "patient") {
   const id = item.Id ?? item.id ?? item.NotificationId ?? item.notificationId ?? `local-${Date.now()}-${Math.random()}`;
+  const related = extractRelatedEntities(item);
+  const actionUrl = getNotificationActionUrl(item, role);
+  const body = text(
+    item.Body ??
+      item.body ??
+      item.Description ??
+      item.description ??
+      item.Message ??
+      item.message ??
+      item.Content ??
+      item.content,
+  );
+
   return {
     id: String(id),
     title: text(item.Title ?? item.title ?? item.Subject ?? item.subject) || "Notification",
-    body: text(item.Body ?? item.body ?? item.Message ?? item.message ?? item.Content ?? item.content),
+    body,
+    description: body,
+    type: getNotificationType(item),
     isRead: Boolean(item.IsRead ?? item.isRead ?? item.Read ?? item.read),
     date: item.CreatedAt ?? item.createdAt ?? item.Date ?? item.date ?? new Date().toISOString(),
     category: getNotificationCategory(item),
-    actionUrl: getNotificationActionUrl(item, role),
+    actionUrl,
+    targetUrl: text(item.TargetUrl ?? item.targetUrl) || actionUrl,
+    targetUserId: text(item.TargetUserId ?? item.targetUserId ?? item.UserId ?? item.userId),
+    targetRole: text(item.TargetRole ?? item.targetRole ?? item.Role ?? item.role),
+    relatedEntity: related,
     raw: item,
   };
+}
+
+export function createLocalNotification(partial = {}, role = "patient") {
+  const stamp = Date.now();
+  const id = partial.id ?? partial.Id ?? `local-${stamp}-${Math.random().toString(36).slice(2, 8)}`;
+  return normalizeNotification({ IsRead: false, CreatedAt: new Date().toISOString(), ...partial, Id: id }, role);
+}
+
+export function mapChatMessageToNotification(msg = {}, role = "patient", { roomMeta } = {}) {
+  const roomId = getIncomingRoomId(msg);
+  const messageId = getIncomingMessageId(msg);
+  const content = text(msg?.Content ?? msg?.content ?? msg?.Text ?? msg?.text);
+  const preview = content.length > 120 ? `${content.slice(0, 117)}...` : content;
+
+  const merged = {
+    ...msg,
+    RoomId: roomId,
+    MessageId: messageId || undefined,
+    Body: preview || (msg?.AttachmentUrl || msg?.attachmentUrl ? "Attachment" : "New message"),
+    SupportCaseType: roomMeta?.key ?? msg?.SupportCaseType ?? msg?.supportCaseType,
+    CaseType: roomMeta?.key ?? msg?.CaseType ?? msg?.caseType,
+    IsSupport: roomMeta?.isSupport ?? msg?.IsSupport ?? msg?.isSupport,
+  };
+
+  const support = isSupportPayload(merged);
+  const emergency = /emergency|blackmail|abuse|urgent|طارئ|ابتزاز/.test(
+    [merged.SupportCaseType, merged.CaseType, roomMeta?.key].map(text).join(" ").toLowerCase(),
+  );
+
+  merged.Type = emergency ? "emergency" : support ? "support" : "messages";
+  merged.Title =
+    msg?.Title ??
+    msg?.title ??
+    (emergency ? "Emergency alert" : support ? "New support message" : "New message");
+
+  const stableId = messageId ? `local-chat-${roomId}-${messageId}` : `local-chat-${roomId}-${stampFallback(msg)}`;
+
+  return normalizeNotification({ ...merged, Id: stableId, IsRead: false }, role);
+}
+
+function stampFallback(msg) {
+  return text(msg?.CreatedAt ?? msg?.createdAt) || Date.now();
+}
+
+export function mapRealtimeNotification(eventName, payload = {}, role = "patient") {
+  const source = payload?.notification ? { ...payload.notification, ...(payload.data || {}) } : payload;
+  const event = String(eventName || "").toLowerCase();
+
+  const defaults = { IsRead: false };
+
+  if (event.includes("bookingcreated") || event.includes("newbooking")) {
+    defaults.Type = "appointments";
+    defaults.Title = source.Title || "New booking created";
+  } else if (event.includes("bookingconfirmed")) {
+    defaults.Type = "appointments";
+    defaults.Title = source.Title || "Booking confirmed";
+  } else if (event.includes("bookingcancel")) {
+    defaults.Type = "appointments";
+    defaults.Title = source.Title || "Booking cancelled";
+  } else if (event.includes("bookingreschedul")) {
+    defaults.Type = "appointments";
+    defaults.Title = source.Title || "Booking rescheduled";
+  } else if (event.includes("bookingstatus") || event.includes("bookingupdated")) {
+    defaults.Type = "appointments";
+    defaults.Title = source.Title || "Booking status updated";
+  } else if (event.includes("sessionstarted") || event.includes("livesession") || event.includes("meetingstarted")) {
+    defaults.Type = "appointments";
+    defaults.Title = source.Title || "Live session started";
+  } else if (event.includes("appointmentreminder") || event.includes("sessionreminder")) {
+    defaults.Type = "appointments";
+    defaults.NotificationType = "AppointmentReminder";
+    defaults.Title = source.Title || "Session reminder";
+  } else if (event.includes("emergency") || event.includes("blackmail") || event.includes("abuse")) {
+    defaults.Type = "emergency";
+    defaults.Title = source.Title || "Emergency alert";
+  } else if (event.includes("supportticket") || event.includes("newsupport") || event.includes("ticketcreated")) {
+    defaults.Type = "support";
+    defaults.Title = source.Title || "New support ticket";
+  } else if (event.includes("support")) {
+    defaults.Type = "support";
+    defaults.Title = source.Title || "Support update";
+  } else if (event.includes("patientupdate") || event.includes("patientstatus")) {
+    defaults.Type = "system";
+    defaults.Title = source.Title || "Patient update";
+  } else if (event.includes("message") || event.includes("chat")) {
+    defaults.Type = isSupportPayload(source) ? "support" : "messages";
+    defaults.Title =
+      source.Title ||
+      (defaults.Type === "support" ? "New support message" : "New therapist message");
+  }
+
+  return normalizeNotification({ ...defaults, ...source }, role);
 }

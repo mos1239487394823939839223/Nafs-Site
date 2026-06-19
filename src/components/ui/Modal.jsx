@@ -28,7 +28,7 @@ export default function Modal({ isOpen, onClose, title, children, className, siz
       TransitionComponent={Transition}
       sx={{
         '& .MuiDialog-paper': {
-          borderRadius: '16px',
+          borderRadius: 'var(--ds-radius-card)',
           overflow: 'hidden',
         },
         ...sx,
@@ -45,7 +45,7 @@ export default function Modal({ isOpen, onClose, title, children, className, siz
           borderBottom: 1,
           borderColor: 'divider',
           fontSize: '1.5rem',
-          fontWeight: 600,
+          fontWeight: 700,
         }}
       >
         {title}

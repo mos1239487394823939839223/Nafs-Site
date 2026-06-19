@@ -23,7 +23,7 @@ interface TodayScheduleProps {
 function formatTimeRange(start?: string, end?: string): string {
   if (!start) return "";
   const fmt = (s: string) =>
-    new Date(s).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    new Date(s).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   return end ? `${fmt(start)} – ${fmt(end)}` : fmt(start);
 }
 
@@ -31,27 +31,27 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
   const { t, isRTL } = useLanguage();
 
   return (
-    <section className="rounded-3xl bg-card border border-border shadow-card p-4 sm:p-6 md:p-7 mb-6">
-      <div className="flex items-center justify-between mb-5">
-        <h2 className="text-lg font-bold text-foreground">
-          {t("doctor.dashboardHome.schedule.title")}
-        </h2>
+    <section className="rounded-2xl bg-card border border-border shadow-card p-4 md:p-5">
+      <div className="flex items-center justify-between mb-3">
         <Link
           to="/dashboard/doctor/schedule"
-          className="text-sm font-semibold text-primary hover:text-primary/80"
+          className="text-xs font-semibold text-primary hover:text-primary/80"
         >
           {t("doctor.dashboardHome.schedule.viewFull")}
         </Link>
+        <h2 className="text-base font-bold text-foreground">
+          {t("doctor.dashboardHome.schedule.title")}
+        </h2>
       </div>
 
       {loading && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           {[1, 2, 3].map((n) => (
-            <div key={n} className="flex items-center justify-between gap-4 p-3 rounded-2xl animate-pulse">
-              <div className="h-9 w-24 rounded-full bg-muted" />
+            <div key={n} className="flex items-center justify-between gap-4 p-2 rounded-xl animate-pulse">
+              <div className="h-8 w-20 rounded-full bg-muted" />
               <div className="h-4 w-20 rounded bg-muted" />
               <div className="flex items-center gap-3">
-                <div className="size-11 rounded-full bg-muted" />
+                <div className="size-9 rounded-full bg-muted" />
                 <div className="space-y-2">
                   <div className="h-4 w-28 rounded bg-muted" />
                   <div className="h-3 w-20 rounded bg-muted" />
@@ -69,7 +69,7 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
       )}
 
       {!loading && bookings.length > 0 && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           {bookings.map((b, i) => {
             const isPrimary =
               b.Status === APPOINTMENT_STATUS.IN_PROGRESS;
@@ -89,42 +89,44 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
             return (
               <div
                 key={b.BookingId ?? i}
-                className="flex flex-wrap items-center gap-3 sm:gap-4 p-3 rounded-2xl hover:bg-muted/40 transition-colors"
+                className="flex items-center justify-between gap-4 p-2 rounded-xl hover:bg-muted/40 transition-colors"
               >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
+                <button
+                  type="button"
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                    isPrimary
+                      ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                      : "border border-border text-foreground hover:bg-muted"
+                  }`}
+                >
+                  {t(ctaKey)}
+                </button>
+
+                {timeLabel && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{timeLabel}</span>
+                    <Clock className="size-3.5" />
+                  </div>
+                )}
+
+                <div
+                  className={`flex items-center gap-2 min-w-0 ${
+                    t("auto.flexrowTextstart")
+                  }`}
+                >
                   <img
                     src={avatar}
                     alt={b.PatientName as string ?? ""}
-                    className="size-10 sm:size-11 rounded-full object-cover shrink-0"
+                    className="size-9 rounded-full object-cover"
                   />
                   <div className="min-w-0">
-                    <p className="font-semibold text-foreground truncate text-sm sm:text-base">
+                    <p className="text-sm font-semibold text-foreground truncate">
                       {b.PatientName as string ?? ""}
                     </p>
                     <p className="text-xs text-muted-foreground truncate">
                       {t("doctor.dashboardHome.schedule.sessionTypes.individual")}
                     </p>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-2 sm:gap-3 ms-auto sm:ms-0">
-                  {timeLabel && (
-                    <div className="flex items-center gap-1.5 text-xs sm:text-sm text-muted-foreground">
-                      <Clock className="size-3.5 sm:size-4" />
-                      <span dir="ltr">{timeLabel}</span>
-                    </div>
-                  )}
-
-                  <button
-                    type="button"
-                    className={`px-3 sm:px-5 py-1.5 sm:py-2 rounded-full text-xs sm:text-sm font-semibold transition-colors ${
-                      isPrimary
-                        ? "bg-primary hover:bg-primary/90 text-primary-foreground"
-                        : "border border-border text-foreground hover:bg-muted"
-                    }`}
-                  >
-                    {t(ctaKey)}
-                  </button>
                 </div>
               </div>
             );

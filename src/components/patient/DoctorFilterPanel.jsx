@@ -51,6 +51,10 @@ export default function DoctorFilterPanel({
   hasActiveFilters,
   t,
 }) {
+  const minPrice = Number(filterPriceMin || 0);
+  const maxPrice = Number(filterPriceMax || 2000);
+  const updateMinPrice = (value) => onPriceChange(String(Math.min(Number(value), maxPrice)), String(maxPrice));
+  const updateMaxPrice = (value) => onPriceChange(String(minPrice), String(Math.max(Number(value), minPrice)));
   const toggleSpecialty = (specialty) => {
     onSpecialtiesChange(
       filterSpecialties.includes(specialty)
@@ -170,29 +174,25 @@ export default function DoctorFilterPanel({
         </FilterSection>
 
         <FilterSection icon={WalletCards} title={t("patient.filterPriceRange", "Price Range")}>
-          <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-2">
-            <div className="relative">
-              <input
-                type="number"
-                min="0"
-                placeholder={t("common.min", "Min")}
-                value={filterPriceMin}
-                onChange={(event) => onPriceChange(event.target.value, filterPriceMax)}
-                className="w-full rounded-xl border border-border bg-background-subtle px-3 py-2.5 text-sm text-text-heading outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
-              />
-              <span className="absolute end-3 top-1/2 -translate-y-1/2 text-[10px] text-text-muted">EGP</span>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <span className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-bold text-primary">
+                {minPrice} EGP
+              </span>
+              <span className="h-px flex-1 bg-border" />
+              <span className="rounded-xl bg-primary/10 px-3 py-2 text-xs font-bold text-primary">
+                {maxPrice} EGP
+              </span>
             </div>
-            <span className="text-text-muted">-</span>
-            <div className="relative">
-              <input
-                type="number"
-                min="0"
-                placeholder={t("common.max", "Max")}
-                value={filterPriceMax}
-                onChange={(event) => onPriceChange(filterPriceMin, event.target.value)}
-                className="w-full rounded-xl border border-border bg-background-subtle px-3 py-2.5 text-sm text-text-heading outline-none transition focus:border-primary focus:ring-2 focus:ring-primary/10"
-              />
-              <span className="absolute end-3 top-1/2 -translate-y-1/2 text-[10px] text-text-muted">EGP</span>
+            <div className="grid gap-3">
+              <label className="grid gap-1 text-[11px] font-semibold text-text-muted">
+                {t("common.min", "Minimum Price")}
+                <input type="range" min="0" max="2000" step="50" value={minPrice} onChange={(event) => updateMinPrice(event.target.value)} className="w-full accent-primary" />
+              </label>
+              <label className="grid gap-1 text-[11px] font-semibold text-text-muted">
+                {t("common.max", "Maximum Price")}
+                <input type="range" min="0" max="2000" step="50" value={maxPrice} onChange={(event) => updateMaxPrice(event.target.value)} className="w-full accent-primary" />
+              </label>
             </div>
           </div>
         </FilterSection>
@@ -203,9 +203,10 @@ export default function DoctorFilterPanel({
             title={t("patient.filterAvailability", "Availability")}
             className="lg:col-span-2"
           >
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {[
                 { value: "all", label: t("patient.allAvailableAppointments", "All Available Appointments") },
+                { value: "now", label: t("patient.availabilityNow", "Available Now") },
                 { value: "today", label: t("patient.availabilityToday", "Today") },
                 { value: "week", label: t("patient.availabilityThisWeek", "This Week") },
               ].map((option) => (

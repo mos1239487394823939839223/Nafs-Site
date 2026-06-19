@@ -41,8 +41,26 @@ const getAuthToken = () => {
 api.interceptors.request.use(
   (config) => {
     const token = getAuthToken();
-    if (token) {
+    const requestUrl = String(config.url || "").toLowerCase();
+    const publicAuthPaths = [
+      "/auth/login",
+      "/auth/register",
+      "/auth/resendotp",
+      "/auth/verifyotp",
+      "/auth/forgotpassword",
+      "/auth/confirmotpforchangepassword",
+      "/auth/changepasswordbytoken",
+    ];
+    const isPublicAuthRequest = publicAuthPaths.some((path) => requestUrl.includes(path));
+
+    // Public auth endpoints must not receive a stale session token.
+    if (token && !isPublicAuthRequest) {
       config.headers.Authorization = `Bearer ${token}`;
+    } else if (isPublicAuthRequest) {
+      delete config.headers.Authorization;
+      if (config.headers.common) {
+        delete config.headers.common.Authorization;
+      }
     }
 
     if (
@@ -97,6 +115,19 @@ api.interceptors.response.use(
  * @param {string} fallback - Fallback message if nothing found
  * @returns {string}
  */
+export const toUserFacingError = (
+  message,
+  fallback = "Something went wrong",
+) => {
+  if (typeof message !== "string" || !message.trim()) return fallback;
+  const normalized = message.trim();
+  const technicalPattern =
+    /authorization failed|unauthorized|forbidden|exception|stack trace|axios|network error|request failed|status code|null reference|object reference|internal server error/i;
+  return technicalPattern.test(normalized) || normalized.length > 220
+    ? fallback
+    : normalized;
+};
+
 export const extractErrorMessage = (
   error,
   fallback = "Something went wrong",
@@ -105,17 +136,19 @@ export const extractErrorMessage = (
   const data = error?.response?.data;
   if (data) {
     // Most common: { Message: "..." } or { message: "..." }
-    if (data.Message && typeof data.Message === "string") return data.Message;
-    if (data.message && typeof data.message === "string") return data.message;
+    if (data.Message && typeof data.Message === "string") return toUserFacingError(data.Message, fallback);
+    if (data.message && typeof data.message === "string") return toUserFacingError(data.message, fallback);
     // Validation errors array: { errors: ["...", "..."] }
     if (Array.isArray(data.errors) && data.errors.length) return data.errors[0];
+    if (data.errors && typeof data.errors === "object") {
+      const firstValidationError = Object.values(data.errors).flat().find(Boolean);
+      if (typeof firstValidationError === "string") return toUserFacingError(firstValidationError, fallback);
+    }
     if (Array.isArray(data.Messages) && data.Messages.length)
-      return data.Messages[0];
+      return toUserFacingError(data.Messages[0], fallback);
     // Plain string body
-    if (typeof data === "string" && data.length < 300) return data;
+    if (typeof data === "string") return toUserFacingError(data, fallback);
   }
-  // 2. Network / timeout error
-  if (error?.message) return error.message;
   return fallback;
 };
 
@@ -677,12 +710,33 @@ export const chatAPI = {
 
     const chatTypeValue =
       chatType != null && Number.isFinite(Number(chatType)) ? Number(chatType) : 2;
+    const normalizedPriority = ["urgent", "high", "critical"].includes(String(priority || "").toLowerCase())
+      ? "urgent"
+      : priority
+        ? "normal"
+        : null;
     const supportPayload = {
       ChatType: chatTypeValue,
       ...(caseType ? { CaseType: caseType, SupportCaseType: caseType } : {}),
-      ...(priority ? { Priority: priority, SupportPriority: priority, IsHighPriority: priority === "high" } : {}),
+      ...(normalizedPriority ? { Priority: normalizedPriority, SupportPriority: normalizedPriority, IsHighPriority: normalizedPriority === "urgent" } : {}),
+      CreatedAt: extraPayload.CreatedAt || new Date().toISOString(),
       ...extraPayload,
     };
+
+    const isSensitiveCase =
+      caseType === "blackmail_abuse" ||
+      caseType === "emergency" ||
+      extraPayload.IsSensitive === true ||
+      extraPayload.IsPrivate === true;
+
+    if (isSensitiveCase) {
+      supportPayload.IsSensitive = true;
+      supportPayload.NotifySupportTeam = extraPayload.NotifySupportTeam !== false;
+    }
+
+    if (caseType === "emergency") {
+      supportPayload.RequestImmediateNotify = true;
+    }
 
     try {
       const response = await api.post("/CustomerSupport/Chat", {
@@ -724,10 +778,13 @@ export const chatAPI = {
   },
 
   openBlackmailSupportChat: async (patientId, dedicatedSupportUserId = null) => {
-    return chatAPI.openPatientSupportChat(patientId, 4, "blackmail_abuse", "high", {
+    return chatAPI.openPatientSupportChat(patientId, 4, "blackmail_abuse", "urgent", {
       DedicatedSupportUserId: dedicatedSupportUserId || undefined,
       AssignedSupportUserId: dedicatedSupportUserId || undefined,
       IsPrivate: true,
+      IsSensitive: true,
+      SensitiveCase: true,
+      NotifySupportTeam: true,
       CreatedAt: new Date().toISOString(),
     });
   },
@@ -775,6 +832,65 @@ export const chatAPI = {
   markAsRead: async (roomId) => {
     const response = await api.post(`/Chat/Room/${roomId}/MarkAsRead`);
     return response.data;
+  },
+
+  updateUser: async (id, userData = {}) => {
+    const payload = {
+      Id: id,
+      UserId: id,
+      Name: userData.name || userData.Name || null,
+      Email: userData.email || userData.Email || null,
+      PhoneNumber: userData.phoneNumber || userData.PhoneNumber || null,
+      Description: userData.description || userData.Description || null,
+      Specialist: userData.specialist || userData.Specialist || null,
+      IsActive:
+        userData.isActive === undefined && userData.IsActive === undefined
+          ? undefined
+          : Boolean(userData.isActive ?? userData.IsActive),
+    };
+    const endpoints = [
+      { method: "put", url: `/Admin/User/${id}` },
+      { method: "put", url: "/Admin/UpdateUser" },
+      { method: "put", url: `/user/${id}` },
+    ];
+
+    let lastError;
+    for (const endpoint of endpoints) {
+      try {
+        const response = await api[endpoint.method](endpoint.url, payload);
+        return response.data;
+      } catch (error) {
+        lastError = error;
+        if (![404, 405].includes(Number(error?.response?.status))) break;
+      }
+    }
+    throw lastError;
+  },
+
+  updateSupportPriority: async (roomId, priority) => {
+    const isUrgent = priority === "urgent";
+    const payload = {
+      Priority: priority,
+      SupportPriority: priority,
+      IsHighPriority: isUrgent,
+    };
+    const endpoints = [
+      { method: "patch", url: `/CustomerSupport/Chat/${roomId}/Priority` },
+      { method: "patch", url: `/Chat/Room/${roomId}/Priority` },
+      { method: "post", url: `/CustomerSupport/Chat/${roomId}/Priority` },
+    ];
+
+    let lastError;
+    for (const endpoint of endpoints) {
+      try {
+        const response = await api[endpoint.method](endpoint.url, payload);
+        return response.data;
+      } catch (error) {
+        lastError = error;
+        if (![404, 405].includes(Number(error?.response?.status))) break;
+      }
+    }
+    throw lastError;
   },
 };
 
@@ -1094,6 +1210,12 @@ export const notificationAPI = {
   // Mark notification as read
   markAsRead: async (id) => {
     const response = await api.put(`/Notification/${id}/Read`);
+    return response.data;
+  },
+
+  // Delete a notification
+  deleteNotification: async (id) => {
+    const response = await api.delete(`/Notification/${id}`);
     return response.data;
   },
 

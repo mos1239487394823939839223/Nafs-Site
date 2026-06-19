@@ -11,16 +11,40 @@ import { doctorAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { medicalAPI } from '../../lib/api'
 import { getAppointmentStatusKey } from '../../lib/appointmentStatus'
+import { useSearchParams, Link, useNavigate } from 'react-router-dom'
+import { doctorMessagesUrl } from '../../lib/doctorPatientRoutes'
 
 export default function MedicalHistory() {
     const { user } = useAuth()
     const toast = useToast()
     const { t } = useLanguage()
+    const navigate = useNavigate()
+    const [searchParams, setSearchParams] = useSearchParams()
+
+    const initialPatientId = searchParams.get('patientId')
+    const shouldOpenAdd = searchParams.get('add') === '1'
+    const workspaceSection = searchParams.get('section') === 'assessments' ? 'assessments' : 'records'
+
+    const setWorkspaceSection = (section) => {
+        const next = new URLSearchParams(searchParams)
+        if (section === 'records') next.delete('section')
+        else next.set('section', section)
+        setSearchParams(next, { replace: true })
+    }
 
     const [selectedPatient, setSelectedPatient] = useState(null)
     const [searchQuery, setSearchQuery] = useState('')
     const [isAddModalOpen, setIsAddModalOpen] = useState(false)
-    const [newRecord, setNewRecord] = useState({ summary: '', medications: '' })
+    const [newRecord, setNewRecord] = useState({
+        summary: '',
+        medications: '',
+        treatmentProgram: '',
+        customProgram: '',
+        programSessions: 8,
+        assessment: '',
+        assessmentLevel: '',
+        recommendations: '',
+    })
     const [loading, setLoading] = useState(true)
     const [bookings, setBookings] = useState([])
     const [patientHistory, setPatientHistory] = useState([])
@@ -29,6 +53,20 @@ export default function MedicalHistory() {
     const [selectedTestTypeId, setSelectedTestTypeId] = useState('')
     const [creatingType, setCreatingType] = useState(false)
     const [updatingResultId, setUpdatingResultId] = useState(null)
+
+    const tryParseJSON = (str) => {
+        if (!str) return null
+        const trimmed = str.trim()
+        if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+            try {
+                const parsed = JSON.parse(trimmed)
+                if (parsed && typeof parsed === 'object') return parsed
+            } catch {
+                return null
+            }
+        }
+        return null
+    }
 
     const fetchPatientHistory = async (patientId) => {
         if (!patientId) {
@@ -126,12 +164,21 @@ export default function MedicalHistory() {
         }
     })
 
+    useEffect(() => {
+        if (!initialPatientId || loading) return
+        const match = myPatients.find((p) => String(p.id) === String(initialPatientId))
+        if (match) {
+            setSelectedPatient(match)
+            if (shouldOpenAdd) setIsAddModalOpen(true)
+        }
+    }, [initialPatientId, shouldOpenAdd, loading, bookings.length])
+
     const filteredPatients = myPatients.filter(p =>
         p.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
     const handleAddRecord = () => {
-        if (!newRecord.summary) {
+        if (!newRecord.summary && !newRecord.treatmentProgram && !newRecord.assessment) {
             toast.error(t('errors.enterSummary'))
             return
         }
@@ -149,11 +196,22 @@ export default function MedicalHistory() {
                 })
                 const selectedTypeScanUrl = String(selectedType?.Url ?? selectedType?.url ?? '').trim()
 
+                const notesObj = {
+                    isStructured: true,
+                    examNotes: newRecord.summary,
+                    medications: newRecord.medications,
+                    treatmentProgram: newRecord.treatmentProgram === 'custom' ? newRecord.customProgram : newRecord.treatmentProgram,
+                    treatmentProgramSessions: newRecord.treatmentProgram ? Number(newRecord.programSessions) || 8 : null,
+                    assessment: newRecord.assessment,
+                    assessmentLevel: newRecord.assessmentLevel,
+                    recommendations: newRecord.recommendations,
+                }
+
                 const response = await medicalAPI.addPatientTest({
                     PatientID: String(selectedPatient.id),
                     TestTypeID: String(selectedTestTypeId),
                     ScanUrl: selectedTypeScanUrl || null,
-                    ExamNotes: newRecord.summary,
+                    ExamNotes: JSON.stringify(notesObj),
                     TestDate: new Date().toISOString(),
                 })
 
@@ -164,7 +222,16 @@ export default function MedicalHistory() {
 
                 toast.success(t('success.recordAdded'))
                 setIsAddModalOpen(false)
-                setNewRecord({ summary: '', medications: '' })
+                setNewRecord({
+                    summary: '',
+                    medications: '',
+                    treatmentProgram: '',
+                    customProgram: '',
+                    programSessions: 8,
+                    assessment: '',
+                    assessmentLevel: '',
+                    recommendations: '',
+                })
 
                 await fetchPatientHistory(selectedPatient.id)
             } catch {
@@ -256,6 +323,37 @@ export default function MedicalHistory() {
                                 <h1 className="text-3xl font-bold mb-2 text-text-heading">{t('doctor.medicalHistory')}</h1>
                                 <p className="text-text-muted">{t('doctor.manageClinicalRecords')}</p>
                             </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Button
+                                variant={workspaceSection === 'records' ? 'primary' : 'outline'}
+                                size="sm"
+                                onClick={() => setWorkspaceSection('records')}
+                              >
+                                {t('doctor.historyTabs.records', 'Medical records')}
+                              </Button>
+                              <Button
+                                variant={workspaceSection === 'assessments' ? 'primary' : 'outline'}
+                                size="sm"
+                                onClick={() => setWorkspaceSection('assessments')}
+                              >
+                                {t('doctor.historyTabs.assessments', 'Assessments')}
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="gap-2"
+                                onClick={() => {
+                                  if (filteredPatients.length === 0) {
+                                    toast.error(t('doctor.patientsAppearHere'))
+                                    return
+                                  }
+                                  setSearchParams({ add: '1', ...(workspaceSection === 'assessments' ? { section: 'assessments' } : {}) }, { replace: true })
+                                }}
+                              >
+                                <Plus className="w-4 h-4" />
+                                {t('doctor.dashboardHome.quickTools.items.addPatient.title', 'Add patient record')}
+                              </Button>
+                            </div>
                             <div className="relative w-full md:w-80">
                                 <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-clinical-gray" />
                                 <input
@@ -320,17 +418,18 @@ export default function MedicalHistory() {
                             </div>
                             <div className="flex gap-2 w-full sm:w-auto">
                                 <Button variant="outline" className="flex-1 sm:flex-none gap-2" onClick={() => {
-                                    window.location.href = '/dashboard/doctor/messages'
+                                    navigate(doctorMessagesUrl(selectedPatient.id))
                                 }}>
                                     <MessageSquare className="w-4 h-4" /> {t('chat.message')}
                                 </Button>
                                 <Button className="flex-1 sm:flex-none gap-2" onClick={() => setIsAddModalOpen(true)}>
-                                    <Plus className="w-4 h-4" /> {t('doctor.addNote')}
+                                    <Plus className="w-4 h-4" /> {workspaceSection === 'assessments' ? t('doctor.historyTabs.assessments', 'Assessment') : t('doctor.addNote')}
                                 </Button>
                             </div>
                         </div>
 
                         {/* Session History from Bookings */}
+                        {workspaceSection === 'records' && (
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
@@ -386,57 +485,110 @@ export default function MedicalHistory() {
                                 })()}
                             </CardContent>
                         </Card>
+                        )}
 
                         {/* Clinical Notes */}
                         <div className="space-y-6">
-                            <h3 className="text-lg font-bold text-text-heading">{t('doctor.clinicalNotes')}</h3>
+                            <h3 className="text-lg font-bold text-text-heading">
+                              {workspaceSection === 'assessments'
+                                ? t('doctor.historyTabs.assessments', 'Patient assessments')
+                                : t('doctor.clinicalNotes')}
+                            </h3>
                             {historyLoading ? (
                                 <div className="text-center py-12 text-text-muted">{t('common.loading')}</div>
-                            ) : patientHistory.length > 0 ? (
-                                patientHistory.map((record) => (
-                                    <Card key={record.id} className="overflow-hidden border-border/50">
-                                        <div className="bg-background px-4 md:px-6 py-3 border-b border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                            <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-text-muted">
-                                                <div className="flex items-center gap-1.5 font-bold italic text-text-heading">
-                                                    <Calendar className="w-4 h-4" />
-                                                    {record.date}
-                                                </div>
-                                                <div className="flex items-center gap-1.5 font-bold italic text-text-heading">
-                                                    <User className="w-4 h-4" />
-                                                    {record.doctorName}
-                                                </div>
-                                            </div>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                onClick={() => handleUpdateResult(record)}
-                                                disabled={updatingResultId === record.id}
-                                            >
-                                                {updatingResultId === record.id ? t('common.updating') : 'Update Result'}
-                                            </Button>
-                                        </div>
-                                        <div className="p-6 space-y-4">
-                                            <div>
-                                                <h4 className="text-xs font-black italic uppercase tracking-widest text-text-muted mb-2">{t('doctor.sessionSummary')}</h4>
-                                                <p className="text-text-heading leading-relaxed">{record.testTypeName}</p>
-                                                {!!record.examNotes && <p className="text-text-muted mt-2">{record.examNotes}</p>}
-                                                {!!record.result && <p className="text-primary mt-2">Result: {record.result}</p>}
-                                            </div>
-                                            {record.medications && record.medications.length > 0 && (
-                                                <div>
-                                                    <h4 className="text-xs font-black italic uppercase tracking-widest text-text-muted mb-2">{t('doctor.prescribedMedications')}</h4>
-                                                    <div className="flex flex-wrap gap-2">
-                                                        {record.medications.map((med, idx) => (
-                                                            <Badge key={idx} variant="primary" className="flex items-center gap-1 bg-primary/5 text-primary border-primary/20">
-                                                                <Pill className="w-3 h-3" /> {med}
-                                                            </Badge>
-                                                        ))}
+                            ) : patientHistory.filter((record) => {
+                                if (workspaceSection !== 'assessments') return true
+                                const parsed = tryParseJSON(record.examNotes)
+                                return Boolean(parsed?.assessment || parsed?.assessmentLevel || parsed?.recommendations)
+                            }).length > 0 ? (
+                                patientHistory.filter((record) => {
+                                  if (workspaceSection !== 'assessments') return true
+                                  const parsed = tryParseJSON(record.examNotes)
+                                  return Boolean(parsed?.assessment || parsed?.assessmentLevel || parsed?.recommendations)
+                                }).map((record) => {
+                                    const parsed = tryParseJSON(record.examNotes)
+                                    const actualNotes = parsed ? parsed.examNotes : record.examNotes
+                                    const medications = parsed ? parsed.medications : record.medications
+
+                                    return (
+                                        <Card key={record.id} className="overflow-hidden border-border/50">
+                                            <div className="bg-background px-4 md:px-6 py-3 border-b border-border/50 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                                <div className="flex flex-wrap items-center gap-4 text-sm font-medium text-text-muted">
+                                                    <div className="flex items-center gap-1.5 font-bold italic text-text-heading">
+                                                        <Calendar className="w-4 h-4" />
+                                                        {record.date}
+                                                    </div>
+                                                    <div className="flex items-center gap-1.5 font-bold italic text-text-heading">
+                                                        <User className="w-4 h-4" />
+                                                        {record.doctorName}
                                                     </div>
                                                 </div>
-                                            )}
-                                        </div>
-                                    </Card>
-                                ))
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    onClick={() => handleUpdateResult(record)}
+                                                    disabled={updatingResultId === record.id}
+                                                >
+                                                    {updatingResultId === record.id ? t('common.updating') : 'Update Result'}
+                                                </Button>
+                                            </div>
+                                            <div className="p-6 space-y-4">
+                                                <div>
+                                                    <h4 className="text-xs font-black italic uppercase tracking-widest text-text-muted mb-2">{t('doctor.sessionSummary')}</h4>
+                                                    <p className="text-text-heading leading-relaxed font-bold">{record.testTypeName}</p>
+
+                                                    {parsed && parsed.treatmentProgram && (
+                                                        <div className="mt-2 text-sm text-text-muted">
+                                                            <span className="font-bold text-primary">البرنامج العلاجي:</span> {parsed.treatmentProgram} ({parsed.treatmentProgramSessions} جلسات)
+                                                        </div>
+                                                    )}
+
+                                                    {parsed && parsed.assessment && (
+                                                        <div className="mt-2 text-sm text-text-muted">
+                                                            <span className="font-bold text-primary">تقييم المعالج:</span> {parsed.assessment}
+                                                            {parsed.assessmentLevel && <span className="ms-2 inline-flex items-center rounded-md bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-800 border border-orange-200">{parsed.assessmentLevel}</span>}
+                                                        </div>
+                                                    )}
+
+                                                    {parsed && parsed.recommendations && (
+                                                        <div className="mt-2 text-sm text-text-muted">
+                                                            <span className="font-bold text-primary">التوصيات:</span> {parsed.recommendations}
+                                                        </div>
+                                                    )}
+
+                                                    {!!actualNotes && (
+                                                        <div className="mt-2">
+                                                            <span className="font-bold text-xs text-text-muted uppercase">ملاحظات:</span>
+                                                            <p className="text-text-light mt-1 whitespace-pre-wrap">{actualNotes}</p>
+                                                        </div>
+                                                    )}
+
+                                                    {!!record.result && <p className="text-primary mt-2">Result: {record.result}</p>}
+                                                </div>
+                                                {medications && medications.length > 0 && (
+                                                    <div>
+                                                        <h4 className="text-xs font-black italic uppercase tracking-widest text-text-muted mb-2">{t('doctor.prescribedMedications')}</h4>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {typeof medications === 'string' ? (
+                                                                medications.split(',').map((med, idx) => (
+                                                                    <Badge key={idx} variant="primary" className="flex items-center gap-1 bg-primary/5 text-primary border-primary/20">
+                                                                        <Pill className="w-3 h-3" /> {med.trim()}
+                                                                    </Badge>
+                                                                ))
+                                                            ) : Array.isArray(medications) ? (
+                                                                medications.map((med, idx) => (
+                                                                    <Badge key={idx} variant="primary" className="flex items-center gap-1 bg-primary/5 text-primary border-primary/20">
+                                                                        <Pill className="w-3 h-3" /> {med}
+                                                                    </Badge>
+                                                                ))
+                                                            ) : null}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </Card>
+                                    )
+                                })
                             ) : (
                                 <div className="text-center py-20 bg-background-paper rounded-3xl border-2 border-dashed border-border">
                                     <FileText className="w-16 h-16 text-text-muted mx-auto mb-4 opacity-20" />
@@ -452,50 +604,138 @@ export default function MedicalHistory() {
             <Modal
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
-                title={`Add Clinical Record for ${selectedPatient?.name}`}
+                title={`${t('doctor.addClinicalRecordFor')} ${selectedPatient?.name}`}
                 size="lg"
             >
                 <div className="space-y-6">
-                    <div className="space-y-2">
-                        <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Test Type</label>
-                        <div className="flex gap-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.testType')}</label>
+                            <div className="flex gap-2">
+                                <select
+                                    value={selectedTestTypeId}
+                                    onChange={(e) => setSelectedTestTypeId(e.target.value)}
+                                    className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
+                                >
+                                    {testTypes.length === 0 ? (
+                                        <option value="">{t('doctor.noTestTypesAvailable')}</option>
+                                    ) : (
+                                        testTypes.map((type) => (
+                                            <option key={type.ID} value={String(type.ID)}>{type.Name}</option>
+                                        ))
+                                    )}
+                                </select>
+                                <Button variant="outline" className="shrink-0 whitespace-nowrap" onClick={handleCreateTestType} disabled={creatingType}>
+                                    {creatingType ? t('common.saving') : t('doctor.createTestType')}
+                                </Button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.treatmentProgram')}</label>
                             <select
-                                value={selectedTestTypeId}
-                                onChange={(e) => setSelectedTestTypeId(e.target.value)}
+                                value={newRecord.treatmentProgram}
+                                onChange={(e) => setNewRecord({ ...newRecord, treatmentProgram: e.target.value })}
                                 className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
                             >
-                                {testTypes.length === 0 ? (
-                                    <option value="">No test types available</option>
-                                ) : (
-                                    testTypes.map((type) => (
-                                        <option key={type.ID} value={String(type.ID)}>{type.Name}</option>
-                                    ))
-                                )}
+                                <option value="">{t('doctor.noProgramOption')}</option>
+                                <option value="برنامج إدارة القلق">{t('doctor.anxietyProgram')}</option>
+                                <option value="برنامج علاج الاكتئاب">{t('doctor.depressionProgram')}</option>
+                                <option value="برنامج التخلص من التوتر">{t('doctor.stressProgram')}</option>
+                                <option value="برنامج تعزيز الثقة بالنفس">{t('doctor.selfEsteemProgram')}</option>
+                                <option value="برنامج التحكم في الغضب">{t('doctor.angerProgram')}</option>
+                                <option value="برنامج الدعم السلوكي المعرفي">{t('doctor.cbtProgram')}</option>
+                                <option value="custom">{t('doctor.customProgramOption')}</option>
                             </select>
-                            <Button variant="outline" onClick={handleCreateTestType} disabled={creatingType}>
-                                {creatingType ? t('common.saving') : 'Create'}
-                            </Button>
                         </div>
                     </div>
+
+                    {newRecord.treatmentProgram === 'custom' && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.customProgramName')}</label>
+                            <input
+                                type="text"
+                                value={newRecord.customProgram}
+                                onChange={(e) => setNewRecord({ ...newRecord, customProgram: e.target.value })}
+                                placeholder={t('doctor.enterProgramName')}
+                                className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
+                            />
+                        </div>
+                    )}
+
+                    {newRecord.treatmentProgram && (
+                        <div className="space-y-2">
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.programSessionsTotal')}</label>
+                            <input
+                                type="number"
+                                min="1"
+                                max="100"
+                                value={newRecord.programSessions}
+                                onChange={(e) => setNewRecord({ ...newRecord, programSessions: parseInt(e.target.value) || 8 })}
+                                className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
+                            />
+                        </div>
+                    )}
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.assessmentSummary')}</label>
+                            <input
+                                type="text"
+                                value={newRecord.assessment}
+                                onChange={(e) => setNewRecord({ ...newRecord, assessment: e.target.value })}
+                                placeholder={t('doctor.assessmentSummaryPlaceholder')}
+                                className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.severityLevel')}</label>
+                            <select
+                                value={newRecord.assessmentLevel}
+                                onChange={(e) => setNewRecord({ ...newRecord, assessmentLevel: e.target.value })}
+                                className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
+                            >
+                                <option value="">{t('doctor.selectSeverityLevel')}</option>
+                                <option value="خفيف (Mild)">{t('doctor.severityMild')}</option>
+                                <option value="متوسط (Moderate)">{t('doctor.severityModerate')}</option>
+                                <option value="شديد (Severe)">{t('doctor.severitySevere')}</option>
+                                <option value="عاجل (Urgent)">{t('doctor.severityUrgent')}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.therapistRecommendations')}</label>
+                        <textarea
+                            value={newRecord.recommendations}
+                            onChange={(e) => setNewRecord({ ...newRecord, recommendations: e.target.value })}
+                            placeholder={t('doctor.recommendationsPlaceholder')}
+                            className="w-full h-24 p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none text-text"
+                        />
+                    </div>
+
                     <div className="space-y-2">
                         <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.sessionSummary')}</label>
                         <textarea
                             value={newRecord.summary}
                             onChange={(e) => setNewRecord({ ...newRecord, summary: e.target.value })}
-                            placeholder="Describe the session highlights, patient progress, etc..."
-                            className="w-full h-40 p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none text-text"
+                            placeholder={t('doctor.sessionSummaryPlaceholder')}
+                            className="w-full h-32 p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none text-text"
                         />
                     </div>
+
                     <div className="space-y-2">
                         <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.medications')}</label>
                         <input
                             type="text"
                             value={newRecord.medications}
                             onChange={(e) => setNewRecord({ ...newRecord, medications: e.target.value })}
-                            placeholder="e.g. Aspirin, Ibuprofen"
+                            placeholder={t('doctor.medicationsPlaceholder')}
                             className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
                         />
                     </div>
+
                     <div className="flex gap-3 pt-4 border-t border-border">
                         <Button variant="outline" className="flex-1" onClick={() => setIsAddModalOpen(false)}>{t('common.cancel')}</Button>
                         <Button className="flex-1 gap-2" onClick={handleAddRecord}>

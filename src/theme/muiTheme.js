@@ -1,4 +1,5 @@
 import { createTheme } from '@mui/material/styles'
+import { designTokens } from './designTokens'
 
 // Helper to read CSS variable values at runtime
 const getCSSVar = (varName) => {
@@ -12,60 +13,60 @@ export function createAppTheme(mode = 'light', direction = 'ltr') {
     // Light mode colors
     const lightPalette = {
         primary: {
-            main: '#6B9E8A',
-            light: '#8FBDAA',
-            dark: '#4A7E6D',
+            main: designTokens.colors.primary,
+            light: designTokens.colors.primaryLight,
+            dark: designTokens.colors.primaryHover,
             contrastText: '#ffffff',
         },
         secondary: {
-            main: '#8FBDAA',
+            main: designTokens.colors.secondary,
             light: '#D4EAE0',
-            dark: '#6B9E8A',
+            dark: designTokens.colors.primary,
         },
         background: {
-            default: '#F5FAF7',
-            paper: '#FFFFFF',
+            default: designTokens.colors.background,
+            paper: designTokens.colors.surface,
         },
         text: {
-            primary: '#2D3D35',
-            secondary: '#4A7E6D',
-            disabled: '#8FBDAA',
+            primary: designTokens.colors.text,
+            secondary: designTokens.colors.mutedText,
+            disabled: designTokens.colors.disabledText,
         },
         error: {
-            main: '#ef4444',
+            main: designTokens.colors.error,
             light: '#fca5a5',
             dark: '#dc2626',
         },
         warning: {
-            main: '#f59e0b',
+            main: designTokens.colors.warning,
             light: '#fcd34d',
             dark: '#d97706',
         },
         success: {
-            main: '#10b981',
+            main: designTokens.colors.success,
             light: '#6ee7b7',
             dark: '#059669',
         },
         info: {
-            main: '#3b82f6',
+            main: designTokens.colors.info,
             light: '#93c5fd',
             dark: '#2563eb',
         },
-        divider: '#C8DFD3',
+        divider: designTokens.colors.border,
     }
 
     // Dark mode colors
     const darkPalette = {
         primary: {
-            main: '#6B9E8A',
-            light: '#8FBDAA',
-            dark: '#4A7E6D',
+            main: designTokens.colors.primary,
+            light: designTokens.colors.primaryLight,
+            dark: designTokens.colors.primaryHover,
             contrastText: '#ffffff',
         },
         secondary: {
-            main: '#4A7E6D',
+            main: designTokens.colors.secondary,
             light: '#2D3D35',
-            dark: '#8FBDAA',
+            dark: designTokens.colors.primary,
         },
         background: {
             default: '#050a08',
@@ -101,6 +102,36 @@ export function createAppTheme(mode = 'light', direction = 'ltr') {
 
     const palette = isLight ? lightPalette : darkPalette
 
+    const typographyScale = {
+        h1: {
+            fontWeight: 700,
+            fontSize: '2.125rem',
+            lineHeight: 44 / 34,
+            '@media (min-width:600px)': {
+                fontSize: '3rem',
+                lineHeight: 60 / 48,
+            },
+        },
+        h2: {
+            fontWeight: 700,
+            fontSize: '1.75rem',
+            lineHeight: 36 / 28,
+            '@media (min-width:600px)': {
+                fontSize: '2.25rem',
+                lineHeight: 46 / 36,
+            },
+        },
+        h3: {
+            fontWeight: 600,
+            fontSize: '1.375rem',
+            lineHeight: 30 / 22,
+            '@media (min-width:600px)': {
+                fontSize: '1.75rem',
+                lineHeight: 36 / 28,
+            },
+        },
+    }
+
     return createTheme({
         direction,
         palette: {
@@ -109,21 +140,7 @@ export function createAppTheme(mode = 'light', direction = 'ltr') {
         },
         typography: {
             fontFamily: "'Inter', 'Almarai', system-ui, Avenir, Helvetica, Arial, sans-serif",
-            h1: {
-                fontWeight: 700,
-                fontSize: '2.25rem',
-                lineHeight: 1.2,
-            },
-            h2: {
-                fontWeight: 700,
-                fontSize: '1.875rem',
-                lineHeight: 1.3,
-            },
-            h3: {
-                fontWeight: 600,
-                fontSize: '1.5rem',
-                lineHeight: 1.4,
-            },
+            ...typographyScale,
             h4: {
                 fontWeight: 600,
                 fontSize: '1.25rem',
@@ -141,11 +158,33 @@ export function createAppTheme(mode = 'light', direction = 'ltr') {
             },
             button: {
                 textTransform: 'none',
-                fontWeight: 500,
+                fontWeight: 600,
+                fontSize: '0.9375rem',
+                lineHeight: 24 / 15,
+                '@media (min-width:600px)': {
+                    fontSize: '1rem',
+                    lineHeight: 1.5,
+                },
+            },
+            body1: {
+                fontSize: '0.9375rem',
+                lineHeight: 26 / 15,
+                '@media (min-width:600px)': {
+                    fontSize: '1rem',
+                    lineHeight: 26 / 16,
+                },
+            },
+            body2: {
+                fontSize: '0.8125rem',
+                lineHeight: 22 / 13,
+                '@media (min-width:600px)': {
+                    fontSize: '0.875rem',
+                    lineHeight: 22 / 14,
+                },
             },
         },
         shape: {
-            borderRadius: 12,
+            borderRadius: designTokens.radius.control,
         },
         components: {
             MuiButton: {
@@ -154,10 +193,10 @@ export function createAppTheme(mode = 'light', direction = 'ltr') {
                 },
                 styleOverrides: {
                     root: {
-                        borderRadius: 12,
+                        borderRadius: designTokens.radius.control,
                         padding: '8px 20px',
-                        fontSize: '0.875rem',
-                        fontWeight: 500,
+                        fontSize: '0.9375rem',
+                        fontWeight: 600,
                         transition: 'all 0.2s ease',
                         '&:active': {
                             transform: 'scale(0.98)',
@@ -166,14 +205,14 @@ export function createAppTheme(mode = 'light', direction = 'ltr') {
                     sizeLarge: {
                         height: 48,
                         padding: '8px 32px',
-                        fontSize: '1rem',
+                        fontSize: '0.9375rem',
                     },
                     sizeMedium: {
-                        height: 40,
-                        padding: '8px 20px',
+                        height: 48,
+                        padding: '8px 24px',
                     },
                     sizeSmall: {
-                        height: 32,
+                        height: 36,
                         padding: '4px 12px',
                         fontSize: '0.75rem',
                         borderRadius: 8,
@@ -249,10 +288,10 @@ export function createAppTheme(mode = 'light', direction = 'ltr') {
             MuiCard: {
                 styleOverrides: {
                     root: {
-                        borderRadius: 16,
+                        borderRadius: designTokens.radius.card,
                         border: `1px solid ${isLight ? 'rgba(200,223,211,0.6)' : 'rgba(30,51,42,0.6)'}`,
                         backgroundImage: 'none',
-                        boxShadow: '0 1px 3px 0 rgb(0 0 0 / 0.1)',
+                        boxShadow: designTokens.shadows.card,
                         transition: 'all 0.3s ease',
                     },
                 },

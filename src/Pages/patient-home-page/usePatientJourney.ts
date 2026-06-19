@@ -66,8 +66,8 @@ export const usePatientJourney = () => {
 
     const sortedHistory = [...history].sort(
       (a, b) =>
-        new Date(b.Date || b.RecordedAt || 0).getTime() -
-        new Date(a.Date || a.RecordedAt || 0).getTime(),
+        new Date(b.Date || b.RecordedAt || b.TestDate || 0).getTime() -
+        new Date(a.Date || a.RecordedAt || a.TestDate || 0).getTime(),
     );
     const latestRecord = sortedHistory[0] || null;
     const latestTest = sortedHistory.find((item) => Number(item.Type) === 1) || null;
@@ -81,35 +81,87 @@ export const usePatientJourney = () => {
           new Date(a.SessionStartTime || 0).getTime(),
       )
       .find((booking) => booking.DoctorNotes || booking.DoctorNote);
-    const resultEntries = sortedHistory.flatMap((item) =>
-      Array.isArray(item.Results) ? item.Results : [],
-    );
-    const clinicalRecords = [...sortedHistory, ...completedBookings];
 
-    const programName = firstValue(clinicalRecords, [
+    const tryParseJSON = (str: string) => {
+      if (!str) return null;
+      const trimmed = str.trim();
+      if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
+        try {
+          const obj = JSON.parse(trimmed);
+          if (obj && typeof obj === "object") return obj;
+        } catch {
+          // ignore
+        }
+      }
+      return null;
+    };
+
+    // Find latest structured records
+    const sortedAllRecords = [...history, ...completedBookings].sort(
+      (a, b) =>
+        new Date(b.Date || b.RecordedAt || b.SessionStartTime || b.TestDate || 0).getTime() -
+        new Date(a.Date || a.RecordedAt || a.SessionStartTime || a.TestDate || 0).getTime(),
+    );
+
+    let structuredProgram: any = null;
+    let structuredAssessment: any = null;
+    let latestTherapistName = "";
+    let latestTherapistUpdate = "";
+
+    for (const record of sortedAllRecords) {
+      const noteContent = record.ExamNotes || record.DoctorNote || record.DoctorNotes || record.Result || "";
+      const parsed = tryParseJSON(noteContent);
+      const docName = record.DoctorName || "";
+
+      if (parsed) {
+        if (!structuredProgram && parsed.treatmentProgram) {
+          structuredProgram = {
+            name: parsed.treatmentProgram,
+            totalSessions: Number(parsed.treatmentProgramSessions) || 8,
+            currentSession: completedBookings.length,
+            updatedAt: record.Date || record.RecordedAt || record.SessionStartTime || record.TestDate || "",
+            doctorName: docName,
+          };
+        }
+        if (!structuredAssessment && parsed.assessment) {
+          structuredAssessment = {
+            summary: parsed.assessment,
+            level: parsed.assessmentLevel || "",
+            recommendations: parsed.recommendations || "",
+            note: parsed.examNotes || parsed.doctorNote || "",
+            updatedAt: record.Date || record.RecordedAt || record.SessionStartTime || record.TestDate || "",
+            doctorName: docName,
+          };
+        }
+      }
+    }
+
+    // Fallbacks to unstructured values if no structured JSON exists
+    const programName = structuredProgram?.name || firstValue(sortedAllRecords, [
       "TreatmentProgram",
       "TreatmentProgramName",
       "ProgramName",
       "PlanName",
       "ApprovedProgramName",
     ]);
-    const programTotal = Number(
-      firstValue(clinicalRecords, [
+    const programTotal = structuredProgram?.totalSessions || Number(
+      firstValue(sortedAllRecords, [
         "ProgramTotalSessions",
         "TreatmentProgramSessions",
         "TotalSessions",
       ]),
     );
-    const assessmentLevel = firstValue(
-      [...clinicalRecords, ...resultEntries],
+    const assessmentLevel = structuredAssessment?.level || firstValue(
+      [...sortedAllRecords],
       ["AssessmentLevel", "ConditionLevel", "Severity", "Level"],
     );
-    const recommendations = firstValue(
-      [...clinicalRecords, ...resultEntries],
+    const recommendations = structuredAssessment?.recommendations || firstValue(
+      [...sortedAllRecords],
       ["Recommendations", "Recommendation", "Notes", "notes"],
     );
     const assessmentSummary =
-      firstValue([...clinicalRecords, ...resultEntries], [
+      structuredAssessment?.summary ||
+      firstValue([...sortedAllRecords], [
         "Assessment",
         "AssessmentSummary",
         "Condition",
@@ -122,9 +174,12 @@ export const usePatientJourney = () => {
       ? {
           name: programName,
           currentSession: completedBookings.length,
-          totalSessions: Number.isFinite(programTotal) && programTotal > 0 ? programTotal : null,
+          totalSessions: Number.isFinite(programTotal) && programTotal > 0 ? programTotal : 8,
+          updatedAt: structuredProgram?.updatedAt || latestRecord?.Date || latestRecord?.RecordedAt || "",
+          doctorName: structuredProgram?.doctorName || latestRecord?.DoctorName || "",
         }
       : null;
+
     const assessment =
       assessmentSummary ||
       assessmentLevel ||
@@ -137,14 +192,34 @@ export const usePatientJourney = () => {
             level: assessmentLevel,
             recommendations,
             note:
+              structuredAssessment?.note ||
               latestNote?.DoctorNote ||
               latestBookingNote?.DoctorNotes ||
               latestBookingNote?.DoctorNote ||
               "",
-            updatedAt: latestRecord?.Date || latestRecord?.RecordedAt || "",
+            updatedAt: structuredAssessment?.updatedAt || latestRecord?.Date || latestRecord?.RecordedAt || "",
+            doctorName: structuredAssessment?.doctorName || latestRecord?.DoctorName || "",
           }
         : null;
+
     const isNewPatient = completedBookings.length === 0 && !program && !assessment;
+
+    if (structuredAssessment) {
+      latestTherapistUpdate = structuredAssessment.note || structuredAssessment.summary || "";
+      latestTherapistName = structuredAssessment.doctorName || "";
+    } else {
+      latestTherapistUpdate =
+        latestNote?.DoctorNote ||
+        latestBookingNote?.DoctorNotes ||
+        latestBookingNote?.DoctorNote ||
+        recommendations ||
+        "";
+      latestTherapistName =
+        latestNote?.DoctorName ||
+        latestBookingNote?.DoctorName ||
+        latestRecord?.DoctorName ||
+        "";
+    }
 
     return {
       loading,
@@ -156,17 +231,8 @@ export const usePatientJourney = () => {
       hasUpcomingSession: upcomingSessions.length > 0,
       program,
       assessment,
-      latestTherapistUpdate:
-        latestNote?.DoctorNote ||
-        latestBookingNote?.DoctorNotes ||
-        latestBookingNote?.DoctorNote ||
-        recommendations ||
-        "",
-      latestTherapistName:
-        latestNote?.DoctorName ||
-        latestBookingNote?.DoctorName ||
-        latestRecord?.DoctorName ||
-        "",
+      latestTherapistUpdate,
+      latestTherapistName,
     };
   }, [bookings, history, loading]);
 };

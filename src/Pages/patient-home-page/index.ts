@@ -6,3 +6,5 @@ export { SuggestedDoctors } from "./SuggestedDoctors";
 export { MoodGauge } from "./MoodGauge";
 export { TreatmentProgram } from "./TreatmentProgram";
 export { MoodCheckIn } from "./MoodCheckIn";
+export { TherapistAssessment } from "./TherapistAssessment";
+

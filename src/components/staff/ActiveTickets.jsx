@@ -3,6 +3,7 @@ import Badge from '../ui/Badge'
 import { Clock, User, AlertCircle, CheckCircle, MessageSquare, Loader2 } from 'lucide-react'
 import { chatAPI } from '../../lib/api'
 import { useLanguage } from '../../contexts/LanguageContext'
+import { getSupportPriority } from '../support/SupportPriorityTag'
 
 export default function ActiveTickets() {
   const { t } = useLanguage()
@@ -23,7 +24,7 @@ export default function ActiveTickets() {
             user: room.Name || room.OtherUserName || 'Unknown User',
             role: 'patient',
             issue: room.LastMessage || 'No message yet',
-            priority: 'medium',
+            priority: getSupportPriority(room),
             status: room.UnreadCount > 0 ? 'open' : 'resolved',
             time: room.LastMessageTime ? new Date(room.LastMessageTime).toLocaleTimeString() : 'N/A',
             category: 'general',
@@ -64,9 +65,9 @@ export default function ActiveTickets() {
   const getPriorityColor = (priority) => {
     switch (priority) {
       case 'high': return 'danger'
-      case 'medium': return 'warning'
-      case 'low': return 'info'
-      default: return 'primary'
+      case 'urgent': return 'danger'
+      case 'normal': return 'info'
+      default: return 'info'
     }
   }
 

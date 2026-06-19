@@ -2,18 +2,17 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMultiStepForm } from "../../../hooks/useMultiStepForm";
-import { useAuth, Roles } from "../../../contexts/AuthContext";
 import { useToast } from "../../../components/ui/Toast";
 import ProgressStepper from "../../../components/forms/ProgressStepper";
 import Button from "../../../components/ui/Button";
-import Input, { Select, Textarea } from "../../../components/ui/Input";
+import Input, { Select } from "../../../components/ui/Input";
 import {
   validateRequired,
   validatePhone,
   validateDate,
   calculateAge,
-  formatPhone,
   validateEmail,
+  validatePassword,
 } from "../../../lib/validation";
 import {
   ArrowLeft,
@@ -28,16 +27,18 @@ import {
   HelpCircle as Quiz,
   AlertTriangle as Emergency,
   Headphones as SupportAgent,
+  Check,
+  X,
 } from "lucide-react";
 
-import { api, authAPI } from "../../../lib/api";
+import { authAPI, extractErrorMessage, toUserFacingError } from "../../../lib/api";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import { Home, Globe } from "lucide-react";
 
 export default function PatientRegistration() {
   const navigate = useNavigate();
-  const { login } = useAuth();
   const toast = useToast();
-  const { t } = useLanguage();
+  const { t, language, toggleLanguage } = useLanguage();
   const [loading, setLoading] = useState(false);
   const [showIntro, setShowIntro] = useState(true);
   const [introStep, setIntroStep] = useState(0);
@@ -162,6 +163,7 @@ export default function PatientRegistration() {
 
   const [otpSent, setOtpSent] = useState(false);
   const [otpTimer, setOtpTimer] = useState(0);
+  const passwordChecks = validatePassword(formData.password);
 
   // Step 1 Validation
   const validateStep1 = () => {
@@ -182,12 +184,12 @@ export default function PatientRegistration() {
       isValid = false;
     }
 
-    if (!validateRequired(formData.password) || formData.password.length < 6) {
-      setFieldError("password", t("errors.passwordTooShort"));
+    if (!passwordChecks.isValid) {
+      setFieldError("password", t("auth.passwordRequirements"));
       isValid = false;
     }
 
-    if (!validatePhone(formData.phone)) {
+    if (formData.phone.trim() && !validatePhone(formData.phone)) {
       setFieldError("phone", t("errors.invalidPhone"));
       isValid = false;
     }
@@ -262,7 +264,7 @@ export default function PatientRegistration() {
           return true;
         }
 
-        toast.error(response.Message || t("errors.failedSendOtp"));
+        toast.error(toUserFacingError(response.Message, t("errors.failedSendOtp")));
         console.groupEnd();
         return false;
       }
@@ -273,7 +275,7 @@ export default function PatientRegistration() {
         console.error("Response Status:", error.response.status);
         console.error("Response Headers:", error.response.headers);
       }
-      toast.error(error.response?.data?.Message || t("errors.failedSendOtp"));
+      toast.error(extractErrorMessage(error, t("errors.failedSendOtp")));
       console.groupEnd();
       return false;
     } finally {
@@ -306,16 +308,17 @@ export default function PatientRegistration() {
 
       const payload = {
         Name: `${formData.firstName} ${formData.lastName}`,
-        PhoneNumber: cleanPhone,
         Email: formData.email,
         Password: formData.password,
         Gender: genderValue,
         Birthday: new Date(formData.dateOfBirth).toISOString(),
+        PhoneNumber: cleanPhone || null,
       };
 
       console.log("📤 Registration Payload:", payload);
 
-      const registerResponse = await api.post("/Auth/Register", payload);
+      const registerData = await authAPI.register(payload);
+      const registerResponse = { status: 200, data: registerData };
 
       console.log("📡 Server Response for Registration:", registerResponse);
       console.log("Status Code:", registerResponse?.status);
@@ -367,20 +370,14 @@ export default function PatientRegistration() {
           "❌ Registration failed (IsSuccess check):",
           registerResponse.data?.Message || registerResponse.data,
         );
-        toast.error(
-          registerResponse.data?.Message || t("errors.somethingWentWrong"),
-        );
+        toast.error(toUserFacingError(registerResponse.data?.Message, t("errors.somethingWentWrong")));
       }
     } catch (error) {
       console.error("❌ Registration Threw Exception:", error);
       console.error("Error Response Data:", error.response?.data);
       console.error("Error Status:", error.response?.status);
 
-      const errorMessage =
-        error.response?.data?.Message ||
-        error.response?.data?.message ||
-        error.message ||
-        t("errors.somethingWentWrong");
+      const errorMessage = extractErrorMessage(error, t("errors.somethingWentWrong"));
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -423,7 +420,7 @@ export default function PatientRegistration() {
       const otpResponse = await authAPI.verifyOtp(formData.email, formData.otp);
 
       if (!otpResponse.IsSuccess) {
-        toast.error(otpResponse.Message || t("errors.failedVerifyOtp"));
+        toast.error(toUserFacingError(otpResponse.Message, t("errors.failedVerifyOtp")));
         setLoading(false);
         return;
       }
@@ -436,12 +433,7 @@ export default function PatientRegistration() {
     } catch (error) {
       console.error("OTP verification failed:", error);
       setLoading(false);
-      const errorMessage =
-        error.response?.data?.Message ||
-        error.response?.data?.message ||
-        error.message ||
-        t("errors.failedVerifyOtp");
-      toast.error(errorMessage);
+      toast.error(extractErrorMessage(error, t("errors.failedVerifyOtp")));
     }
   };
 
@@ -451,8 +443,26 @@ export default function PatientRegistration() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background-paper to-background py-6 sm:py-12 px-3 sm:px-4 flex items-center justify-center">
-      <div className="w-full max-w-4xl">
+    <div className="min-h-screen bg-background py-6 sm:py-8 px-3 sm:px-4">
+      {/* ── Floating Top Bar ── */}
+      <div className="fixed top-4 inset-x-4 z-50 flex items-center justify-between pointer-events-none">
+        <button
+          onClick={() => navigate("/")}
+          className="pointer-events-auto flex items-center gap-2 bg-background-paper/90 backdrop-blur-md border border-border shadow-lg rounded-full px-4 py-2 text-sm font-semibold text-text-heading hover:text-primary hover:border-primary/40 transition-all duration-200"
+        >
+          <Home className="w-4 h-4" />
+          <span className="hidden sm:inline">{t("auth.backToHome", "Home")}</span>
+        </button>
+        <button
+          onClick={toggleLanguage}
+          className="pointer-events-auto flex items-center gap-2 bg-background-paper/90 backdrop-blur-md border border-border shadow-lg rounded-full px-4 py-2 text-sm font-semibold text-text-heading hover:text-primary hover:border-primary/40 transition-all duration-200"
+        >
+          <Globe className="w-4 h-4" />
+          <span>{language === "ar" ? "English" : "العربية"}</span>
+        </button>
+      </div>
+
+      <div className="max-w-4xl mx-auto pt-12">
         <AnimatePresence mode="wait">
           {showIntro ? (
             <motion.div
@@ -673,8 +683,30 @@ export default function PatientRegistration() {
                         />
                       </div>
 
+                      <div className="rounded-2xl border border-border bg-background-subtle/60 p-4">
+                        <p className="mb-3 text-sm font-bold text-text-heading">
+                          {t("auth.passwordRequirements", "Password must contain:")}
+                        </p>
+                        <div className="grid gap-2 text-xs sm:grid-cols-2">
+                          {[
+                            [passwordChecks.minLength, t("auth.passwordMinLength", "At least 8 characters")],
+                            [passwordChecks.hasUpperCase, t("auth.passwordUppercase", "One uppercase letter (A-Z)")],
+                            [passwordChecks.hasLowerCase, t("auth.passwordLowercase", "One lowercase letter (a-z)")],
+                            [passwordChecks.hasNumber, t("auth.passwordNumber", "At least one number")],
+                            [passwordChecks.hasSpecialChar, t("auth.passwordSpecial", "One special character")],
+                          ].map(([passed, label]) => (
+                            <div key={String(label)} className={`flex items-center gap-2 ${passed ? "text-green-700" : "text-text-muted"}`}>
+                              <span className={`grid h-5 w-5 place-items-center rounded-full ${passed ? "bg-green-100" : "bg-background-paper"}`}>
+                                {passed ? <Check className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
+                              </span>
+                              <span>{label}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
                       <Input
-                        label={t("auth.phoneNumber")}
+                        label={`${t("auth.phoneNumber")} (${t("common.optional", "Optional")})`}
                         type="tel"
                         value={formData.phone}
                         onChange={(e) =>

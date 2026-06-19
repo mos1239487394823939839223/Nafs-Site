@@ -1,11 +1,12 @@
 import { useState } from "react";
-import { Calendar, Clock, Loader2, Sparkles, Video } from "lucide-react";
+import { Calendar, Clock, FileText, Loader2, RefreshCw, Sparkles, Video } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useToast } from "../../components/ui/Toast";
-import { extractErrorMessage, meetingAPI } from "../../lib/api";
-import { getAppointmentStatusKey } from "../../lib/appointmentStatus";
+import { extractErrorMessage, meetingAPI, patientAPI } from "../../lib/api";
+import { canStartPatientSession } from "../../lib/patientBookingSlots";
 import fallbackDoc from "./assets/doctor-2.jpg";
+import { SectionHeading } from "./SectionHeading";
 
 interface BookingDto {
   [key: string]: any;
@@ -26,13 +27,14 @@ export const UpcomingSession = ({
   session: BookingDto | null;
   loading: boolean;
 }) => {
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const dateLocale = language === "ar" ? "ar-EG" : "en-US";
   const navigate = useNavigate();
   const toast = useToast();
   const [meetingLoading, setMeetingLoading] = useState(false);
 
   const formatDate = (iso: string) =>
-    new Date(iso).toLocaleDateString(t("auto.enus"), {
+    new Date(iso).toLocaleDateString(dateLocale, {
       weekday: "long",
       day: "numeric",
       month: "long",
@@ -40,67 +42,16 @@ export const UpcomingSession = ({
     });
 
   const formatTime = (iso: string) =>
-    new Date(iso).toLocaleTimeString(t("auto.enus"), {
+    new Date(iso).toLocaleTimeString(dateLocale, {
       hour: "2-digit",
       minute: "2-digit",
     });
 
   const bookingId = session?.BookingId || session?.Id;
-  const statusKey = session ? getAppointmentStatusKey(session.Status, session) : "";
-  const startTime = session?.SessionStartTime ? new Date(session.SessionStartTime).getTime() : NaN;
-  const endTime = session?.SessionEndTime ? new Date(session.SessionEndTime).getTime() : NaN;
-  const now = Date.now();
-  const startWindowMs = 15 * 60 * 1000;
-  const fallbackEnd = Number.isFinite(startTime) ? startTime + 90 * 60 * 1000 : NaN;
-  const allowedEnd = Number.isFinite(endTime) ? endTime : fallbackEnd;
-  const isWithinStartWindow =
-    Number.isFinite(startTime) && Number.isFinite(allowedEnd)
-      ? now >= startTime - startWindowMs && now <= allowedEnd
-      : Boolean(session?.MeetingUrl);
-
-  const therapistSignals = [
-    session?.DoctorIsOnline,
-    session?.IsDoctorOnline,
-    session?.DoctorAvailable,
-    session?.IsDoctorAvailable,
-    session?.TherapistOnline,
-    session?.TherapistAvailable,
-    session?.Doctor?.IsOnline,
-    session?.Doctor?.IsAvailable,
-  ];
-  const hasTherapistSignal = therapistSignals.some((value) => value !== undefined && value !== null);
-  const isTherapistAvailable = hasTherapistSignal
-    ? therapistSignals.some((value) => value === true || String(value).toLowerCase() === "true")
-    : Boolean(session?.MeetingUrl);
-
-  const paymentStatus = String(
-    session?.PaymentStatusText ||
-      session?.PaymentStatusName ||
-      session?.PaymentStatus ||
-      session?.paymentStatus ||
-      "",
-  ).toLowerCase();
-  const paidSignals = [
-    session?.IsPaid,
-    session?.Paid,
-    session?.PaymentConfirmed,
-    session?.IsPaymentConfirmed,
-  ];
-  const hasPaymentSignal = paidSignals.some((value) => value !== undefined && value !== null) || paymentStatus;
-  const isPaid = hasPaymentSignal
-    ? paidSignals.some((value) => value === true || String(value).toLowerCase() === "true") ||
-      paymentStatus === "2" ||
-      paymentStatus.includes("paid") ||
-      paymentStatus.includes("confirmed")
-    : Boolean(session?.MeetingUrl);
-
-  const isConfirmed = ["confirmed", "inProgress"].includes(statusKey);
-  const canStartMeeting = Boolean(
-    session && bookingId && isTherapistAvailable && isPaid && isConfirmed && isWithinStartWindow,
-  );
+  const canStartMeeting = Boolean(session && bookingId && canStartPatientSession(session));
 
   const handleStartMeeting = async () => {
-    if (!session || !bookingId || meetingLoading) return;
+    if (!session || !bookingId || meetingLoading || !canStartMeeting) return;
     setMeetingLoading(true);
     try {
       const response = await meetingAPI.startBookingMeeting(bookingId);
@@ -130,82 +81,92 @@ export const UpcomingSession = ({
   };
 
   return (
-    <section className="bg-card rounded-2xl p-4 sm:p-6 shadow-card mb-6">
-      <div className="flex items-center justify-between mb-5">
-        <button
-          onClick={() => navigate("/dashboard/patient/reserve")}
-          className="text-sm text-primary font-semibold hover:underline"
-        >
-          {t("patientHome.upcomingSession.viewAll")}
-        </button>
-        <h2 className="text-lg font-bold">{t("patientHome.upcomingSession.title")}</h2>
-      </div>
+    <section>
+      <SectionHeading
+        title={t("patientHome.upcomingSession.title")}
+        actionLabel={t("patientHome.upcomingSession.viewAll")}
+        onAction={() => navigate("/dashboard/patient/reserve")}
+      />
 
       {loading ? (
-        <p className="text-sm text-muted-foreground text-center py-4">
-          {t("patientHome.upcomingSession.loading")}
-        </p>
+        <div className="rounded-xl border border-border bg-background-paper p-5 text-center shadow-card">
+          <p className="text-sm text-text-light">{t("patientHome.upcomingSession.loading")}</p>
+        </div>
       ) : !session ? (
-        <div className="rounded-2xl border border-dashed border-primary/40 bg-primary-soft/40 p-6 text-center">
-          <Sparkles className="w-8 h-8 text-primary mx-auto mb-3" />
-          <h3 className="font-bold text-lg">{t("patientHome.upcomingSession.startNow")}</h3>
-          <p className="text-sm text-muted-foreground mt-1 mb-4">
-            {t("patientHome.upcomingSession.startNowDesc")}
-          </p>
+        <div className="rounded-xl border border-dashed border-secondary/45 bg-[linear-gradient(135deg,var(--color-background-paper)_0%,var(--color-background-subtle)_100%)] p-5 text-center shadow-card">
+          <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-xl bg-[#78a794]/10 text-[#78a794]">
+            <Sparkles className="h-5 w-5" />
+          </span>
+          <h3 className="text-lg font-black text-text-heading">{t("patientHome.upcomingSession.startNow")}</h3>
+          <p className="mb-4 mt-1.5 text-sm text-text-light">{t("patientHome.upcomingSession.startNowDesc")}</p>
           <button
             onClick={() => navigate("/dashboard/patient/reserve")}
-            className="bg-primary text-primary-foreground rounded-xl px-6 py-2.5 text-sm font-semibold hover:opacity-90"
+            className="h-10 rounded-xl bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/15 transition-colors hover:bg-primary-dark"
           >
             {t("patientHome.upcomingSession.bookFirst")}
           </button>
         </div>
       ) : (
-        <div className="flex flex-col md:flex-row md:items-center gap-5 md:gap-8">
-          <div className="flex items-center gap-3 md:min-w-[240px]">
-            <img
-              src={session.DoctorImage || fallbackDoc}
-              alt={session.DoctorName}
-              width={56}
-              height={56}
-              loading="lazy"
-              className="w-14 h-14 rounded-full object-cover flex-shrink-0"
-            />
-            <div className="text-start">
-              <p className="font-bold">{session.DoctorName}</p>
-              <span className="inline-block mt-1 text-[11px] bg-primary-soft text-primary px-2 py-0.5 rounded-full">
-                {t("patientHome.upcomingSession.sessionType")}
-              </span>
+        <div className="relative overflow-hidden rounded-xl border border-border bg-background-paper p-4 shadow-card md:p-5">
+          <div className="absolute inset-y-0 start-0 w-1 bg-gradient-to-b from-secondary to-primary" />
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-w-0 items-center gap-3">
+              <img
+                src={session.DoctorImage || fallbackDoc}
+                alt={session.DoctorName}
+                width={56}
+                height={64}
+                loading="lazy"
+                className="h-16 w-16 shrink-0 rounded-2xl bg-background object-cover ring-4 ring-background-subtle"
+              />
+              <div className="min-w-0 text-start">
+                <p className="truncate text-lg font-bold leading-7 text-text-heading" dir="auto">
+                  {session.DoctorName}
+                </p>
+                <p className="pb-1 text-sm leading-5 text-text-light" dir="auto">
+                  {session.Specialist || session.DoctorSpecialty || t("patientHome.upcomingSession.therapist")}
+                </p>
+                <span className="inline-block rounded-full bg-background-subtle px-3 py-1 text-xs font-bold leading-4 text-primary">
+                  {t("patientHome.upcomingSession.sessionType")}
+                </span>
+              </div>
             </div>
-          </div>
 
-          <div className="flex-1 flex flex-col gap-2 text-sm text-muted-foreground md:items-center">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-primary flex-shrink-0" />
-              <span>{formatDate(session.SessionStartTime)}</span>
+            <div className="flex flex-col items-start justify-center gap-3 text-base leading-6 text-text sm:flex-row sm:flex-wrap sm:items-center sm:gap-8 lg:justify-center">
+              <div className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 shrink-0 text-text-light" />
+                <span>{formatDate(session.SessionStartTime)}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-5 w-5 shrink-0 text-text-light" />
+                <span>{formatTime(session.SessionStartTime)}</span>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-primary flex-shrink-0" />
-              <span>{formatTime(session.SessionStartTime)}</span>
-            </div>
-          </div>
 
-          <div className="flex flex-col gap-2 md:min-w-[180px]">
-            {canStartMeeting && (
+            <div className="flex w-full shrink-0 flex-col gap-2 lg:w-44">
               <button
                 onClick={handleStartMeeting}
-                disabled={meetingLoading}
-                className="inline-flex items-center justify-center gap-2 bg-primary hover:opacity-90 disabled:opacity-60 text-primary-foreground font-semibold py-2.5 px-5 rounded-xl text-sm transition-opacity"
+                disabled={!canStartMeeting || meetingLoading}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold leading-6 text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:bg-[#D8DED9] disabled:text-[#9AA69E]"
               >
-                {meetingLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Video className="w-4 h-4" />}
-                {t("patientHome.upcomingSession.startMeeting", "ابدأ الجلسة")}
+                {meetingLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
+                {t("patientHome.upcomingSession.enterSession")}
               </button>
-            )}
-            <button
-              onClick={() => navigate("/dashboard/patient/reserve")}
-              className="border border-border text-foreground hover:bg-muted font-semibold py-2.5 px-5 rounded-xl text-sm transition-colors"
-            >
-              {t("patientHome.upcomingSession.sessionDetails")}
-            </button>
+              <button
+                onClick={() => navigate(`/dashboard/patient/reserve?tab=status&bookingId=${encodeURIComponent(String(bookingId))}`)}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border bg-background-paper px-4 text-sm font-bold leading-6 text-text transition-colors hover:bg-background-subtle"
+              >
+                <FileText className="h-4 w-4" />
+                {t("patientHome.upcomingSession.sessionDetails")}
+              </button>
+              <button
+                onClick={() => navigate("/dashboard/patient/reserve?tab=status")}
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl text-sm font-bold text-secondary transition-colors hover:bg-background-subtle"
+              >
+                <RefreshCw className="h-4 w-4" />
+                {language === "ar" ? "إعادة الجدولة" : "Reschedule"}
+              </button>
+            </div>
           </div>
         </div>
       )}

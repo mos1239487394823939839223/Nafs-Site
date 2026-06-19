@@ -29,7 +29,7 @@ export default function MessageBubble({ message, isSent, showAvatar = true, part
   const hasAttachments = message.attachments && message.attachments.length > 0
 
   return (
-    <div className={`flex items-end gap-2 mb-1 ${isSent ? 'flex-row-reverse' : ''}`}>
+    <div className={`flex items-end gap-2 mb-2 ${isSent ? 'flex-row-reverse' : ''}`}>
 
       {/* Avatar — only for received messages */}
       {!isSent && (
@@ -45,13 +45,13 @@ export default function MessageBubble({ message, isSent, showAvatar = true, part
       )}
 
       {/* Bubble */}
-      <div className={`max-w-[68%] flex flex-col ${isSent ? 'items-end' : 'items-start'}`}>
+      <div className={`max-w-[84%] sm:max-w-[72%] flex flex-col ${isSent ? 'items-end' : 'items-start'}`}>
         <div
           className={`
-            px-3.5 py-2.5 shadow-sm
+            px-4 py-3 shadow-sm transition-shadow hover:shadow-md
             ${isSent
-              ? 'bg-primary text-white rounded-2xl rounded-ee-sm'
-              : 'bg-background-subtle border border-border/50 text-text rounded-2xl rounded-es-sm'
+              ? 'bg-primary text-white rounded-[20px] rounded-ee-sm'
+              : 'bg-background-paper border border-border/70 text-text rounded-[20px] rounded-es-sm'
             }
           `}
         >
@@ -112,10 +112,25 @@ export default function MessageBubble({ message, isSent, showAvatar = true, part
           )}
         </div>
 
-        {/* Timestamp */}
-        <span className={`text-[10px] text-text-muted mt-1 px-1 ${isSent ? 'text-end' : 'text-start'}`}>
-          {formatTime(message.timestamp)}
-        </span>
+        {/* Timestamp + Status checkmarks */}
+        <div className={`flex items-center gap-1 mt-1 px-1 ${isSent ? 'justify-end' : 'justify-start'}`}>
+          <span className="text-[10px] text-text-muted">
+            {formatTime(message.timestamp)}
+          </span>
+          {isSent && (
+            <span className="flex items-center">
+              {(message.isRead !== false && message.isRead !== undefined) ? (
+                <svg className="w-3.5 h-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7M8 17l4 4L22 10" />
+                </svg>
+              ) : (
+                <svg className="w-3.5 h-3.5 text-text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                </svg>
+              )}
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Spacer for sent messages (no avatar) */}

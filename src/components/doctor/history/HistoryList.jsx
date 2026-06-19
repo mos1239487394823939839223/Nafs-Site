@@ -1,8 +1,10 @@
 import { motion } from "framer-motion";
-import { FileText, Clock, CheckCircle, AlertCircle, Eye as ViewIcon } from "lucide-react";
+import { FileText, Clock, CheckCircle, AlertCircle, Eye as ViewIcon, User } from "lucide-react";
 import Badge from "../../ui/Badge";
 import Button from "../../ui/Button";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import { Link } from "react-router-dom";
+import { doctorMedicalRecordsUrl } from "../../../lib/doctorPatientRoutes";
 
 export default function HistoryList({ sessions, onNoteClick, onViewNoteClick }) {
   const { t, isRTL } = useLanguage();
@@ -134,6 +136,15 @@ export default function HistoryList({ sessions, onNoteClick, onViewNoteClick }) 
                   className={`px-6 py-5 text-end`}
                 >
                   <div className={`flex gap-1 flex-row justify-end`}>
+                    {session.patientId ? (
+                      <Link
+                        to={doctorMedicalRecordsUrl(session.patientId)}
+                        title={t("doctor.viewProfile", "View profile")}
+                        className="inline-flex h-9 w-9 items-center justify-center rounded-lg text-primary hover:bg-primary/10"
+                      >
+                        <User className="w-5 h-5" />
+                      </Link>
+                    ) : null}
                     <Button
                       variant="ghost"
                       size="sm"

@@ -23,19 +23,26 @@ import {
   Wallet as AccountBalanceWallet,
   User as Person,
   MessageSquare,
+  AlertTriangle,
+  ArrowUpRight,
+  UserPlus,
 } from "lucide-react";
 import { customerSupportAPI, chatAPI } from "../../lib/api";
+import { useAuth } from "../../contexts/AuthContext";
+import { canStaffViewSupportRoom, isSensitiveSupportRoom } from "../../lib/supportAccess";
 import { useLanguage } from "../../contexts/LanguageContext";
 import {
   getPaymentStatusFilterOptions,
   getPaymentStatusMeta,
   normalizePaymentStatus,
 } from "../../lib/paymentStatus";
-import { getRoomCaseTypeMeta, readLocalRoomCaseTypes } from "../../lib/supportCaseTypes";
+import { getRoomCaseTypeMeta, getSupportRoomTimestamp, readLocalRoomCaseTypes, sortSupportRooms } from "../../lib/supportCaseTypes";
 import SupportCaseTag from "../../components/support/SupportCaseTag";
+import SupportPriorityTag, { getSupportPriority } from "../../components/support/SupportPriorityTag";
 
 export default function CustomerServiceDashboard() {
   const { t, isRTL } = useLanguage();
+  const { user, role } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
   const [activeModule, setActiveModule] = useState("manual-payments");
@@ -63,6 +70,9 @@ export default function CustomerServiceDashboard() {
   // Chat rooms state
   const [chatRooms, setChatRooms] = useState([]);
   const [chatRoomsLoading, setChatRoomsLoading] = useState(false);
+  const [chatRoomsSearch, setChatRoomsSearch] = useState("");
+  const [chatRoomsTypeFilter, setChatRoomsTypeFilter] = useState("all");
+  const [priorityUpdatingRoomId, setPriorityUpdatingRoomId] = useState(null);
 
   const tx = (key, fallback) => {
     const value = t(key);
@@ -198,8 +208,8 @@ export default function CustomerServiceDashboard() {
   }, []);
 
   useEffect(() => {
-    if (activeModule === "chat-rooms") fetchChatRooms();
-  }, [activeModule, fetchChatRooms]);
+    fetchChatRooms();
+  }, [fetchChatRooms]);
 
   const getProviderLabel = (providerValue) => {
     const value = Number(providerValue);
@@ -273,6 +283,24 @@ export default function CustomerServiceDashboard() {
     return { ...meta, cls: meta.className };
   };
 
+  const visibleChatRooms = useMemo(() => {
+    const localMap = readLocalRoomCaseTypes();
+    const query = chatRoomsSearch.trim().toLowerCase();
+    return sortSupportRooms(
+      chatRooms.filter((room) => {
+        const meta = getRoomCaseTypeMeta(room, isRTL, localMap);
+        const matchesType = chatRoomsTypeFilter === "all" || meta.key === chatRoomsTypeFilter;
+        const matchesSearch =
+          !query ||
+          String(room.OtherParticipantName || room.Name || "").toLowerCase().includes(query) ||
+          String(room.LastMessage || "").toLowerCase().includes(query);
+        const canView = canStaffViewSupportRoom(room, user, role, localMap);
+        return matchesType && matchesSearch && canView;
+      }),
+      localMap,
+    );
+  }, [chatRooms, chatRoomsSearch, chatRoomsTypeFilter, isRTL, role, user]);
+
   const moduleTabs = [
     {
       id: "manual-payments",
@@ -299,6 +327,31 @@ export default function CustomerServiceDashboard() {
 
   const activeModuleMeta =
     moduleTabs.find((item) => item.id === activeModule) || moduleTabs[0];
+
+  const supportOverview = useMemo(() => {
+    const localMap = readLocalRoomCaseTypes();
+    return {
+      total: chatRooms.length,
+      urgent: chatRooms.filter((room) => getRoomCaseTypeMeta(room, false, localMap).priority).length,
+      unread: chatRooms.filter((room) => Number(room.UnreadCount) > 0).length,
+      resolved: chatRooms.filter((room) => room.IsActive === false).length,
+    };
+  }, [chatRooms]);
+
+  const supportTypeOverview = useMemo(() => {
+    const localMap = readLocalRoomCaseTypes();
+    const order = ["technical", "medical", "billing", "emergency", "blackmail_abuse"];
+    return order.map((key) => {
+      const sampleRoom = { SupportCaseType: key };
+      const meta = getRoomCaseTypeMeta(sampleRoom, isRTL, localMap);
+      return {
+        key,
+        label: meta.label,
+        className: meta.className,
+        count: chatRooms.filter((room) => getRoomCaseTypeMeta(room, false, localMap).key === key).length,
+      };
+    });
+  }, [chatRooms, isRTL]);
 
   const handleConfirmPayment = async (paymentItem) => {
     setActionLoadingId(paymentItem.Id);
@@ -390,6 +443,39 @@ export default function CustomerServiceDashboard() {
       toast.error(t("errors.somethingWentWrong"));
     } finally {
       setProcessingRefundId(null);
+    }
+  };
+
+  const handlePriorityChange = async (room, priority) => {
+    const roomId = room?.Id || room?.id;
+    if (!roomId) return;
+
+    const previousRooms = chatRooms;
+    const patchRoom = (item) => {
+      const itemId = item?.Id || item?.id;
+      if (String(itemId) !== String(roomId)) return item;
+      return {
+        ...item,
+        Priority: priority,
+        SupportPriority: priority,
+        IsHighPriority: priority === "urgent",
+      };
+    };
+
+    setPriorityUpdatingRoomId(roomId);
+    setChatRooms((items) => items.map(patchRoom));
+    try {
+      const response = await chatAPI.updateSupportPriority(roomId, priority);
+      if (response?.IsSuccess === false) {
+        throw new Error(response?.Message || response?.message);
+      }
+      toast.success(tx("support.priorityUpdated", "Priority updated"));
+    } catch (error) {
+      console.error("Failed to update support priority:", error);
+      setChatRooms(previousRooms);
+      toast.error(tx("support.priorityUpdateFailed", "Could not update priority"));
+    } finally {
+      setPriorityUpdatingRoomId(null);
     }
   };
 
@@ -508,6 +594,31 @@ export default function CustomerServiceDashboard() {
           </div>
         </div>
       </motion.div>
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[
+          [MessageSquare, tx("support.totalCases", "Total cases"), supportOverview.total, "bg-blue-50 text-blue-700"],
+          [AlertTriangle, tx("support.emergencyCases", "Emergency cases"), supportOverview.urgent, "bg-red-50 text-red-700"],
+          [PendingActions, tx("support.waitingReply", "Waiting reply"), supportOverview.unread, "bg-amber-50 text-amber-700"],
+          [Verified, tx("staff.resolved", "Resolved"), supportOverview.resolved, "bg-emerald-50 text-emerald-700"],
+        ].map(([Icon, label, value, tone]) => (
+          <div key={label} className="rounded-[20px] border border-border bg-background-paper p-4 shadow-[var(--ds-shadow-card)]">
+            <div className="flex items-start justify-between gap-3">
+              <div><p className="text-2xl font-black text-text-heading">{value}</p><p className="mt-1 text-xs font-bold text-text-muted">{label}</p></div>
+              <span className={`grid h-11 w-11 place-items-center rounded-2xl ${tone}`}><Icon className="h-5 w-5" /></span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex gap-2 overflow-x-auto rounded-2xl border border-border bg-background-paper p-3 shadow-sm">
+        {supportTypeOverview.map((item) => (
+          <span key={item.key} className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold ${item.className}`}>
+            {item.label}
+            <span className="rounded-full bg-white/70 px-2 py-0.5 text-[10px]">{item.count}</span>
+          </span>
+        ))}
+      </div>
 
       <Card className="border border-border/80 shadow-sm">
         <CardContent className="p-3 md:p-4">
@@ -987,7 +1098,10 @@ export default function CustomerServiceDashboard() {
       {activeModule === "chat-rooms" && (
         <Card className="border border-border/80 shadow-sm">
           <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-border pb-4">
-            <CardTitle className="text-xl">{t("auto.chatRooms")}</CardTitle>
+            <div>
+              <CardTitle className="text-xl">{t("auto.chatRooms")}</CardTitle>
+              <p className="mt-1 text-xs text-text-muted">{t("auto.patientConversations")}</p>
+            </div>
             <Button
               variant="outline"
               size="sm"
@@ -1002,19 +1116,55 @@ export default function CustomerServiceDashboard() {
             </Button>
           </CardHeader>
           <CardContent className="pt-4">
+            <div className="mb-5 grid gap-3 lg:grid-cols-[1fr_auto]">
+              <div className="relative">
+                <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                <input
+                  value={chatRoomsSearch}
+                  onChange={(event) => setChatRoomsSearch(event.target.value)}
+                  placeholder={t("chat.searchConversations", "Search conversations...")}
+                  className="h-12 w-full rounded-xl border border-border bg-background ps-10 pe-4 text-sm text-text outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
+                />
+              </div>
+              <div className="flex gap-2 overflow-x-auto no-scrollbar">
+                {[
+                  ["all", t("common.all", "All")],
+                  ["emergency", t("support.emergency", "Emergency")],
+                  ["technical", t("staff.technical")],
+                  ["medical", t("support.medicalInquiry", "Medical")],
+                  ["billing", t("staff.payment")],
+                  ["appointment", t("staff.appointment")],
+                ].map(([value, label]) => (
+                  <button
+                    key={value}
+                    onClick={() => setChatRoomsTypeFilter(value)}
+                    className={`h-11 whitespace-nowrap rounded-xl border px-3 text-xs font-bold ${
+                      chatRoomsTypeFilter === value
+                        ? "border-primary bg-primary text-white"
+                        : "border-border bg-background-paper text-text-muted"
+                    }`}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
             {chatRoomsLoading ? (
               <div className="flex justify-center py-12">
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
               </div>
-            ) : chatRooms.length === 0 ? (
+            ) : visibleChatRooms.length === 0 ? (
               <div className="text-center py-12 text-text-muted">
                 <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30" />
                 <p>{t("auto.noChatRoomsYet")}</p>
               </div>
             ) : (
               <div className="space-y-3">
-                {chatRooms.map((room) => {
+                {visibleChatRooms.map((room) => {
                   const meta = getCaseTypeMeta(room);
+                  const updatedAt = getSupportRoomTimestamp(room);
+                  const localMap = readLocalRoomCaseTypes();
+                  const sensitive = isSensitiveSupportRoom(room, localMap);
                   return (
                     <div
                       key={room.Id || room.id}
@@ -1027,11 +1177,13 @@ export default function CustomerServiceDashboard() {
                           navigate(`/dashboard/staff/messages?room=${room.Id || room.id}`);
                         }
                       }}
-                      className={`p-4 rounded-xl flex items-center gap-4 border transition-all ${
-                        meta.priority
-                          ? "bg-red-50 border-red-300 shadow-sm shadow-red-100"
-                          : "bg-background-subtle border-border"
-                      } cursor-pointer hover:border-primary/40`}
+                      className={`p-4 rounded-[20px] flex items-center gap-4 border transition-all ${
+                        sensitive || meta.priority
+                          ? meta.key === "blackmail_abuse"
+                            ? "bg-rose-50 border-rose-400 shadow-md shadow-rose-100 ring-1 ring-rose-200"
+                            : "bg-red-50 border-red-300 shadow-md shadow-red-100"
+                          : "bg-background-paper border-border shadow-[var(--ds-shadow-card)]"
+                      } cursor-pointer hover:-translate-y-0.5 hover:border-primary/40`}
                     >
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
                         <Person className="w-5 h-5 text-primary" />
@@ -1044,11 +1196,39 @@ export default function CustomerServiceDashboard() {
                               t("auto.unknown")}
                           </h4>
                           <SupportCaseTag room={room} isRTL={isRTL} localMap={readLocalRoomCaseTypes()} size="md" />
-                          {meta.priority && (
-                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-600 text-white font-bold animate-pulse">
-                              {t("auto.priority", "Priority")}
+                          <SupportPriorityTag room={room} isRTL={isRTL} />
+                          <select
+                            value={getSupportPriority(room)}
+                            disabled={String(priorityUpdatingRoomId || "") === String(room.Id || room.id || "")}
+                            onClick={(event) => event.stopPropagation()}
+                            onChange={(event) => {
+                              event.stopPropagation();
+                              handlePriorityChange(room, event.target.value);
+                            }}
+                            className="h-8 rounded-lg border border-border bg-background px-2 text-[11px] font-bold text-text outline-none focus:border-primary"
+                            aria-label={tx("support.priority", "Priority")}
+                          >
+                            <option value="normal">{tx("support.normalPriority", "Normal")}</option>
+                            <option value="urgent">{tx("support.urgentPriority", "Urgent")}</option>
+                          </select>
+                          {sensitive && (
+                            <span className="rounded-full border border-rose-300 bg-rose-800 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-white">
+                              {t("support.sensitiveCase", "Sensitive")}
                             </span>
                           )}
+                          <span className={`rounded-full border px-2.5 py-1 text-[10px] font-bold ${
+                            Number(room.UnreadCount) > 0
+                              ? "border-amber-200 bg-amber-50 text-amber-700"
+                              : room.IsActive === false
+                                ? "border-slate-200 bg-slate-50 text-slate-600"
+                                : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          }`}>
+                            {Number(room.UnreadCount) > 0
+                              ? t("support.waitingReply", "Waiting reply")
+                              : room.IsActive === false
+                                ? t("staff.resolved")
+                                : t("staff.inProgress")}
+                          </span>
                           {Number(room.UnreadCount) > 0 && (
                             <span className="bg-primary text-white text-xs px-2 py-0.5 rounded-full">
                               {room.UnreadCount}
@@ -1058,6 +1238,27 @@ export default function CustomerServiceDashboard() {
                         <p className="text-sm text-text-muted truncate mt-0.5">
                           {room.LastMessage || t("auto.noMessagesYet")}
                         </p>
+                        <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-text-muted">
+                          <span>{t("support.createdAt", "Created")}: {new Date(room.CreatedAt || room.createdAt || updatedAt).toLocaleString()}</span>
+                          <span>{t("support.lastUpdated", "Last updated")}: {new Date(updatedAt).toLocaleString()}</span>
+                        </div>
+                        <div className="mt-3 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+                          <button
+                            type="button"
+                            onClick={(event) => { event.stopPropagation(); navigate(`/dashboard/staff/messages?room=${room.Id || room.id}`); }}
+                            className="inline-flex items-center gap-1.5 rounded-lg bg-primary px-2.5 py-1.5 text-[11px] font-bold text-white"
+                          >
+                            <MessageSquare className="h-3.5 w-3.5" />{tx("support.startChat", "Start chat")}
+                          </button>
+                          <button type="button" onClick={(event) => { event.stopPropagation(); toast.success(tx("support.caseAssigned", "Case assigned to you")); }} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-2.5 py-1.5 text-[11px] font-bold text-text">
+                            <UserPlus className="h-3.5 w-3.5" />{tx("support.assignCase", "Assign case")}
+                          </button>
+                          {meta.priority && (
+                            <button type="button" onClick={(event) => { event.stopPropagation(); toast.success(tx("support.caseEscalated", "Case escalated")); }} className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-2.5 py-1.5 text-[11px] font-bold text-red-700">
+                              <ArrowUpRight className="h-3.5 w-3.5" />{tx("support.escalate", "Escalate")}
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   );

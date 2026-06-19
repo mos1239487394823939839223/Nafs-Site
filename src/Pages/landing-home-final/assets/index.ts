@@ -1,0 +1,11 @@
+export { default as assessmentIllustration } from "./assessment-illustration.jpg";
+export { default as assessmentSkill } from "./assessment-skill2.png";
+export { default as heroBg } from "./hero-bg.png";
+export { default as heroArmchair } from "./hero-armchair.jpg";
+export { default as doctor1 } from "./doctor-1.jpg";
+export { default as doctor2 } from "./doctor-2.jpg";
+export { default as doctor3 } from "./doctor-3.jpg";
+export { default as doctor4 } from "./doctor-4.jpg";
+export { default as testimonial1 } from "./testimonial-1.jpg";
+export { default as testimonial2 } from "./testimonial-2.jpg";
+export { default as testimonial3 } from "./testimonial-3.jpg";

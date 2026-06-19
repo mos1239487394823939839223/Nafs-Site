@@ -6,12 +6,10 @@ import { useToast } from "../../components/ui/Toast";
 import { useAuth, Roles, RoleDashboards } from "../../contexts/AuthContext";
 import {
   validateEmail,
-  validatePassword,
-  getPasswordStrength,
 } from "../../lib/validation";
-import { Eye, EyeOff, Mail, Lock } from "lucide-react";
+import { Eye, EyeOff, Video, Headphones, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
-import { authAPI } from "../../lib/api";
+import { authAPI, extractErrorMessage, toUserFacingError } from "../../lib/api";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 export default function Login() {
@@ -19,7 +17,8 @@ export default function Login() {
   const location = useLocation();
   const toast = useToast();
   const { login: authLogin } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
+  const isAr = language === "ar";
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -159,7 +158,7 @@ export default function Login() {
         }
       } else {
         console.log("Login failed (IsSuccess false):", response.Message);
-        toast.error(response.Message || t("errors.loginFailed"));
+        toast.error(toUserFacingError(response.Message, t("errors.loginFailed")));
         setLoading(false);
       }
     } catch (error) {
@@ -170,8 +169,8 @@ export default function Login() {
         errorMessage = t("errors.connectionTimeout");
       } else if (!error.response) {
         errorMessage = t("errors.networkError");
-      } else if (error.response?.data?.Message) {
-        errorMessage = error.response.data.Message;
+      } else {
+        errorMessage = extractErrorMessage(error, t("errors.loginFailed"));
       }
 
       toast.error(errorMessage);
@@ -228,8 +227,8 @@ export default function Login() {
                   name="password"
                   value={formData.password}
                   onChange={handleChange}
-                  className={`w-full px-4 py-2 pe-10 border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent transition-all bg-background text-text placeholder-text-muted ${
-                    errors.password ? "border-red-500" : "border-border"
+                  className={`h-12 w-full rounded-xl border bg-background px-4 pe-11 text-text placeholder-text-muted transition-all focus:border-primary focus:outline-none focus:ring-4 focus:ring-primary/15 ${
+                    errors.password ? "border-red-500 focus:border-red-500 focus:ring-red-500/10" : "border-border"
                   }`}
                   placeholder="••••••••"
                 />
@@ -287,6 +286,21 @@ export default function Login() {
               </button>
             </p>
           </div>
+        </div>
+
+        <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3">
+          {[
+            [Video, isAr ? "فيديو" : "Video"],
+            [Headphones, isAr ? "صوت" : "Audio"],
+            [MessageCircle, isAr ? "كتابة" : "Chat"],
+          ].map(([Icon, label]) => (
+            <div key={label} className="flex flex-col items-center gap-2 rounded-2xl border border-border bg-background-paper/85 p-3 text-center shadow-sm">
+              <span className="grid h-9 w-9 place-items-center rounded-xl bg-primary/10 text-primary">
+                <Icon className="h-4 w-4" />
+              </span>
+              <span className="text-xs font-bold text-text">{label}</span>
+            </div>
+          ))}
         </div>
       </motion.div>
     </div>

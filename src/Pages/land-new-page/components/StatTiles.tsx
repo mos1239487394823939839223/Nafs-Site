@@ -12,9 +12,11 @@ interface StatTilesProps {
 export const StatTiles = ({ todayCount }: StatTilesProps) => {
   const { t, isRTL } = useLanguage();
 
+  const orderedTiles = isRTL ? [...statTiles].reverse() : statTiles;
+
   return (
-    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-      {statTiles.map((tile) => {
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {orderedTiles.map((tile) => {
         const Icon = iconMap[tile.icon as keyof typeof iconMap];
 
         // The schedule tile shows a live count; others use their static translation
@@ -28,16 +30,16 @@ export const StatTiles = ({ todayCount }: StatTilesProps) => {
         return (
           <div
             key={tile.titleKey}
-            className="rounded-2xl bg-card border border-border shadow-card p-5 text-center flex flex-col items-center"
+            className="rounded-xl bg-card border border-border shadow-card p-3 text-center flex flex-col items-center"
           >
-            <Icon className="size-6 text-primary mb-3" />
-            <h3 className="font-bold text-foreground mb-2">{t(tile.titleKey)}</h3>
-            <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line mb-4">
+            <Icon className="size-5 text-primary mb-1.5" />
+            <h3 className="text-sm font-bold text-foreground mb-1">{t(tile.titleKey)}</h3>
+            <p className="text-xs text-muted-foreground leading-snug whitespace-pre-line mb-2">
               {descText}
             </p>
             <Link
               to={tile.href}
-              className="text-sm font-semibold text-primary hover:text-primary/80 mt-auto"
+              className="text-xs font-semibold text-primary hover:text-primary/80 mt-auto"
             >
               {t(tile.ctaKey)}
             </Link>

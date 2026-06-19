@@ -12,7 +12,7 @@ const Table = React.forwardRef(({ className, children, sx, ...props }, ref) => (
     component={Paper}
     variant="outlined"
     sx={{
-      borderRadius: '12px',
+      borderRadius: 'var(--ds-radius-card)',
       border: 1,
       borderColor: 'divider',
       overflowX: 'auto',
@@ -62,7 +62,7 @@ const TableHead = React.forwardRef(({ className, children, ...props }, ref) => (
     component="th"
     sx={{
       fontWeight: 600,
-      fontSize: '0.7rem',
+      fontSize: '0.75rem',
       textTransform: 'uppercase',
       letterSpacing: '0.05em',
       color: 'text.secondary',

@@ -1,27 +1,98 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { notificationAPI } from "../lib/api";
-import { useAuth } from "./AuthContext";
+import { useAuth, Roles } from "./AuthContext";
 import { useFirebaseMessaging } from "../hooks/useFirebaseMessaging";
 import { useSignalR } from "../hooks/useSignalR";
-import { normalizeNotification } from "../lib/notificationUtils";
+import { useAppointmentReminders } from "../hooks/useAppointmentReminders";
+import {
+  isChatMessagePayload,
+  mapChatMessageToNotification,
+  mapRealtimeNotification,
+  messageFromCurrentUser,
+  normalizeNotification,
+  getIncomingRoomId,
+  shouldPushChatNotification,
+} from "../lib/notificationUtils";
+
+const CHAT_MESSAGE_EVENTS = new Set([
+  "ReceiveMessage",
+  "NewMessage",
+  "MessageReceived",
+  "ChatMessageCreated",
+]);
 
 const NotificationContext = createContext(null);
+
+const REALTIME_EVENTS = [
+  "ReceiveNotification",
+  "NewNotification",
+  "NotificationCreated",
+  "ReceiveMessage",
+  "NewMessage",
+  "MessageReceived",
+  "ChatMessageCreated",
+  "BookingCreated",
+  "NewBooking",
+  "BookingConfirmed",
+  "BookingCancelled",
+  "BookingCanceled",
+  "BookingUpdated",
+  "BookingStatusUpdated",
+  "BookingRescheduled",
+  "SessionStarted",
+  "LiveSessionStarted",
+  "MeetingStarted",
+  "NewSupportTicket",
+  "SupportTicketCreated",
+  "PatientUpdate",
+  "PatientStatusUpdated",
+  "AppointmentReminder",
+  "SessionReminder",
+  "SupportStatusUpdated",
+  "SupportCaseUpdated",
+  "EmergencyAlert",
+  "EmergencyCaseOpened",
+  "BlackmailAlert",
+  "BlackmailCaseOpened",
+  "HighPrioritySupportCase",
+];
 
 export function NotificationProvider({ children }) {
   const { user, role } = useAuth();
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const addNotification = useCallback((payload) => {
-    const source = payload?.notification
-      ? { ...payload.notification, ...(payload.data || {}) }
-      : payload;
-    const normalized = normalizeNotification(source, role);
+  const upsertNotification = useCallback((notification) => {
     setNotifications((prev) => {
-      const withoutDuplicate = prev.filter((item) => item.id !== normalized.id);
-      return [normalized, ...withoutDuplicate];
+      const withoutDuplicate = prev.filter((item) => item.id !== notification.id);
+      return [notification, ...withoutDuplicate];
     });
-  }, [role]);
+  }, []);
+
+  const addNotification = useCallback((payload) => {
+    const normalized =
+      payload?.id && payload?.category
+        ? payload
+        : normalizeNotification(
+            payload?.notification ? { ...payload.notification, ...(payload.data || {}) } : payload,
+            role,
+          );
+    upsertNotification(normalized);
+  }, [role, upsertNotification]);
+
+  const handleRealtime = useCallback(
+    (eventName, payload) => {
+      if (CHAT_MESSAGE_EVENTS.has(eventName) && isChatMessagePayload(payload)) {
+        if (messageFromCurrentUser(payload, user)) return;
+        const roomId = getIncomingRoomId(payload);
+        if (!shouldPushChatNotification(roomId)) return;
+        upsertNotification(mapChatMessageToNotification(payload, role));
+        return;
+      }
+      upsertNotification(mapRealtimeNotification(eventName, payload, role));
+    },
+    [role, upsertNotification, user],
+  );
 
   const fetchNotifications = useCallback(async (pageIndex = 1, pageSize = 100) => {
     if (!user) return;
@@ -29,7 +100,13 @@ export function NotificationProvider({ children }) {
     try {
       const response = await notificationAPI.getNotifications(pageIndex, pageSize);
       const data = response?.Data ?? response?.data ?? response;
-      const items = Array.isArray(data?.Items) ? data.Items : Array.isArray(data?.items) ? data.items : Array.isArray(data) ? data : [];
+      const items = Array.isArray(data?.Items)
+        ? data.Items
+        : Array.isArray(data?.items)
+          ? data.items
+          : Array.isArray(data)
+            ? data
+            : [];
       setNotifications(items.map((item) => normalizeNotification(item, role)));
     } catch (error) {
       console.error("Failed to load notifications", error);
@@ -38,20 +115,25 @@ export function NotificationProvider({ children }) {
     }
   }, [role, user]);
 
+  const signalRHandlers = useMemo(
+    () =>
+      REALTIME_EVENTS.reduce((handlers, eventName) => {
+        handlers[eventName] = (payload) => handleRealtime(eventName, payload);
+        return handlers;
+      }, {}),
+    [handleRealtime],
+  );
+
   useFirebaseMessaging(Boolean(user), addNotification, fetchNotifications);
   useSignalR({
     enabled: Boolean(user),
-    handlers: {
-      ReceiveNotification: addNotification,
-      NewNotification: addNotification,
-      NotificationCreated: addNotification,
-      ReceiveMessage: (payload) => addNotification({ ...payload, Type: "messages", Title: "New message" }),
-      BookingStatusUpdated: (payload) => addNotification({ ...payload, Type: "appointments", Title: "Booking status updated" }),
-      BookingConfirmed: (payload) => addNotification({ ...payload, Type: "appointments", Title: "Booking confirmed" }),
-      AppointmentReminder: (payload) => addNotification({ ...payload, Type: "appointments", Title: "Session reminder" }),
-      SupportStatusUpdated: (payload) => addNotification({ ...payload, Type: "support", Title: "Support request updated" }),
-      EmergencyAlert: (payload) => addNotification({ ...payload, Type: "emergency", Title: "Emergency alert" }),
-    },
+    handlers: signalRHandlers,
+  });
+
+  useAppointmentReminders({
+    enabled: Boolean(user) && (role === Roles.PATIENT || role === Roles.DOCTOR),
+    role,
+    onReminder: upsertNotification,
   });
 
   useEffect(() => {
@@ -60,7 +142,7 @@ export function NotificationProvider({ children }) {
   }, [fetchNotifications, user]);
 
   const markAsRead = useCallback(async (id) => {
-    setNotifications((prev) => prev.map((item) => item.id === String(id) ? { ...item, isRead: true } : item));
+    setNotifications((prev) => prev.map((item) => (item.id === String(id) ? { ...item, isRead: true } : item)));
     if (!String(id).startsWith("local-")) {
       await notificationAPI.markAsRead(id).catch((error) => console.error("Failed to mark notification as read", error));
     }
@@ -69,17 +151,48 @@ export function NotificationProvider({ children }) {
   const markAllAsRead = useCallback(async () => {
     const unread = notifications.filter((item) => !item.isRead);
     setNotifications((prev) => prev.map((item) => ({ ...item, isRead: true })));
-    await Promise.allSettled(unread.filter((item) => !item.id.startsWith("local-")).map((item) => notificationAPI.markAsRead(item.id)));
+    await Promise.allSettled(
+      unread.filter((item) => !item.id.startsWith("local-")).map((item) => notificationAPI.markAsRead(item.id)),
+    );
   }, [notifications]);
 
-  const value = useMemo(() => ({
-    notifications,
-    unreadCount: notifications.filter((item) => !item.isRead).length,
-    loading,
-    fetchNotifications,
-    markAsRead,
-    markAllAsRead,
-  }), [fetchNotifications, loading, markAllAsRead, markAsRead, notifications]);
+  const deleteNotification = useCallback(
+    async (id) => {
+      const notificationId = String(id);
+      setNotifications((prev) => prev.filter((item) => item.id !== notificationId));
+      if (!notificationId.startsWith("local-")) {
+        await notificationAPI.deleteNotification(id).catch((error) => {
+          console.error("Failed to delete notification", error);
+          fetchNotifications();
+        });
+      }
+    },
+    [fetchNotifications],
+  );
+
+  const unreadByCategory = useMemo(
+    () =>
+      notifications.reduce((counts, item) => {
+        if (!item.isRead) counts[item.category] = (counts[item.category] || 0) + 1;
+        return counts;
+      }, {}),
+    [notifications],
+  );
+
+  const value = useMemo(
+    () => ({
+      notifications,
+      unreadCount: notifications.filter((item) => !item.isRead).length,
+      unreadByCategory,
+      loading,
+      fetchNotifications,
+      markAsRead,
+      markAllAsRead,
+      deleteNotification,
+      addNotification,
+    }),
+    [addNotification, deleteNotification, fetchNotifications, loading, markAllAsRead, markAsRead, notifications, unreadByCategory],
+  );
 
   return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
 }

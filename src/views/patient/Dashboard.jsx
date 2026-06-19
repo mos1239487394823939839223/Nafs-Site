@@ -447,7 +447,7 @@ export default function PatientDashboard() {
         {/* Emergency Button */}
         <div
           className="bg-gradient-to-br from-red-500 to-rose-600 text-white rounded-xl cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all p-5 flex flex-col items-center justify-center gap-3 text-center"
-          onClick={() => navigate('/dashboard/patient/messages?type=support&caseType=emergency')}
+          onClick={() => navigate('/dashboard/patient/messages?type=support&caseType=emergency&support=1')}
         >
           <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
             <AlertTriangle className="w-8 h-8 text-white" />

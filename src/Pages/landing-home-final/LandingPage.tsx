@@ -1,13 +1,13 @@
 import { Navbar } from "./components/Navbar";
 import { Hero } from "./components/Hero";
 import { Journey } from "./components/Journey";
+import { JourneyStepsSection } from "./components/JourneyStepsSection";
 import { EmergencyBand } from "./components/EmergencyBand";
 import { Services } from "./components/Services";
 import { Doctors } from "./components/Doctors";
 import { Assessment } from "./components/Assessment";
 import { Stats } from "./components/Stats";
 import { Testimonials } from "./components/Testimonials";
-import { FinalCTA } from "./components/FinalCTA";
 import { Footer } from "./components/Footer";
 import { ChatBubble } from "./components/ChatBubble";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -17,18 +17,18 @@ const LandingPage = () => {
   const isAr = language === "ar";
 
   return (
-    <div dir={isAr ? "rtl" : "ltr"} className="min-h-screen bg-background">
+    <div dir={isAr ? "rtl" : "ltr"} className="landing-shell min-h-screen overflow-hidden bg-background">
       <Navbar />
       <Hero />
-      <main className="mx-auto max-w-screen-xl">
+      <main className="bg-background-paper">
         <Journey />
+        <JourneyStepsSection />
         <EmergencyBand />
         <Services />
         <Doctors />
         <Assessment />
         <Stats />
         <Testimonials />
-        <FinalCTA />
       </main>
       <Footer />
       <ChatBubble />

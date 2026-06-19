@@ -1,54 +1,70 @@
-import { ClipboardCheck, UserPlus, CalendarCheck } from "lucide-react";
+import { Award, Clock3, LockKeyhole, Star } from "lucide-react";
 import { useLanguage } from "../../../contexts/LanguageContext";
 
+const FEATURES = [
+  {
+    icon: Star,
+    titleAr: "تقييم عالي",
+    descAr: "4.9 من 5 نجوم",
+    titleEn: "High Rating",
+    descEn: "4.9 out of 5 stars",
+  },
+  {
+    icon: Clock3,
+    titleAr: "متاح 24/7",
+    descAr: "نحن هنا عند الحاجة",
+    titleEn: "Available 24/7",
+    descEn: "Here whenever you need",
+  },
+  {
+    icon: Award,
+    titleAr: "دكاترة معتمدون",
+    descAr: "+100 متخصص",
+    titleEn: "Certified Doctors",
+    descEn: "+100 specialists",
+  },
+  {
+    icon: LockKeyhole,
+    titleAr: "سرية تامة",
+    descAr: "خصوصيتك أولويتنا",
+    titleEn: "Full Privacy",
+    descEn: "Your privacy comes first",
+  },
+];
+
 export const Journey = () => {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const isAr = language === "ar";
 
-  const steps = [
-    { number: 1, icon: ClipboardCheck, titleKey: "landing.journey.step1.title", descKey: "landing.journey.step1.desc" },
-    { number: 2, icon: UserPlus, titleKey: "landing.journey.step2.title", descKey: "landing.journey.step2.desc" },
-    { number: 3, icon: CalendarCheck, titleKey: "landing.journey.step3.title", descKey: "landing.journey.step3.desc" },
-  ];
-
   return (
-    <section id="about" dir={isAr ? "rtl" : "ltr"} className="py-16 md:py-20 bg-background">
-      <div className="container mx-auto px-4">
-        <h2 className="text-center text-2xl md:text-3xl font-bold text-foreground mb-12">
-          {t("landing.journey.title")}
-        </h2>
-
-        <div className="relative max-w-5xl mx-auto">
-          {/* Dotted connector line (desktop only) */}
-          <div
-            aria-hidden
-            className="hidden md:block absolute top-1/2 end-[12%] start-[12%] -translate-y-1/2 border-t-2 border-dashed border-brand/40 z-0"
-          />
-          {/* Connector dots */}
-          <div
-            aria-hidden
-            className="hidden md:block absolute top-1/2 end-[33%] -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-brand z-0"
-          />
-          <div
-            aria-hidden
-            className="hidden md:block absolute top-1/2 start-[33%] -translate-y-1/2 w-2.5 h-2.5 rounded-full bg-brand z-0"
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative z-10">
-            {steps.map(({ number, icon: Icon, titleKey, descKey }) => (
-              <div
-                key={number}
-                className="relative bg-card border border-border rounded-2xl p-6 pt-6 mt-4 shadow-[var(--shadow-card)] text-start"
-              >
-                <span className="absolute -top-4 start-4 w-8 h-8 rounded-full bg-brand text-primary-foreground text-sm font-bold flex items-center justify-center">
-                  {number}
-                </span>
-                <Icon className="w-10 h-10 text-brand mb-4" strokeWidth={1.75} />
-                <h3 className="text-lg font-bold text-foreground mb-2">{t(titleKey)}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{t(descKey)}</p>
+    <section
+      id="about"
+      dir={isAr ? "rtl" : "ltr"}
+      className="relative z-10 -mt-[52px] px-4 sm:px-6 lg:px-8"
+    >
+      <div className="mx-auto w-full max-w-6xl rounded-tl-md rounded-tr-[3rem] rounded-b-[20px] bg-background-paper px-10 py-7 sm:px-12 sm:py-8">
+        <div className="grid grid-cols-2 gap-y-4 divide-x divide-x-reverse divide-border sm:grid-cols-4">
+          {FEATURES.map(({ icon: Icon, titleAr, descAr, titleEn, descEn }, i) => (
+            <div
+              key={titleAr}
+              className={`flex items-center justify-center gap-4 ${
+                i !== 0 ? "sm:border-s sm:border-border" : ""
+              } px-4 py-2 sm:px-6`}
+            >
+              <Icon
+                className="h-7 w-7 shrink-0 text-[#78a794] sm:h-8 sm:w-8"
+                strokeWidth={1.75}
+              />
+              <div>
+                <p className="text-[15px] font-bold leading-snug text-primary sm:text-base">
+                  {isAr ? titleAr : titleEn}
+                </p>
+                <p className="mt-1 text-[13px] leading-snug text-text-light sm:text-sm">
+                  {isAr ? descAr : descEn}
+                </p>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>

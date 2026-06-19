@@ -12,17 +12,17 @@ const Card = React.forwardRef(({ className, hover = false, children, sx, onClick
     onClick={onClick}
     elevation={1}
     sx={{
-      borderRadius: '16px',
+      borderRadius: 'var(--ds-radius-card)',
       border: '1px solid',
       borderColor: 'divider',
       p: 2.5,
+      boxShadow: 'var(--ds-shadow-card)',
       backdropFilter: 'blur(4px)',
       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       ...(hover && {
         cursor: 'pointer',
         '&:hover': {
-          elevation: 8,
-          boxShadow: (theme) => `0 20px 25px -5px ${theme.palette.primary.main}0D`,
+          boxShadow: 'var(--ds-shadow-hover)',
           transform: 'translateY(-4px)',
           borderColor: (theme) => `${theme.palette.primary.main}4D`,
         },

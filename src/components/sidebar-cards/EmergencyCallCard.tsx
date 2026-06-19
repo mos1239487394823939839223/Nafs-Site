@@ -5,19 +5,19 @@ export const EmergencyCallCard = ({ onClick }: { onClick?: () => void }) => {
   const { t } = useLanguage();
 
   return (
-    <div className="rounded-2xl bg-background-subtle p-4 border border-border">
-      <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-3">
-        <Phone className="w-5 h-5 text-red-600 dark:text-red-400" />
+    <div className="rounded-3xl border border-white/20 bg-white/5 p-4 text-white shadow-xl shadow-black/10 backdrop-blur">
+      <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-red-500 text-white shadow-lg shadow-red-950/30">
+        <Phone className="h-7 w-7" />
       </div>
-      <h4 className="font-bold text-sm mb-1 text-text">{t("sidebar.emergency.title")}</h4>
-      <p className="text-xs text-text-light leading-relaxed mb-3">
-        {t("sidebar.emergency.desc")}
+      <h4 className="mb-1.5 text-center text-base font-extrabold">{t("sidebar.emergency.title", "تحتاج مساعدة فورية؟")}</h4>
+      <p className="mb-3 text-center text-xs leading-6 text-white/75">
+        {t("sidebar.emergency.desc", "تواصل الآن مع فريق الدعم المختص")}
       </p>
       <button
         onClick={onClick}
-        className="w-full bg-primary hover:opacity-90 text-primary-foreground text-sm font-semibold py-2 rounded-lg transition-opacity"
+        className="w-full rounded-2xl bg-secondary px-4 py-3 text-sm font-bold text-white shadow-md shadow-black/10 transition-colors hover:bg-secondary-dark"
       >
-        {t("sidebar.emergency.cta")}
+        {t("sidebar.emergency.cta", "اتصال طارئ")}
       </button>
     </div>
   );

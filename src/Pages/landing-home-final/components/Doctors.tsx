@@ -1,120 +1,119 @@
-import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Button } from "../../../components/ui/button";
+import { ChevronLeft, ChevronRight, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import { patientAPI } from "../../../lib/api";
+import { doctor1, doctor2, doctor3, doctor4 } from "../assets";
+import { landingBtnBlock } from "../landingButtonStyles";
 
 interface DoctorDto {
   Id: number;
   Name: string;
-  Specialist: string[] | null;
+  Specialist: string[] | string | null;
   Image: string | null;
   Rate: number;
   SessionPrice?: number | null;
 }
 
-const SkeletonCard = () => (
-  <div className="rounded-2xl border border-border/60 bg-card p-5 text-center shadow-[var(--shadow-card)] animate-pulse">
-    <div className="mx-auto h-28 w-28 rounded-full bg-muted" />
-    <div className="mt-4 h-4 w-2/3 mx-auto rounded bg-muted" />
-    <div className="mt-2 h-3 w-1/2 mx-auto rounded bg-muted" />
-    <div className="mt-3 h-3 w-1/3 mx-auto rounded bg-muted" />
-    <div className="mt-4 h-9 w-full rounded-full bg-muted" />
-  </div>
-);
+const fallbackDoctors: DoctorDto[] = [
+  { Id: -1, Name: "د. سارة أحمد", Specialist: "أخصائية نفسية إكلينيكية", Image: doctor1, Rate: 4.9, SessionPrice: 350 },
+  { Id: -2, Name: "د. محمد علي", Specialist: "أخصائي نفسي", Image: doctor2, Rate: 4.8, SessionPrice: 300 },
+  { Id: -3, Name: "د. ندى إبراهيم", Specialist: "أخصائية علاج معرفي سلوكي", Image: doctor3, Rate: 4.9, SessionPrice: 400 },
+  { Id: -4, Name: "د. أحمد حسن", Specialist: "أخصائي نفسي إكلينيكي", Image: doctor4, Rate: 4.7, SessionPrice: 350 },
+];
 
 export const Doctors = () => {
   const navigate = useNavigate();
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const isAr = language === "ar";
   const [doctors, setDoctors] = useState<DoctorDto[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+  const visibleDoctors = (loaded ? doctors : fallbackDoctors).slice(0, 4);
 
   useEffect(() => {
-    patientAPI.getAllDoctors(1, 4)
-      .then((res: any) => {
+    patientAPI
+      .getAllDoctors(1, 4)
+      .then(async (res: any) => {
         if (res?.IsSuccess && res?.Data) {
-          const list: DoctorDto[] = res.Data.Items || res.Data || [];
-          setDoctors(list);
+          const baseDoctors: DoctorDto[] = res.Data.Items || res.Data || [];
+
+          const priceResults = await Promise.allSettled(
+            baseDoctors.map((doc) => patientAPI.getDoctorById(String(doc.Id))),
+          );
+          const enriched = baseDoctors.map((doc, index) => {
+            const result = priceResults[index];
+            if (result.status === "fulfilled" && (result.value as any)?.IsSuccess) {
+              const data = (result.value as any).Data;
+              const detail = data?.Items?.length > 0 ? data.Items[0] : data;
+              return { ...doc, SessionPrice: detail?.SessionPrice ?? doc.SessionPrice };
+            }
+            return doc;
+          });
+
+          setDoctors(enriched);
+          setLoaded(true);
         }
       })
-      .catch(() => {/* leave empty */})
-      .finally(() => setLoading(false));
+      .catch(() => undefined);
   }, []);
 
   return (
-  <section id="doctors" dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-12">
-    <div className="mb-6 flex items-center justify-between">
-      <h2 className="text-2xl font-bold text-foreground md:text-3xl">{t("landing.doctors.title")}</h2>
-      <a href="/auth/login" className="text-sm font-medium text-brand hover:underline">
-        {t("landing.doctors.viewAll")}
-      </a>
-    </div>
-
-    <div className="relative">
-      <button
-        aria-label={isAr ? "السابق" : "Previous"}
-        className="absolute -start-2 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-border bg-card p-2 shadow-[var(--shadow-card)] hover:bg-secondary md:block"
-      >
-        <ChevronLeft className="h-5 w-5 text-foreground rtl:rotate-180" />
-      </button>
-      <button
-        aria-label={isAr ? "التالي" : "Next"}
-        className="absolute -end-2 top-1/2 z-10 hidden -translate-y-1/2 rounded-full border border-border bg-card p-2 shadow-[var(--shadow-card)] hover:bg-secondary md:block"
-      >
-        <ChevronRight className="h-5 w-5 text-foreground rtl:rotate-180" />
-      </button>
-
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
-        {loading
-          ? Array.from({ length: 4 }).map((_, i) => <SkeletonCard key={i} />)
-          : doctors.map((doc) => (
-          <article
-            key={doc.Id}
-            className="rounded-2xl border border-border/60 bg-card p-5 text-center shadow-[var(--shadow-card)]"
-          >
-            <div className="mx-auto h-28 w-28 overflow-hidden rounded-full bg-muted">
-              {doc.Image ? (
-                <img
-                  src={doc.Image}
-                  alt={doc.Name}
-                  width={112}
-                  height={112}
-                  loading="lazy"
-                  className="h-full w-full object-cover"
-                />
-              ) : (
-                <span className="flex h-full w-full items-center justify-center text-2xl font-bold text-brand">
-                  {doc.Name?.charAt(0) ?? "د"}
-                </span>
-              )}
-            </div>
-            <h3 className="mt-4 text-base font-bold text-foreground">{doc.Name}</h3>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {Array.isArray(doc.Specialist) ? doc.Specialist.join(" | ") : doc.Specialist ?? ""}
-            </p>
-            {doc.Rate != null && (
-              <div className="mt-3 flex items-center justify-center gap-1 text-sm">
-                <span className="font-bold text-foreground">{doc.Rate.toFixed(1)}</span>
-                <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-              </div>
-            )}
-            {doc.SessionPrice != null && (
-              <p className="mt-1 text-xs text-muted-foreground">
-                {doc.SessionPrice} {t("landing.doctors.perSession")}
-              </p>
-            )}
-            <Button
-              onClick={() => navigate("/auth/login")}
-              className="mt-4 w-full rounded-full bg-brand text-brand-foreground hover:bg-brand/90"
-            >
-              {t("landing.doctors.bookNow")}
-            </Button>
-          </article>
-        ))}
+    <section id="doctors" dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-12 md:py-16">
+      <div className="mx-auto mb-4 flex max-w-6xl items-end justify-between gap-4">
+        <a href="/auth/login" className="text-xs font-bold text-[#397b62] hover:underline md:text-[13px]">
+          {isAr ? "عرض جميع الدكاترة" : "View all doctors"}
+        </a>
+        <h2 className="text-center text-2xl font-bold text-[#234c3f] md:text-[26px]">
+          {isAr ? "اختر دكتورك المناسب" : "Choose the right doctor"}
+        </h2>
+        <span className="hidden w-[105px] md:block" />
       </div>
-    </div>
-  </section>
+
+      <div className="relative mx-auto max-w-6xl">
+        <button className="absolute -start-14 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-[#edf1ee] bg-white text-[#8a9993] shadow-[0_2px_8px_rgba(35,76,63,0.04)] md:grid">
+          <ChevronLeft className="h-4 w-4 rtl:rotate-180" />
+        </button>
+        <button className="absolute -end-14 top-1/2 z-10 hidden h-9 w-9 -translate-y-1/2 place-items-center rounded-full border border-[#edf1ee] bg-white text-[#8a9993] shadow-[0_2px_8px_rgba(35,76,63,0.04)] md:grid">
+          <ChevronRight className="h-4 w-4 rtl:rotate-180" />
+        </button>
+
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {visibleDoctors.map((doc) => {
+            const specialty = Array.isArray(doc.Specialist) ? doc.Specialist.join(" | ") : doc.Specialist || "";
+            return (
+              <article key={doc.Id} className="overflow-hidden rounded-xl border border-[#edf1ee] bg-white text-center shadow-[0_2px_8px_rgba(35,76,63,0.025)]">
+                <div className="relative h-44 bg-[#f4f6f5] md:h-48">
+                  {doc.Image ? (
+                    <img src={doc.Image} alt={doc.Name} className="h-full w-full object-cover object-top" />
+                  ) : (
+                    <span className="grid h-full place-items-center text-3xl font-black text-primary">{doc.Name?.charAt(0) || "د"}</span>
+                  )}
+                </div>
+                <div className="relative px-4 pb-4 pt-3">
+                  <h3 className="text-[13px] font-bold leading-6 text-[#294b40] md:text-sm">{doc.Name}</h3>
+                  <p className="mt-1 min-h-5 truncate text-xs font-medium text-[#687871]">{specialty}</p>
+                  <div className="mt-2 flex items-center justify-center gap-1 text-xs font-semibold text-[#4f615a]">
+                    <span>{Number(doc.Rate || 4.8).toFixed(1)}</span>
+                    <Star className="h-3.5 w-3.5 fill-[#e9b949] text-[#e9b949]" />
+                  </div>
+                  <p className="mt-2 text-xs font-medium text-[#687871]">
+                    {doc.SessionPrice || 350} {isAr ? "جنيه للجلسة" : "EGP per session"}
+                  </p>
+                  <Button
+                    onClick={() => navigate("/auth/login")}
+                    variant="outline"
+                    className={`mt-3 !h-9 !rounded-lg !px-4 !text-xs ${landingBtnBlock} border-[#8fb1a3] text-[#315548]`}
+                  >
+                    {isAr ? "احجز الآن" : "Book now"}
+                  </Button>
+                </div>
+           
+              </article>
+            );
+          })}
+        </div>
+      </div>
+    </section>
   );
 };

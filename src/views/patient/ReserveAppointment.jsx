@@ -14,30 +14,44 @@ import Table, {
   TableHeader,
   TableRow,
 } from "../../components/ui/Table";
-import { Search, Stethoscope, Calendar, Clock, ChevronRight, User, ArrowLeft, CheckCircle, XCircle, ChevronLeft, Loader2, Eye, List as ViewList, LayoutGrid as GridView, Star, Send, ThumbsUp as ThumbUp, Badge as BadgeIcon, Zap as FlashOn, Wallet as AccountBalanceWallet, Upload as UploadIcon, Receipt as ReceiptLong, Filter, SlidersHorizontal, X } from "lucide-react";
+import { Search, Stethoscope, Calendar, Clock, ChevronRight, User, ArrowLeft, CheckCircle, XCircle, ChevronLeft, Loader2, Eye, List as ViewList, LayoutGrid as GridView, Star, Send, ThumbsUp as ThumbUp, Badge as BadgeIcon, Zap as FlashOn, Wallet as AccountBalanceWallet, Upload as UploadIcon, Receipt as ReceiptLong, Filter, SlidersHorizontal, X, Video } from "lucide-react";
 import DoctorFilterPanel from "../../components/patient/DoctorFilterPanel";
 
 import { useAuth } from "../../contexts/AuthContext";
-import { patientAPI, paymentAPI, filesAPI } from "../../lib/api";
+import { patientAPI, paymentAPI, filesAPI, meetingAPI, extractErrorMessage } from "../../lib/api";
 import { getPaymentStatusMeta } from "../../lib/paymentStatus";
 import { useToast } from "../../components/ui/Toast";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { useSignalR } from "../../hooks/useSignalR";
 import DoctorDocumentsViewer from "../../components/patient/DoctorDocumentsViewer";
 import Modal from "../../components/ui/Modal";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { getDoctorSpecialtyTheme } from "../../lib/doctorSpecialtyTheme";
 import { getAppointmentStatusMeta } from "../../lib/appointmentStatus";
+import {
+  SESSION_DURATION_MINUTES,
+  canStartPatientSession,
+  extractSlotDurationMinutes,
+  findNearestAvailableFromApiSlots,
+  formatDateKey as bookingFormatDateKey,
+  formatNearestSlotLabel,
+  getDoctorNearestSlotDate,
+} from "../../lib/patientBookingSlots";
+import { useNotifications } from "../../contexts/NotificationContext";
+import { createLocalNotification } from "../../lib/notificationUtils";
 
 const TWO_DAYS_IN_MS = 2 * 24 * 60 * 60 * 1000;
 
 export default function ReserveAppointment() {
-  const { user: currentUser } = useAuth();
+  const { user: currentUser, role } = useAuth();
+  const { addNotification } = useNotifications();
   const toast = useToast();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, language } = useLanguage();
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const focusedBookingId = searchParams.get("bookingId");
   const initialTab =
-    searchParams.get("tab") === "status"
+    focusedBookingId || searchParams.get("tab") === "status"
       ? "status"
       : searchParams.get("tab") === "available"
       ? "available"
@@ -50,6 +64,13 @@ export default function ReserveAppointment() {
   const [doctorSearch, setDoctorSearch] = useState("");
   const [mainTab, setMainTab] = useState(initialTab); // all, available, status
   const [viewMode, setViewMode] = useState("grid"); // list or grid
+
+  // Re-sync the active tab when arriving via a link that only changes the
+  // query string (e.g. sidebar "Therapists" link) — without this, navigating
+  // here while the component is already mounted leaves mainTab stale.
+  useEffect(() => {
+    setMainTab(initialTab);
+  }, [initialTab]);
 
   // Filter & sort state
   const [filterSpecialties, setFilterSpecialties] = useState([]);
@@ -113,6 +134,7 @@ export default function ReserveAppointment() {
     setPendingManualPaymentBookingId,
   ] = useState(null);
   const [bookingPendingReview, setBookingPendingReview] = useState(false);
+  const [startingMeetingId, setStartingMeetingId] = useState(null);
 
   const getNumericFee = (doctor) => {
     const rawFee =
@@ -137,43 +159,42 @@ export default function ReserveAppointment() {
     return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
   };
 
-  const getNextAvailableSlot = (doctor) => {
-    const raw = doctor?.NextAvailableSlot ?? doctor?.nextAvailableSlot;
-    if (raw) {
-      const slot = new Date(raw);
-      if (!Number.isNaN(slot.getTime())) return slot;
-    }
-
-    const now = new Date();
-    const scheduleSlots = Array.isArray(doctor?.DoctoreSchualings)
-      ? doctor.DoctoreSchualings
-          .filter((slot) => slot?.Aviable !== false && slot?.Date)
-          .map((slot) => new Date(slot.Date))
-          .filter((slot) => !Number.isNaN(slot.getTime()) && slot > now)
-          .sort((a, b) => a - b)
-      : [];
-    return scheduleSlots[0] || null;
+  const getDoctorReviewCount = (doctor) => {
+    const parsed = Number(
+      doctor?.ReviewsCount ?? doctor?.ReviewCount ?? doctor?.RatingsCount ?? doctor?.NumberOfReviews,
+    );
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : 0;
   };
 
-  const formatNearestAvailability = (doctor) => {
-    const slot = getNextAvailableSlot(doctor);
-    if (!slot) return t("patient.noAvailableAppointments");
+  const getDoctorSessionTypes = (doctor) => {
+    const configured = doctor?.SessionTypes ?? doctor?.ConsultationTypes ?? doctor?.AvailableSessionTypes;
+    if (Array.isArray(configured) && configured.length > 0) return configured.map(String);
+    return [
+      t("patient.videoConsultation", "Video"),
+      t("patient.audioConsultation", "Audio"),
+      t("patient.writtenConsultation", "Chat"),
+    ];
+  };
 
-    const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const slotDay = new Date(slot.getFullYear(), slot.getMonth(), slot.getDate());
-    const dayDiff = Math.round((slotDay.getTime() - today.getTime()) / 86400000);
-    const dayLabel =
-      dayDiff === 0
-        ? t("patient.availabilityToday")
-        : dayDiff === 1
-          ? t("patient.availabilityTomorrow")
-          : slot.toLocaleDateString(t("auto.enus"), { weekday: "long" });
-    const timeLabel = slot.toLocaleTimeString(t("auto.enus"), {
-      hour: "numeric",
-      minute: "2-digit",
-    });
-    return `${dayLabel} - ${timeLabel}`;
+  const getNextAvailableSlot = (doctor) => getDoctorNearestSlotDate(doctor);
+
+  const formatNearestAvailability = (doctor) =>
+    formatNearestSlotLabel(getDoctorNearestSlotDate(doctor), { t, language });
+
+  const fetchNearestSlotForDoctor = async (doctorId) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const end = new Date(today);
+    end.setDate(end.getDate() + 30);
+    const response = await patientAPI.getDoctorSlots(
+      String(doctorId),
+      bookingFormatDateKey(today),
+      bookingFormatDateKey(end),
+    );
+    if (response?.IsSuccess) {
+      return findNearestAvailableFromApiSlots(response.Data);
+    }
+    return null;
   };
 
   const getTransferFeeAmount = (baseFee, provider) => {
@@ -236,19 +257,45 @@ export default function ReserveAppointment() {
       const batch = items.slice(index, index + batchSize);
       const batchResults = await Promise.all(
         batch.map(async (doctor) => {
+        let merged = doctor;
         const alreadyHasPrice = getNumericFee(doctor) > 0;
         const alreadyHasDetails =
           alreadyHasPrice &&
           (getDoctorExperience(doctor) !== null || doctor.Gender !== undefined);
-        if (alreadyHasDetails) return doctor;
 
-        try {
-          const response = await patientAPI.getDoctorById(String(doctor.Id));
-          const details = response?.Data;
-          return details ? { ...doctor, ...details, NextAvailableSlot: doctor.NextAvailableSlot } : doctor;
-        } catch {
-          return doctor;
+        if (!alreadyHasDetails) {
+          try {
+            const response = await patientAPI.getDoctorById(String(doctor.Id));
+            const details = response?.Data;
+            if (details) {
+              merged = {
+                ...doctor,
+                ...(details?.Items?.[0] || details),
+                NextAvailableSlot: doctor.NextAvailableSlot,
+              };
+            }
+          } catch {
+            merged = doctor;
+          }
         }
+
+        if (!merged._nearestSlotAt) {
+          try {
+            const nearest = await fetchNearestSlotForDoctor(merged.Id);
+            if (nearest) {
+              const iso = nearest.toISOString();
+              merged = {
+                ...merged,
+                NextAvailableSlot: iso,
+                _nearestSlotAt: iso,
+              };
+            }
+          } catch {
+            // Keep list usable if slot lookup fails for one doctor.
+          }
+        }
+
+        return merged;
         }),
       );
       enriched.push(...batchResults);
@@ -365,6 +412,14 @@ export default function ReserveAppointment() {
   }, [mainTab, bookingsPagination.pageIndex]);
 
   useEffect(() => {
+    if (!focusedBookingId || mainTab !== "status" || bookingsLoading) return;
+    const el = document.getElementById(`booking-${focusedBookingId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }, [focusedBookingId, mainTab, bookingsLoading, patientBookings]);
+
+  useEffect(() => {
     if ((mainTab !== "all" && mainTab !== "available") || step !== 2 || !selectedDoctor)
       return undefined;
     const intervalId = setInterval(() => {
@@ -376,13 +431,17 @@ export default function ReserveAppointment() {
 
   useEffect(() => {
     const nextParams = new URLSearchParams(searchParams);
+    const existingBookingId = searchParams.get("bookingId");
 
     if (mainTab === "status") {
       nextParams.set("tab", "status");
+      if (existingBookingId) nextParams.set("bookingId", existingBookingId);
     } else if (mainTab === "available") {
       nextParams.set("tab", "available");
+      nextParams.delete("bookingId");
     } else {
       nextParams.delete("tab");
+      nextParams.delete("bookingId");
     }
 
     const current = searchParams.toString();
@@ -709,16 +768,13 @@ export default function ReserveAppointment() {
             const minute = String(slotDate.getMinutes()).padStart(2, "0");
             const key = `${dateKey}-${hour}:${minute}`;
 
-            const rawDuration = Number(
-              slot.DurationMinute ?? slot.DurationMinutes ?? slot.Duration,
-            );
-            const durationMinutes =
-              Number.isFinite(rawDuration) && rawDuration > 0
-                ? rawDuration
-                : null;
-
             const slotEndTime =
               slot.EndTime || slot.End || slot.SessionEndTime || null;
+            const durationMinutes = extractSlotDurationMinutes(slot, {
+              startTime: slotDate,
+              endTime: slotEndTime,
+            });
+
             let endTimeKey = null;
             if (slotEndTime) {
               const endDate = new Date(slotEndTime);
@@ -1082,7 +1138,12 @@ export default function ReserveAppointment() {
 
     // Allow booking if slot is available
     if (slots[key] === "available") {
-      setBookedSlot({ date, timeKey });
+      const details = slotDetailsByKey[key];
+      setBookedSlot({
+        date,
+        timeKey,
+        durationMinutes: details?.durationMinutes ?? SESSION_DURATION_MINUTES,
+      });
       console.log("Booked slot set:", { date: dateKey, timeKey });
     }
   };
@@ -1114,10 +1175,16 @@ export default function ReserveAppointment() {
       bookingDate.setMinutes(Number.isFinite(minute) ? minute : 0);
       bookingDate.setSeconds(0);
 
+      const slotKey = `${formatDateKey(bookingDate)}-${bookedSlot.timeKey || "00:00"}`;
+      const durationMinutes =
+        Number(bookedSlot.durationMinutes) > 0
+          ? Number(bookedSlot.durationMinutes)
+          : slotDetailsByKey[slotKey]?.durationMinutes ?? SESSION_DURATION_MINUTES;
+
       const bookingRequest = {
         DoctorId: selectedDoctor.Id,
         SessionStartTime: formatDate(bookingDate),
-        DurationMinutes: 30, // Backend accepts 30 or 45 minutes only
+        DurationMinutes: durationMinutes,
         PatientNotes: "Booked via Web App",
       };
 
@@ -1178,6 +1245,21 @@ export default function ReserveAppointment() {
 
         setBookingPendingReview(true);
         setStep(3);
+        const doctorLabel =
+          selectedDoctor?.Name ?? selectedDoctor?.name ?? selectedDoctor?.FullName ?? "";
+        addNotification(
+          createLocalNotification(
+            {
+              Type: "appointments",
+              Title: t("notifications.bookingCreated", "New booking created"),
+              Body: [doctorLabel, bookedSlot?.StartTime ?? bookedSlot?.startTime]
+                .filter(Boolean)
+                .join(" · "),
+              BookingId: bookingId,
+            },
+            role,
+          ),
+        );
         toast.success(
           t("auto.bookingAndPaymentRequestSubmittedSuccessfullyAndIsNowPendingReview"),
         );
@@ -1203,6 +1285,43 @@ export default function ReserveAppointment() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleStartMeeting = async (booking) => {
+    const bookingId = booking?.BookingId || booking?.Id;
+    if (!bookingId || startingMeetingId || !canStartPatientSession(booking)) return;
+
+    setStartingMeetingId(bookingId);
+    try {
+      const response = await meetingAPI.startBookingMeeting(bookingId);
+      if (response?.IsSuccess === false || response?.isSuccess === false) {
+        throw new Error(response?.Message || response?.message || "Failed to start meeting");
+      }
+      const meeting = response?.Data ?? response?.data ?? response;
+      const meetingUrl =
+        meeting?.MeetingUrl ||
+        meeting?.meetingUrl ||
+        meeting?.RoomUrl ||
+        meeting?.roomUrl ||
+        meeting?.JoinUrl ||
+        meeting?.joinUrl ||
+        booking?.MeetingUrl ||
+        "";
+
+      navigate(`/dashboard/patient/meeting/${bookingId}`, {
+        state: { session: booking, meeting, meetingUrl },
+      });
+    } catch (error) {
+      console.error("Failed to start meeting:", error);
+      toast.error(
+        extractErrorMessage(
+          error,
+          t("patientHome.upcomingSession.meetingStartFailed", "Could not start the session."),
+        ),
+      );
+    } finally {
+      setStartingMeetingId(null);
     }
   };
 
@@ -1243,6 +1362,10 @@ export default function ReserveAppointment() {
   const processedDoctors = useMemo(() => {
     let src = mainTab === "available" ? availableDoctors : doctors;
 
+    if (mainTab === "available") {
+      src = src.filter((d) => getDoctorNearestSlotDate(d));
+    }
+
     if (doctorSearch.trim()) {
       const q = doctorSearch.toLowerCase();
       src = src.filter((d) => d.Name?.toLowerCase().includes(q));
@@ -1279,6 +1402,10 @@ export default function ReserveAppointment() {
       src = src.filter((d) => {
         const slot = getNextAvailableSlot(d);
         if (!slot) return false;
+        if (filterAvailability === "now") {
+          const diff = slot.getTime() - today.getTime();
+          return diff >= 0 && diff <= 2 * 60 * 60 * 1000;
+        }
         return filterAvailability === "today"
           ? slot.toDateString() === today.toDateString()
           : slot <= weekEnd;
@@ -1374,10 +1501,10 @@ export default function ReserveAppointment() {
       </div>
 
       {/* Tabs */}
-      <div className="flex p-1 rounded-2xl border border-border bg-background-subtle mb-6 sm:mb-8 overflow-x-auto no-scrollbar scroll-smooth gap-1 w-fit max-w-full">
+      <div className="grid w-full grid-cols-3 gap-1 overflow-x-auto rounded-2xl border border-border bg-background-paper p-1.5 shadow-sm no-scrollbar scroll-smooth mb-6 sm:mb-8">
         <button
-          onClick={() => { setMainTab("all"); setStep(1); setSelectedDoctor(null); }}
-          className={`px-4 sm:px-5 md:px-8 py-2.5 sm:py-3 text-xs sm:text-sm md:text-base font-semibold transition-all relative whitespace-nowrap rounded-xl ${
+          onClick={() => { setMainTab("all"); setStep(1); setSelectedDoctor(null); setSearchParams({}); }}
+          className={`min-w-max px-3 sm:px-5 md:px-8 py-3 text-[11px] sm:text-sm md:text-base font-semibold transition-all duration-300 relative whitespace-nowrap rounded-xl ${
             mainTab === "all"
               ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
               : "text-text-muted hover:text-text-heading hover:bg-background-paper"
@@ -1387,8 +1514,8 @@ export default function ReserveAppointment() {
           {t("patient.allDoctors", "All Therapists")}
         </button>
         <button
-          onClick={() => { setMainTab("available"); setStep(1); setSelectedDoctor(null); }}
-          className={`px-4 sm:px-5 md:px-8 py-2.5 sm:py-3 text-xs sm:text-sm md:text-base font-semibold transition-all relative whitespace-nowrap rounded-xl ${
+          onClick={() => { setMainTab("available"); setStep(1); setSelectedDoctor(null); setSearchParams({ tab: "available" }); }}
+          className={`min-w-max px-3 sm:px-5 md:px-8 py-3 text-[11px] sm:text-sm md:text-base font-semibold transition-all duration-300 relative whitespace-nowrap rounded-xl ${
             mainTab === "available"
               ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
               : "text-text-muted hover:text-text-heading hover:bg-background-paper"
@@ -1398,8 +1525,8 @@ export default function ReserveAppointment() {
           {t("patient.availableDoctors", "Available Therapists")}
         </button>
         <button
-          onClick={() => setMainTab("status")}
-          className={`px-4 sm:px-5 md:px-8 py-2.5 sm:py-3 text-xs sm:text-sm md:text-base font-semibold transition-all relative whitespace-nowrap rounded-xl ${
+          onClick={() => { setMainTab("status"); setSearchParams({ tab: "status" }); }}
+          className={`min-w-max px-3 sm:px-5 md:px-8 py-3 text-[11px] sm:text-sm md:text-base font-semibold transition-all duration-300 relative whitespace-nowrap rounded-xl ${
             mainTab === "status"
               ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
               : "text-text-muted hover:text-text-heading hover:bg-background-paper"
@@ -1693,13 +1820,13 @@ export default function ReserveAppointment() {
                                 <Card
                                   key={doctor.Id}
                                   dir={isRTL ? "rtl" : "ltr"}
-                                  className={`hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1 rounded-2xl shadow-sm border ${specialtyTheme.surface}`}
+                                  className={`group overflow-hidden hover:border-primary/50 transition-all duration-300 transform hover:-translate-y-1 rounded-[24px] shadow-[0_16px_42px_-28px_rgba(15,76,58,0.45)] hover:shadow-[0_24px_60px_-28px_rgba(15,76,58,0.6)] border ${specialtyTheme.surface}`}
                                 >
-                                  <CardContent className="p-4 sm:p-5 flex flex-col h-full">
+                                  <CardContent className="p-5 sm:p-6 flex flex-col h-full">
                                     {/* Header: Image & Name */}
                                     <div className="flex items-start gap-3 sm:gap-4 mb-3 min-h-[88px]">
                                       <div
-                                        className={`w-12 h-12 sm:w-16 sm:h-16 rounded-full overflow-hidden flex-shrink-0 flex items-center justify-center border shadow-inner ${specialtyTheme.avatar}`}
+                                        className={`w-16 h-16 sm:w-20 sm:h-20 rounded-2xl overflow-hidden flex-shrink-0 flex items-center justify-center border shadow-inner ${specialtyTheme.avatar}`}
                                       >
                                         {doctor.Image ? (
                                           <img
@@ -1725,6 +1852,9 @@ export default function ReserveAppointment() {
                                             <span className="text-[13px] font-semibold text-text">
                                               {getDoctorRating(doctor).toFixed(1)}
                                             </span>
+                                            <span className="text-[11px] text-text-muted">
+                                              ({getDoctorReviewCount(doctor)} {t("patient.reviews", "reviews")})
+                                            </span>
                                           </div>
                                         )}
 
@@ -1739,8 +1869,18 @@ export default function ReserveAppointment() {
                                     }`}>
                                       <Clock className="w-3.5 h-3.5 flex-shrink-0" />
                                       <span className="truncate">
-                                        {t("patient.nextAvailableSlot")}: {formatNearestAvailability(doctor)}
+                                        {getNextAvailableSlot(doctor)
+                                          ? `${t("patient.nextAvailableSlot")}: ${formatNearestAvailability(doctor)}`
+                                          : formatNearestAvailability(doctor)}
                                       </span>
+                                    </div>
+
+                                    <div className="mt-3 flex flex-wrap gap-1.5">
+                                      {getDoctorSessionTypes(doctor).slice(0, 3).map((type) => (
+                                        <span key={type} className="rounded-full border border-primary/15 bg-primary/5 px-2.5 py-1 text-[10px] font-bold text-primary">
+                                          {type}
+                                        </span>
+                                      ))}
                                     </div>
 
                                     {getDoctorExperience(doctor) !== null && (
@@ -1789,8 +1929,14 @@ export default function ReserveAppointment() {
                                         </span>
                                       )}
                                     </div>
+                                    <div className="mt-6 flex items-center justify-between rounded-2xl bg-background-paper/80 px-3 py-2.5">
+                                      <span className="text-xs font-semibold text-text-muted">{t("patient.sessionPrice", "Session price")}</span>
+                                      <span className="text-base font-black text-primary">
+                                        {getNumericFee(doctor) > 0 ? formatCurrency(getNumericFee(doctor)) : t("patient.priceNotAvailable")}
+                                      </span>
+                                    </div>
                                     <Button
-                                      className="w-full !mt-8 gap-2"
+                                      className="w-full !mt-4 gap-2"
                                       onClick={() => handleSelectDoctor(doctor.Id)}
                                       disabled={!getNextAvailableSlot(doctor)}
                                     >
@@ -2634,6 +2780,13 @@ export default function ReserveAppointment() {
                             >
                               {bookedSlot.date.toLocaleDateString()} -{" "}
                               {formatHourLabel(bookedSlot.timeKey)}
+                              {bookedSlot.durationMinutes ? (
+                                <span className="text-text-muted font-normal">
+                                  {" "}
+                                  ({bookedSlot.durationMinutes}{" "}
+                                  {t("common.min", "min")})
+                                </span>
+                              ) : null}
                             </p>
                           ) : (
                             <p
@@ -3287,13 +3440,22 @@ export default function ReserveAppointment() {
                     statusInfo.key === "approved" ||
                     statusInfo.key === "paid";
                   const canCancel = canCancelByStatus && Boolean(isBefore48h);
+                  const canStart = canStartPatientSession(booking);
+                  const bookingId = booking?.BookingId || booking?.Id;
+                  const isFocusedBooking =
+                    focusedBookingId && String(bookingId) === String(focusedBookingId);
 
                   return (
                     <Card
+                      id={`booking-${bookingId}`}
                       key={`${String(booking?.Id ?? "booking")}-${String(
                         booking?.SessionStartTime ?? bookingIndex,
                       )}-${bookingIndex}`}
-                      className="p-4 sm:p-6"
+                      className={`p-4 sm:p-6 transition-all ${
+                        isFocusedBooking
+                          ? "border-primary/60 bg-primary/5 shadow-lg shadow-primary/10 ring-2 ring-primary/20"
+                          : ""
+                      }`}
                     >
                       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
                         <div className="flex items-center gap-3 sm:gap-4">
@@ -3359,6 +3521,22 @@ export default function ReserveAppointment() {
                               {t("auto.payment")}
                               {paymentStatusInfo.label}
                             </Badge>
+
+                            {canStart && (
+                              <Button
+                                size="sm"
+                                className="gap-1.5"
+                                onClick={() => handleStartMeeting(booking)}
+                                disabled={String(startingMeetingId) === String(bookingId)}
+                              >
+                                {String(startingMeetingId) === String(bookingId) ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Video className="w-4 h-4" />
+                                )}
+                                {t("patientHome.upcomingSession.enterSession")}
+                              </Button>
+                            )}
 
                             {canCancel && (
                               <Button

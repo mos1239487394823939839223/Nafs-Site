@@ -1,28 +1,34 @@
-import { Users, BadgeCheck, ThumbsUp, Clock } from "lucide-react";
+import { Clock3, Stethoscope, ThumbsUp, Users } from "lucide-react";
 import { useLanguage } from "../../../contexts/LanguageContext";
 
 export const Stats = () => {
-  const { t, language } = useLanguage();
+  const { language } = useLanguage();
   const isAr = language === "ar";
-
   const stats = [
-    { icon: Users, valueKey: "landing.stats.users.value", labelKey: "landing.stats.users.label" },
-    { icon: BadgeCheck, valueKey: "landing.stats.doctors.value", labelKey: "landing.stats.doctors.label" },
-    { icon: ThumbsUp, valueKey: "landing.stats.satisfaction.value", labelKey: "landing.stats.satisfaction.label" },
-    { icon: Clock, valueKey: "landing.stats.available.value", labelKey: "landing.stats.available.label" },
+    { icon: Users, value: "+10K", label: isAr ? "مستخدم ساعدناهم" : "users supported" },
+    { icon: Stethoscope, value: "+100", label: isAr ? "دكتور متخصص" : "specialist doctors" },
+    { icon: ThumbsUp, value: "98%", label: isAr ? "رضا المستخدمين" : "user satisfaction" },
+    { icon: Clock3, value: "24/7", label: isAr ? "متاح دائمًا" : "always available" },
   ];
 
   return (
-    <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-10">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {stats.map(({ icon: Icon, valueKey, labelKey }) => (
-          <div key={labelKey} className="flex flex-col items-center gap-3 rounded-2xl bg-card border border-border shadow-[var(--shadow-card)] px-4 py-6">
-            <span className="grid h-12 w-12 place-items-center rounded-full bg-brand/10 text-brand">
-              <Icon className="h-6 w-6" strokeWidth={1.75} />
-            </span>
-            <div className="text-center">
-              <p className="text-xl font-bold text-brand leading-tight">{t(valueKey)}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">{t(labelKey)}</p>
+    <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-8 md:py-12">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4 md:gap-6">
+        {stats.map(({ icon: Icon, value, label }) => (
+          <div
+            key={value}
+            dir="ltr"
+            className="flex items-center justify-center gap-4 md:gap-6"
+          >
+            <Icon
+              className="h-11 w-11 shrink-0 text-[#78a794] md:h-12 md:w-12"
+              strokeWidth={1.6}
+            />
+            <div className="text-start">
+              <p className="text-2xl font-black leading-none text-primary md:text-[1.75rem]">
+                {value}
+              </p>
+              <p className="mt-1.5 text-sm font-bold text-text-light">{label}</p>
             </div>
           </div>
         ))}

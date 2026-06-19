@@ -1,18 +1,22 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
-import { useSearchParams } from 'react-router-dom'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth, Roles } from '../../contexts/AuthContext'
 import { chatAPI, filesAPI, MessageType, userAPI } from '../../lib/api'
 import ChatWindow from '../../components/chat/ChatWindow'
 import StartDirectMessageDialog from '../../components/chat/StartDirectMessageDialog'
 import SelectDropdown from '../../components/ui/SelectDropdown'
-import { Search, MessageSquare, Loader2, RefreshCw, Stethoscope, Headphones, FileEdit as EditNoteIcon, Wrench, HeartPulse, AlertTriangle, CreditCard, CalendarClock, UserCog, CircleHelp, ShieldAlert } from 'lucide-react'
+import { Search, MessageSquare, Loader2, RefreshCw, Stethoscope, Headphones, FileEdit as EditNoteIcon, Wrench, HeartPulse, AlertTriangle, CreditCard, CalendarClock, UserCog, CircleHelp, ShieldAlert, FileText, LockKeyhole, Paperclip, X } from 'lucide-react'
 const SupportAgent = Headphones
 import { useToast } from '../../components/ui/Toast'
 import { useLanguage } from '../../contexts/LanguageContext'
 import { startChatConnection } from '../../lib/signalr'
-import { getRoomCaseTypeMeta } from '../../lib/supportCaseTypes'
+import { setActiveChatRoomForNotifications } from '../../lib/notificationUtils'
+import { canStaffViewSupportRoom } from '../../lib/supportAccess'
+import { getRoomCaseTypeMeta, sortSupportRooms } from '../../lib/supportCaseTypes'
+import { applySupportLifecycleToRooms, getSupportConversationStatus, readSupportArchiveMeta } from '../../lib/supportChatLifecycle'
 import SupportCaseTag from '../../components/support/SupportCaseTag'
+import SupportPriorityTag from '../../components/support/SupportPriorityTag'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -135,6 +139,14 @@ const CASE_TYPE_CHAT_TYPE_MAP = {
   account: 2,
   other: 2,
   blackmail_abuse: 4,
+}
+
+const PATIENT_SUPPORT_CASE_KEYS = ['technical', 'medical', 'billing', 'emergency']
+
+const getConversationStatusLabel = (status, t) => {
+  if (status === 'archived') return t('chat.statusArchived', 'Archived')
+  if (status === 'closed') return t('chat.statusClosed', 'Closed')
+  return t('chat.statusActive', 'Active')
 }
 
 const SUPPORT_CASE_TYPES = [
@@ -297,6 +309,7 @@ export default function MessagesPage() {
   const { user, role } = useAuth()
   const { t, isRTL } = useLanguage()
   const toast = useToast()
+  const navigate = useNavigate()
   const [searchParams, setSearchParams] = useSearchParams()
 
   const initialRoomId = searchParams.get('room')
@@ -318,7 +331,12 @@ export default function MessagesPage() {
   const [supportRoomLoading, setSupportRoomLoading] = useState(false)
   const [directMessageOpen, setDirectMessageOpen] = useState(false)
   const [messagesLoading, setMessagesLoading] = useState(false)
+  const [messagesError, setMessagesError] = useState('')
+  const [messageSending, setMessageSending] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [roomTypeFilter, setRoomTypeFilter] = useState('all')
+  const [sidebarFilter, setSidebarFilter] = useState('all')
+  const [showDetailsPanel, setShowDetailsPanel] = useState(false)
   const [contactType, setContactType] = useState(() => {
     if (shouldAutoOpenSupport || initialType === 'support') return 'support'
     return 'doctors'
@@ -336,6 +354,7 @@ export default function MessagesPage() {
   })
   const connectionRef = useRef(null)
   const activeRoomRef = useRef(null)
+  const roomsRef = useRef([])
   const hydrationTimersRef = useRef({})
   const optimisticSafetyTimersRef = useRef({})
   const supportRoomIdsRef = useRef(new Set())
@@ -406,6 +425,7 @@ export default function MessagesPage() {
 
   // ── Sync ref ────────────────────────────────────────────────────────────────
   useEffect(() => { activeRoomRef.current = activeRoom }, [activeRoom])
+  useEffect(() => { roomsRef.current = rooms }, [rooms])
 
   const isPatient = role === Roles.PATIENT
   const isSupportOperator = role === Roles.STAFF
@@ -453,9 +473,21 @@ export default function MessagesPage() {
   useEffect(() => {
     if (pendingRoomId && rooms.length > 0 && !activeRoom) {
       const match = rooms.find((r) => String(r.Id || r.id) === String(pendingRoomId))
-      if (match) setActiveRoom(match)
+      if (match) {
+        setActiveRoom(match)
+        return
+      }
+      setActiveRoom({
+        Id: pendingRoomId,
+        OtherParticipantName: contactType === 'support' ? t('chat.technicalTeam', 'Technical Support') : t('chat.newConversation', 'Conversation'),
+        OtherParticipantRole: contactType === 'support' ? 'support' : 'user',
+        LastMessage: '',
+        LastMessageAt: new Date().toISOString(),
+        UnreadCount: 0,
+        SupportCaseType: supportCaseType || localRoomCaseTypes[String(pendingRoomId)] || undefined,
+      })
     }
-  }, [rooms, pendingRoomId, activeRoom])
+  }, [rooms, pendingRoomId, activeRoom, contactType, localRoomCaseTypes, supportCaseType, t])
 
   useEffect(() => {
     if (activeRoom || rooms.length === 0 || pendingRoomId) return
@@ -486,7 +518,15 @@ export default function MessagesPage() {
       const incomingRooms = response?.Data
         ? (Array.isArray(response.Data) ? response.Data : response.Data.Items || [])
         : (Array.isArray(response) ? response : [])
-      const normalizedRooms = enrichRoomsWithSupportMeta(incomingRooms)
+      const normalizedRooms = enrichRoomsWithSupportMeta(
+        applySupportLifecycleToRooms(incomingRooms, localRoomCaseTypes),
+      )
+      const visibleRooms =
+        role === Roles.STAFF
+          ? normalizedRooms.filter((room) =>
+              canStaffViewSupportRoom(room, user, role, localRoomCaseTypes),
+            )
+          : normalizedRooms
 
       const activeRoomId = String(activeRoomRef.current?.Id || activeRoomRef.current?.id || '')
       const activeRole = String(activeRoomRef.current?.OtherParticipantRole || '').toLowerCase()
@@ -502,11 +542,11 @@ export default function MessagesPage() {
         role === Roles.PATIENT &&
         activeRoomId &&
         activeRoomKnownAsSupport &&
-        !normalizedRooms.some((room) => String(room?.Id || room?.id || '') === activeRoomId)
+        !visibleRooms.some((room) => String(room?.Id || room?.id || '') === activeRoomId)
 
       logSupportDebug('fetchRooms:result', {
         incomingCount: incomingRooms.length,
-        normalizedCount: normalizedRooms.length,
+        normalizedCount: visibleRooms.length,
         activeRoomId,
         activeRole,
         activeRoomKnownAsSupport,
@@ -527,10 +567,10 @@ export default function MessagesPage() {
             LastMessageAt: activeRoomRef.current?.LastMessageAt || new Date().toISOString(),
             UnreadCount: activeRoomRef.current?.UnreadCount || 0,
           },
-          ...normalizedRooms,
+          ...visibleRooms,
         ])
       } else {
-        setRooms(normalizedRooms)
+        setRooms(visibleRooms)
       }
     } catch (error) {
       logSupportDebug('fetchRooms:error', {
@@ -542,7 +582,7 @@ export default function MessagesPage() {
     } finally {
       setLoading(false)
     }
-  }, [enrichRoomsWithSupportMeta, role, t])
+  }, [enrichRoomsWithSupportMeta, localRoomCaseTypes, role, t, user])
 
   // ── Fetch Messages ──────────────────────────────────────────────────────────
   const fetchLatestMessages = useCallback(async (roomId) => {
@@ -651,6 +691,7 @@ export default function MessagesPage() {
     const run = (async () => {
       if (!silent) setMessagesLoading(true)
       try {
+        if (!silent) setMessagesError('')
         const msgs = await fetchLatestMessages(roomKey)
         if (silent) {
           setMessages((prev) => mergeMessages(prev, msgs))
@@ -661,6 +702,7 @@ export default function MessagesPage() {
         await chatAPI.markAsRead(roomKey).catch(() => {})
       } catch (error) {
         console.error('Failed to fetch messages:', error)
+        if (!silent) setMessagesError(error?.message || t('errors.loadFailed', 'Failed to load messages'))
       } finally {
         if (!silent) setMessagesLoading(false)
       }
@@ -672,7 +714,7 @@ export default function MessagesPage() {
     } finally {
       messagesFetchInFlightRef.current.delete(roomKey)
     }
-  }, [fetchLatestMessages])
+  }, [fetchLatestMessages, t])
 
   const debouncedFetchRooms = useCallback(() => {
     if (debouncedFetchRoomsTimerRef.current) clearTimeout(debouncedFetchRoomsTimerRef.current)
@@ -759,6 +801,17 @@ export default function MessagesPage() {
               }
             }
           }
+          if (!fromCurrentUser) {
+            const incomingRoom = roomsRef.current.find(
+              (room) => String(room?.Id || room?.id || '') === msgRoomId,
+            )
+            const incomingMeta = getRoomCaseTypeMeta(incomingRoom || msg, isRTL, localRoomCaseTypes)
+            if (incomingMeta.priority && currentRoomId !== msgRoomId) {
+              toast.error(
+                t('support.emergencyNewMessage', 'New message in an emergency support case'),
+              )
+            }
+          }
           debouncedFetchRooms()
         }
 
@@ -801,6 +854,11 @@ export default function MessagesPage() {
 
   const activeRoomId = String(activeRoom?.Id || activeRoom?.id || '')
 
+  useEffect(() => {
+    setActiveChatRoomForNotifications(activeRoomId || null)
+    return () => setActiveChatRoomForNotifications(null)
+  }, [activeRoomId])
+
   // ── Polling fallback: catch messages SignalR might miss ─────────────────────
   useEffect(() => {
     if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current)
@@ -825,7 +883,7 @@ export default function MessagesPage() {
   // ── Send ────────────────────────────────────────────────────────────────────
   const handleSendMessage = async (msgData) => {
     const roomId = activeRoom?.Id || activeRoom?.id
-    if (!roomId) return
+    if (!roomId || messageSending) return
     const savedCaseType = localRoomCaseTypes[String(roomId)]
     if (isPatient && isSupportRoom(activeRoom) && !supportCaseType && !savedCaseType) {
       toast.warning(t('chat.caseTypeRequired', 'Select a support case type before sending your first message.'))
@@ -883,20 +941,43 @@ export default function MessagesPage() {
       setMessages(prev => prev.filter(m => m.id !== optimisticId))
       const fallback = t("auto.failedToSendMessage")
       toast.error(String(error?.message || fallback))
-    }
-  }
+        } finally {
+          setMessageSending(false)
+        }
+      }
 
   // ── Derived ─────────────────────────────────────────────────────────────────
+  const roomAttachments = useMemo(() => {
+    return messages
+      .filter((msg) => getIncomingAttachmentUrl(msg))
+      .map((msg) => ({
+        name: getIncomingAttachmentName(msg),
+        url: getIncomingAttachmentUrl(msg),
+        timestamp: msg.CreatedAt || msg.timestamp,
+      }))
+  }, [messages])
+
   const getConversation = (room) => {
     if (!room) return null
     const participant = resolveParticipant(room, currentUserId)
+    const onlineSignals = [
+      room?.OtherParticipantOnline,
+      room?.otherParticipantOnline,
+      room?.IsOnline,
+      room?.isOnline,
+      participant.role === 'doctor' ? room?.DoctorIsOnline : null,
+    ].filter((value) => value !== undefined && value !== null)
     return {
       id: room.Id || room.id,
+      bookingId: room.BookingId || room.bookingId || room.ActiveBookingId || room.activeBookingId || null,
+      rawRoom: room,
       participant: {
         name: participant.name,
         avatar: participant.image,
         role: participant.role,
-        online: true,
+        online: onlineSignals.length > 0
+          ? onlineSignals.some((value) => value === true || String(value).toLowerCase() === 'true')
+          : false,
       },
       caseTypeMeta: (role === Roles.STAFF || isSupportRoom(room))
         ? getRoomCaseTypeMeta(room, isRTL, localRoomCaseTypes)
@@ -927,6 +1008,26 @@ export default function MessagesPage() {
     }
     : currentConversation
 
+  const handleStartMeeting = useCallback((conversation) => {
+    const bookingId =
+      conversation?.bookingId ||
+      activeRoomRef.current?.BookingId ||
+      activeRoomRef.current?.bookingId ||
+      activeRoomRef.current?.ActiveBookingId ||
+      activeRoomRef.current?.activeBookingId
+
+    if (!bookingId) {
+      toast.warning(t('chat.noLinkedBooking', 'No active booking is linked to this conversation.'))
+      return
+    }
+
+    navigate(`/dashboard/patient/meeting/${bookingId}`, {
+      state: {
+        session: activeRoomRef.current,
+      },
+    })
+  }, [navigate, t, toast])
+
   const filteredByContactType = isPatient
     ? rooms.filter((room) => {
       if (contactType === 'support') return isSupportRoom(room)
@@ -934,14 +1035,31 @@ export default function MessagesPage() {
     })
     : rooms
 
-  const filteredRooms = filteredByContactType.filter((room) => {
-    const participant = resolveParticipant(room, currentUserId)
-    return participant.name.toLowerCase().includes(searchQuery.toLowerCase())
-  })
+  const filteredRooms = sortSupportRooms(
+    filteredByContactType.filter((room) => {
+      const participant = resolveParticipant(room, currentUserId)
+      const caseMeta = getRoomCaseTypeMeta(room, isRTL, localRoomCaseTypes)
+      const matchesSearch =
+        participant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        String(room.LastMessage || room.lastMessage || '').toLowerCase().includes(searchQuery.toLowerCase())
+      const matchesType = roomTypeFilter === 'all' || caseMeta.key === roomTypeFilter
+      return matchesSearch && matchesType
+    }),
+    localRoomCaseTypes,
+  )
 
   const selectedSupportCaseType = SUPPORT_CASE_TYPES.find((option) => option.key === supportCaseType) || null
+  const patientSupportCaseOptions = useMemo(() => {
+    const keys = [...PATIENT_SUPPORT_CASE_KEYS]
+    if (initialCaseType === 'blackmail_abuse' || supportCaseType === 'blackmail_abuse') {
+      keys.push('blackmail_abuse')
+    }
+    return SUPPORT_CASE_TYPES.filter((option) => keys.includes(option.key))
+  }, [initialCaseType, supportCaseType])
 
   const unreadTotal = rooms.reduce((acc, r) => acc + (r.UnreadCount || 0), 0)
+  const supportRoomsCount = rooms.filter((room) => isSupportRoom(room)).length
+  const therapistRoomsCount = rooms.length - supportRoomsCount
 
   const handleSelectRoom = (room) => {
     if (isPatient && isSupportRoom(room)) {
@@ -974,6 +1092,7 @@ export default function MessagesPage() {
       targetUser?.Email ||
       t('chat.newConversation', 'New conversation')
 
+    setMessageSending(true)
     try {
       const roomsResponse = await chatAPI.getRooms()
       const roomList = Array.isArray(roomsResponse?.Data)
@@ -1009,25 +1128,26 @@ export default function MessagesPage() {
     }
   }, [enrichRoomsWithSupportMeta, t])
 
-  const openSupportChat = useCallback(async () => {
-    if (!isPatient) return
+  const openSupportChat = useCallback(async (requestedCaseType) => {
     if (!currentUserId) {
       toast.error(t("auto.unableToResolvePatientId"))
       return
     }
-    if (!supportCaseType) {
+    const caseType = requestedCaseType || supportCaseType || 'technical'
+    if (isPatient && !caseType) {
       toast.warning(t('chat.caseTypeRequired', 'Select a support case type before starting a support conversation.'))
       return
     }
 
     setContactType('support')
+    if (caseType !== supportCaseType) setSupportCaseType(caseType)
 
     setSupportRoomLoading(true)
     try {
       logSupportDebug('openSupportChat:start')
-      const chatType = CASE_TYPE_CHAT_TYPE_MAP[supportCaseType] ?? 2
-      const priority = supportCaseType === 'emergency' || supportCaseType === 'blackmail_abuse' ? 'high' : null
-      const supportResponse = await chatAPI.openPatientSupportChat(currentUserId, chatType, supportCaseType, priority)
+      const chatType = CASE_TYPE_CHAT_TYPE_MAP[caseType] ?? 2
+      const priority = caseType === 'emergency' || caseType === 'blackmail_abuse' ? 'urgent' : null
+      const supportResponse = await chatAPI.openPatientSupportChat(currentUserId, chatType, caseType, priority)
       logSupportDebug('openSupportChat:response', supportResponse)
       const supportSuccess = supportResponse?.IsSuccess ?? supportResponse?.isSuccess
       if (supportSuccess === false) {
@@ -1055,7 +1175,7 @@ export default function MessagesPage() {
         supportRoomMetaRef.current[supportRoomId] = {
           role: 'support',
           name: supportAgentName,
-          caseType: supportCaseType,
+          caseType,
         }
       }
 
@@ -1102,9 +1222,7 @@ export default function MessagesPage() {
           participantRole: matchedRoom?.OtherParticipantRole || null,
         })
         setActiveRoom(matchedRoom)
-        if (supportCaseType) {
-          saveRoomCaseType(matchedRoom?.Id || matchedRoom?.id, supportCaseType)
-        }
+        saveRoomCaseType(matchedRoom?.Id || matchedRoom?.id, caseType)
         return
       }
 
@@ -1113,7 +1231,7 @@ export default function MessagesPage() {
           Id: supportRoomId,
           OtherParticipantName: supportAgentName,
           OtherParticipantRole: 'support',
-          SupportCaseType: supportCaseType,
+          SupportCaseType: caseType,
           LastMessage: '',
           LastMessageAt: new Date().toISOString(),
           UnreadCount: 0,
@@ -1129,9 +1247,7 @@ export default function MessagesPage() {
           syntheticName: syntheticSupportRoom.OtherParticipantName,
         })
         setActiveRoom(syntheticSupportRoom)
-        if (supportCaseType) {
-          saveRoomCaseType(supportRoomId, supportCaseType)
-        }
+        saveRoomCaseType(supportRoomId, caseType)
       }
     } catch (error) {
       logSupportDebug('openSupportChat:error', {
@@ -1154,14 +1270,6 @@ export default function MessagesPage() {
   }, [currentUserId, enrichRoomsWithSupportMeta, isPatient, isRTL, saveRoomCaseType, supportCaseType, t, toast])
 
   useEffect(() => {
-    if (!isPatient || contactType !== 'support') return
-    if (!supportCaseType) return
-    if (supportRoomLoading || loading) return
-    if (rooms.some((room) => isSupportRoom(room))) return
-    openSupportChat()
-  }, [contactType, isPatient, isSupportRoom, loading, openSupportChat, rooms, supportCaseType, supportRoomLoading])
-
-  useEffect(() => {
     if (!supportCaseType || !activeRoom || !isSupportRoom(activeRoom)) return
     saveRoomCaseType(activeRoom?.Id || activeRoom?.id, supportCaseType)
   }, [activeRoom, isSupportRoom, saveRoomCaseType, supportCaseType])
@@ -1179,8 +1287,8 @@ export default function MessagesPage() {
   return (
     <>
     <div
-      className="flex min-h-[calc(100vh-6rem)] h-[calc(100vh-4.25rem)] overflow-hidden rounded-2xl border border-border/60 shadow-sm bg-background-paper"
-      
+      dir={isRTL ? 'rtl' : 'ltr'}
+      className="flex min-h-[calc(100vh-6rem)] h-[calc(100vh-4.25rem)] overflow-hidden rounded-[26px] border border-border/70 shadow-[0_20px_55px_-35px_rgba(15,76,58,0.55)] bg-background-paper"
     >
 
       {/* ════════════════════ SIDEBAR ════════════════════ */}
@@ -1191,8 +1299,8 @@ export default function MessagesPage() {
       `}>
 
         {/* Sidebar Header */}
-        <div className="px-5 pt-5 pb-4 border-b border-border/50">
-          <div className="flex items-center justify-between mb-4">
+        <div className="px-5 pt-5 pb-4 border-b border-border/50 space-y-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center">
                 <MessageSquare className="w-4 h-4 text-primary" />
@@ -1225,84 +1333,124 @@ export default function MessagesPage() {
             </div>
           </div>
 
-          {isPatient && (
-            <div className="mb-3 space-y-3">
-              <div className="grid grid-cols-2 p-1 rounded-2xl border border-border bg-background-subtle gap-1 w-full">
-                <button
-                  onClick={() => setContactType('doctors')}
-                  className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
-                    contactType === 'doctors'
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-text-muted hover:text-text-heading hover:bg-background-paper'
-                  }`}
-                >
-                  <span className="inline-flex items-center gap-1.5">
-                    <Stethoscope className="w-3.5 h-3.5" />
-                    {t('chat.talkToDoctors', 'Talk to Therapists')}
-                  </span>
-                </button>
+          {/* Category Tabs (Therapists vs Support) */}
+          <div className="grid grid-cols-2 gap-2 w-full bg-background-subtle p-1 rounded-2xl border border-border/65">
+            <button
+              onClick={() => {
+                setContactType('doctors');
+                setSidebarFilter('all');
+              }}
+              className={`rounded-xl px-3 py-2 text-xs font-bold transition-all duration-200 ${
+                contactType === 'doctors'
+                  ? 'bg-background-paper text-primary shadow-sm border border-border/40'
+                  : 'text-text-muted hover:text-primary'
+              }`}
+            >
+              <span className="flex items-center justify-center gap-1.5">
+                <Stethoscope className="w-3.5 h-3.5" />
+                {t('chat.talkToDoctors', 'Talk to therapists')}
+                <span className="rounded-full px-1.5 py-0.5 text-[9px] bg-primary/10 text-primary">{therapistRoomsCount}</span>
+              </span>
+            </button>
 
-                <button
-                  onClick={() => setContactType('support')}
-                  className={`px-3 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
-                    contactType === 'support'
-                      ? 'bg-primary text-white shadow-sm'
-                      : 'text-text-muted hover:text-text-heading hover:bg-background-paper'
-                  }`}
-                >
-                  <span className="inline-flex items-center gap-1.5">
-                    {supportRoomLoading ? (
-                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                    ) : (
-                      <SupportAgent className="w-3.5 h-3.5" />
-                    )}
-                    {t('chat.talkToSupport', 'Talk to Support')}
-                  </span>
-                </button>
-              </div>
+            <button
+              onClick={() => {
+                setContactType('support');
+                setSidebarFilter('all');
+              }}
+              className={`rounded-xl px-3 py-2 text-xs font-bold transition-all duration-200 ${
+                contactType === 'support'
+                  ? 'bg-background-paper text-primary shadow-sm border border-border/40'
+                  : 'text-text-muted hover:text-primary'
+              }`}
+            >
+              <span className="flex items-center justify-center gap-1.5">
+                {supportRoomLoading ? (
+                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : (
+                  <SupportAgent className="w-3.5 h-3.5" />
+                )}
+                {t('chat.talkToSupport', 'Talk to support')}
+                <span className="rounded-full px-1.5 py-0.5 text-[9px] bg-primary/10 text-primary">{supportRoomsCount}</span>
+              </span>
+            </button>
+          </div>
 
-              {contactType === 'support' && (
-                <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-3">
-                  <label className="text-xs font-semibold text-text-heading flex items-center justify-between gap-2">
-                    <span>{t('chat.selectCaseType', 'Select Case Type')}</span>
-                    <span className="text-[10px] text-red-600">{t('chat.required', 'Required')}</span>
-                  </label>
-                  <SelectDropdown
-                    size="sm"
-                    value={supportCaseType}
-                    onChange={(val) => setSupportCaseType(val)}
-                    options={SUPPORT_CASE_TYPES.map((option) => ({
-                      value: option.key,
-                      label: isRTL ? option.labelAr : option.labelEn,
-                      icon: (
-                        <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${option.badgeColor}`}>
-                          <option.icon className="w-3.5 h-3.5" />
-                        </span>
-                      ),
-                    }))}
-                  />
-
-                  {selectedSupportCaseType && (
-                    <p className="text-[11px] text-text-muted leading-4">
-                      {isRTL ? selectedSupportCaseType.descAr : selectedSupportCaseType.descEn}
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Search */}
+          {/* Search bar */}
           <div className="relative">
-            <Search className={`absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none`} />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-muted pointer-events-none" />
             <input
               type="text"
               placeholder={t('chat.searchConversations', 'Search conversations...')}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className={`w-full ps-10 pe-4 py-2 bg-background-subtle border border-border/60 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-text placeholder:text-text-muted`}
+              className="w-full ps-10 pe-4 py-2 bg-background-subtle border border-border/60 rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary/40 transition-all text-text placeholder:text-text-muted"
             />
           </div>
+
+          {/* Sidebar sub-filters */}
+          <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+            {[
+              ['all', t('common.all', 'All')],
+              ['unread', t('chat.unread', 'Unread')],
+              ['emergency', t('support.emergency', 'Emergency')],
+            ].map(([value, label]) => (
+              <button
+                key={value}
+                onClick={() => setSidebarFilter(value)}
+                className={`whitespace-nowrap rounded-full border px-3.5 py-1.5 text-[11px] font-bold transition-all ${
+                  sidebarFilter === value
+                    ? 'border-primary bg-primary text-white shadow-sm'
+                    : 'border-border bg-background-paper text-text-muted hover:border-primary/40 hover:text-primary'
+                }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {/* Support conversation category */}
+          {contactType === 'support' && isPatient && (
+            <div className="space-y-2 rounded-xl border border-primary/20 bg-primary/5 p-3">
+              <label className="text-xs font-semibold text-text-heading flex items-center justify-between gap-2">
+                <span>{t('chat.selectCaseType', 'Select Case Type')}</span>
+                <span className="text-[10px] text-red-600">{t('chat.required', 'Required')}</span>
+              </label>
+              <SelectDropdown
+                size="sm"
+                value={supportCaseType}
+                onChange={(val) => setSupportCaseType(val)}
+                options={patientSupportCaseOptions.map((option) => ({
+                  value: option.key,
+                  label: isRTL ? option.labelAr : option.labelEn,
+                  icon: (
+                    <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full ${option.badgeColor}`}>
+                      <option.icon className="w-3.5 h-3.5" />
+                    </span>
+                  ),
+                }))}
+              />
+
+              {selectedSupportCaseType && (
+                <p className="text-[11px] text-text-muted leading-4">
+                  {isRTL ? selectedSupportCaseType.descAr : selectedSupportCaseType.descEn}
+                </p>
+              )}
+              {supportCaseType === 'blackmail_abuse' && (
+                <div className="rounded-xl border border-rose-200 bg-rose-50 p-3 text-start">
+                  <div className="flex items-center gap-2 text-rose-800">
+                    <LockKeyhole className="h-4 w-4" />
+                    <p className="text-xs font-black">{isRTL ? 'بلاغ سري ومحمي' : 'Private and protected report'}</p>
+                  </div>
+                  <p className="mt-2 text-[11px] leading-5 text-rose-700">
+                    {isRTL
+                      ? 'يصل البلاغ للمختصين المعتمدين فقط، وتتم معالجة بياناتك بسرية تامة وبأقل عدد من الخطوات.'
+                      : 'Only approved specialists can access this report. Your information is handled confidentially with minimal steps.'}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Rooms List */}
@@ -1316,15 +1464,20 @@ export default function MessagesPage() {
             </div>
           ) : filteredRooms.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-primary/8 flex items-center justify-center mb-4">
-                <MessageSquare className="w-7 h-7 text-primary/40" />
+              <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                {contactType === 'support' ? <Headphones className="w-7 h-7 text-primary" /> : <Stethoscope className="w-7 h-7 text-primary" />}
               </div>
-              <p className="text-sm font-medium text-text-muted">
+              <p className="text-sm font-bold text-text-heading">
                 {searchQuery ? t('chat.noResults', 'No results found') : t('chat.noConversations', 'No conversations yet')}
+              </p>
+              <p className="mt-2 max-w-xs text-xs leading-5 text-text-muted">
+                {contactType === 'support'
+                  ? t('chat.noSupportCasesDesc', 'Choose a conversation type above, then start chatting with support.')
+                  : t('chat.noTherapistChatsDesc', 'Your therapist conversations will appear here after they become available.')}
               </p>
             </div>
           ) : (
-            <div className="py-2">
+            <div className="py-2 px-2 space-y-1">
               {filteredRooms.map((room) => {
                 const isActive = (activeRoom?.Id || activeRoom?.id) === (room.Id || room.id)
                 const participant = resolveParticipant(room, currentUserId)
@@ -1333,16 +1486,23 @@ export default function MessagesPage() {
                 const roomInitials = name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
                 const hasUnread = (room.UnreadCount || 0) > 0
                 const lastTime = formatLastSeen(room.LastMessageAt || room.lastMessageAt)
+                const caseMeta = getRoomCaseTypeMeta(room, isRTL, localRoomCaseTypes)
+                const isEmergency = caseMeta.priority || caseMeta.key === 'emergency' || room.SupportCaseType === 'emergency'
+                const conversationStatus =
+                  room?.ConversationStatus || getSupportConversationStatus(room, readSupportArchiveMeta())
+                const statusLabel = getConversationStatusLabel(conversationStatus, t)
 
                 return (
                   <button
                     key={room.Id || room.id}
                     onClick={() => handleSelectRoom(room)}
                     className={`
-                      w-full px-4 py-3.5 transition-all text-start relative
-                      ${isActive
-                        ? 'bg-primary/8 border-s-2 border-s-primary'
-                        : 'hover:bg-background-subtle/80 border-s-2 border-s-transparent'
+                      w-full px-4 py-3.5 transition-all text-start relative block rounded-2xl border
+                      ${isEmergency
+                        ? 'border-red-300 bg-red-50/70 shadow-md shadow-red-100/30 ring-2 ring-red-100/50 animate-pulse-subtle'
+                        : isActive
+                          ? 'bg-primary/8 border-primary/20 shadow-sm'
+                          : 'border-transparent hover:border-border hover:bg-background-subtle/80'
                       }
                     `}
                   >
@@ -1357,7 +1517,9 @@ export default function MessagesPage() {
                             <span className="text-sm font-bold text-primary">{roomInitials}</span>
                           )}
                         </div>
-                        <span className="absolute bottom-0 end-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-background-paper rounded-full" />
+                        {participant.role === 'doctor' && (
+                          <span className="absolute bottom-0 end-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-background-paper rounded-full" />
+                        )}
                       </div>
 
                       {/* Content */}
@@ -1367,11 +1529,15 @@ export default function MessagesPage() {
                             {name}
                           </h4>
                           <div className="flex items-center gap-1.5 flex-shrink-0">
-                            {(role === Roles.STAFF || (isPatient && isSupportRoom(room))) && (() => {
-                              return (
-                                <SupportCaseTag room={room} isRTL={isRTL} localMap={localRoomCaseTypes} />
-                              )
-                            })()}
+                            {isEmergency && (
+                              <span className="bg-red-500 text-white text-[8px] font-black uppercase px-1.5 py-0.5 rounded-full">
+                                {isRTL ? 'حالة طارئة' : 'Emergency'}
+                              </span>
+                            )}
+                            {(role === Roles.STAFF || (isPatient && isSupportRoom(room))) && (
+                              <SupportCaseTag room={room} isRTL={isRTL} localMap={localRoomCaseTypes} />
+                            )}
+                            {role === Roles.STAFF && <SupportPriorityTag room={room} isRTL={isRTL} />}
                             {lastTime && (
                               <span className="text-[10px] text-text-muted whitespace-nowrap">{lastTime}</span>
                             )}
@@ -1385,6 +1551,14 @@ export default function MessagesPage() {
                         <p className={`text-xs truncate mt-0.5 ${hasUnread ? 'text-text font-medium' : 'text-text-muted'}`}>
                           {room.LastMessage || room.lastMessage || t('chat.noMessagesYet', 'No messages yet')}
                         </p>
+                        <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-text-muted">
+                          {participant.role === 'doctor'
+                            ? t('common.therapist', 'Therapist')
+                            : participant.role === 'support'
+                              ? t('chat.supportTeam', 'Support team')
+                              : participant.role}
+                          {isSupportRoom(room) ? ` · ${statusLabel}` : ''}
+                        </p>
                       </div>
                     </div>
                   </button>
@@ -1397,7 +1571,7 @@ export default function MessagesPage() {
 
       {/* ════════════════════ CHAT AREA ════════════════════ */}
       <div className={`
-        flex-1 flex flex-col overflow-hidden
+        flex-1 flex flex-col overflow-hidden bg-background-paper
         ${!activeRoom ? 'hidden lg:flex' : 'flex'}
       `}>
         {activeRoom ? (
@@ -1408,6 +1582,20 @@ export default function MessagesPage() {
                 <p className="text-sm text-text-muted">{t('chat.loadingMessages', 'Loading messages...')}</p>
               </div>
             </div>
+          ) : messagesError ? (
+            <div className="flex-1 flex items-center justify-center p-8 text-center">
+              <div className="max-w-sm">
+                <AlertTriangle className="mx-auto mb-3 h-10 w-10 text-amber-600" />
+                <h3 className="text-lg font-bold text-text-heading">{t('chat.messagesLoadFailed', 'Messages could not be loaded')}</h3>
+                <p className="mt-2 text-sm leading-6 text-text-muted">{messagesError}</p>
+                <button
+                  onClick={() => fetchMessages(activeRoomId, { force: true })}
+                  className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-primary px-5 text-sm font-bold text-white hover:bg-primary-dark"
+                >
+                  {t('common.retry', 'Retry')}
+                </button>
+              </div>
+            </div>
           ) : (
             <ChatWindow
               conversation={safeConversation}
@@ -1415,35 +1603,184 @@ export default function MessagesPage() {
               onBack={() => { setActiveRoom(null); setMessages([]) }}
               composerDisabled={isPatient && isSupportRoom(activeRoom) && !supportCaseType && !localRoomCaseTypes[String(activeRoom?.Id || activeRoom?.id || '')]}
               composerDisabledReason={t('chat.caseTypeRequired', 'Select a support case type before sending your first message.')}
+              sending={messageSending}
+              onToggleDetails={() => setShowDetailsPanel(prev => !prev)}
+              showDetails={showDetailsPanel}
+              onStartMeeting={handleStartMeeting}
             />
           )
         ) : (
-          /* Empty state */
+          /* Premium Empty states */
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
             <div className="absolute inset-0 pointer-events-none">
               <div className="absolute top-1/4 start-1/4 w-64 h-64 bg-primary/5 rounded-full blur-3xl" />
               <div className="absolute bottom-1/4 end-1/4 w-48 h-48 bg-secondary/5 rounded-full blur-3xl" />
             </div>
-            <div className="relative z-10">
-              <div className="w-20 h-20 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-sm">
-                <EditNoteIcon className="w-9 h-9 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold text-text-heading mb-2">
-                {t('chat.selectConversation', 'Select a conversation')}
-              </h3>
-              <p className="text-sm text-text-muted max-w-xs">
-                {t('chat.selectConversationDesc', 'Choose a conversation from the sidebar to start chatting')}
-              </p>
-              {rooms.length > 0 && (
-                <div className="mt-6 flex items-center gap-2 justify-center text-xs text-text-muted">
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  <span>{rooms.length} {t('chat.conversations', 'conversations')}</span>
+            {contactType === 'doctors' ? (
+              <div className="relative z-10 max-w-sm">
+                <div className="w-20 h-20 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-sm">
+                  <Stethoscope className="w-9 h-9 text-primary" />
                 </div>
-              )}
-            </div>
+                <h3 className="text-xl font-bold text-text-heading mb-2">
+                  {isRTL ? 'تواصل مع معالجك الخاص' : 'Consult Your Therapist'}
+                </h3>
+                <p className="text-sm text-text-muted leading-6 mb-6">
+                  {isRTL 
+                    ? 'هنا تظهر محادثاتك مع الأطباء والمعالجين. يمكنك البدء بحجز جلسة جديدة مباشرة.' 
+                    : 'Your active therapist sessions and messages will appear here. Book a session to get started.'}
+                </p>
+                {isPatient && (
+                  <button
+                    onClick={() => navigate('/dashboard/patient/reserve')}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-bold text-white transition-all hover:bg-primary-dark hover:-translate-y-0.5 shadow-md shadow-primary/20"
+                  >
+                    {isRTL ? 'احجز جلسة مع معالج' : 'Book Session with Therapist'}
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="relative z-10 max-w-sm">
+                <div className="w-20 h-20 bg-gradient-to-br from-primary/20 to-secondary/10 rounded-3xl flex items-center justify-center mx-auto mb-5 shadow-sm">
+                  <Headphones className="w-9 h-9 text-primary" />
+                </div>
+                <h3 className="text-xl font-bold text-text-heading mb-2">
+                  {isRTL ? 'الدعم الفني والمساعدة' : 'Support Desk'}
+                </h3>
+                <p className="text-sm text-text-muted leading-6 mb-6">
+                  {isRTL 
+                    ? 'هل تواجه أي مشكلة؟ فريق الدعم متواجد لمساعدتك وحل جميع استفساراتك الفنية والطبية.' 
+                    : 'Facing any issues? Start a direct chat with our support team.'}
+                </p>
+                {!isSupportOperator ? (
+                  <button
+                    onClick={() => openSupportChat('technical')}
+                    disabled={supportRoomLoading}
+                    className="inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-6 text-sm font-bold text-white transition-all hover:bg-primary-dark hover:-translate-y-0.5 shadow-md shadow-primary/20 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {supportRoomLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                    {isRTL ? 'ابدأ محادثة دعم' : 'Start Support Chat'}
+                  </button>
+                ) : (
+                  <p className="text-xs text-text-muted">{t('chat.selectConversationDesc', 'Choose a conversation from the sidebar to start chatting')}</p>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
+
+      {/* ════════════════════ DETAILS PANEL ════════════════════ */}
+      {showDetailsPanel && activeRoom && (
+        <div className={`
+          hidden xl:flex flex-col bg-background-paper border-s border-border/60
+          w-[320px] xl:w-[360px] flex-shrink-0 overflow-y-auto p-6 transition-all duration-300
+        `}>
+          {/* Header */}
+          <div className="flex items-center justify-between pb-4 border-b border-border/50 mb-6">
+            <h3 className="text-base font-bold text-text-heading">{t('chat.details', 'Details')}</h3>
+            <button
+              onClick={() => setShowDetailsPanel(false)}
+              className="p-1.5 hover:bg-background-subtle rounded-lg text-text-muted hover:text-text transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          {/* Profile details */}
+          {(() => {
+            const participant = resolveParticipant(activeRoom, currentUserId)
+            const initials = participant.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+            const isSupport = isSupportRoom(activeRoom)
+            const caseMeta = isSupport ? getRoomCaseTypeMeta(activeRoom, isRTL, localRoomCaseTypes) : null
+            
+            return (
+              <div className="space-y-6">
+                <div className="flex flex-col items-center text-center">
+                  <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary/30 to-secondary/20 flex items-center justify-center overflow-hidden ring-4 ring-primary/10 mb-4">
+                    {participant.image ? (
+                      <img src={participant.image} alt={participant.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <span className="text-primary font-bold text-2xl">{initials}</span>
+                    )}
+                  </div>
+                  <h4 className="text-base font-bold text-text-heading">{participant.name}</h4>
+                  <span className="mt-1 inline-flex rounded-full bg-primary/8 px-2.5 py-0.5 text-xs font-semibold text-primary capitalize">
+                    {participant.role === 'doctor'
+                      ? t('common.therapist', 'Therapist')
+                      : participant.role === 'support'
+                        ? t('chat.supportTeam', 'Support team')
+                        : participant.role}
+                  </span>
+                </div>
+
+                {/* Support conversation info */}
+                {isSupport && caseMeta && (
+                  <div className="bg-background-subtle rounded-2xl p-4 border border-border/60 space-y-3">
+                    <h5 className="text-xs font-bold text-text-heading uppercase tracking-wider">
+                      {isRTL ? 'معلومات المحادثة' : 'Conversation Info'}
+                    </h5>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-text-muted">{t('chat.caseType', 'Case Type')}</span>
+                        <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${caseMeta.solidClassName || caseMeta.className}`}>
+                          {caseMeta.label}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between text-xs">
+                        <span className="text-text-muted">{t('chat.priority', 'Priority')}</span>
+                        <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] uppercase ${
+                          caseMeta.priority ? 'bg-red-100 text-red-800' : 'bg-slate-100 text-slate-800'
+                        }`}>
+                          {caseMeta.priority ? t('support.urgentPriority', 'Urgent') : t('support.normalPriority', 'Normal')}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Attachments Section */}
+                <div>
+                  <h5 className="text-xs font-bold text-text-heading uppercase tracking-wider mb-3 flex items-center gap-1.5">
+                    <Paperclip className="w-3.5 h-3.5" />
+                    <span>{t('chat.sharedFiles', 'Shared Files')}</span>
+                    <span className="text-text-muted text-[10px]">({roomAttachments.length})</span>
+                  </h5>
+                  {roomAttachments.length === 0 ? (
+                    <p className="text-xs text-text-muted italic py-2 text-start">{t('chat.noFilesYet', 'No shared files yet.')}</p>
+                  ) : (
+                    <div className="grid grid-cols-3 gap-2">
+                      {roomAttachments.map((file, i) => {
+                        const isImg = file.url.match(/\.(png|jpg|jpeg|gif|webp|svg)$/i)
+                        return (
+                          <a
+                            key={i}
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="group relative aspect-square rounded-xl bg-background-subtle border border-border/55 overflow-hidden flex items-center justify-center hover:opacity-95 transition-all"
+                            title={file.name}
+                          >
+                            {isImg ? (
+                              <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <FileText className="w-6 h-6 text-primary" />
+                            )}
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <svg className="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                              </svg>
+                            </div>
+                          </a>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )
+          })()}
+        </div>
+      )}
     </div>
     <StartDirectMessageDialog
       open={directMessageOpen}

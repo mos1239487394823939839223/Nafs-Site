@@ -20,7 +20,7 @@ export const PerformanceSummary = ({
   stats,
   loading = false,
 }: PerformanceSummaryProps) => {
-  const { t } = useLanguage();
+  const { t, isRTL } = useLanguage();
 
   const liveValues = [
     stats?.rating ?? null,
@@ -29,26 +29,29 @@ export const PerformanceSummary = ({
     stats?.activePatients ?? null,
   ];
 
+  const orderedCards = performanceCards.map((m, idx) => ({ ...m, value: liveValues[idx] }));
+  if (isRTL) orderedCards.reverse();
+
   return (
-    <section className="rounded-3xl bg-card border border-border shadow-card p-4 sm:p-6 md:p-7 mb-6">
-      <h2 className="text-lg font-bold text-foreground text-center mb-4 sm:mb-6">
+    <section className="rounded-2xl bg-card border border-border shadow-card p-4 md:p-5">
+      <h2 className="text-base font-bold text-foreground text-center mb-4">
         {t("doctor.dashboardHome.performance.title")}
       </h2>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        {performanceCards.map((m, idx) => {
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        {orderedCards.map((m) => {
           const Icon = iconMap[m.icon as keyof typeof iconMap];
           const displayValue =
             loading
               ? "—"
-              : (liveValues[idx] !== null && liveValues[idx] !== undefined)
-              ? String(liveValues[idx])
+              : (m.value !== null && m.value !== undefined)
+              ? String(m.value)
               : "—";
           return (
             <div key={m.labelKey} className="text-center flex flex-col items-center">
-              <Icon className="size-6 mb-2 text-primary" />
-              <p className="text-2xl sm:text-3xl font-extrabold text-foreground">{displayValue}</p>
-              <p className="text-sm text-foreground/80 mt-1">{t(m.labelKey)}</p>
-              <p className="text-xs text-muted-foreground mt-1">{t(m.deltaKey)}</p>
+              <Icon className="size-5 mb-1 text-primary" />
+              <p className="text-2xl font-extrabold text-foreground">{displayValue}</p>
+              <p className="text-sm text-foreground/80 mt-0.5">{t(m.labelKey)}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{t(m.deltaKey)}</p>
             </div>
           );
         })}

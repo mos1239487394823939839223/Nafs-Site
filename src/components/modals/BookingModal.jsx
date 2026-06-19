@@ -6,6 +6,7 @@ import Badge from "../ui/Badge";
 import DatePicker from "../ui/DatePicker";
 import { Search, Calendar, Clock, Star, Loader2, Stethoscope } from "lucide-react";
 import { patientAPI, extractErrorMessage } from "../../lib/api";
+import { SESSION_DURATION_MINUTES, extractSlotDurationMinutes } from "../../lib/patientBookingSlots";
 import { useToast } from "../ui/Toast";
 import { useLanguage } from "../../contexts/LanguageContext";
 import { getDoctorSpecialtyTheme } from "../../lib/doctorSpecialtyTheme";
@@ -17,6 +18,7 @@ export default function BookingModal({ isOpen, onClose }) {
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
+  const [selectedSlotDuration, setSelectedSlotDuration] = useState(null);
   const [doctors, setDoctors] = useState([]);
   const [loading, setLoading] = useState(false);
   const [bookingLoading, setBookingLoading] = useState(false);
@@ -62,8 +64,11 @@ export default function BookingModal({ isOpen, onClose }) {
         selectedDate,
       );
       if (response?.IsSuccess === true && response?.Data) {
-        const slots = response.Data || [];
-        setAvailableSlots(Array.isArray(slots) ? slots : []);
+        const slotsData =
+          response.Data.Slots ||
+          response.Data.Items ||
+          (Array.isArray(response.Data) ? response.Data : []);
+        setAvailableSlots(Array.isArray(slotsData) ? slotsData : []);
       } else {
         setAvailableSlots([]);
       }
@@ -89,7 +94,10 @@ export default function BookingModal({ isOpen, onClose }) {
       const bookingData = {
         DoctorId: doctorId,
         SessionStartTime: sessionStartTime,
-        DurationMinutes: 30,
+        DurationMinutes:
+          Number(selectedSlotDuration) > 0
+            ? Number(selectedSlotDuration)
+            : SESSION_DURATION_MINUTES,
       };
 
       const response = await patientAPI.createBooking(bookingData);
@@ -115,11 +123,24 @@ export default function BookingModal({ isOpen, onClose }) {
   // Generate time slots from available slots or use fallback
   const getTimeSlots = () => {
     if (availableSlots.length > 0) {
-      return availableSlots.map((slot) => ({
-        time: slot.StartTime || slot.start,
-        label: slot.StartTime || slot.start,
-        available: slot.IsAvailable !== false,
-      }));
+      return availableSlots.map((slot) => {
+        const startRaw = slot.StartTime || slot.start || slot.SessionStartTime;
+        const startDate = startRaw ? new Date(startRaw) : null;
+        const time =
+          startDate && !Number.isNaN(startDate.getTime())
+            ? `${String(startDate.getHours()).padStart(2, "0")}:${String(startDate.getMinutes()).padStart(2, "0")}`
+            : String(startRaw || "").slice(11, 16);
+        const durationMinutes = extractSlotDurationMinutes(slot, {
+          startTime: startDate,
+        });
+        return {
+          slot,
+          time,
+          label: time,
+          durationMinutes,
+          available: !(slot.IsReserved ?? slot.IsBooked) && slot.IsAvailable !== false,
+        };
+      });
     }
     // Fallback time slots
     return [
@@ -326,7 +347,10 @@ export default function BookingModal({ isOpen, onClose }) {
                     .map((slot) => (
                       <button
                         key={slot.time}
-                        onClick={() => setSelectedTime(slot.time)}
+                        onClick={() => {
+                          setSelectedTime(slot.time);
+                          setSelectedSlotDuration(slot.durationMinutes ?? null);
+                        }}
                         className={`p-3 border-2 rounded-lg text-sm font-medium transition-all ${
                           selectedTime === slot.time
                             ? "border-primary bg-primary/10 text-primary"

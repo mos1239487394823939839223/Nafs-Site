@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { FileText as ArticleIcon, Search, Calendar, Tag as TagIcon, X, TrendingUp } from 'lucide-react'
+import { FileText as ArticleIcon, Search, Calendar, Tag as TagIcon, X, TrendingUp, User } from 'lucide-react'
 import Select from 'react-select'
 import { useLanguage } from '../../contexts/LanguageContext'
 import Badge from '../../components/ui/Badge'
@@ -8,52 +8,109 @@ import { useBlogsStore } from '../../hooks/useBlogsStore'
 import { blogAPI } from '../../lib/api'
 import { useToast } from '../../components/ui/Toast'
 
+// Dynamic thematic gradients based on text hash to provide premium visual look when actual cover images are absent
+const getGradientClass = (title = '') => {
+  const gradients = [
+    'from-teal-500/20 via-emerald-500/10 to-background',
+    'from-blue-500/20 via-indigo-500/10 to-background',
+    'from-purple-500/20 via-fuchsia-500/10 to-background',
+    'from-amber-500/20 via-orange-500/10 to-background',
+    'from-rose-500/20 via-pink-500/10 to-background',
+  ]
+  let hash = 0
+  for (let i = 0; i < title.length; i++) {
+    hash = title.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const index = Math.abs(hash) % gradients.length
+  return gradients[index]
+}
+
+const getAccentColor = (title = '') => {
+  const colors = [
+    'text-teal-600 dark:text-teal-400 bg-teal-500/10 border-teal-500/20',
+    'text-blue-600 dark:text-blue-400 bg-blue-500/10 border-blue-500/20',
+    'text-purple-600 dark:text-purple-400 bg-purple-500/10 border-purple-500/20',
+    'text-amber-600 dark:text-amber-400 bg-amber-500/10 border-amber-500/20',
+    'text-rose-600 dark:text-rose-400 bg-rose-500/10 border-rose-500/20',
+  ]
+  let hash = 0
+  for (let i = 0; i < title.length; i++) {
+    hash = title.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const index = Math.abs(hash) % colors.length
+  return colors[index]
+}
+
 /* ──── Article Card ──────────────────────────────────────────────────────── */
 function BlogCard({ blog, onClick, t, isRTL }) {
   const formatDate = (iso) =>
-    new Date(iso).toLocaleDateString(t("auto.enus"), { year: 'numeric', month: 'short', day: 'numeric' })
+    new Date(iso).toLocaleDateString(isRTL ? "ar-EG" : "en-US", { year: 'numeric', month: 'short', day: 'numeric' })
+
+  const gradientClass = useMemo(() => getGradientClass(blog.title), [blog.title])
+  const accentColorClass = useMemo(() => getAccentColor(blog.title), [blog.title])
 
   return (
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -3 }}
-      className="bg-background-paper border border-border rounded-2xl shadow-sm hover:shadow-md transition-all cursor-pointer group overflow-hidden"
+      whileHover={{ y: -6, scale: 1.01 }}
+      transition={{ duration: 0.3, ease: 'easeOut' }}
+      className="bg-background-paper border border-border rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer group overflow-hidden flex flex-col justify-between h-full"
       onClick={() => onClick(blog)}
     >
-      <div className="h-1.5 bg-gradient-to-r from-primary via-secondary to-primary/30" />
-
-      <div className="p-5 space-y-3">
-        <div className={`flex items-start justify-between gap-3 ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <div className="flex-1 min-w-0">
-            <h3 className={`font-bold text-text-heading text-base leading-snug group-hover:text-primary transition-colors line-clamp-2 text-start`}>
-              {blog.title}
-            </h3>
+      <div>
+        {/* Cover visual header */}
+        <div className={`h-36 bg-gradient-to-br ${gradientClass} flex items-center justify-center relative overflow-hidden transition-all duration-500 border-b border-border/50`}>
+          <div className="absolute inset-0 opacity-20 mix-blend-overlay bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white to-transparent" />
+          <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))] dark:bg-grid-slate-700/50 opacity-10" />
+          
+          <div className={`p-3.5 rounded-2xl bg-background-paper/60 backdrop-blur-md border border-white/20 shadow-md ${accentColorClass.split(' ')[0]} transform group-hover:scale-110 transition-transform duration-300`}>
+            <ArticleIcon className="w-6 h-6" />
           </div>
         </div>
 
-        <p className={`text-sm text-text-muted line-clamp-3 leading-relaxed text-start`}>
-          {blog.description}
-        </p>
+        <div className="p-6 space-y-4">
+          {/* Title */}
+          <h3 className={`font-bold text-text-heading text-base leading-snug group-hover:text-primary transition-colors line-clamp-2 ${isRTL ? 'text-right' : 'text-left'}`}>
+            {blog.title}
+          </h3>
 
-        <div className={`flex flex-wrap gap-1.5 ${t("auto.justifystart")}`}>
-          {blog.tags.slice(0, 3).map(tag => (
-            <span key={tag} className="text-xs px-2.5 py-0.5 bg-background-subtle border border-border rounded-full text-text-muted flex items-center gap-1">
-              <TagIcon style={{ width: 10, height: 10 }} />
-              {tag}
-            </span>
-          ))}
-          {blog.tags.length > 3 && (
-            <span className="text-xs px-2 py-0.5 bg-background-subtle border border-border rounded-full text-text-muted">+{blog.tags.length - 3}</span>
+          {/* Description */}
+          {blog.description && (
+            <p className={`text-sm text-text-muted line-clamp-3 leading-relaxed ${isRTL ? 'text-right' : 'text-left'}`}>
+              {blog.description}
+            </p>
           )}
-        </div>
 
-        <div className={`pt-3 border-t border-border flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
-          <div className={`flex items-center gap-1 text-xs text-text-muted ${isRTL ? 'flex-row-reverse' : ''}`}>
-            <Calendar style={{ width: 12, height: 12 }} />
+          {/* Tags */}
+          <div className={`flex flex-wrap gap-1.5 ${isRTL ? 'justify-start' : 'justify-start'}`}>
+            {blog.tags.slice(0, 3).map(tag => (
+              <span key={tag} className="text-xs px-2.5 py-1 bg-primary/5 border border-primary/10 rounded-full text-primary flex items-center gap-1 hover:bg-primary/10 transition-colors">
+                <TagIcon style={{ width: 10, height: 10 }} />
+                {tag}
+              </span>
+            ))}
+            {blog.tags.length > 3 && (
+              <span className="text-xs px-2.5 py-1 bg-background-subtle border border-border rounded-full text-text-muted">+{blog.tags.length - 3}</span>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Footer */}
+      <div className="p-6 pt-0">
+        <div className={`pt-4 border-t border-border/80 flex items-center justify-between ${isRTL ? 'flex-row-reverse' : ''}`}>
+          <div className={`flex items-center gap-1.5 text-xs text-text-muted ${isRTL ? 'flex-row-reverse' : ''}`}>
+            <Calendar style={{ width: 13, height: 13 }} />
             {formatDate(blog.createdAt)}
           </div>
-          <span className="text-xs text-primary font-semibold">{t('blogs.readMore')}</span>
+          
+          <div className="flex items-center gap-1 text-xs text-primary font-bold group-hover:underline">
+            <span>{t('blogs.readMore')}</span>
+            <span className={`transition-transform duration-300 transform ${isRTL ? 'group-hover:-translate-x-1' : 'group-hover:translate-x-1'}`}>
+              {isRTL ? '←' : '→'}
+            </span>
+          </div>
         </div>
       </div>
     </motion.div>
@@ -62,25 +119,34 @@ function BlogCard({ blog, onClick, t, isRTL }) {
 
 /* ──── Featured Banner Card ──────────────────────────────────────────────── */
 function FeaturedCard({ blog, onClick, t, isRTL }) {
+  const gradientClass = useMemo(() => getGradientClass(blog.title), [blog.title])
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ y: -2 }}
-      className="relative bg-gradient-to-br from-primary/90 to-secondary/80 rounded-2xl p-6 text-white cursor-pointer overflow-hidden shadow-lg"
+      whileHover={{ y: -4, scale: 1.005 }}
+      transition={{ duration: 0.3 }}
+      className="relative bg-gradient-to-br from-primary/95 via-primary to-secondary rounded-3xl p-8 text-white cursor-pointer overflow-hidden shadow-lg hover:shadow-xl transition-all"
       onClick={() => onClick(blog)}
     >
-      <div className="absolute top-0 end-0 w-32 h-32 bg-white/5 rounded-full -translate-y-8 translate-x-8" />
-      <div className="absolute bottom-0 start-0 w-24 h-24 bg-white/5 rounded-full translate-y-8 -translate-x-8" />
-      <div className="relative z-10">
-        <span className="inline-flex items-center gap-1.5 bg-white/20 text-white text-xs font-semibold px-3 py-1 rounded-full mb-3">
-          <TrendingUp style={{ width: 12, height: 12 }} /> {t('blogs.featuredBadge')}
-        </span>
-        <h3 className={`font-bold text-lg leading-snug mb-2 text-start`}>{blog.title}</h3>
-        <p className={`text-white/80 text-sm line-clamp-2 text-start`}>{blog.description}</p>
-        <div className={`flex flex-wrap gap-1.5 mt-3 ${t("auto.justifystart")}`}>
-          {blog.tags.slice(0, 2).map(tag => (
-            <span key={tag} className="text-xs bg-white/15 text-white/90 px-2 py-0.5 rounded-full">{tag}</span>
+      {/* Decorative shapes */}
+      <div className="absolute top-0 end-0 w-48 h-48 bg-white/5 rounded-full -translate-y-12 translate-x-12 blur-2xl" />
+      <div className="absolute bottom-0 start-0 w-36 h-36 bg-white/5 rounded-full translate-y-12 -translate-x-12 blur-xl" />
+      <div className="absolute inset-0 bg-grid-white/[0.03] opacity-40 [mask-image:radial-gradient(circle_at_center,white,transparent)]" />
+      
+      <div className="relative z-10 flex flex-col justify-between h-full space-y-6">
+        <div>
+          <span className="inline-flex items-center gap-1.5 bg-white/20 backdrop-blur-md text-white text-xs font-bold px-3.5 py-1.5 rounded-full mb-4 border border-white/10 shadow-sm">
+            <TrendingUp style={{ width: 12, height: 12 }} /> {t('blogs.featuredBadge')}
+          </span>
+          <h3 className={`font-extrabold text-2xl leading-snug mb-3 ${isRTL ? 'text-right' : 'text-left'}`}>{blog.title}</h3>
+          <p className={`text-white/80 text-sm leading-relaxed line-clamp-3 ${isRTL ? 'text-right' : 'text-left'}`}>{blog.description}</p>
+        </div>
+
+        <div className={`flex flex-wrap gap-2 pt-2 ${isRTL ? 'justify-start' : 'justify-start'}`}>
+          {blog.tags.slice(0, 3).map(tag => (
+            <span key={tag} className="text-xs bg-white/15 backdrop-blur-sm text-white/95 px-3 py-1 rounded-full border border-white/5">{tag}</span>
           ))}
         </div>
       </div>
@@ -93,7 +159,10 @@ function BlogModal({ blog, onClose, t, isRTL }) {
   if (!blog) return null
 
   const formatDate = (iso) =>
-    new Date(iso).toLocaleDateString(t("auto.enus"), { year: 'numeric', month: 'long', day: 'numeric' })
+    new Date(iso).toLocaleDateString(isRTL ? "ar-EG" : "en-US", { year: 'numeric', month: 'long', day: 'numeric' })
+
+  const gradientClass = getGradientClass(blog.title)
+  const accentColorClass = getAccentColor(blog.title)
 
   return (
     <AnimatePresence>
@@ -101,57 +170,69 @@ function BlogModal({ blog, onClose, t, isRTL }) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-center justify-center p-4"
         onClick={onClose}
       >
         <motion.div
-          initial={{ scale: 0.95, opacity: 0, y: 20 }}
+          initial={{ scale: 0.95, opacity: 0, y: 30 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.96, opacity: 0, y: 10 }}
-          transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-          className="bg-background-paper rounded-3xl shadow-2xl max-w-2xl w-full max-h-[88vh] overflow-y-auto"
-          
+          exit={{ scale: 0.95, opacity: 0, y: 30 }}
+          transition={{ type: 'spring', stiffness: 350, damping: 30 }}
+          className="bg-background-paper rounded-[28px] shadow-2xl max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col border border-border/40"
           onClick={e => e.stopPropagation()}
         >
-          <div className="h-2 bg-gradient-to-r from-primary via-secondary to-primary/40 rounded-t-3xl" />
+          {/* Cover Area in Modal */}
+          <div className={`h-40 bg-gradient-to-br ${gradientClass} flex items-center justify-center relative overflow-hidden shrink-0`}>
+            <div className="absolute inset-0 opacity-20 mix-blend-overlay bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-white to-transparent" />
+            <div className="absolute inset-0 bg-grid-slate-100 opacity-10" />
+            
+            {/* Close button inside cover */}
+            <button
+              onClick={onClose}
+              className={`absolute top-4 ${isRTL ? 'left-4' : 'right-4'} p-2 rounded-full bg-background-paper/30 hover:bg-background-paper/60 border border-white/20 text-white hover:text-text-heading backdrop-blur-md transition-all shadow-sm`}
+            >
+              <X style={{ width: 18, height: 18 }} />
+            </button>
 
-          <div className="p-6 space-y-5">
-            <div className={`flex items-center justify-end`}>
-              <button
-                onClick={onClose}
-                className="p-2 rounded-xl text-text-muted hover:text-text hover:bg-background-subtle transition-all"
-              >
-                <X style={{ width: 20, height: 20 }} />
-              </button>
+            <div className={`p-4 rounded-full bg-background-paper/80 backdrop-blur-md border border-white/30 shadow-lg ${accentColorClass.split(' ')[0]}`}>
+              <ArticleIcon className="w-8 h-8" />
             </div>
+          </div>
 
-            <h2 className={`text-2xl font-black text-text-heading leading-snug text-start`}>
+          {/* Modal Body */}
+          <div className="p-8 overflow-y-auto space-y-6 flex-1 custom-scrollbar">
+            <h2 className={`text-2xl sm:text-3xl font-extrabold text-text-heading leading-snug ${isRTL ? 'text-right' : 'text-left'}`}>
               {blog.title}
             </h2>
 
-            <div className={`flex items-center gap-3 text-sm text-text-muted flex-wrap ${isRTL ? 'justify-end flex-row-reverse' : ''}`}>
+            <div className={`flex items-center gap-4 text-sm text-text-muted flex-wrap ${isRTL ? 'flex-row-reverse' : ''}`}>
               <span className={`flex items-center gap-1.5 ${isRTL ? 'flex-row-reverse' : ''}`}>
-                <Calendar style={{ width: 14, height: 14 }} />
+                <Calendar style={{ width: 14, height: 14 }} className="text-primary" />
                 {formatDate(blog.createdAt)}
               </span>
-              <span className="w-1 h-1 rounded-full bg-border" />
-              <span>{t('blogs.by')}: {blog.author || t('blogs.nafsTeam')}</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-border" />
+              <span className={`flex items-center gap-1.5 ${isRTL ? 'flex-row-reverse' : ''}`}>
+                <User style={{ width: 14, height: 14 }} className="text-primary" />
+                {t('blogs.by')}: {blog.author || t('blogs.nafsTeam')}
+              </span>
             </div>
 
-            <hr className="border-border" />
+            <hr className="border-border/60" />
 
-            <div className={`text-text leading-relaxed text-base whitespace-pre-line text-start`}>
+            <div className={`text-text leading-relaxed text-base sm:text-lg whitespace-pre-line ${isRTL ? 'text-right' : 'text-left'}`}>
               {blog.description}
             </div>
 
-            <div className={`flex flex-wrap gap-2 pt-2 ${t("auto.justifystart")}`}>
-              {blog.tags.map(tag => (
-                <span key={tag} className="flex items-center gap-1 text-sm px-3 py-1 bg-primary/10 text-primary rounded-full font-medium border border-primary/20">
-                  <TagIcon style={{ width: 13, height: 13 }} />
-                  {tag}
-                </span>
-              ))}
-            </div>
+            {blog.tags && blog.tags.length > 0 && (
+              <div className={`flex flex-wrap gap-2 pt-4 border-t border-border/40 ${isRTL ? 'justify-start' : 'justify-start'}`}>
+                {blog.tags.map(tag => (
+                  <span key={tag} className="flex items-center gap-1.5 text-xs px-3.5 py-1.5 bg-primary/5 hover:bg-primary/10 text-primary rounded-full font-semibold border border-primary/10 transition-colors">
+                    <TagIcon style={{ width: 11, height: 11 }} />
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </motion.div>
       </motion.div>
@@ -221,10 +302,18 @@ export default function PatientBlogs() {
     return matchSearch && matchTag
   }), [blogs, search, activeTag])
 
+  const featuredBlog = useMemo(() => {
+    return filtered.find(b => b.featured)
+  }, [filtered])
+
+  const nonFeaturedBlogs = useMemo(() => {
+    return filtered.filter(b => !b.featured)
+  }, [filtered])
+
   return (
     <div className="space-y-6 max-w-5xl mx-auto" >
       {/* Header and Controls */}
-      <div className={`flex flex-col lg:flex-row lg:items-center justify-between gap-5 ${isRTL ? 'lg:flex-row-reverse' : ''}`}>
+      <div className={`flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-border/40 ${isRTL ? 'lg:flex-row-reverse' : ''}`}>
         <div>
           <h1 className="text-3xl font-black text-text-heading flex items-center gap-3">
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -232,10 +321,10 @@ export default function PatientBlogs() {
             </div>
             {t('blogs.pageTitle')}
           </h1>
-          <p className="text-text-muted mt-1 text-sm">{t('blogs.pageSubtitle')}</p>
+          <p className="text-text-muted mt-1.5 text-sm">{t('blogs.pageSubtitle')}</p>
         </div>
 
-        <div className={`flex flex-col sm:flex-row gap-3 w-full lg:w-auto ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
+        <div className={`flex flex-col sm:flex-row gap-4 w-full lg:w-auto ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
           {/* Dropdown Filter */}
           <div className="w-full sm:w-56 z-20">
             <Select
@@ -276,7 +365,7 @@ export default function PatientBlogs() {
                     ? '#ffffff' 
                     : 'var(--color-text)',
                   cursor: 'pointer',
-                  textAlign: t("auto.left"),
+                  textAlign: isRTL ? 'right' : 'left',
                 }),
                 singleValue: (base) => ({
                   ...base,
@@ -320,7 +409,7 @@ export default function PatientBlogs() {
         </p>
       )}
 
-      {/* Articles grid */}
+      {/* Articles Grid / Empty State */}
       {filtered.length === 0 ? (
         <motion.div
           initial={{ opacity: 0 }}
@@ -336,19 +425,29 @@ export default function PatientBlogs() {
           </p>
         </motion.div>
       ) : (
-        <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          <AnimatePresence>
-            {filtered.map(b => (
-              <BlogCard
-                key={b.id}
-                blog={b}
-                onClick={handleSelectBlog}
-                t={t}
-                isRTL={isRTL}
-              />
-            ))}
-          </AnimatePresence>
-        </motion.div>
+        <div className="space-y-8">
+          {/* Featured Banner */}
+          {activeTag === 'all' && !search && featuredBlog && (
+            <div className="mb-6">
+              <FeaturedCard blog={featuredBlog} onClick={handleSelectBlog} t={t} isRTL={isRTL} />
+            </div>
+          )}
+
+          {/* Grid list */}
+          <motion.div layout className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <AnimatePresence>
+              {(activeTag === 'all' && !search && featuredBlog ? nonFeaturedBlogs : filtered).map(b => (
+                <BlogCard
+                  key={b.id}
+                  blog={b}
+                  onClick={handleSelectBlog}
+                  t={t}
+                  isRTL={isRTL}
+                />
+              ))}
+            </AnimatePresence>
+          </motion.div>
+        </div>
       )}
 
       {/* Detail modal */}

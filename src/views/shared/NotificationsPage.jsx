@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { Bell, CheckCheck, Loader2 } from "lucide-react";
+import { Bell, CheckCheck, Loader2, Mail, MailOpen } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button";
 import NotificationItem from "../../components/notifications/NotificationItem";
@@ -10,12 +10,26 @@ import { NOTIFICATION_CATEGORIES } from "../../lib/notificationUtils";
 export default function NotificationsPage() {
   const { t, isRTL } = useLanguage();
   const navigate = useNavigate();
-  const { notifications, unreadCount, loading, markAsRead, markAllAsRead } = useNotifications();
+  const { notifications, unreadCount, loading, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   const [category, setCategory] = useState("all");
+  const [readState, setReadState] = useState("all");
 
   const filtered = useMemo(
-    () => category === "all" ? notifications : notifications.filter((item) => item.category === category),
-    [category, notifications],
+    () => notifications.filter((item) => {
+      const matchesCategory = category === "all" || item.category === category;
+      const matchesReadState = readState === "all" || (readState === "unread" ? !item.isRead : item.isRead);
+      return matchesCategory && matchesReadState;
+    }),
+    [category, notifications, readState],
+  );
+  const categoryCounts = useMemo(
+    () => NOTIFICATION_CATEGORIES.reduce((counts, item) => ({
+      ...counts,
+      [item]: item === "all"
+        ? notifications.length
+        : notifications.filter((notification) => notification.category === item).length,
+    }), {}),
+    [notifications],
   );
 
   const openNotification = async (item) => {
@@ -24,7 +38,7 @@ export default function NotificationsPage() {
   };
 
   return (
-    <div dir={isRTL ? "rtl" : "ltr"} className="space-y-5 max-w-4xl mx-auto">
+    <div dir={isRTL ? "rtl" : "ltr"} className="space-y-6 max-w-5xl mx-auto">
       <div className="rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/15 via-background-paper to-secondary/10 p-5 sm:p-7">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3">
@@ -48,11 +62,35 @@ export default function NotificationsPage() {
           <button
             key={item}
             onClick={() => setCategory(item)}
-            className={`px-4 py-2 rounded-full border text-sm font-medium whitespace-nowrap transition-colors ${
-              category === item ? "bg-primary text-white border-primary" : "bg-background-paper text-text-muted border-border hover:border-primary/40"
+            className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border text-sm font-bold whitespace-nowrap transition-all ${
+              category === item ? "bg-primary text-white border-primary shadow-lg shadow-primary/15" : "bg-background-paper text-text-muted border-border hover:-translate-y-0.5 hover:border-primary/40 hover:text-primary"
             }`}
           >
             {t(`notifications.categories.${item}`, item)}
+            <span className={`rounded-full px-2 py-0.5 text-[10px] ${category === item ? "bg-white/15 text-white" : "bg-primary/10 text-primary"}`}>
+              {categoryCounts[item]}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        {[
+          ["all", Bell, t("common.all", "All")],
+          ["unread", Mail, t("chat.unread", "Unread")],
+          ["read", MailOpen, t("notifications.read", "Read")],
+        ].map(([value, Icon, label]) => (
+          <button
+            key={value}
+            onClick={() => setReadState(value)}
+            className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-xs font-bold ${
+              readState === value
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-border bg-background-paper text-text-muted"
+            }`}
+          >
+            <Icon className="h-4 w-4" />
+            {label}
           </button>
         ))}
       </div>
@@ -66,10 +104,17 @@ export default function NotificationsPage() {
         </div>
       ) : (
         <div className="space-y-3">
-          {filtered.map((item) => <NotificationItem key={item.id} notification={item} onClick={openNotification} />)}
+          {filtered.map((item) => (
+            <NotificationItem
+              key={item.id}
+              notification={item}
+              onClick={openNotification}
+              onMarkAsRead={(notification) => markAsRead(notification.id)}
+              onDelete={(notification) => deleteNotification(notification.id)}
+            />
+          ))}
         </div>
       )}
     </div>
   );
 }
-

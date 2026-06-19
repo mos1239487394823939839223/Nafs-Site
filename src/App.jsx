@@ -20,10 +20,13 @@ import PatientProfile from "./views/patient/Profile";
 import ReserveAppointment from "./views/patient/ReserveAppointment";
 import MeetingRoom from "./views/patient/MeetingRoom";
 import PatientTests from "./views/patient/Tests";
+import PatientTestDetailPage from "./views/patient/TestDetailPage";
+import TreatmentProgramDetails from "./views/patient/TreatmentProgramDetails";
 import PatientArticles from "./views/patient/Articles";
 import Schedule from "./views/doctor/Schedule";
 import PatientQueue from "./views/doctor/PatientQueue";
 import SessionHistory from "./views/doctor/SessionHistory";
+import MedicalHistory from "./views/doctor/MedicalHistory";
 import Settings from "./views/doctor/Settings";
 import UserManagement from "./views/admin/UserManagement";
 import AdminProfile from "./views/admin/Profile";
@@ -135,11 +138,31 @@ function AppRoutes() {
           }
         />
         <Route
+          path="/dashboard/patient/tests/:testId"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
+              <Layout>
+                <PatientTestDetailPage />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
           path="/dashboard/patient/tests"
           element={
             <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
               <Layout>
                 <PatientTests />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/patient/treatment-program"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.PATIENT]}>
+              <Layout>
+                <TreatmentProgramDetails />
               </Layout>
             </ProtectedRoute>
           }
@@ -210,7 +233,17 @@ function AppRoutes() {
           path="/dashboard/doctor/medical-history"
           element={
             <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
-              <Navigate to="/dashboard/doctor/history" replace />
+              <Navigate to="/dashboard/doctor/medical-records" replace />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/dashboard/doctor/medical-records"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.DOCTOR]}>
+              <Layout>
+                <MedicalHistory />
+              </Layout>
             </ProtectedRoute>
           }
         />

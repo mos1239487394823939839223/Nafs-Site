@@ -57,6 +57,10 @@ const Button = React.forwardRef(
         backgroundColor: 'rgba(255,255,255,0.2)',
         borderColor: 'rgba(255,255,255,0.3)',
       },
+      '&:focus-visible': {
+        outline: '2px solid var(--ds-secondary)',
+        outlineOffset: 2,
+      },
     } : {}
 
     // Link variant styling
@@ -82,6 +86,15 @@ const Button = React.forwardRef(
         className={className}
         startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
         sx={{
+          minWidth: 40,
+          borderRadius: 'var(--ds-radius-control)',
+          '&:focus-visible': {
+            outline: '2px solid var(--ds-secondary)',
+            outlineOffset: 2,
+          },
+          '&.Mui-disabled': {
+            opacity: 0.5,
+          },
           ...glassSx,
           ...linkSx,
           ...sx,

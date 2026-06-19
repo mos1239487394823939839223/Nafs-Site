@@ -51,8 +51,18 @@ export default {
                 },
                 // shadcn/ui semantic colors
                 destructive: {
-                    DEFAULT: '#ef4444',
+                    DEFAULT: 'var(--ds-error)',
                     foreground: '#ffffff',
+                },
+                success: {
+                    DEFAULT: 'var(--ds-success)',
+                    foreground: '#ffffff',
+                },
+                warning: {
+                    DEFAULT: 'var(--ds-warning)',
+                },
+                info: {
+                    DEFAULT: 'var(--ds-info)',
                 },
                 muted: {
                     DEFAULT: 'var(--color-background-subtle)',
@@ -116,13 +126,15 @@ export default {
                 'gradient-hero': 'var(--gradient-hero)',
             },
             boxShadow: {
-                card: 'var(--shadow-card)',
-                cta:  'var(--shadow-cta)',
+                card: '0 4px 20px rgba(0,0,0,0.05)',
+                hover: '0 8px 30px rgba(0,0,0,0.08)',
+                cta: '0 8px 30px rgba(0,0,0,0.08)',
             },
             borderRadius: {
-                lg: '0.75rem',
-                md: '0.5rem',
-                sm: '0.375rem',
+                sm: '10px',
+                md: '12px',
+                lg: '20px',
+                xl: '24px',
             },
             keyframes: {
                 'accordion-down': {
