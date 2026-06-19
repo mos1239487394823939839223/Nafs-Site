@@ -38,24 +38,35 @@ export const Services = () => {
 
   return (
     <section id="services" dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-12 md:py-16">
-      <h2 className="text-center text-3xl font-black text-text-heading">{isAr ? "خدماتنا" : "Our services"}</h2>
-      <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
-        {services.map(({ icon: Icon, title, desc }) => (
-          <article key={title} className="min-h-[190px] rounded-[20px] border border-border bg-background-paper p-6 text-center">
-            <Icon className="mx-auto h-12 w-12 text-text-light" strokeWidth={1.7} />
-            <h3 className="mt-5 text-base font-black text-text-heading">{title}</h3>
-            <p className="mt-3 text-sm font-semibold leading-7 text-text-light">{desc}</p>
-          </article>
-        ))}
-      </div>
-      <div className="mt-8 text-center">
-        <Button
-          onClick={() => navigate("/auth/login")}
-          variant="outline"
-          className={landingBtnMd}
-        >
-          {isAr ? "عرض جميع الخدمات" : "View all services"}
-        </Button>
+      <div className="mx-auto max-w-6xl">
+        <h2 className="text-center text-2xl font-bold text-[#234c3f] md:text-[26px]">
+          {isAr ? "خدماتنا" : "Our services"}
+        </h2>
+        <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-5 lg:gap-5">
+          {services.map(({ icon: Icon, title, desc }) => (
+            <article
+              key={title}
+              className="flex min-h-[160px] flex-col items-center rounded-xl border border-[#edf1ee] bg-white px-4 py-5 text-center shadow-[0_2px_7px_rgba(35,76,63,0.025)] md:min-h-[166px]"
+            >
+              <Icon className="h-10 w-10 text-[#78a794] md:h-11 md:w-11" strokeWidth={1.65} />
+              <h3 className="mt-3 text-[14px] font-bold leading-6 text-[#294b40] md:text-[15px]">
+                {title}
+              </h3>
+              <p className="mt-2 max-w-[170px] text-xs font-medium leading-6 text-[#5f7069] md:text-[13px]">
+                {desc}
+              </p>
+            </article>
+          ))}
+        </div>
+        <div className="mt-7 text-center">
+          <Button
+            onClick={() => navigate("/auth/login")}
+            variant="outline"
+            className={`${landingBtnMd} border-[#c8d8d1] text-[#315548]`}
+          >
+            {isAr ? "عرض جميع الخدمات" : "View all services"}
+          </Button>
+        </div>
       </div>
     </section>
   );

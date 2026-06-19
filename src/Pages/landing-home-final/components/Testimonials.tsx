@@ -19,6 +19,7 @@ export const Testimonials = () => {
 
   return (
     <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-12 md:py-16">
+      <div className="mx-auto max-w-6xl">
       <h2 className="text-center text-3xl font-black text-text-heading">
         {isAr ? "ماذا يقول عملاؤنا" : "What our clients say"}
       </h2>
@@ -27,10 +28,10 @@ export const Testimonials = () => {
         {items.map((item) => (
           <article
             key={item.name}
-            className="flex min-h-[220px] flex-col rounded-[20px] border border-border bg-background-paper p-7"
+            className="flex min-h-[220px] flex-col rounded-lg border border-border bg-background-paper p-6"
           >
             <Quote
-              className={`h-8 w-8 shrink-0 text-text-light ${isAr ? "ms-auto" : "me-auto"}`}
+              className={`h-8 w-8 shrink-0 text-[#78a794] ${isAr ? "ms-auto" : "me-auto"}`}
               strokeWidth={1.5}
             />
 
@@ -42,7 +43,7 @@ export const Testimonials = () => {
               <img
                 src={item.image}
                 alt={item.name}
-                className="h-16 w-16 shrink-0 rounded-full object-cover md:h-[4.5rem] md:w-[4.5rem]"
+                className="h-16 w-16 shrink-0 rounded-full object-cover"
               />
               <div className="min-w-0 text-start">
                 <p className="text-sm font-black text-text-heading">{item.name}</p>
@@ -57,6 +58,7 @@ export const Testimonials = () => {
         <span className="h-2 w-2 rounded-full border border-text-light" aria-hidden />
         <span className="h-2 w-2 rounded-full bg-primary" aria-hidden />
         <span className="h-2 w-2 rounded-full border border-text-light" aria-hidden />
+      </div>
       </div>
     </section>
   );

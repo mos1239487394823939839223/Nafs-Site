@@ -13,15 +13,15 @@ export const Stats = () => {
 
   return (
     <section dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-8 md:py-12">
-      <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4 md:gap-6">
+      <div className="mx-auto grid max-w-6xl grid-cols-1 gap-8 sm:grid-cols-2 md:grid-cols-4 md:gap-6">
         {stats.map(({ icon: Icon, value, label }) => (
           <div
             key={value}
             dir="ltr"
-            className="flex items-center justify-center gap-4 md:gap-5"
+            className="flex items-center justify-center gap-4 md:gap-6"
           >
             <Icon
-              className="h-11 w-11 shrink-0 text-text-light md:h-12 md:w-12"
+              className="h-11 w-11 shrink-0 text-[#78a794] md:h-12 md:w-12"
               strokeWidth={1.6}
             />
             <div className="text-start">

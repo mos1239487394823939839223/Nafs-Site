@@ -89,35 +89,35 @@ export const UpcomingSession = ({
       />
 
       {loading ? (
-        <div className="rounded-[24px] border border-border bg-background-paper p-7 text-center shadow-card">
+        <div className="rounded-xl border border-border bg-background-paper p-5 text-center shadow-card">
           <p className="text-sm text-text-light">{t("patientHome.upcomingSession.loading")}</p>
         </div>
       ) : !session ? (
-        <div className="rounded-[24px] border border-dashed border-secondary/45 bg-[linear-gradient(135deg,var(--color-background-paper)_0%,var(--color-background-subtle)_100%)] p-8 text-center shadow-card">
-          <span className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-background-subtle text-primary">
-            <Sparkles className="h-7 w-7" />
+        <div className="rounded-xl border border-dashed border-secondary/45 bg-[linear-gradient(135deg,var(--color-background-paper)_0%,var(--color-background-subtle)_100%)] p-5 text-center shadow-card">
+          <span className="mx-auto mb-3 grid h-11 w-11 place-items-center rounded-xl bg-[#78a794]/10 text-[#78a794]">
+            <Sparkles className="h-5 w-5" />
           </span>
-          <h3 className="text-xl font-black text-text-heading">{t("patientHome.upcomingSession.startNow")}</h3>
-          <p className="mb-5 mt-2 text-sm text-text-light">{t("patientHome.upcomingSession.startNowDesc")}</p>
+          <h3 className="text-lg font-black text-text-heading">{t("patientHome.upcomingSession.startNow")}</h3>
+          <p className="mb-4 mt-1.5 text-sm text-text-light">{t("patientHome.upcomingSession.startNowDesc")}</p>
           <button
             onClick={() => navigate("/dashboard/patient/reserve")}
-            className="h-12 rounded-xl bg-primary px-7 text-sm font-bold text-white shadow-lg shadow-primary/15 transition-colors hover:bg-primary-dark"
+            className="h-10 rounded-xl bg-primary px-6 text-sm font-bold text-white shadow-lg shadow-primary/15 transition-colors hover:bg-primary-dark"
           >
             {t("patientHome.upcomingSession.bookFirst")}
           </button>
         </div>
       ) : (
-        <div className="relative overflow-hidden rounded-[24px] border border-border bg-background-paper p-6 shadow-card md:p-7">
+        <div className="relative overflow-hidden rounded-xl border border-border bg-background-paper p-4 shadow-card md:p-5">
           <div className="absolute inset-y-0 start-0 w-1 bg-gradient-to-b from-secondary to-primary" />
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-            <div className="flex min-w-0 items-center gap-4">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="flex min-w-0 items-center gap-3">
               <img
                 src={session.DoctorImage || fallbackDoc}
                 alt={session.DoctorName}
-                width={65}
-                height={73}
+                width={56}
+                height={64}
                 loading="lazy"
-                className="h-[76px] w-[76px] shrink-0 rounded-2xl bg-background object-cover ring-4 ring-background-subtle"
+                className="h-16 w-16 shrink-0 rounded-2xl bg-background object-cover ring-4 ring-background-subtle"
               />
               <div className="min-w-0 text-start">
                 <p className="truncate text-lg font-bold leading-7 text-text-heading" dir="auto">
@@ -143,25 +143,25 @@ export const UpcomingSession = ({
               </div>
             </div>
 
-            <div className="flex w-full shrink-0 flex-col gap-3 lg:w-48">
+            <div className="flex w-full shrink-0 flex-col gap-2 lg:w-44">
               <button
                 onClick={handleStartMeeting}
                 disabled={!canStartMeeting || meetingLoading}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-bold leading-6 text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:bg-[#D8DED9] disabled:text-[#9AA69E]"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl bg-primary px-4 text-sm font-bold leading-6 text-white transition-colors hover:bg-primary-dark disabled:cursor-not-allowed disabled:bg-[#D8DED9] disabled:text-[#9AA69E]"
               >
                 {meetingLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Video className="h-4 w-4" />}
                 {t("patientHome.upcomingSession.enterSession")}
               </button>
               <button
                 onClick={() => navigate(`/dashboard/patient/reserve?tab=status&bookingId=${encodeURIComponent(String(bookingId))}`)}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-border bg-background-paper px-5 text-sm font-bold leading-6 text-text transition-colors hover:bg-background-subtle"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-border bg-background-paper px-4 text-sm font-bold leading-6 text-text transition-colors hover:bg-background-subtle"
               >
                 <FileText className="h-4 w-4" />
                 {t("patientHome.upcomingSession.sessionDetails")}
               </button>
               <button
                 onClick={() => navigate("/dashboard/patient/reserve?tab=status")}
-                className="inline-flex h-12 items-center justify-center gap-2 rounded-xl text-sm font-bold text-secondary transition-colors hover:bg-background-subtle"
+                className="inline-flex h-10 items-center justify-center gap-2 rounded-xl text-sm font-bold text-secondary transition-colors hover:bg-background-subtle"
               >
                 <RefreshCw className="h-4 w-4" />
                 {language === "ar" ? "إعادة الجدولة" : "Reschedule"}

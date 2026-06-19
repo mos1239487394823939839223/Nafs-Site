@@ -65,6 +65,13 @@ export default function ReserveAppointment() {
   const [mainTab, setMainTab] = useState(initialTab); // all, available, status
   const [viewMode, setViewMode] = useState("grid"); // list or grid
 
+  // Re-sync the active tab when arriving via a link that only changes the
+  // query string (e.g. sidebar "Therapists" link) — without this, navigating
+  // here while the component is already mounted leaves mainTab stale.
+  useEffect(() => {
+    setMainTab(initialTab);
+  }, [initialTab]);
+
   // Filter & sort state
   const [filterSpecialties, setFilterSpecialties] = useState([]);
   const [filterGender, setFilterGender] = useState(null);

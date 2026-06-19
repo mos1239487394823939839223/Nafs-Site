@@ -1,7 +1,7 @@
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth, Roles } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { chatAPI, patientAPI, userAPI } from "../../lib/api";
+import { chatAPI, userAPI } from "../../lib/api";
 import { getConfiguredBlackmailSupportUserId } from "../../lib/supportRouting";
 import { EmergencyCallCard } from "../sidebar-cards/EmergencyCallCard";
 import { BlackmailProtectionCard } from "../sidebar-cards/BlackmailProtectionCard";
@@ -42,38 +42,9 @@ export default function DynamicSidebar({ isOpen, onClose }) {
     if (onClose && window.innerWidth < 1024) onClose();
   };
 
-  const handleEmergencyClick = async () => {
+  const handleEmergencyClick = () => {
     closeOnMobile();
-    try {
-      const bookingsResponse = await patientAPI.getPatientBookings(1, 20);
-      const data = bookingsResponse?.Data ?? bookingsResponse?.data ?? bookingsResponse;
-      const bookings = Array.isArray(data?.Items)
-        ? data.Items
-        : Array.isArray(data?.items)
-          ? data.items
-          : Array.isArray(data)
-            ? data
-            : [];
-      const now = Date.now();
-      const liveOrNextBooking = bookings
-        .filter((booking) => {
-          const start = new Date(booking.SessionStartTime || booking.sessionStartTime || 0).getTime();
-          const end = new Date(booking.SessionEndTime || booking.sessionEndTime || 0).getTime();
-          const status = String(booking.StatusName || booking.statusName || booking.Status || booking.status || "").toLowerCase();
-          return status.includes("progress") || (Number.isFinite(start) && (end >= now || start >= now));
-        })
-        .sort((a, b) => new Date(a.SessionStartTime || a.sessionStartTime || 0) - new Date(b.SessionStartTime || b.sessionStartTime || 0))[0];
-      const bookingId = liveOrNextBooking?.Id || liveOrNextBooking?.id || liveOrNextBooking?.BookingId || liveOrNextBooking?.bookingId;
-      if (bookingId) {
-        navigate(`/dashboard/patient/meeting/${bookingId}`);
-        return;
-      }
-      navigate("/dashboard/patient/messages?type=doctors");
-    } catch (error) {
-      console.error("Failed to start therapist contact:", error);
-      toast.error(t("errors.somethingWentWrong", "Could not start therapist contact."));
-      navigate("/dashboard/patient/messages?type=doctors");
-    }
+    navigate("/dashboard/patient/messages?type=support&caseType=emergency&support=1");
   };
 
   const handleProtectionClick = async () => {
@@ -114,7 +85,6 @@ export default function DynamicSidebar({ isOpen, onClose }) {
   if (role === Roles.PATIENT) {
     const mainItems = [
       { name: t("nav.home"), path: "/dashboard/patient/home", icon: Home },
-      { name: t("nav.mySessions"), path: "/dashboard/patient/reserve", icon: Calendar },
       { name: t("nav.doctors"), path: "/dashboard/patient/reserve?tab=available", icon: Users },
       { name: t("nav.psychologicalAssessment"), path: "/dashboard/patient/tests", icon: Brain },
       { name: t("nav.treatmentPrograms"), path: "/dashboard/patient/treatment-program", icon: HeartHandshake },
@@ -140,10 +110,11 @@ export default function DynamicSidebar({ isOpen, onClose }) {
           <NavLink
             to={item.path}
             onClick={closeOnMobile}
-            className={`flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all relative ${
+            style={isActive ? { backgroundColor: "#2c6947", color: "#ffffff" } : undefined}
+            className={`flex items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all relative ${
               isActive
-                ? "bg-white/15 text-white shadow-sm ring-1 ring-white/10 font-bold"
-                : "text-white/75 hover:bg-white/8 hover:text-white"
+                ? "shadow-sm font-bold"
+                : "text-[#bfd9d4] hover:bg-white/8 hover:text-white"
             }`}
           >
             {isActive && (
@@ -167,7 +138,8 @@ export default function DynamicSidebar({ isOpen, onClose }) {
           <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onClose} />
         )}
         <aside
-          className={`fixed start-0 top-0 z-50 h-full w-[86vw] max-w-[280px] border-e border-white/10 bg-gradient-to-b from-primary via-secondary to-primary-dark text-white shadow-2xl shadow-black/25 transform transition-transform duration-300 ease-in-out ${
+          style={{ backgroundColor: "#153f34" }}
+          className={`fixed start-0 top-0 z-50 h-full w-[86vw] max-w-[280px] border-e border-white/10 text-[#bfd9d4] shadow-card transform transition-transform duration-300 ease-in-out ${
             isOpen
               ? "translate-x-0"
               : isRTL
@@ -176,19 +148,19 @@ export default function DynamicSidebar({ isOpen, onClose }) {
           }`}
         >
           <div className="flex h-full flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-6">
+            <div className="flex items-center justify-between px-6 py-6">
               {isRTL ? (
                 <>
                   <div className="flex items-center gap-2">
-                    <span className="text-3xl font-black tracking-tight">nafas</span>
-                    <span className="grid h-9 w-9 place-items-center rounded-2xl bg-gradient-to-br from-secondary to-primary">
+                    <span className="text-3xl font-black tracking-tight text-white">nafas</span>
+                    <span className="grid h-9 w-9 place-items-center rounded-xl" style={{ backgroundColor: "#2c6947" }}>
                       <HeartHandshake className="h-5 w-5 text-white" />
                     </span>
                   </div>
                   <button
                     type="button"
                     onClick={onClose}
-                    className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 text-white/85 transition-colors hover:bg-white/15"
+                    className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-[#bfd9d4] transition-colors hover:bg-white/15"
                     aria-label="Menu"
                   >
                     <Menu className="h-5 w-5" />
@@ -199,14 +171,14 @@ export default function DynamicSidebar({ isOpen, onClose }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 text-white/85 transition-colors hover:bg-white/15"
+                className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-[#bfd9d4] transition-colors hover:bg-white/15"
                 aria-label="Menu"
               >
                 <Menu className="h-5 w-5" />
               </button>
               <div className="flex items-center gap-2">
-                <span className="text-3xl font-black tracking-tight">nafas</span>
-                <span className="grid h-9 w-9 place-items-center rounded-2xl bg-gradient-to-br from-secondary to-primary">
+                <span className="text-3xl font-black tracking-tight text-white">nafas</span>
+                <span className="grid h-9 w-9 place-items-center rounded-xl" style={{ backgroundColor: "#2c6947" }}>
                   <HeartHandshake className="h-5 w-5 text-white" />
                 </span>
               </div>
@@ -214,15 +186,15 @@ export default function DynamicSidebar({ isOpen, onClose }) {
               )}
             </div>
 
-            <nav className="flex-1 overflow-y-auto px-4 pb-5">
-              <ul className="space-y-2">{mainItems.map(renderPatientLink)}</ul>
-              <div className="my-5 h-px bg-white/16" />
-              <ul className="space-y-2">
+            <nav className="flex-1 overflow-y-auto px-4 pb-6">
+              <ul className="space-y-1">{mainItems.map(renderPatientLink)}</ul>
+              <div className="my-4 h-px bg-white/16" />
+              <ul className="space-y-1">
                 {supportItems.map(renderPatientLink)}
                 <li>
                   <button
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/75 transition-all hover:bg-white/8 hover:text-white"
+                    className="flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm font-semibold text-[#bfd9d4] transition-all hover:bg-white/8 hover:text-white"
                   >
                     <LogOut className="h-5 w-5" />
                     <span>{t("auth.logout")}</span>
@@ -230,18 +202,18 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                 </li>
               </ul>
 
-              <div className="mt-7 space-y-4">
+              <div className="mt-5 space-y-3">
                 <EmergencyCallCard onClick={handleEmergencyClick} />
                 <BlackmailProtectionCard onClick={handleProtectionClick} />
               </div>
 
-              <div className="mt-6 mx-2 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-start flex items-start gap-3">
-                <div className="p-2 rounded-xl bg-white/10 text-emerald-200 shrink-0">
+              <div className="mt-4 mx-2 rounded-xl border border-white/10 bg-white/[0.04] p-3 text-start flex items-start gap-3">
+                <div className="p-2 rounded-xl bg-white/10 text-[#bfd9d4] shrink-0">
                   <ShieldCheck className="h-5 w-5" />
                 </div>
                 <div>
                   <h4 className="text-xs font-bold text-white mb-0.5">{t("sidebar.privacy.title")}</h4>
-                  <p className="text-[10px] leading-relaxed text-white/60">
+                  <p className="text-[10px] leading-relaxed text-[#bfd9d4]/80">
                     {t("sidebar.privacy.desc")}
                   </p>
                 </div>
@@ -293,7 +265,8 @@ export default function DynamicSidebar({ isOpen, onClose }) {
           <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" onClick={onClose} />
         )}
         <aside
-          className={`fixed start-0 top-0 z-50 h-full w-[88vw] max-w-[292px] border-e border-white/10 bg-gradient-to-b from-primary via-secondary to-primary-dark text-white shadow-2xl shadow-primary/25 transform transition-transform duration-300 ease-in-out ${
+          style={{ backgroundColor: "#153f34" }}
+          className={`fixed start-0 top-0 z-50 h-full w-[88vw] max-w-[292px] border-e border-white/10 text-[#bfd9d4] shadow-card transform transition-transform duration-300 ease-in-out ${
             isOpen
               ? "translate-x-0"
               : isRTL
@@ -302,14 +275,14 @@ export default function DynamicSidebar({ isOpen, onClose }) {
           }`}
         >
           <div className="flex h-full flex-col overflow-hidden">
-            <div className="flex items-center justify-between px-5 pb-5 pt-7">
+            <div className="flex items-center justify-between px-6 pb-6 pt-8">
               <div className="flex items-center gap-3">
-                <span className="grid h-11 w-11 place-items-center rounded-2xl bg-gradient-to-br from-secondary to-primary shadow-lg shadow-black/15">
+                <span className="grid h-11 w-11 place-items-center rounded-xl shadow-md" style={{ backgroundColor: "#2c6947" }}>
                   <HeartHandshake className="h-6 w-6 text-white" />
                 </span>
                 <div>
-                  <p className="text-2xl font-black leading-none tracking-tight">nafas</p>
-                  <p className="mt-1 text-[10px] font-semibold tracking-[0.18em] text-white/55">
+                  <p className="text-2xl font-black leading-none tracking-tight text-white">nafas</p>
+                  <p className="mt-1 text-[10px] font-semibold tracking-[0.18em] text-[#bfd9d4]/70">
                     CARE PLATFORM
                   </p>
                 </div>
@@ -317,14 +290,14 @@ export default function DynamicSidebar({ isOpen, onClose }) {
               <button
                 type="button"
                 onClick={onClose}
-                className="grid h-10 w-10 place-items-center rounded-2xl bg-white/10 text-white/85 hover:bg-white/15"
+                className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-[#bfd9d4] hover:bg-white/15"
                 aria-label="Menu"
               >
                 <Menu className="h-5 w-5" />
               </button>
             </div>
 
-            <nav className="doctor-sidebar-scroll flex-1 overflow-y-auto px-4 pb-5">
+            <nav className="doctor-sidebar-scroll flex-1 overflow-y-auto px-4 pb-6">
               <ul className="space-y-1.5">
                 {navItems.map((item) => {
                   const Icon = item.icon;
@@ -337,10 +310,11 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                         className={({ isActive }) =>
                           `flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold transition-all relative ${
                             isActive
-                              ? "bg-secondary text-white shadow-sm ring-1 ring-white/10 font-bold"
-                              : "text-white/75 hover:bg-white/8 hover:text-white"
+                              ? "text-white shadow-sm font-bold"
+                              : "text-[#bfd9d4] hover:bg-white/8 hover:text-white"
                           }`
                         }
+                        style={({ isActive }) => (isActive ? { backgroundColor: "#2c6947" } : undefined)}
                       >
                         {({ isActive }) => (
                           <>
@@ -362,23 +336,23 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                 })}
               </ul>
 
-              <div className="my-5 h-px bg-white/15" />
+              <div className="my-6 h-px bg-white/15" />
               <button
                 onClick={handleLogout}
-                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-white/75 hover:bg-white/8 hover:text-white"
+                className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-semibold text-[#bfd9d4] hover:bg-white/8 hover:text-white"
               >
                 <LogOut className="h-5 w-5" />
                 <span>{t("auth.logout")}</span>
               </button>
             </nav>
 
-            <div className="m-4 mt-0 rounded-2xl border border-white/10 bg-white/[0.04] p-3.5 text-start flex items-start gap-3">
-              <div className="p-2 rounded-xl bg-white/10 text-emerald-200 shrink-0">
+            <div className="m-4 mt-0 rounded-xl border border-white/10 bg-white/[0.04] p-4 text-start flex items-start gap-3">
+              <div className="p-2 rounded-xl bg-white/10 text-[#bfd9d4] shrink-0">
                 <ShieldCheck className="h-5 w-5" />
               </div>
               <div>
                 <h4 className="text-xs font-bold text-white mb-0.5">{t("sidebar.privacy.title")}</h4>
-                <p className="text-[10px] leading-relaxed text-white/60">
+                <p className="text-[10px] leading-relaxed text-[#bfd9d4]/80">
                   {t("sidebar.privacy.desc")}
                 </p>
               </div>
@@ -396,7 +370,8 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       )}
 
       <aside
-        className={`fixed top-0 h-full w-[85vw] max-w-[280px] sm:w-64 bg-background-paper transform transition-transform duration-300 ease-in-out z-50 start-0 border-e border-border ${
+        style={{ backgroundColor: "#153f34" }}
+        className={`fixed top-0 h-full w-[85vw] max-w-[280px] sm:w-64 text-[#bfd9d4] transform transition-transform duration-300 ease-in-out z-50 start-0 border-e border-white/10 ${
           isOpen
             ? "translate-x-0"
             : isRTL
@@ -405,16 +380,16 @@ export default function DynamicSidebar({ isOpen, onClose }) {
         }`}
       >
         <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-border">
-            <h1 className="text-2xl font-bold text-primary">{t("auth.platformName")}</h1>
-            <p className="text-sm text-text-light mt-1">{t("auth.platformTagline")}</p>
+          <div className="p-6 border-b border-white/10">
+            <h1 className="text-2xl font-bold text-white">{t("auth.platformName")}</h1>
+            <p className="text-sm text-[#bfd9d4]/80 mt-1">{t("auth.platformTagline")}</p>
           </div>
 
-          <div className="p-4 border-b border-border">
+          <div className="p-4 border-b border-white/10">
             <div className="flex items-center gap-3">
               <UserAvatar name={user?.name || user?.Name} src={user?.image || user?.Image} size="md" />
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-text truncate">{user?.name || user?.Name || "User"}</p>
+                <p className="font-medium text-white truncate">{user?.name || user?.Name || "User"}</p>
                 <RoleBadge role={role} size="sm" />
               </div>
             </div>
@@ -433,15 +408,16 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                       className={({ isActive }) =>
                         `flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 relative ${
                           isActive
-                            ? "bg-primary/10 text-primary border-s-4 border-primary font-bold shadow-sm"
-                            : "text-text hover:bg-background-subtle hover:text-primary"
+                            ? "text-white font-bold shadow-sm"
+                            : "text-[#bfd9d4] hover:bg-white/8 hover:text-white"
                         }`
                       }
+                      style={({ isActive }) => (isActive ? { backgroundColor: "#2c6947" } : undefined)}
                     >
                       <Icon className="w-5 h-5 flex-shrink-0" />
                       <span className="font-medium">{item.name}</span>
                       {item.badge > 0 && (
-                        <span className={`ms-auto rounded-full px-2 py-0.5 text-[10px] font-black text-white ${item.emergency ? "bg-red-500" : "bg-primary"}`}>
+                        <span className={`ms-auto rounded-full px-2 py-0.5 text-[10px] font-black text-white ${item.emergency ? "bg-red-500" : "bg-white/15"}`}>
                           {item.badge > 99 ? "99+" : item.badge}
                         </span>
                       )}
@@ -452,10 +428,10 @@ export default function DynamicSidebar({ isOpen, onClose }) {
             </ul>
           </nav>
 
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-white/10">
             <button
               onClick={handleLogout}
-              className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-text hover:bg-red-50 hover:text-red-600 transition-all duration-200"
+              className="flex items-center gap-3 px-4 py-3 w-full rounded-xl text-[#bfd9d4] hover:bg-white/8 hover:text-white transition-all duration-200"
             >
               <LogOut className="w-5 h-5" />
               <span className="font-medium">{t("auth.logout")}</span>

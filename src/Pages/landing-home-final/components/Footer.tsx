@@ -42,8 +42,8 @@ export const Footer = () => {
 
   return (
     <footer dir={isAr ? "rtl" : "ltr"} className="border-t border-border bg-background-paper">
-      <div className="container mx-auto grid gap-10 px-4 py-12 sm:grid-cols-2 lg:grid-cols-[1.35fr_1fr_1fr_1fr]">
-        <div className="text-start">
+      <div className="container mx-auto max-w-6xl grid gap-8 px-4 py-12 sm:grid-cols-2 lg:grid-cols-[1.35fr_1fr_1fr_1fr]">
+        <div className="text-start" style={isAr ? { order: 4 } : undefined}>
           <Logo />
           <p className="mt-4 max-w-xs text-sm font-semibold leading-7 text-text-light">
             {isAr
@@ -75,7 +75,7 @@ export const Footer = () => {
           </div>
         </div>
 
-        <div className="text-start">
+        <div className="text-start" style={isAr ? { order: 3 } : undefined}>
           <h4 className="mb-4 text-base font-black text-text-heading">{isAr ? "روابط سريعة" : "Quick links"}</h4>
           <ul className="space-y-3 text-sm font-semibold text-text-light">
             {quickLinks.map((link) => (
@@ -86,7 +86,7 @@ export const Footer = () => {
           </ul>
         </div>
 
-        <div className="text-start">
+        <div className="text-start" style={isAr ? { order: 2 } : undefined}>
           <h4 className="mb-4 text-base font-black text-text-heading">{isAr ? "الدعم والمساعدة" : "Support"}</h4>
           <ul className="space-y-3 text-sm font-semibold text-text-light">
             {supportLinks.map((link) => (
@@ -97,7 +97,7 @@ export const Footer = () => {
           </ul>
         </div>
 
-        <div className="text-start">
+        <div className="text-start" style={isAr ? { order: 1 } : undefined}>
           <h4 className="mb-4 text-base font-black text-text-heading">{isAr ? "تواصل معنا" : "Contact us"}</h4>
           <ul className="space-y-3 text-sm font-semibold text-text-light">
             <li className="flex items-center gap-2"><Phone className="h-4 w-4 text-text-light" />010 1234 5678</li>
@@ -107,7 +107,7 @@ export const Footer = () => {
         </div>
       </div>
       <div className="border-t border-border">
-        <p className="container mx-auto px-4 py-5 text-center text-xs font-semibold text-text-light">
+        <p className="container mx-auto max-w-6xl px-4 py-6 text-center text-xs font-semibold text-text-light">
           {isAr ? "جميع الحقوق محفوظة © 2026 نفس" : "All rights reserved © 2026 Nafas"}
         </p>
       </div>

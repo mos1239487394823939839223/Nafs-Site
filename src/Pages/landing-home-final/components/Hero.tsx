@@ -2,7 +2,7 @@ import { Button } from "../../../components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import { heroBg } from "../assets";
-import { landingBtnLg } from "../landingButtonStyles";
+import { landingBtnLg, landingBtnLgPrimary } from "../landingButtonStyles";
 
 export const Hero = () => {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ export const Hero = () => {
   return (
     <section
       id="home"
-      className="relative overflow-hidden bg-background-paper pb-12 md:pb-[52px]"
+      className="relative overflow-hidden bg-background-paper pb-12 md:pb-16"
       style={{
         backgroundImage: `url(${heroBg})`,
         backgroundSize: "cover",
@@ -45,7 +45,7 @@ export const Hero = () => {
           dir={isAr ? "rtl" : "ltr"}
           className="flex flex-col justify-center px-8 py-16 lg:px-14 xl:px-20"
         >
-          <h1 className="text-[42px] font-black leading-[1.22] text-primary sm:text-[52px] lg:text-[64px]">
+          <h1 className="text-[40px] font-black leading-[1.22] text-primary lg:text-[56px]">
             {isAr ? (
               <>
                 خُذ نفس،
@@ -61,7 +61,7 @@ export const Hero = () => {
             )}
           </h1>
 
-          <p className="mt-5 max-w-[340px] text-[15px] font-medium leading-[1.9] text-text">
+          <p className="mt-6 max-w-[340px] text-[15px] font-medium leading-[1.9] text-text">
             {isAr
               ? "منصة دعم نفسي سرية وآمنة تساعدك على فهم نفسك والتحدث مع متخصصين متى احتجت."
               : "A private, secure mental health platform that helps you understand yourself and talk with specialists whenever you need."}
@@ -74,8 +74,7 @@ export const Hero = () => {
           >
             <Button
               onClick={() => navigate("/auth/role-selection")}
-              variant="outline"
-              className={landingBtnLg}
+              className={landingBtnLgPrimary}
             >
               {isAr ? "احجز جلسة الآن" : "Book a Session"}
             </Button>

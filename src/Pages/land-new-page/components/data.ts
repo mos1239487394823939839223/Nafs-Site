@@ -18,14 +18,14 @@ export const statTiles = [
     titleKey: "doctor.dashboardHome.tiles.reviews.title",
     descKey: "doctor.dashboardHome.tiles.reviews.desc",
     ctaKey: "doctor.dashboardHome.tiles.reviews.cta",
-      href: "/dashboard/doctor/history?tab=statistics",
+    href: "/dashboard/doctor/history",
   },
   {
     icon: "BarChart3",
     titleKey: "doctor.dashboardHome.tiles.performance.title",
     descKey: "doctor.dashboardHome.tiles.performance.desc",
     ctaKey: "doctor.dashboardHome.tiles.performance.cta",
-    href: "/dashboard/doctor/history?tab=statistics",
+    href: "/dashboard/doctor/history",
   },
 ];
 
@@ -91,25 +91,25 @@ export const quickTools = [
     icon: "BookOpen",
     titleKey: "doctor.dashboardHome.quickTools.items.assessmentForms.title",
     descKey: "doctor.dashboardHome.quickTools.items.assessmentForms.desc",
-    href: "/dashboard/doctor/medical-records?section=assessments",
+    href: "/dashboard/doctor/history",
   },
   {
     icon: "ClipboardList",
     titleKey: "doctor.dashboardHome.quickTools.items.sessionNotes.title",
     descKey: "doctor.dashboardHome.quickTools.items.sessionNotes.desc",
-    href: "/dashboard/doctor/history?tab=records",
+    href: "/dashboard/doctor/history",
   },
   {
     icon: "SlidersHorizontal",
     titleKey: "doctor.dashboardHome.quickTools.items.sessionManagement.title",
     descKey: "doctor.dashboardHome.quickTools.items.sessionManagement.desc",
-    href: "/dashboard/doctor/schedule?open=slot",
+    href: "/dashboard/doctor/schedule",
   },
   {
     icon: "UserPlus",
     titleKey: "doctor.dashboardHome.quickTools.items.addPatient.title",
     descKey: "doctor.dashboardHome.quickTools.items.addPatient.desc",
-    href: "/dashboard/doctor/medical-records?add=1",
+    href: "/dashboard/doctor/queue",
   },
 ];
 

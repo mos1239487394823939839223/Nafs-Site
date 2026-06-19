@@ -1,8 +1,6 @@
 import { Link } from "react-router-dom";
-import { FileClock, MessageSquare, PlayCircle, User } from "lucide-react";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import { APPOINTMENT_STATUS } from "../../../lib/appointmentStatus";
-import { doctorMedicalRecordsUrl, doctorMessagesUrl, doctorHistoryUrl } from "../../../lib/doctorPatientRoutes";
 
 interface BookingDto {
   BookingId?: number | string;
@@ -41,7 +39,7 @@ function statusKey(status?: number): string {
 
 function formatDate(iso?: string): string {
   if (!iso) return "";
-  return new Date(iso).toLocaleDateString("en-US", {
+  return new Date(iso).toLocaleDateString(undefined, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -52,29 +50,33 @@ export const RecentPatients = ({ patients = [], loading = false }: RecentPatient
   const { t, isRTL } = useLanguage();
 
   return (
-    <section className="rounded-[26px] border border-border bg-background-paper p-5 shadow-card sm:p-7">
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-extrabold text-text-heading">
-          {t("doctor.dashboardHome.recentPatients.title")}
-        </h2>
+    <section className="rounded-2xl bg-card border border-border shadow-card p-4 md:p-5">
+      <div className="flex items-center justify-between mb-3">
         <Link
           to="/dashboard/doctor/history"
-          className="rounded-xl bg-background-subtle px-3 py-2 text-xs font-bold text-secondary hover:bg-background"
+          className="text-xs font-semibold text-primary hover:text-primary/80"
         >
           {t("doctor.dashboardHome.recentPatients.viewAll")}
         </Link>
+        <h2 className="text-base font-bold text-foreground">
+          {t("doctor.dashboardHome.recentPatients.title")}
+        </h2>
       </div>
 
       {loading && (
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-1.5">
           {[1, 2, 3].map((n) => (
-            <div key={n} className="flex items-center gap-3 p-3 rounded-2xl animate-pulse">
-              <div className="size-10 rounded-full bg-muted shrink-0" />
-              <div className="flex-1 min-w-0 space-y-2">
-                <div className="h-4 w-32 rounded bg-muted" />
-                <div className="h-3 w-24 rounded bg-muted" />
+            <div key={n} className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 p-2 rounded-xl animate-pulse">
+              <div className="flex items-center gap-3">
+                <div className="size-9 rounded-full bg-muted" />
+                <div className="space-y-2">
+                  <div className="h-4 w-32 rounded bg-muted" />
+                  <div className="h-3 w-24 rounded bg-muted" />
+                </div>
               </div>
-              <div className="h-6 w-16 rounded-full bg-muted hidden sm:block" />
+              <div className="h-4 w-20 rounded bg-muted" />
+              <div className="h-6 w-16 rounded-full bg-muted" />
+              <div className="h-4 w-16 rounded bg-muted" />
             </div>
           ))}
         </div>
@@ -87,7 +89,7 @@ export const RecentPatients = ({ patients = [], loading = false }: RecentPatient
       )}
 
       {!loading && patients.length > 0 && (
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col gap-1.5">
           {patients.map((p, i) => {
             const variant = statusVariant(p.Status as number | undefined);
             const sKey = statusKey(p.Status as number | undefined);
@@ -99,52 +101,42 @@ export const RecentPatients = ({ patients = [], loading = false }: RecentPatient
             return (
               <div
                 key={p.BookingId ?? i}
-                className="flex flex-wrap items-center gap-4 rounded-[20px] border border-transparent bg-background p-4 transition-all hover:border-border hover:bg-background-subtle sm:p-5"
+                className="grid grid-cols-[1fr_auto_auto_auto] items-center gap-4 p-2 rounded-xl hover:bg-muted/40 transition-colors"
               >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
+                <div className="flex items-center gap-2.5 min-w-0">
                   <img
                     src={avatar}
                     alt={p.PatientName as string ?? ""}
-                    className="size-12 shrink-0 rounded-2xl object-cover ring-4 ring-white sm:size-14"
+                    className="size-9 rounded-full object-cover"
                   />
                   <div className="min-w-0">
-                    <p className="truncate font-extrabold text-text-heading">
+                    <p className="text-sm font-semibold text-foreground truncate">
                       {p.PatientName as string ?? ""}
                     </p>
-                    <p className="mt-1 truncate text-xs font-medium text-text-light">
+                    <p className="text-xs text-muted-foreground truncate">
                       {`${t("doctor.dashboardHome.recentPatients.lastSession")} ${date}`}
                     </p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 sm:gap-3 ms-auto sm:ms-0">
-                  <span dir="ltr" className="hidden whitespace-nowrap text-xs font-semibold text-text-light sm:inline sm:text-sm">{date}</span>
+                <span className="text-xs text-muted-foreground whitespace-nowrap">{date}</span>
 
-                  <span
-                    className={`rounded-full px-3 py-1.5 text-xs font-bold ${
-                      variant === "active"
-                        ? "bg-[#E4F5EC] text-[#237253]"
-                        : "bg-[#FFF4DA] text-[#9A6A14]"
-                    }`}
-                  >
-                    {t(sKey)}
-                  </span>
+                <span
+                  className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                    variant === "active"
+                      ? "bg-primary/15 text-primary"
+                      : "bg-muted text-foreground"
+                  }`}
+                >
+                  {t(sKey)}
+                </span>
 
-                  <div className="flex items-center gap-1.5">
-                    <Link title={t("doctor.dashboardHome.recentPatients.viewFile")} to={doctorMedicalRecordsUrl(p.PatientId)} className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-background-paper text-primary hover:bg-background-subtle">
-                      <User className="size-4" />
-                    </Link>
-                    <Link title={isRTL ? "عرض السجل" : "View history"} to={doctorHistoryUrl({ tab: "records", patientId: p.PatientId })} className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-background-paper text-primary hover:bg-background-subtle">
-                      <FileClock className="size-4" />
-                    </Link>
-                    <Link title={isRTL ? "إرسال رسالة" : "Send message"} to={doctorMessagesUrl(p.PatientId, p.BookingId)} className="grid h-9 w-9 place-items-center rounded-xl border border-border bg-background-paper text-primary hover:bg-background-subtle">
-                      <MessageSquare className="size-4" />
-                    </Link>
-                    <Link title={isRTL ? "بدء الجلسة" : "Start session"} to={doctorMessagesUrl(p.PatientId, p.BookingId)} className="inline-flex h-9 items-center gap-1.5 whitespace-nowrap rounded-xl bg-primary px-3 text-xs font-bold text-white hover:bg-primary-dark">
-                      <PlayCircle className="size-4" />{isRTL ? "بدء" : "Start"}
-                    </Link>
-                  </div>
-                </div>
+                <Link
+                  to="/dashboard/doctor/history"
+                  className="text-xs font-semibold text-primary hover:text-primary/80 whitespace-nowrap"
+                >
+                  {t("doctor.dashboardHome.recentPatients.viewFile")}
+                </Link>
               </div>
             );
           })}

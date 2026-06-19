@@ -10,14 +10,14 @@ export const Assessment = () => {
   const isAr = language === "ar";
 
   return (
-    <section className="container mx-auto px-4 py-10 md:py-14">
-      <div className="overflow-hidden rounded-[20px] border border-border bg-background-subtle">
+    <section className="container mx-auto px-4 py-12 md:py-16">
+      <div className="mx-auto max-w-6xl overflow-hidden rounded-lg border border-border bg-background-subtle">
         <div
           dir="ltr"
           className="grid items-center gap-8 md:grid-cols-2 md:gap-10 lg:gap-14"
         >
           {/* Illustration — physical left */}
-          <div className="flex items-center justify-center overflow-hidden rounded-s-[20px] bg-background-subtle">
+          <div className="flex items-center justify-center overflow-hidden rounded-s-lg bg-background-subtle">
             <img
               src={assessmentSkill}
               alt={isAr ? "استبيان تقييم نفسي" : "Mental health assessment clipboard"}

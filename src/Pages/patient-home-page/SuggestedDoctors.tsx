@@ -14,8 +14,8 @@ interface DoctorDto {
   SessionPrice?: number | null;
 }
 
-const AVATAR_SIZE = 84;
-const CARD_HEIGHT = 324;
+const AVATAR_SIZE = 64;
+const CARD_HEIGHT = 260;
 
 export const SuggestedDoctors = () => {
   const navigate = useNavigate();
@@ -75,7 +75,7 @@ export const SuggestedDoctors = () => {
         onAction={() => navigate("/dashboard/patient/reserve")}
       />
 
-      <div className="relative px-7 md:px-9">
+      <div className="relative px-6 md:px-8">
         <button
           onClick={() => setScroll(Math.max(0, scroll - 1))}
           disabled={scroll === 0}
@@ -103,7 +103,7 @@ export const SuggestedDoctors = () => {
               ? skeletonCards.map((_, index) => (
                   <div
                     key={index}
-                    className="flex animate-pulse flex-col items-center rounded-2xl border border-border bg-background-paper px-[21px] py-8 shadow-sm"
+                    className="flex animate-pulse flex-col items-center rounded-xl border border-border bg-background-paper px-4 py-5 shadow-sm"
                     style={{ height: CARD_HEIGHT, minHeight: CARD_HEIGHT, maxHeight: CARD_HEIGHT }}
                   >
                     <div className="rounded-full bg-muted" style={avatarStyle} />
@@ -119,7 +119,7 @@ export const SuggestedDoctors = () => {
               : doctors.map((doctor) => (
                   <article
                     key={doctor.Id}
-                    className="flex flex-col items-center rounded-[24px] border border-border bg-background-paper px-[21px] py-8 text-center shadow-card transition-all hover:-translate-y-1 hover:border-secondary/40 hover:shadow-[0_22px_55px_-28px_rgba(15,76,58,0.5)]"
+                    className="flex flex-col items-center rounded-xl border border-border bg-background-paper px-4 py-5 text-center shadow-card transition-all duration-200 hover:-translate-y-1 hover:border-secondary/40 hover:shadow-hover"
                     style={{ height: CARD_HEIGHT, minHeight: CARD_HEIGHT, maxHeight: CARD_HEIGHT }}
                   >
                     <div

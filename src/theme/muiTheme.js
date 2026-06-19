@@ -30,29 +30,29 @@ export function createAppTheme(mode = 'light', direction = 'ltr') {
         text: {
             primary: designTokens.colors.text,
             secondary: designTokens.colors.mutedText,
-            disabled: '#8FBDAA',
+            disabled: designTokens.colors.disabledText,
         },
         error: {
-            main: '#ef4444',
+            main: designTokens.colors.error,
             light: '#fca5a5',
             dark: '#dc2626',
         },
         warning: {
-            main: '#f59e0b',
+            main: designTokens.colors.warning,
             light: '#fcd34d',
             dark: '#d97706',
         },
         success: {
-            main: '#10b981',
+            main: designTokens.colors.success,
             light: '#6ee7b7',
             dark: '#059669',
         },
         info: {
-            main: '#3b82f6',
+            main: designTokens.colors.info,
             light: '#93c5fd',
             dark: '#2563eb',
         },
-        divider: '#C8DFD3',
+        divider: designTokens.colors.border,
     }
 
     // Dark mode colors

@@ -22,27 +22,12 @@ export const Navbar = () => {
 
   return (
     <header dir="ltr" className="sticky top-0 z-50 border-b border-border bg-background-paper/95 backdrop-blur">
-      <nav className="container mx-auto grid h-[68px] grid-cols-[1fr_auto] items-center gap-3 px-4 md:h-[76px] lg:grid-cols-[auto_1fr_auto] lg:gap-6 lg:px-6">
-        {/* Left: CTAs (desktop) */}
-        <div className="hidden items-center gap-2 lg:flex">
-          <Button
-            variant="outline"
-            size="sm"
-            className={landingBtnNav}
-            onClick={() => navigate("/auth/login")}
-          >
-            {isAr ? "تسجيل الدخول" : "Login"}
-          </Button>
-          <Button size="sm" className={landingBtnNavPrimary} onClick={() => navigate("/auth/role-selection")}>
-            {isAr ? "احجز جلسة الآن" : "Book now"}
-          </Button>
-        </div>
+      <nav className="container mx-auto flex h-[68px] items-center justify-between gap-4 px-4 md:h-[76px] lg:gap-6 lg:px-6">
+        {/* Logo — always on the left (matches reference design) */}
+        <Logo className="[&>span:first-child]:h-10 [&>span:first-child]:w-10 [&>span:last-child]:text-xl" />
 
-        {/* Center-right: nav links (closer to logo) */}
-        <ul
-          dir={isAr ? "rtl" : "ltr"}
-          className="hidden items-center justify-end gap-6 lg:flex lg:pe-6 xl:pe-10"
-        >
+        {/* Center: nav links — kept in RTL reading order for Arabic */}
+        <ul dir={isAr ? "rtl" : "ltr"} className="hidden items-center gap-6 lg:flex">
           {links.map((link) => (
             <li key={link.href}>
               <a
@@ -55,8 +40,22 @@ export const Navbar = () => {
           ))}
         </ul>
 
-        {/* Right: logo + mobile menu */}
-        <div className="col-start-2 flex items-center justify-end gap-3 lg:col-start-3">
+        {/* Right (RTL: Left): CTAs + Mobile menu toggle */}
+        <div className="flex items-center gap-3">
+          <div className="hidden items-center gap-2 lg:flex">
+            <Button
+              variant="outline"
+              size="sm"
+              className={landingBtnNav}
+              onClick={() => navigate("/auth/login")}
+            >
+              {isAr ? "تسجيل الدخول" : "Login"}
+            </Button>
+            <Button size="sm" className={landingBtnNavPrimary} onClick={() => navigate("/auth/role-selection")}>
+              {isAr ? "احجز جلسة الآن" : "Book now"}
+            </Button>
+          </div>
+
           <button
             onClick={() => setMenuOpen(!menuOpen)}
             className="grid h-10 w-10 place-items-center rounded-xl border border-border bg-background-paper text-primary lg:hidden"
@@ -64,7 +63,6 @@ export const Navbar = () => {
           >
             {menuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </button>
-          <Logo className="[&>span:first-child]:h-10 [&>span:first-child]:w-10 [&>span:last-child]:text-xl" />
         </div>
       </nav>
 

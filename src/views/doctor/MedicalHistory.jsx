@@ -604,13 +604,13 @@ export default function MedicalHistory() {
             <Modal
                 isOpen={isAddModalOpen}
                 onClose={() => setIsAddModalOpen(false)}
-                title={`Add Clinical Record for ${selectedPatient?.name}`}
+                title={`${t('doctor.addClinicalRecordFor')} ${selectedPatient?.name}`}
                 size="lg"
             >
                 <div className="space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Test Type</label>
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.testType')}</label>
                             <div className="flex gap-2">
                                 <select
                                     value={selectedTestTypeId}
@@ -618,46 +618,46 @@ export default function MedicalHistory() {
                                     className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
                                 >
                                     {testTypes.length === 0 ? (
-                                        <option value="">No test types available</option>
+                                        <option value="">{t('doctor.noTestTypesAvailable')}</option>
                                     ) : (
                                         testTypes.map((type) => (
                                             <option key={type.ID} value={String(type.ID)}>{type.Name}</option>
                                         ))
                                     )}
                                 </select>
-                                <Button variant="outline" onClick={handleCreateTestType} disabled={creatingType}>
-                                    {creatingType ? t('common.saving') : 'Create'}
+                                <Button variant="outline" className="shrink-0 whitespace-nowrap" onClick={handleCreateTestType} disabled={creatingType}>
+                                    {creatingType ? t('common.saving') : t('doctor.createTestType')}
                                 </Button>
                             </div>
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Treatment Program (البرنامج العلاجي)</label>
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.treatmentProgram')}</label>
                             <select
                                 value={newRecord.treatmentProgram}
                                 onChange={(e) => setNewRecord({ ...newRecord, treatmentProgram: e.target.value })}
                                 className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
                             >
-                                <option value="">No program (بدون تحديد برنامج)</option>
-                                <option value="برنامج إدارة القلق">برنامج إدارة القلق (Anxiety Program)</option>
-                                <option value="برنامج علاج الاكتئاب">برنامج علاج الاكتئاب (Depression Program)</option>
-                                <option value="برنامج التخلص من التوتر">برنامج التخلص من التوتر (Stress Program)</option>
-                                <option value="برنامج تعزيز الثقة بالنفس">برنامج تعزيز الثقة بالنفس (Self-Esteem Program)</option>
-                                <option value="برنامج التحكم في الغضب">برنامج التحكم في الغضب (Anger Program)</option>
-                                <option value="برنامج الدعم السلوكي المعرفي">برنامج الدعم السلوكي المعرفي (CBT Program)</option>
-                                <option value="custom">Other / Custom Program (برنامج مخصص)</option>
+                                <option value="">{t('doctor.noProgramOption')}</option>
+                                <option value="برنامج إدارة القلق">{t('doctor.anxietyProgram')}</option>
+                                <option value="برنامج علاج الاكتئاب">{t('doctor.depressionProgram')}</option>
+                                <option value="برنامج التخلص من التوتر">{t('doctor.stressProgram')}</option>
+                                <option value="برنامج تعزيز الثقة بالنفس">{t('doctor.selfEsteemProgram')}</option>
+                                <option value="برنامج التحكم في الغضب">{t('doctor.angerProgram')}</option>
+                                <option value="برنامج الدعم السلوكي المعرفي">{t('doctor.cbtProgram')}</option>
+                                <option value="custom">{t('doctor.customProgramOption')}</option>
                             </select>
                         </div>
                     </div>
 
                     {newRecord.treatmentProgram === 'custom' && (
                         <div className="space-y-2">
-                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Custom Program Name (اسم البرنامج المخصص)</label>
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.customProgramName')}</label>
                             <input
                                 type="text"
                                 value={newRecord.customProgram}
                                 onChange={(e) => setNewRecord({ ...newRecord, customProgram: e.target.value })}
-                                placeholder="Enter program name"
+                                placeholder={t('doctor.enterProgramName')}
                                 className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
                             />
                         </div>
@@ -665,7 +665,7 @@ export default function MedicalHistory() {
 
                     {newRecord.treatmentProgram && (
                         <div className="space-y-2">
-                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Program Sessions Total (عدد الجلسات الإجمالي)</label>
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.programSessionsTotal')}</label>
                             <input
                                 type="number"
                                 min="1"
@@ -679,48 +679,48 @@ export default function MedicalHistory() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Assessment Summary (تشخيص الحالة)</label>
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.assessmentSummary')}</label>
                             <input
                                 type="text"
                                 value={newRecord.assessment}
                                 onChange={(e) => setNewRecord({ ...newRecord, assessment: e.target.value })}
-                                placeholder="e.g. Generalized Anxiety Disorder"
+                                placeholder={t('doctor.assessmentSummaryPlaceholder')}
                                 className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
                             />
                         </div>
 
                         <div className="space-y-2">
-                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Severity Level (مستوى الشدة)</label>
+                            <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.severityLevel')}</label>
                             <select
                                 value={newRecord.assessmentLevel}
                                 onChange={(e) => setNewRecord({ ...newRecord, assessmentLevel: e.target.value })}
                                 className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
                             >
-                                <option value="">Select severity level (اختر مستوى الشدة)</option>
-                                <option value="خفيف (Mild)">خفيف (Mild)</option>
-                                <option value="متوسط (Moderate)">متوسط (Moderate)</option>
-                                <option value="شديد (Severe)">شديد (Severe)</option>
-                                <option value="عاجل (Urgent)">عاجل (Urgent)</option>
+                                <option value="">{t('doctor.selectSeverityLevel')}</option>
+                                <option value="خفيف (Mild)">{t('doctor.severityMild')}</option>
+                                <option value="متوسط (Moderate)">{t('doctor.severityModerate')}</option>
+                                <option value="شديد (Severe)">{t('doctor.severitySevere')}</option>
+                                <option value="عاجل (Urgent)">{t('doctor.severityUrgent')}</option>
                             </select>
                         </div>
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">Therapist Recommendations (التوصيات العلاجية)</label>
+                        <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.therapistRecommendations')}</label>
                         <textarea
                             value={newRecord.recommendations}
                             onChange={(e) => setNewRecord({ ...newRecord, recommendations: e.target.value })}
-                            placeholder="Write recommendations, exercises, home tasks..."
+                            placeholder={t('doctor.recommendationsPlaceholder')}
                             className="w-full h-24 p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none text-text"
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.sessionSummary')} / ملاحظات الجلسة</label>
+                        <label className="text-sm font-black italic text-text-muted uppercase tracking-tighter">{t('doctor.sessionSummary')}</label>
                         <textarea
                             value={newRecord.summary}
                             onChange={(e) => setNewRecord({ ...newRecord, summary: e.target.value })}
-                            placeholder="Describe the session highlights, patient progress, etc..."
+                            placeholder={t('doctor.sessionSummaryPlaceholder')}
                             className="w-full h-32 p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all resize-none text-text"
                         />
                     </div>
@@ -731,7 +731,7 @@ export default function MedicalHistory() {
                             type="text"
                             value={newRecord.medications}
                             onChange={(e) => setNewRecord({ ...newRecord, medications: e.target.value })}
-                            placeholder="e.g. Aspirin, Ibuprofen"
+                            placeholder={t('doctor.medicationsPlaceholder')}
                             className="w-full p-4 bg-background border border-border rounded-2xl focus:ring-2 focus:ring-primary/20 outline-none transition-all text-text"
                         />
                     </div>

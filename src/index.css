@@ -21,7 +21,7 @@ html {
   --brand-muted: 151 51% 36%;     /* #2D8C63 - secondary */
   --cream: 144 33% 97%;           /* #F5FAF7 - background */
   --cream-deep: 142 29% 95%;      /* #EDF5F0 - background-subtle */
-  --background: 144 33% 97%;      /* #F5FAF7 */
+  --background: 0 0% 100%;        /* #FFFFFF */
   --border: 216 11% 91%;          /* #E5E7EB */
   --foreground: 0 0% 11%;         /* #1B1B1B */
 
@@ -34,17 +34,17 @@ html {
   --color-secondary-light: #EAF5EF;
   --color-secondary-dark: #0E5A3C;
 
-  --color-background: #F5FAF7;
+  --color-background: #FFFFFF;
   --color-background-paper: #FFFFFF;
   --color-background-subtle: #F8F9F8;
 
   --color-border: #E5E7EB;
-  --color-border-light: #EEF1F3;
+  --color-border-light: #E5E7EB;
   --color-border-dark: #B9C0C6;
 
   --color-text: #1B1B1B;
   --color-text-light: #6F6F6F;
-  --color-text-heading: #1A2B23;
+  --color-text-heading: #1B1B1B;
 
   /* Provided design-system token aliases */
   --primary: #0E5A3C;
@@ -71,9 +71,9 @@ html {
   --ds-info: #3977C3;
   --ds-radius-control: 12px;
   --ds-radius-card: 20px;
-  --ds-radius-panel: 26px;
-  --ds-shadow-card: 0 12px 35px -28px rgba(15, 76, 58, 0.45);
-  --ds-shadow-elevated: 0 18px 50px -30px rgba(15, 76, 58, 0.38);
+  --ds-radius-panel: 24px;
+  --ds-shadow-card: 0 4px 20px rgba(0, 0, 0, 0.05);
+  --ds-shadow-elevated: 0 8px 30px rgba(0, 0, 0, 0.08);
   --ds-shadow-hover: 0 8px 30px rgba(0, 0, 0, 0.08);
 
   /* Typography scale */
@@ -370,8 +370,8 @@ a {
 /* ─── Patient Home Page Design Tokens ───────────────────────────────────── */
 :root {
   --gradient-hero: linear-gradient(135deg, hsl(150 40% 96%) 0%, hsl(150 35% 92%) 100%);
-  --shadow-card:   0 2px 12px -4px hsl(152 35% 45% / 0.08);
-  --shadow-cta:    0 4px 20px -6px hsl(152 35% 45% / 0.28);
+  --shadow-card:   0 4px 20px rgba(0,0,0,0.05);
+  --shadow-cta:    0 8px 30px rgba(0,0,0,0.08);
   --primary-soft:  150 40% 92%;
 
   /* mood palette */
@@ -384,8 +384,8 @@ a {
 
 .dark {
   --gradient-hero: linear-gradient(135deg, hsl(160 25% 12%) 0%, hsl(152 30% 16%) 100%);
-  --shadow-card:   0 2px 12px -4px hsl(0 0% 0% / 0.25);
-  --shadow-cta:    0 4px 20px -6px hsl(152 35% 45% / 0.35);
+  --shadow-card:   0 4px 20px rgba(0,0,0,0.25);
+  --shadow-cta:    0 8px 30px rgba(0,0,0,0.35);
   --primary-soft:  152 30% 18%;
 }
 

@@ -10,28 +10,26 @@ export const QuickTools = () => {
   const { t, isRTL } = useLanguage();
 
   return (
-    <section className="mb-7 rounded-[26px] border border-border bg-background-paper p-5 shadow-card sm:p-7">
-      <h2 className="mb-6 text-start text-xl font-extrabold text-text-heading">
+    <section className="rounded-2xl bg-card border border-border shadow-card p-4 md:p-5">
+      <h2 className="text-base font-bold text-foreground text-center mb-4">
         {t("doctor.dashboardHome.quickTools.title")}
       </h2>
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4 sm:gap-4">
-        {quickTools.map((tool) => {
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        {(isRTL ? [...quickTools].reverse() : quickTools).map((tool) => {
           const Icon = iconMap[tool.icon as keyof typeof iconMap];
           return (
             <button
               key={tool.titleKey}
               type="button"
               onClick={() => navigate(tool.href)}
-              className={`group flex min-h-[104px] items-center gap-4 rounded-[20px] border border-border bg-background p-4 transition-all hover:-translate-y-0.5 hover:border-secondary/30 hover:bg-background-subtle hover:shadow-md ${
-                "text-start"
+              className={`flex items-center gap-2.5 p-3 rounded-xl border border-border hover:border-primary/40 hover:bg-muted/40 transition-colors text-start ${
+                isRTL ? "flex-row-reverse" : ""
               }`}
             >
-              <span className="grid h-12 w-12 shrink-0 place-items-center rounded-2xl bg-background-subtle text-primary group-hover:bg-primary group-hover:text-white">
-                <Icon className="size-5" />
-              </span>
+              <Icon className="size-4 text-primary shrink-0" />
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-extrabold text-text-heading">{t(tool.titleKey)}</p>
-                <p className="mt-1 truncate text-xs font-medium text-text-light">{t(tool.descKey)}</p>
+                <p className="font-semibold text-foreground text-sm">{t(tool.titleKey)}</p>
+                <p className="text-xs text-muted-foreground truncate">{t(tool.descKey)}</p>
               </div>
             </button>
           );

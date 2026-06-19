@@ -12,11 +12,11 @@ const moodMeta: Array<{
   color: string;
   ring: string;
 }> = [
-  { key: "terrible", labelKey: "patientHome.moodCheckIn.terrible", emoji: "😣", color: "bg-[#EF4444]", ring: "ring-[#FCA5A5]" },
-  { key: "bad", labelKey: "patientHome.moodCheckIn.bad", emoji: "🙁", color: "bg-[#F97316]", ring: "ring-[#FDBA74]" },
-  { key: "okay", labelKey: "patientHome.moodCheckIn.okay", emoji: "😐", color: "bg-[#FACC15]", ring: "ring-[#FDE68A]" },
-  { key: "good", labelKey: "patientHome.moodCheckIn.good", emoji: "🙂", color: "bg-[#FBBF24]", ring: "ring-[#FDE68A]" },
-  { key: "great", labelKey: "patientHome.moodCheckIn.great", emoji: "😊", color: "bg-[#79C267]", ring: "ring-[#BBF7D0]" },
+  { key: "terrible", labelKey: "patientHome.moodCheckIn.terrible", emoji: "😣", color: "bg-mood-1", ring: "ring-mood-1/50" },
+  { key: "bad", labelKey: "patientHome.moodCheckIn.bad", emoji: "🙁", color: "bg-mood-2", ring: "ring-mood-2/50" },
+  { key: "okay", labelKey: "patientHome.moodCheckIn.okay", emoji: "😐", color: "bg-mood-3", ring: "ring-mood-3/50" },
+  { key: "good", labelKey: "patientHome.moodCheckIn.good", emoji: "🙂", color: "bg-mood-4", ring: "ring-mood-4/50" },
+  { key: "great", labelKey: "patientHome.moodCheckIn.great", emoji: "😊", color: "bg-mood-5", ring: "ring-mood-5/50" },
 ];
 
 export const MoodCheckIn = () => {
@@ -52,7 +52,7 @@ export const MoodCheckIn = () => {
   };
 
   return (
-    <section className="rounded-[26px] border border-border bg-[linear-gradient(135deg,var(--color-background-paper)_0%,var(--color-background)_100%)] p-5 text-center shadow-card md:p-7">
+    <section className="rounded-xl border border-border bg-[linear-gradient(135deg,var(--color-background-paper)_0%,var(--color-background)_100%)] p-4 text-center shadow-card md:p-5">
       <div className="flex flex-col items-center justify-between gap-3 sm:flex-row sm:text-start">
         <div>
       <h3 className="text-xl font-black text-text-heading">
@@ -70,7 +70,7 @@ export const MoodCheckIn = () => {
         )}
       </div>
 
-      <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-5">
+      <div className="mt-4 grid grid-cols-2 gap-2.5 sm:grid-cols-5">
         {moodMeta.map((mood) => {
           const isSelected = selected === mood.key;
 
@@ -79,7 +79,7 @@ export const MoodCheckIn = () => {
               key={mood.key}
               type="button"
               onClick={() => saveMood(mood.key)}
-              className={`group min-h-[104px] rounded-2xl border bg-background-paper px-3 py-4 text-center shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-secondary/35 hover:shadow-lg ${
+              className={`group min-h-[84px] rounded-2xl border bg-background-paper px-2.5 py-3 text-center shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-secondary/35 hover:shadow-lg ${
                 isSelected
                   ? `border-primary ring-4 ${mood.ring}`
                   : "border-border"
@@ -87,11 +87,11 @@ export const MoodCheckIn = () => {
               aria-pressed={isSelected}
             >
               <span
-                className={`mx-auto grid h-11 w-11 place-items-center rounded-full ${mood.color} text-xl shadow-sm transition-transform duration-200 group-hover:scale-110`}
+                className={`mx-auto grid h-9 w-9 place-items-center rounded-full ${mood.color} text-lg shadow-sm transition-transform duration-200 group-hover:scale-110`}
               >
                 {mood.emoji}
               </span>
-              <span className="mt-3 block text-sm font-bold text-text-heading">
+              <span className="mt-2 block text-xs font-bold text-text-heading">
                 {t(mood.labelKey)}
               </span>
             </button>

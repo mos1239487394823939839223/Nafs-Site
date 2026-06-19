@@ -1,16 +1,10 @@
-import { CalendarDays, Clock, FileText, MessageSquare, Play, User, Video } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Clock } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useLanguage } from "../../../contexts/LanguageContext";
-import { APPOINTMENT_STATUS, getAppointmentStatusMeta } from "../../../lib/appointmentStatus";
-import {
-  doctorHistoryUrl,
-  doctorMedicalRecordsUrl,
-  doctorMessagesUrl,
-} from "../../../lib/doctorPatientRoutes";
+import { APPOINTMENT_STATUS } from "../../../lib/appointmentStatus";
 
 interface BookingDto {
   BookingId?: number | string;
-  Id?: number | string;
   PatientId?: number | string;
   PatientName?: string;
   SessionStartTime?: string;
@@ -18,7 +12,6 @@ interface BookingDto {
   Status?: number;
   DurationMinutes?: number;
   DoctorImage?: string;
-  MeetingUrl?: string;
   [key: string]: unknown;
 }
 
@@ -30,51 +23,35 @@ interface TodayScheduleProps {
 function formatTimeRange(start?: string, end?: string): string {
   if (!start) return "";
   const fmt = (s: string) =>
-    new Date(s).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" });
+    new Date(s).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   return end ? `${fmt(start)} – ${fmt(end)}` : fmt(start);
-}
-
-function bookingIdOf(b: BookingDto) {
-  return b.BookingId ?? b.Id;
 }
 
 export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleProps) => {
   const { t, isRTL } = useLanguage();
-  const navigate = useNavigate();
-
-  const startSession = (b: BookingDto) => {
-    const meetingUrl = b.MeetingUrl as string | undefined;
-    if (meetingUrl) {
-      window.open(meetingUrl, "_blank", "noopener,noreferrer");
-      return;
-    }
-    const bookingId = bookingIdOf(b);
-    const patientId = b.PatientId;
-    navigate(doctorMessagesUrl(patientId, bookingId));
-  };
 
   return (
-    <section className="mb-7 rounded-[26px] border border-border bg-background-paper p-5 shadow-card sm:p-7">
-      <div className="mb-6 flex items-center justify-between">
-        <h2 className="text-xl font-extrabold text-text-heading">
-          {t("doctor.dashboardHome.schedule.title")}
-        </h2>
+    <section className="rounded-2xl bg-card border border-border shadow-card p-4 md:p-5">
+      <div className="flex items-center justify-between mb-3">
         <Link
           to="/dashboard/doctor/schedule"
-          className="rounded-xl bg-background-subtle px-3 py-2 text-xs font-bold text-secondary hover:bg-background"
+          className="text-xs font-semibold text-primary hover:text-primary/80"
         >
           {t("doctor.dashboardHome.schedule.viewFull")}
         </Link>
+        <h2 className="text-base font-bold text-foreground">
+          {t("doctor.dashboardHome.schedule.title")}
+        </h2>
       </div>
 
       {loading && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           {[1, 2, 3].map((n) => (
-            <div key={n} className="flex items-center justify-between gap-4 p-3 rounded-2xl animate-pulse">
-              <div className="h-9 w-24 rounded-full bg-muted" />
+            <div key={n} className="flex items-center justify-between gap-4 p-2 rounded-xl animate-pulse">
+              <div className="h-8 w-20 rounded-full bg-muted" />
               <div className="h-4 w-20 rounded bg-muted" />
               <div className="flex items-center gap-3">
-                <div className="size-11 rounded-full bg-muted" />
+                <div className="size-9 rounded-full bg-muted" />
                 <div className="space-y-2">
                   <div className="h-4 w-28 rounded bg-muted" />
                   <div className="h-3 w-20 rounded bg-muted" />
@@ -86,23 +63,21 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
       )}
 
       {!loading && bookings.length === 0 && (
-        <div className="rounded-[22px] border border-dashed border-border bg-background px-5 py-12 text-center">
-          <span className="mx-auto mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-background-subtle text-secondary">
-            <CalendarDays className="size-6" />
-          </span>
-          <p className="font-extrabold text-text-heading">{t("doctor.dashboardHome.schedule.noSessions")}</p>
-          <p className="mt-2 text-xs font-medium text-text-light">
-            {isRTL ? "لا توجد جلسات مجدولة اليوم. راجع الجدول الكامل للجلسات القادمة." : "Your day is clear. Review the full calendar for upcoming sessions."}
-          </p>
-        </div>
+        <p className="text-center text-muted-foreground py-6 text-sm">
+          {t("doctor.dashboardHome.schedule.noSessions")}
+        </p>
       )}
 
       {!loading && bookings.length > 0 && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           {bookings.map((b, i) => {
-            const isPrimary = b.Status === APPOINTMENT_STATUS.IN_PROGRESS;
-            const isUpcoming = b.Status === APPOINTMENT_STATUS.CONFIRMED;
-            const status = getAppointmentStatusMeta(b.Status, { t, isRTL, booking: b });
+            const isPrimary =
+              b.Status === APPOINTMENT_STATUS.IN_PROGRESS;
+            const ctaKey =
+              b.Status === APPOINTMENT_STATUS.CONFIRMED ||
+              b.Status === APPOINTMENT_STATUS.IN_PROGRESS
+                ? "doctor.dashboardHome.schedule.enterNow"
+                : "doctor.dashboardHome.schedule.join";
             const timeLabel = formatTimeRange(
               b.SessionStartTime as string | undefined,
               b.SessionEndTime as string | undefined,
@@ -110,115 +85,49 @@ export const TodaySchedule = ({ bookings = [], loading = false }: TodayScheduleP
             const avatar =
               (b.DoctorImage as string | undefined) ??
               `https://i.pravatar.cc/100?img=${(i % 10) + 1}`;
-            const patientId = b.PatientId;
-            const bookingId = bookingIdOf(b);
 
             return (
               <div
-                key={String(bookingId ?? i)}
-                className={`group relative flex flex-col gap-4 rounded-[20px] border p-4 transition-all hover:shadow-sm sm:p-5 ${
-                  isPrimary
-                    ? "border-secondary bg-background-subtle shadow-md shadow-primary/10"
-                    : isUpcoming
-                      ? "border-violet-200 bg-violet-50/40"
-                      : "border-border bg-background"
-                }`}
+                key={b.BookingId ?? i}
+                className="flex items-center justify-between gap-4 p-2 rounded-xl hover:bg-muted/40 transition-colors"
               >
-                <span className={`absolute bottom-4 start-0 top-4 w-1 rounded-full ${isPrimary ? "bg-primary" : isUpcoming ? "bg-violet-400" : "bg-border"}`} />
-                <div className="flex flex-wrap items-center gap-4">
-                  <div className="flex min-w-0 flex-1 items-center gap-3">
-                    <img
-                      src={avatar}
-                      alt={b.PatientName as string ?? ""}
-                      className="size-12 shrink-0 rounded-2xl object-cover ring-4 ring-white sm:size-14"
-                    />
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-extrabold text-text-heading sm:text-base">
-                        {b.PatientName as string ?? ""}
-                      </p>
-                      <p className="mt-1 truncate text-xs font-medium text-text-light">
-                        {t("doctor.dashboardHome.schedule.sessionTypes.individual")}
-                      </p>
-                      <span
-                        className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ${
-                          status.variant === "success"
-                            ? "bg-emerald-100 text-emerald-700"
-                            : status.variant === "danger"
-                              ? "bg-red-100 text-red-700"
-                              : status.variant === "primary"
-                                ? "bg-violet-100 text-violet-700"
-                                : "bg-amber-100 text-amber-700"
-                        }`}
-                      >
-                        {status.label}
-                      </span>
-                    </div>
-                  </div>
+                <button
+                  type="button"
+                  className={`px-4 py-1.5 rounded-full text-xs font-semibold transition-colors ${
+                    isPrimary
+                      ? "bg-primary hover:bg-primary/90 text-primary-foreground"
+                      : "border border-border text-foreground hover:bg-muted"
+                  }`}
+                >
+                  {t(ctaKey)}
+                </button>
 
-                  <div className="flex items-center gap-2 sm:gap-3 ms-auto">
-                    {timeLabel && (
-                      <div className="flex items-center gap-2 rounded-xl bg-background-paper px-3 py-2 text-xs font-semibold text-text-light shadow-sm sm:text-sm">
-                        <Clock className="size-4 text-secondary" />
-                        <span dir="ltr">{timeLabel}</span>
-                      </div>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={() => startSession(b)}
-                      className={`rounded-xl px-4 py-2.5 text-xs font-bold transition-all sm:px-5 sm:text-sm ${
-                        isPrimary
-                          ? "bg-primary text-white shadow-md shadow-primary/15 hover:bg-primary-dark"
-                          : "border border-border bg-background-paper text-primary hover:bg-background-subtle"
-                      }`}
-                    >
-                      <Video className="me-1 inline size-4" />
-                      {t("doctor.dashboardHome.schedule.enterNow")}
-                    </button>
-                  </div>
-                </div>
-
-                {patientId && (
-                  <div className="flex flex-wrap items-center gap-2 border-t border-border pt-3">
-                    <Link
-                      to={doctorMedicalRecordsUrl(patientId)}
-                      title={t("doctor.viewProfile", "View profile")}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background-paper px-3 py-2 text-[11px] font-bold text-primary hover:bg-background-subtle"
-                    >
-                      <User className="size-3.5" />
-                      {t("doctor.viewProfile", "View profile")}
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => startSession(b)}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background-paper px-3 py-2 text-[11px] font-bold text-primary hover:bg-background-subtle"
-                    >
-                      <Play className="size-3.5" />
-                      {t("doctor.joinNow", "Start session")}
-                    </button>
-                    <Link
-                      to={doctorHistoryUrl({ tab: "records", bookingId, action: "note" })}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background-paper px-3 py-2 text-[11px] font-bold text-primary hover:bg-background-subtle"
-                    >
-                      <FileText className="size-3.5" />
-                      {t("doctor.addNote", "Add notes")}
-                    </Link>
-                    <Link
-                      to={doctorHistoryUrl({ tab: "records", patientId })}
-                      className="inline-flex items-center gap-1.5 rounded-xl border border-border bg-background-paper px-3 py-2 text-[11px] font-bold text-primary hover:bg-background-subtle"
-                    >
-                      <CalendarDays className="size-3.5" />
-                      {t("doctor.clinicalHistory", "View history")}
-                    </Link>
-                    <Link
-                      to={doctorMessagesUrl(patientId, bookingId)}
-                      className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-[11px] font-bold text-white hover:bg-primary-dark"
-                    >
-                      <MessageSquare className="size-3.5" />
-                      {t("chat.sendMessage", "Send message")}
-                    </Link>
+                {timeLabel && (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{timeLabel}</span>
+                    <Clock className="size-3.5" />
                   </div>
                 )}
+
+                <div
+                  className={`flex items-center gap-2 min-w-0 ${
+                    t("auto.flexrowTextstart")
+                  }`}
+                >
+                  <img
+                    src={avatar}
+                    alt={b.PatientName as string ?? ""}
+                    className="size-9 rounded-full object-cover"
+                  />
+                  <div className="min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">
+                      {b.PatientName as string ?? ""}
+                    </p>
+                    <p className="text-xs text-muted-foreground truncate">
+                      {t("doctor.dashboardHome.schedule.sessionTypes.individual")}
+                    </p>
+                  </div>
+                </div>
               </div>
             );
           })}

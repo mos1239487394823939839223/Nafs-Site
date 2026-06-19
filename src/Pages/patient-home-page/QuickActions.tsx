@@ -23,21 +23,21 @@ export const QuickActions = () => {
 
   return (
     <section
-      className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4"
-      
+      className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4"
+
     >
       {actions.map((a) => (
         <article
           key={a.key}
-          className="group min-h-[210px] rounded-[24px] border border-border bg-background-paper p-6 text-center shadow-card transition-all duration-200 hover:-translate-y-1 hover:border-secondary/40 hover:shadow-[0_22px_55px_-28px_rgba(15,76,58,0.5)]"
+          className="group min-h-[150px] rounded-xl border border-border bg-background-paper p-4 text-center shadow-card transition-all duration-200 hover:-translate-y-1 hover:border-secondary/40 hover:shadow-hover"
         >
-          <div className="mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-background-subtle text-primary transition-transform group-hover:scale-105">
-            <a.icon className="h-9 w-9" />
+          <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-[#78a794]/10 text-[#78a794] transition-transform group-hover:scale-105">
+            <a.icon className="h-5 w-5" />
           </div>
-          <h3 className="mb-2 text-xl font-extrabold text-text-heading">
+          <h3 className="mb-1.5 text-base font-extrabold text-text-heading">
             {t(`patientHome.quickActions.${a.key}.title`)}
           </h3>
-          <p className="mx-auto mb-5 min-h-[44px] max-w-[150px] text-sm leading-6 text-text-light">
+          <p className="mx-auto mb-3 min-h-[36px] max-w-[150px] text-xs leading-5 text-text-light">
             {t(`patientHome.quickActions.${a.key}.desc`)}
           </p>
           <button

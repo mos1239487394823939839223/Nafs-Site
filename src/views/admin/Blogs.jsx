@@ -895,18 +895,18 @@ export default function AdminBlogs() {
   return (
     <div dir={isRTL ? "rtl" : "ltr"} className="space-y-8 max-w-[1600px] mx-auto p-1 sm:p-2">
       {/* ─── Header area ──────────────────────────────────────────────────── */}
-      <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/40 ${isRTL ? 'sm:flex-row-reverse' : ''}`}>
-        <div>
-          <h1 className="text-3xl font-black text-text-heading flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/40">
+        <div className="w-full sm:w-auto text-right">
+          <h1 className="text-3xl font-black text-text-heading flex items-center justify-end gap-3">
+            {t("blogs.adminTitle")}
             <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center">
               <ArticleIcon
                 className="text-primary"
                 style={{ width: 22, height: 22 }}
               />
             </div>
-            {t("blogs.adminTitle")}
           </h1>
-          <p className="text-text-muted mt-1.5 text-sm">
+          <p className="text-text-muted mt-1.5 text-sm text-right">
             {t("blogs.adminSubtitle")}
           </p>
         </div>

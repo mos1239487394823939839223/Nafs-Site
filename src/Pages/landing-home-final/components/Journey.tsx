@@ -52,7 +52,7 @@ export const Journey = () => {
               } px-4 py-2 sm:px-6`}
             >
               <Icon
-                className="h-7 w-7 shrink-0 text-text-light sm:h-8 sm:w-8"
+                className="h-7 w-7 shrink-0 text-[#78a794] sm:h-8 sm:w-8"
                 strokeWidth={1.75}
               />
               <div>

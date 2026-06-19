@@ -1,44 +1,52 @@
-import { CalendarDays, CheckCircle2, Star, Users, XCircle } from "lucide-react";
+import { CalendarDays, FileText, Star, BarChart3 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { useLanguage } from "../../../contexts/LanguageContext";
+import { statTiles } from "./data";
+
+const iconMap = { CalendarDays, FileText, Star, BarChart3 };
 
 interface StatTilesProps {
   todayCount?: number;
-  stats?: {
-    activePatients?: number;
-    completedSessions?: number;
-    cancelledSessions?: number;
-    rating?: string | null;
-  };
 }
 
-export const StatTiles = ({ todayCount = 0, stats }: StatTilesProps) => {
-  const { isRTL } = useLanguage();
-  const tiles = [
-    { label: isRTL ? "إجمالي المرضى" : "Total patients", value: stats?.activePatients ?? 0, icon: Users, tone: "bg-blue-50 text-blue-700" },
-    { label: isRTL ? "جلسات اليوم" : "Today's sessions", value: todayCount, icon: CalendarDays, tone: "bg-violet-50 text-violet-700" },
-    { label: isRTL ? "الجلسات المكتملة" : "Completed sessions", value: stats?.completedSessions ?? 0, icon: CheckCircle2, tone: "bg-emerald-50 text-emerald-700" },
-    { label: isRTL ? "الجلسات الملغاة" : "Cancelled sessions", value: stats?.cancelledSessions ?? 0, icon: XCircle, tone: "bg-red-50 text-red-700" },
-    { label: isRTL ? "متوسط التقييم" : "Average rating", value: stats?.rating ?? "-", icon: Star, tone: "bg-amber-50 text-amber-700" },
-  ];
+export const StatTiles = ({ todayCount }: StatTilesProps) => {
+  const { t, isRTL } = useLanguage();
+
+  const orderedTiles = isRTL ? [...statTiles].reverse() : statTiles;
 
   return (
-    <div className="mb-7 grid grid-cols-2 gap-3 lg:grid-cols-5">
-      {tiles.map((tile) => {
-        const Icon = tile.icon;
+    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      {orderedTiles.map((tile) => {
+        const Icon = iconMap[tile.icon as keyof typeof iconMap];
+
+        // The schedule tile shows a live count; others use their static translation
+        const descText =
+          tile.icon === "CalendarDays" && todayCount !== undefined
+            ? isRTL
+              ? `لديك ${todayCount} جلسة اليوم`
+              : `You have ${todayCount} session${todayCount !== 1 ? "s" : ""} today`
+            : t(tile.descKey);
+
         return (
-        <div key={tile.label} className="rounded-[22px] border border-border bg-background-paper p-4 shadow-card transition-all hover:-translate-y-1 hover:border-secondary/30 sm:p-5">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-2xl font-black text-text-heading sm:text-3xl">{tile.value}</p>
-                <p className="mt-2 text-xs font-bold leading-5 text-text-light">{tile.label}</p>
-              </div>
-              <span className={`grid h-11 w-11 shrink-0 place-items-center rounded-2xl ${tile.tone}`}>
-                <Icon className="size-5" />
-              </span>
-            </div>
+          <div
+            key={tile.titleKey}
+            className="rounded-xl bg-card border border-border shadow-card p-3 text-center flex flex-col items-center"
+          >
+            <Icon className="size-5 text-primary mb-1.5" />
+            <h3 className="text-sm font-bold text-foreground mb-1">{t(tile.titleKey)}</h3>
+            <p className="text-xs text-muted-foreground leading-snug whitespace-pre-line mb-2">
+              {descText}
+            </p>
+            <Link
+              to={tile.href}
+              className="text-xs font-semibold text-primary hover:text-primary/80 mt-auto"
+            >
+              {t(tile.ctaKey)}
+            </Link>
           </div>
         );
       })}
     </div>
   );
 };
+

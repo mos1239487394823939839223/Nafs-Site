@@ -20,26 +20,26 @@ export const TherapistAssessment = ({
   const { language } = useLanguage();
 
   return (
-    <section className="flex h-full flex-col rounded-[24px] border border-border bg-background-paper p-6 shadow-card">
-      <div className="mb-6 flex items-center justify-between gap-3">
+    <section className="flex h-full flex-col rounded-xl border border-border bg-background-paper p-4 shadow-card">
+      <div className="mb-4 flex items-center justify-between gap-3">
         <div className="text-start">
           <p className="text-xs font-bold uppercase tracking-wider text-secondary">
             {language === "ar" ? "التقييم المهني" : "Professional Evaluation"}
           </p>
-          <h3 className="mt-1 text-xl font-black text-text-heading">
+          <h3 className="mt-1 text-lg font-black text-text-heading">
             {language === "ar" ? "تقييم المعالج" : "Therapist Assessment"}
           </h3>
         </div>
-        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-background-subtle text-primary">
-          <HeartPulse className="h-6 w-6" />
+        <span className="grid h-9 w-9 place-items-center rounded-xl bg-[#78a794]/10 text-[#78a794]">
+          <HeartPulse className="h-[18px] w-[18px]" />
         </span>
       </div>
 
       {loading ? (
         <Loader2 className="mx-auto my-14 h-7 w-7 animate-spin text-secondary" />
       ) : !assessment ? (
-        <div className="my-auto flex flex-col items-center justify-center py-8 text-center">
-          <ClipboardList className="h-12 w-12 text-secondary opacity-50" />
+        <div className="my-auto flex flex-col items-center justify-center py-6 text-center">
+          <ClipboardList className="h-10 w-10 text-[#78a794] opacity-60" />
           <h4 className="mt-4 text-base font-bold text-text-heading">
             {language === "ar" ? "لم يتم تقييم الحالة بعد" : "No assessment recorded yet"}
           </h4>
@@ -50,8 +50,8 @@ export const TherapistAssessment = ({
           </p>
         </div>
       ) : (
-        <div className="flex flex-1 flex-col justify-between space-y-4 text-start">
-          <div className="space-y-4">
+        <div className="flex flex-1 flex-col justify-between space-y-3 text-start">
+          <div className="space-y-3">
             {/* Condition / Current Status */}
             <div>
               <p className="text-xs font-bold text-secondary">
@@ -66,7 +66,7 @@ export const TherapistAssessment = ({
                 <p className="text-xs font-bold text-secondary">
                   {language === "ar" ? "مستوى الشدة" : "Severity Level"}
                 </p>
-                <span className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-orange-50 px-2.5 py-1 text-xs font-bold text-orange-800 border border-orange-200">
+                <span className="mt-1 inline-flex items-center gap-1.5 rounded-lg bg-secondary-light px-2.5 py-1 text-xs font-bold text-secondary border border-secondary/20">
                   <Award className="h-3.5 w-3.5" />
                   {assessment.level}
                 </span>
@@ -98,7 +98,7 @@ export const TherapistAssessment = ({
             )}
           </div>
 
-          <div className="mt-auto border-t border-border/65 pt-4">
+          <div className="mt-auto border-t border-border/65 pt-3">
             <div className="flex items-center justify-between text-xs font-bold text-text-light">
               {assessment.doctorName && (
                 <span>
@@ -107,7 +107,7 @@ export const TherapistAssessment = ({
                 </span>
               )}
               <span className="flex items-center gap-1">
-                <CalendarDays className="h-3.5 w-3.5 text-secondary" />
+                <CalendarDays className="h-3.5 w-3.5 text-[#78a794]" />
                 {new Date(assessment.updatedAt).toLocaleDateString(language === "ar" ? "ar-EG" : "en-US")}
               </span>
             </div>
