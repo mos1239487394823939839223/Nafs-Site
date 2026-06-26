@@ -39,6 +39,7 @@ import {
 import { getRoomCaseTypeMeta, getSupportRoomTimestamp, readLocalRoomCaseTypes, sortSupportRooms } from "../../lib/supportCaseTypes";
 import SupportCaseTag from "../../components/support/SupportCaseTag";
 import SupportPriorityTag, { getSupportPriority } from "../../components/support/SupportPriorityTag";
+import { getAppointmentStatusKey } from "../../lib/appointmentStatus";
 
 export default function CustomerServiceDashboard() {
   const { t, isRTL } = useLanguage();
@@ -218,24 +219,83 @@ export default function CustomerServiceDashboard() {
     return `${t("staff.provider")} #${providerValue ?? "-"}`;
   };
 
+  const getManualPaymentParticipants = (item) => {
+    const bookingId = String(item?.BookingId ?? item?.bookingId ?? "");
+    const patientId = String(item?.PatientId ?? item?.patientId ?? "");
+    const matchedRoom = chatRooms.find((room) => {
+      const roomBookingId = String(room?.BookingId ?? room?.bookingId ?? "");
+      if (bookingId && roomBookingId === bookingId) return true;
+      const roomPatientId = String(room?.PatientId ?? room?.patientId ?? "");
+      return !bookingId && patientId && roomPatientId === patientId;
+    });
+
+    return {
+      patientName:
+        item?.PatientName ??
+        item?.patientName ??
+        item?.Patient?.Name ??
+        item?.patient?.name ??
+        item?.Booking?.PatientName ??
+        item?.booking?.patientName ??
+        matchedRoom?.PatientName ??
+        matchedRoom?.patientName ??
+        t("common.unknownPatient", "Unknown patient"),
+      doctorName:
+        item?.DoctorName ??
+        item?.doctorName ??
+        item?.DoctorFullName ??
+        item?.TherapistName ??
+        item?.Doctor?.Name ??
+        item?.doctor?.name ??
+        item?.Booking?.DoctorName ??
+        item?.booking?.doctorName ??
+        matchedRoom?.DoctorName ??
+        matchedRoom?.doctorName ??
+        t("common.unknownDoctor", "Unknown doctor"),
+    };
+  };
+
+  const hasCancellationLock = (item) => {
+    const cancellationStatus = String(
+      item?.CancellationStatus ??
+        item?.CancellationRequestStatus ??
+        item?.RefundStatus ??
+        "",
+    ).toLowerCase();
+    const bookingStatus =
+      item?.BookingStatus ?? item?.bookingStatus ?? item?.AppointmentStatus;
+    return (
+      item?.IsCancellationPending === true ||
+      item?.CancellationRequested === true ||
+      item?.IsCancelled === true ||
+      cancellationStatus.includes("pending") ||
+      cancellationStatus.includes("approve") ||
+      cancellationStatus.includes("cancel") ||
+      (bookingStatus !== undefined &&
+        getAppointmentStatusKey(bookingStatus, item) === "cancelled")
+    );
+  };
+
   const filteredManualPayments = useMemo(() => {
     const q = manualPaymentsSearch.trim().toLowerCase();
     return manualPayments.filter((item) => {
       if (!q) return true;
 
       const patientName = String(item?.PatientName || "").toLowerCase();
+      const { doctorName } = getManualPaymentParticipants(item);
       const referenceNumber = String(item?.ReferenceNumber || "").toLowerCase();
       const bookingId = String(item?.BookingId || "").toLowerCase();
       const paymentId = String(item?.Id || "").toLowerCase();
 
       return (
         patientName.includes(q) ||
+        String(doctorName).toLowerCase().includes(q) ||
         referenceNumber.includes(q) ||
         bookingId.includes(q) ||
         paymentId.includes(q)
       );
     });
-  }, [manualPayments, manualPaymentsSearch]);
+  }, [chatRooms, manualPayments, manualPaymentsSearch]);
 
   const manualSummary = useMemo(() => {
     const pending = manualPayments.filter(
@@ -354,6 +414,12 @@ export default function CustomerServiceDashboard() {
   }, [chatRooms, isRTL]);
 
   const handleConfirmPayment = async (paymentItem) => {
+    if (hasCancellationLock(paymentItem)) {
+      toast.error(
+        t("staff.cancelledBookingCannotBeApproved", "A cancelled or cancellation-pending session cannot be approved."),
+      );
+      return;
+    }
     setActionLoadingId(paymentItem.Id);
     try {
       const response = await customerSupportAPI.confirmManualPayment(
@@ -421,10 +487,9 @@ export default function CustomerServiceDashboard() {
 
     setProcessingRefundId(processingRefundItem?.Id);
     try {
-      const response = await customerSupportAPI.processRefund(
-        processingRefundItem?.Id,
-        notes,
-      );
+      const response = refundProcessMode === "approve"
+        ? await customerSupportAPI.processRefund(processingRefundItem?.Id, notes)
+        : await customerSupportAPI.rejectRefund(processingRefundItem?.Id, notes);
       if (response?.IsSuccess === false) {
         toast.error(response?.Message || t("errors.somethingWentWrong"));
       } else {
@@ -729,6 +794,7 @@ export default function CustomerServiceDashboard() {
             ) : (
               <div className="grid lg:grid-cols-2 gap-4">
                 {filteredManualPayments.map((item, index) => {
+                  const { patientName, doctorName } = getManualPaymentParticipants(item);
                   const statusMeta = getPaymentStatusMeta(item?.Status, {
                     isRTL,
                   });
@@ -740,6 +806,7 @@ export default function CustomerServiceDashboard() {
                     : "-";
                   const isBusy = actionLoadingId === item.Id;
                   const isPendingPayment = statusMeta.value === 1;
+                  const cancellationLocked = hasCancellationLock(item);
 
                   return (
                     <motion.div
@@ -752,10 +819,10 @@ export default function CustomerServiceDashboard() {
                       <div className="flex items-start justify-between gap-3 mb-4">
                         <div className="min-w-0 flex-1">
                           <p className="font-semibold text-text-heading truncate text-sm sm:text-base">
-                            {item.PatientName || t("common.unknownPatient")}
+                            {patientName}
                           </p>
                           <p className="text-xs text-text-muted mt-0.5 truncate">
-                            #{item.Id || "-"} · {t("auto.booking")} #{item.BookingId || "-"}
+                            {t("common.doctor", "Doctor")}: {doctorName} · {t("common.patient", "Patient")}: {patientName}
                           </p>
                         </div>
                         <span
@@ -809,7 +876,7 @@ export default function CustomerServiceDashboard() {
                           </span>
                         )}
 
-                        {isPendingPayment ? (
+                        {isPendingPayment && !cancellationLocked ? (
                           <div className="flex flex-wrap items-center gap-2 ms-auto">
                             <Button
                               size="sm"
@@ -837,6 +904,10 @@ export default function CustomerServiceDashboard() {
                               {t("auto.markFailed")}
                             </Button>
                           </div>
+                        ) : cancellationLocked ? (
+                          <span className="text-xs font-semibold text-amber-700 ms-auto">
+                            {t("auto.cancellationPending", "Cancellation pending review")}
+                          </span>
                         ) : (
                           <span className="text-xs text-text-muted ms-auto">
                             {t("auto.alreadyProcessed")}

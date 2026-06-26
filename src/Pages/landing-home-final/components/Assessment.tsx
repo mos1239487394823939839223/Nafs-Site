@@ -37,7 +37,7 @@ export const Assessment = () => {
                 : "A simple scientific assessment helps you understand your state and recommends the right doctor for you."}
             </p>
             <Button
-              onClick={() => navigate("/auth/login")}
+              onClick={() => navigate("/auth/role-selection")}
               className={`mt-6 ${landingBtnPrimary}`}
             >
               {isAr ? "ابدأ التقييم الآن" : "Start assessment now"}

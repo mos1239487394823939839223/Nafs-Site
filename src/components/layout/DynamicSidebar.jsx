@@ -22,7 +22,6 @@ import {
   HeartHandshake,
   Home,
   LogOut,
-  Menu,
   MessageSquare,
   Settings,
   ShieldCheck,
@@ -157,25 +156,9 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                       <HeartHandshake className="h-5 w-5 text-white" />
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={onClose}
-                    className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-[#bfd9d4] transition-colors hover:bg-white/15"
-                    aria-label="Menu"
-                  >
-                    <Menu className="h-5 w-5" />
-                  </button>
                 </>
               ) : (
                 <>
-              <button
-                type="button"
-                onClick={onClose}
-                className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-[#bfd9d4] transition-colors hover:bg-white/15"
-                aria-label="Menu"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
               <div className="flex items-center gap-2">
                 <span className="text-3xl font-black tracking-tight text-white">nafas</span>
                 <span className="grid h-9 w-9 place-items-center rounded-xl" style={{ backgroundColor: "#2c6947" }}>
@@ -186,7 +169,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
               )}
             </div>
 
-            <nav className="flex-1 overflow-y-auto px-4 pb-6">
+            <nav className="no-scrollbar flex-1 overflow-y-auto px-4 pb-6">
               <ul className="space-y-1">{mainItems.map(renderPatientLink)}</ul>
               <div className="my-4 h-px bg-white/16" />
               <ul className="space-y-1">
@@ -251,7 +234,6 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       { name: t("nav.dashboard"), path: "/dashboard/staff", icon: Home },
       { name: t("nav.blogs"), path: "/dashboard/staff/blogs", icon: FileText },
       { name: t("nav.messages"), path: "/dashboard/staff/messages", icon: MessageSquare, badge: unreadByCategory.messages || 0 },
-      { name: t("nav.supportAndHelp", "Support"), path: "/dashboard/staff", icon: Headphones, badge: (unreadByCategory.support || 0) + (unreadByCategory.emergency || 0), emergency: Boolean(unreadByCategory.emergency) },
       { name: t("common.notifications", "Notifications"), path: "/notifications", icon: Bell, badge: unreadCount },
       { name: t("nav.profile"), path: "/dashboard/staff/profile", icon: Settings },
     ],
@@ -287,17 +269,9 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                   </p>
                 </div>
               </div>
-              <button
-                type="button"
-                onClick={onClose}
-                className="grid h-10 w-10 place-items-center rounded-xl bg-white/10 text-[#bfd9d4] hover:bg-white/15"
-                aria-label="Menu"
-              >
-                <Menu className="h-5 w-5" />
-              </button>
             </div>
 
-            <nav className="doctor-sidebar-scroll flex-1 overflow-y-auto px-4 pb-6">
+            <nav className="no-scrollbar flex-1 overflow-y-auto px-4 pb-6">
               <ul className="space-y-1.5">
                 {navItems.map((item) => {
                   const Icon = item.icon;
@@ -395,7 +369,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
             </div>
           </div>
 
-          <nav className="flex-1 overflow-y-auto p-4">
+          <nav className="no-scrollbar flex-1 overflow-y-auto p-4">
             <ul className="space-y-1">
               {navItems.map((item) => {
                 const Icon = item.icon;

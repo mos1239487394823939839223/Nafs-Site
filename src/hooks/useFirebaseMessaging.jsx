@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { getFirebaseToken, onMessageListener } from '../lib/firebase';
+import { getFirebaseToken, onForegroundMessage } from '../lib/firebase';
 import { notificationAPI } from '../lib/api';
 import toast from 'react-hot-toast';
 
@@ -37,25 +37,26 @@ export const useFirebaseMessaging = (isAuthenticated, onNotificationReceived, on
       requestPermissionAndGetToken();
     }
 
-    const setupMessageListener = () => {
-      onMessageListener().then((payload) => {
-        toast(
-          (t) => (
-            <div className="flex flex-col gap-1">
-              <span className="font-bold">{payload.notification?.title || 'New Notification'}</span>
-              <span className="text-sm">{payload.notification?.body}</span>
-            </div>
-          ),
-          { duration: 4000, position: 'top-right' }
-        );
-        if (onNotificationReceivedRef.current) {
-          onNotificationReceivedRef.current(payload);
-        }
-        setupMessageListener();
-      }).catch(err => console.log('failed: ', err));
-    };
+    // Register the foreground listener ONCE; the unsubscribe is returned and run
+    // on cleanup so listeners never accumulate (which would handle one push N times).
+    const unsubscribe = onForegroundMessage((payload) => {
+      toast(
+        () => (
+          <div className="flex flex-col gap-1">
+            <span className="font-bold">{payload.notification?.title || 'New Notification'}</span>
+            <span className="text-sm">{payload.notification?.body}</span>
+          </div>
+        ),
+        { duration: 4000, position: 'top-right' }
+      );
+      if (onNotificationReceivedRef.current) {
+        onNotificationReceivedRef.current(payload);
+      }
+    });
 
-    setupMessageListener();
+    return () => {
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
   }, [isAuthenticated]);
 
   return { fcmToken };

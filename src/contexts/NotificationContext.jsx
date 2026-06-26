@@ -69,17 +69,6 @@ export function NotificationProvider({ children }) {
     });
   }, []);
 
-  const addNotification = useCallback((payload) => {
-    const normalized =
-      payload?.id && payload?.category
-        ? payload
-        : normalizeNotification(
-            payload?.notification ? { ...payload.notification, ...(payload.data || {}) } : payload,
-            role,
-          );
-    upsertNotification(normalized);
-  }, [role, upsertNotification]);
-
   const handleRealtime = useCallback(
     (eventName, payload) => {
       if (CHAT_MESSAGE_EVENTS.has(eventName) && isChatMessagePayload(payload)) {
@@ -93,6 +82,29 @@ export function NotificationProvider({ children }) {
     },
     [role, upsertNotification, user],
   );
+
+  const addNotification = useCallback((payload) => {
+    if (payload?.id && payload?.category) {
+      upsertNotification(payload);
+      return;
+    }
+
+    // Firebase foreground payloads arrive as { notification, data }; chat fields
+    // live in `data`. Route chat messages through the same path as SignalR so the
+    // stable id (local-chat-<room>-<messageId>) dedups against an already-handled
+    // message and active-room / own-message suppression applies — and so Firebase
+    // never forces a full message reload when SignalR already appended it.
+    const chatSource =
+      payload?.notification || payload?.data
+        ? { ...(payload.notification || {}), ...(payload.data || {}) }
+        : payload;
+    if (isChatMessagePayload(chatSource)) {
+      handleRealtime("ReceiveMessage", chatSource);
+      return;
+    }
+
+    upsertNotification(normalizeNotification(chatSource, role));
+  }, [handleRealtime, role, upsertNotification]);
 
   const fetchNotifications = useCallback(async (pageIndex = 1, pageSize = 100) => {
     if (!user) return;

@@ -41,11 +41,16 @@ export const getFirebaseToken = async () => {
   }
 };
 
-export const onMessageListener = () => {
-  if (!messaging) return new Promise(() => {}); // never resolves if no messaging
-  return new Promise((resolve) => {
-    onMessage(messaging, (payload) => {
-      resolve(payload);
-    });
-  });
+/**
+ * Subscribe to foreground FCM messages with a SINGLE registration.
+ * Returns an unsubscribe function. Unlike the one-shot promise pattern, this
+ * registers `onMessage` exactly once so listeners can't accumulate (which would
+ * make a single push fire the callback multiple times).
+ *
+ * @param {(payload: any) => void} callback
+ * @returns {() => void} unsubscribe
+ */
+export const onForegroundMessage = (callback) => {
+  if (!messaging) return () => {};
+  return onMessage(messaging, callback);
 };

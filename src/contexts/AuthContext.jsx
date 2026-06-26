@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import { authAPI, userAPI } from "../lib/api";
+import { stopChatConnection } from "../lib/signalr";
 
 // Role definitions
 export const Roles = {
@@ -98,6 +99,8 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error("Logout API error:", error);
     }
+
+    await stopChatConnection();
 
     setUser(null);
     setRole(null);

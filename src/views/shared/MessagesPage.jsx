@@ -10,7 +10,7 @@ import { Search, MessageSquare, Loader2, RefreshCw, Stethoscope, Headphones, Fil
 const SupportAgent = Headphones
 import { useToast } from '../../components/ui/Toast'
 import { useLanguage } from '../../contexts/LanguageContext'
-import { startChatConnection } from '../../lib/signalr'
+import { startChatConnection, subscribeToChatMessages } from '../../lib/signalr'
 import { setActiveChatRoomForNotifications } from '../../lib/notificationUtils'
 import { canStaffViewSupportRoom } from '../../lib/supportAccess'
 import { getRoomCaseTypeMeta, sortSupportRooms } from '../../lib/supportCaseTypes'
@@ -352,9 +352,9 @@ export default function MessagesPage() {
       return {}
     }
   })
-  const connectionRef = useRef(null)
   const activeRoomRef = useRef(null)
   const roomsRef = useRef([])
+  const messagesRef = useRef([])
   const hydrationTimersRef = useRef({})
   const optimisticSafetyTimersRef = useRef({})
   const supportRoomIdsRef = useRef(new Set())
@@ -363,7 +363,7 @@ export default function MessagesPage() {
   const messagesFetchInFlightRef = useRef(new Map())
   const lastMessagesFetchAtRef = useRef(new Map())
   const debouncedFetchRoomsTimerRef = useRef(null)
-  const pollingIntervalRef = useRef(null)
+  const selectedRoomFetchRef = useRef('')
 
   const saveRoomCaseType = useCallback((roomId, caseType) => {
     if (!roomId) return
@@ -426,6 +426,7 @@ export default function MessagesPage() {
   // ── Sync ref ────────────────────────────────────────────────────────────────
   useEffect(() => { activeRoomRef.current = activeRoom }, [activeRoom])
   useEffect(() => { roomsRef.current = rooms }, [rooms])
+  useEffect(() => { messagesRef.current = messages }, [messages])
 
   const isPatient = role === Roles.PATIENT
   const isSupportOperator = role === Roles.STAFF
@@ -678,7 +679,7 @@ export default function MessagesPage() {
 
     const now = Date.now()
     const lastFetchAt = lastMessagesFetchAtRef.current.get(roomKey) || 0
-    const minFetchIntervalMs = silent ? 3000 : 900
+    const minFetchIntervalMs = 5000
     if (!force && now - lastFetchAt < minFetchIntervalMs) {
       logSupportDebug('fetchMessages:skippedCooldown', {
         roomId: roomKey,
@@ -735,122 +736,152 @@ export default function MessagesPage() {
     }, 450)
   }, [fetchMessages])
 
-  // ── SignalR ─────────────────────────────────────────────────────────────────
-  useEffect(() => {
-    let mounted = true
-    const setupSignalR = async () => {
-      try {
-        const conn = await startChatConnection()
-        if (!mounted) return
-        connectionRef.current = conn
+  // ── Update room list preview / unread locally (no network refetch) ──────────
+  const applyIncomingMessageToRooms = useCallback((msg, { fromCurrentUser, isActiveRoom }) => {
+    const msgRoomId = String(getIncomingRoomId(msg) || '').trim()
+    if (!msgRoomId) return
 
-        const handleMessage = (msg) => {
-          const currentRoom = activeRoomRef.current
-          const currentRoomId = String(currentRoom?.Id || currentRoom?.id || '').trim()
-          const msgRoomId = String(getIncomingRoomId(msg) || '').trim()
-          const fromCurrentUser = isCurrentUserMessage(msg)
-          const hasStableId = msg?.Id !== undefined && msg?.Id !== null ? true : msg?.id !== undefined && msg?.id !== null
+    const known = roomsRef.current.some(
+      (room) => String(room?.Id || room?.id || '') === msgRoomId,
+    )
 
-          logSupportDebug('SignalR:ReceiveMessage', {
-            msgRoomId,
-            currentRoomId,
-            match: currentRoomId === msgRoomId,
-            fromCurrentUser,
-            hasStableId,
-            content: getIncomingContent(msg)?.substring(0, 30),
-            rawKeys: Object.keys(msg || {}),
-          })
+    // Brand-new conversation we don't track yet → one debounced rooms sync (fallback).
+    if (!known) {
+      if (!fromCurrentUser) debouncedFetchRooms()
+      return
+    }
 
-          if (currentRoomId && currentRoomId === msgRoomId) {
-            if (fromCurrentUser && !hasStableId) { scheduleSilentHydration(msgRoomId); return }
-            const msgContent = getIncomingContent(msg)
-            const uiMessage = {
-              id: msg?.Id ?? msg?.id ?? getMessageUniqueKey(msg),
-              sender: fromCurrentUser ? 'current-user' : 'other',
-              content: msgContent,
-              messageType: getIncomingMessageType(msg),
-              timestamp: msg.CreatedAt || msg.createdAt || new Date().toISOString(),
-              attachments: buildIncomingAttachments(msg),
-            }
-            setMessages(prev => {
-              // If from current user, find and replace the matching optimistic message
-              if (fromCurrentUser) {
-                const optimisticIdx = prev.findIndex(m => {
-                  if (!String(m.id || '').startsWith('optimistic-')) return false
-                  return normalizeValue(m.content) === normalizeValue(msgContent)
-                })
-                if (optimisticIdx !== -1) {
-                  const next = [...prev]
-                  next[optimisticIdx] = uiMessage
-                  return next
-                }
-              }
-              // Avoid duplicate if message already exists (by key)
-              const uiMessageKey = getMessageUniqueKey(uiMessage)
-              if (prev.some(m => getMessageUniqueKey(m) === uiMessageKey)) return prev
-              return [...prev, uiMessage]
-            })
-            chatAPI.markAsRead(msgRoomId).catch(() => {})
-            
-            // Clear safety timer when we get a real echo from current user
-            if (fromCurrentUser && hasStableId) {
-              if (optimisticSafetyTimersRef.current[msgRoomId]) {
-                clearTimeout(optimisticSafetyTimersRef.current[msgRoomId])
-                delete optimisticSafetyTimersRef.current[msgRoomId]
-                logSupportDebug('SignalR:clearedSafetyTimer', { roomId: msgRoomId })
-              }
-            }
-          }
-          if (!fromCurrentUser) {
-            const incomingRoom = roomsRef.current.find(
-              (room) => String(room?.Id || room?.id || '') === msgRoomId,
-            )
-            const incomingMeta = getRoomCaseTypeMeta(incomingRoom || msg, isRTL, localRoomCaseTypes)
-            if (incomingMeta.priority && currentRoomId !== msgRoomId) {
-              toast.error(
-                t('support.emergencyNewMessage', 'New message in an emergency support case'),
-              )
-            }
-          }
-          debouncedFetchRooms()
+    const previewText = getIncomingContent(msg) || (getIncomingAttachmentUrl(msg) ? 'Attachment' : '')
+    const previewTime = msg?.CreatedAt || msg?.createdAt || msg?.timestamp || new Date().toISOString()
+
+    setRooms((prev) => {
+      let touched = false
+      const next = prev.map((room) => {
+        if (String(room?.Id || room?.id || '') !== msgRoomId) return room
+        touched = true
+        const prevUnread = Number(room.UnreadCount || 0)
+        const nextUnread = isActiveRoom ? 0 : fromCurrentUser ? prevUnread : prevUnread + 1
+        return {
+          ...room,
+          LastMessage: previewText,
+          LastMessageAt: previewTime,
+          UnreadCount: nextUnread,
         }
+      })
+      if (!touched) return prev
+      // Surface the most recently active conversation at the top of the list.
+      const idx = next.findIndex((room) => String(room?.Id || room?.id || '') === msgRoomId)
+      if (idx > 0) {
+        const [moved] = next.splice(idx, 1)
+        next.unshift(moved)
+      }
+      return next
+    })
+  }, [debouncedFetchRooms])
 
-        conn.off('ReceiveMessage')
-        conn.on('ReceiveMessage', handleMessage)
+  // ── SignalR: single stable ReceiveMessage handler ───────────────────────────
+  const handleReceiveMessage = useCallback((msg) => {
+    const currentRoom = activeRoomRef.current
+    const currentRoomId = String(currentRoom?.Id || currentRoom?.id || '').trim()
+    const msgRoomId = String(getIncomingRoomId(msg) || '').trim()
+    const fromCurrentUser = isCurrentUserMessage(msg)
+    const hasStableId = msg?.Id !== undefined && msg?.Id !== null ? true : msg?.id !== undefined && msg?.id !== null
+    const isActiveRoom = Boolean(currentRoomId) && currentRoomId === msgRoomId
 
-        // Re-register handler on reconnect
-        conn.onreconnected(() => {
-          logSupportDebug('SignalR:reconnected')
-          conn.off('ReceiveMessage')
-          conn.on('ReceiveMessage', handleMessage)
-          // Refresh messages after reconnect to catch any missed ones
-          const roomId = String(activeRoomRef.current?.Id || activeRoomRef.current?.id || '')
-          if (roomId) fetchMessages(roomId, { silent: true, force: true })
-          fetchRooms()
-        })
+    logSupportDebug('SignalR:ReceiveMessage', {
+      msgRoomId,
+      currentRoomId,
+      match: isActiveRoom,
+      fromCurrentUser,
+      hasStableId,
+      content: getIncomingContent(msg)?.substring(0, 30),
+      rawKeys: Object.keys(msg || {}),
+    })
 
-        conn.onclose(() => {
-          logSupportDebug('SignalR:closed')
-        })
-      } catch (err) {
-        console.error('SignalR Setup Error:', err)
+    if (isActiveRoom) {
+      // Backend can emit an optimistic self-echo before DB persistence; reconcile
+      // confirmed self messages via silent hydration instead of rendering twice.
+      if (fromCurrentUser && !hasStableId) {
+        scheduleSilentHydration(msgRoomId)
+        applyIncomingMessageToRooms(msg, { fromCurrentUser, isActiveRoom })
+        return
+      }
+      const msgContent = getIncomingContent(msg)
+      const uiMessage = {
+        id: msg?.Id ?? msg?.id ?? getMessageUniqueKey(msg),
+        sender: fromCurrentUser ? 'current-user' : 'other',
+        content: msgContent,
+        messageType: getIncomingMessageType(msg),
+        timestamp: msg.CreatedAt || msg.createdAt || new Date().toISOString(),
+        attachments: buildIncomingAttachments(msg),
+      }
+      setMessages((prev) => {
+        // If from current user, replace the matching optimistic message in place.
+        if (fromCurrentUser) {
+          const optimisticIdx = prev.findIndex((m) => {
+            if (!String(m.id || '').startsWith('optimistic-')) return false
+            return normalizeValue(m.content) === normalizeValue(msgContent)
+          })
+          if (optimisticIdx !== -1) {
+            const next = [...prev]
+            next[optimisticIdx] = uiMessage
+            return next
+          }
+        }
+        // Avoid duplicate if the message already exists (by stable / fallback key).
+        const uiMessageKey = getMessageUniqueKey(uiMessage)
+        if (prev.some((m) => getMessageUniqueKey(m) === uiMessageKey)) return prev
+        return [...prev, uiMessage]
+      })
+      chatAPI.markAsRead(msgRoomId).catch(() => {})
+
+      // Clear the optimistic safety timer once we get a real echo from current user.
+      if (fromCurrentUser && hasStableId && optimisticSafetyTimersRef.current[msgRoomId]) {
+        clearTimeout(optimisticSafetyTimersRef.current[msgRoomId])
+        delete optimisticSafetyTimersRef.current[msgRoomId]
+        logSupportDebug('SignalR:clearedSafetyTimer', { roomId: msgRoomId })
       }
     }
-    setupSignalR()
-    return () => {
-      mounted = false
-      Object.values(hydrationTimersRef.current).forEach((t) => clearTimeout(t))
-      hydrationTimersRef.current = {}
-      Object.values(optimisticSafetyTimersRef.current).forEach((t) => clearTimeout(t))
-      optimisticSafetyTimersRef.current = {}
-      if (debouncedFetchRoomsTimerRef.current) clearTimeout(debouncedFetchRoomsTimerRef.current)
-      if (connectionRef.current) {
-        connectionRef.current.off('ReceiveMessage')
-        connectionRef.current.off('reconnected')
-        connectionRef.current.off('close')
+
+    if (!fromCurrentUser) {
+      const incomingRoom = roomsRef.current.find(
+        (room) => String(room?.Id || room?.id || '') === msgRoomId,
+      )
+      const incomingMeta = getRoomCaseTypeMeta(incomingRoom || msg, isRTL, localRoomCaseTypes)
+      if (incomingMeta.priority && !isActiveRoom) {
+        toast.error(
+          t('support.emergencyNewMessage', 'New message in an emergency support case'),
+        )
       }
     }
-  }, [user, fetchRooms, fetchMessages, debouncedFetchRooms, scheduleSilentHydration, isCurrentUserMessage])
+
+    // Update room preview / unread locally — no full refetch per message.
+    applyIncomingMessageToRooms(msg, { fromCurrentUser, isActiveRoom })
+  }, [applyIncomingMessageToRooms, isCurrentUserMessage, isRTL, localRoomCaseTypes, scheduleSilentHydration, t, toast])
+
+  // Keep a fresh handler in a ref so the SignalR subscription registers exactly
+  // ONCE per lifecycle (a stable wrapper) yet always runs the latest logic.
+  const handleReceiveMessageRef = useRef(handleReceiveMessage)
+  useEffect(() => { handleReceiveMessageRef.current = handleReceiveMessage }, [handleReceiveMessage])
+
+  useEffect(() => {
+    if (!user) return undefined
+    // Register the handler synchronously (before start) so no incoming message is
+    // missed during connection startup. Single-slot subscription replaces any prior
+    // chat handler, so StrictMode / HMR / remounts never accumulate duplicates.
+    const unsubscribe = subscribeToChatMessages((msg) => handleReceiveMessageRef.current(msg))
+    startChatConnection().catch((err) => console.error('SignalR Setup Error:', err))
+    return () => unsubscribe()
+  }, [user])
+
+  // Clean up all pending chat timers on unmount.
+  useEffect(() => () => {
+    Object.values(hydrationTimersRef.current).forEach((timerId) => clearTimeout(timerId))
+    hydrationTimersRef.current = {}
+    Object.values(optimisticSafetyTimersRef.current).forEach((timerId) => clearTimeout(timerId))
+    optimisticSafetyTimersRef.current = {}
+    if (debouncedFetchRoomsTimerRef.current) clearTimeout(debouncedFetchRoomsTimerRef.current)
+  }, [])
 
   const activeRoomId = String(activeRoom?.Id || activeRoom?.id || '')
 
@@ -859,24 +890,15 @@ export default function MessagesPage() {
     return () => setActiveChatRoomForNotifications(null)
   }, [activeRoomId])
 
-  // ── Polling fallback: catch messages SignalR might miss ─────────────────────
-  useEffect(() => {
-    if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current)
-    if (!activeRoomId) return
-
-    pollingIntervalRef.current = setInterval(() => {
-      fetchMessages(activeRoomId, { silent: true })
-    }, 5000)
-
-    return () => {
-      if (pollingIntervalRef.current) clearInterval(pollingIntervalRef.current)
-    }
-  }, [activeRoomId, fetchMessages])
-
   useEffect(() => { fetchRooms() }, [fetchRooms])
 
   useEffect(() => {
-    if (!activeRoomId) return
+    if (!activeRoomId) {
+      selectedRoomFetchRef.current = ''
+      return
+    }
+    if (selectedRoomFetchRef.current === activeRoomId) return
+    selectedRoomFetchRef.current = activeRoomId
     fetchMessages(activeRoomId, { force: true })
   }, [activeRoomId, fetchMessages])
 
@@ -910,12 +932,9 @@ export default function MessagesPage() {
     const safetyKey = String(roomId)
     if (optimisticSafetyTimersRef.current[safetyKey]) clearTimeout(optimisticSafetyTimersRef.current[safetyKey])
     optimisticSafetyTimersRef.current[safetyKey] = setTimeout(() => {
-      setMessages(prev => {
-        if (prev.some(m => String(m.id || '').startsWith('optimistic-'))) {
-          fetchMessages(safetyKey, { silent: true, force: true })
-        }
-        return prev
-      })
+      if (messagesRef.current.some(m => String(m.id || '').startsWith('optimistic-'))) {
+        fetchMessages(safetyKey, { silent: true, force: true })
+      }
       delete optimisticSafetyTimersRef.current[safetyKey]
     }, 3000)
 
@@ -1033,7 +1052,13 @@ export default function MessagesPage() {
       if (contactType === 'support') return isSupportRoom(room)
       return !isSupportRoom(room)
     })
-    : rooms
+    : isSupportOperator
+      ? rooms.filter((room) => {
+          const participant = resolveParticipant(room, currentUserId)
+          const participantRole = String(participant.role || '').toLowerCase()
+          return ['patient', 'doctor', '1', '2', '3'].includes(participantRole)
+        })
+      : rooms
 
   const filteredRooms = sortSupportRooms(
     filteredByContactType.filter((room) => {

@@ -15,7 +15,7 @@ const links = [
 ];
 
 export const Navbar = () => {
-  const { language } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const [menuOpen, setMenuOpen] = useState(false);
   const navigate = useNavigate();
   const isAr = language === "ar";
@@ -42,6 +42,26 @@ export const Navbar = () => {
 
         {/* Right (RTL: Left): CTAs + Mobile menu toggle */}
         <div className="flex items-center gap-3">
+          <div
+            className="flex items-center rounded-full border border-border bg-background-subtle p-1 text-xs font-black"
+            aria-label={isAr ? "تغيير اللغة" : "Change language"}
+          >
+            {(["ar", "en"] as const).map((lang) => (
+              <button
+                key={lang}
+                type="button"
+                onClick={() => setLanguage(lang)}
+                aria-pressed={language === lang}
+                className={`rounded-full px-2.5 py-1.5 transition-colors ${
+                  language === lang
+                    ? "bg-primary text-white shadow-sm"
+                    : "text-text-muted hover:text-primary"
+                }`}
+              >
+                {lang.toUpperCase()}
+              </button>
+            ))}
+          </div>
           <div className="hidden items-center gap-2 lg:flex">
             <Button
               variant="outline"

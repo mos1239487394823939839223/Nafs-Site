@@ -27,7 +27,7 @@ import DoctorDocumentsViewer from "../../components/patient/DoctorDocumentsViewe
 import Modal from "../../components/ui/Modal";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { getDoctorSpecialtyTheme } from "../../lib/doctorSpecialtyTheme";
-import { getAppointmentStatusMeta } from "../../lib/appointmentStatus";
+import { getAppointmentStatusMeta, getAppointmentStatusKey } from "../../lib/appointmentStatus";
 import {
   SESSION_DURATION_MINUTES,
   canStartPatientSession,
@@ -140,6 +140,9 @@ export default function ReserveAppointment() {
     const rawFee =
       doctor?.SessionPrice ??
       doctor?.ConsultationFee ??
+      doctor?.ConsultationPrice ??
+      doctor?.SessionFee ??
+      doctor?.Fee ??
       doctor?.Price ??
       doctor?.price ??
       0;
@@ -148,8 +151,30 @@ export default function ReserveAppointment() {
   };
 
   const getDoctorRating = (doctor) => {
-    const parsed = Number(doctor?.Rate ?? doctor?.Rating ?? doctor?.rating);
-    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+    const parsed = Number(
+      doctor?.Rate ??
+        doctor?.Rating ??
+        doctor?.AverageRating ??
+        doctor?.AvgRating ??
+        doctor?.rate ??
+        doctor?.rating,
+    );
+    return Number.isFinite(parsed) && parsed >= 0 ? parsed : null;
+  };
+
+  const getDoctorSpecialties = (doctor) => {
+    const raw =
+      doctor?.Specialist ??
+      doctor?.Specialties ??
+      doctor?.Specialty ??
+      doctor?.specialist ??
+      doctor?.specialties ??
+      doctor?.specialty ??
+      [];
+    const values = Array.isArray(raw) ? raw : String(raw).split(/[|,]/);
+    return values
+      .map((value) => String(value?.Name ?? value?.name ?? value).trim())
+      .filter(Boolean);
   };
 
   const getDoctorExperience = (doctor) => {
@@ -312,7 +337,7 @@ export default function ReserveAppointment() {
       if (response.IsSuccess) {
         const items = response.Data.Items || [];
         setDoctors(items);
-        enrichDoctorsWithDetails(items).then(setDoctors);
+        setDoctors(await enrichDoctorsWithDetails(items));
         setPagination({
           pageIndex: response.Data.PageIndex,
           pageSize: response.Data.PageSize,
@@ -338,7 +363,7 @@ export default function ReserveAppointment() {
       if (response.IsSuccess) {
         const items = response.Data.Items || [];
         setAvailableDoctors(items);
-        enrichDoctorsWithDetails(items).then(setAvailableDoctors);
+        setAvailableDoctors(await enrichDoctorsWithDetails(items));
       } else {
         toast.error(response.Message || t("errors.loadDoctorsFailed"));
       }
@@ -978,7 +1003,7 @@ export default function ReserveAppointment() {
     }
   };
 
-  const submitManualPaymentForBooking = async (bookingId) => {
+  const submitManualPaymentForBooking = async (bookingId, preparedScreenshotUrl = null) => {
     if (!bookingId) return false;
     const hasSelectedProvider =
       selectedPaymentProvider !== null &&
@@ -992,7 +1017,7 @@ export default function ReserveAppointment() {
       return false;
     }
 
-    if (!paymentScreenshot) {
+    if (!paymentScreenshot && !preparedScreenshotUrl) {
       toast.error(
         t("auto.pleaseAttachATransferScreenshot"),
       );
@@ -1001,8 +1026,11 @@ export default function ReserveAppointment() {
 
     setPaymentLoading(true);
     try {
-      const uploadResponse = await filesAPI.uploadFile(paymentScreenshot);
-      const screenshotUrl = uploadResponse?.Data?.PublicUrl;
+      let screenshotUrl = preparedScreenshotUrl;
+      if (!screenshotUrl) {
+        const uploadResponse = await filesAPI.uploadFile(paymentScreenshot);
+        screenshotUrl = uploadResponse?.Data?.PublicUrl;
+      }
 
       if (!screenshotUrl) {
         toast.error(
@@ -1084,7 +1112,6 @@ export default function ReserveAppointment() {
 
   useSignalR({
     enabled: Boolean(currentUser),
-    disconnectOnUnmount: true,
     handlers: {
       PaymentStatusUpdated: applyPaymentStatusUpdate,
       BookingPaymentStatusUpdated: applyPaymentStatusUpdate,
@@ -1152,6 +1179,11 @@ export default function ReserveAppointment() {
     if (!selectedDoctor || !bookedSlot) return;
 
     setLoading(true);
+    // Tracked outside the inner try blocks so the outer catch can release the
+    // slot for ANY failure after creation — not only the one path that already
+    // returns `false` cleanly. A booking must never stay reserved without a
+    // confirmed, submitted payment.
+    let createdBookingId = null;
     try {
       // Construct booking request
       const formatDate = (d) => {
@@ -1233,14 +1265,61 @@ export default function ReserveAppointment() {
         // Continue to backend booking validation when pre-check fails.
       }
 
+      // Upload and validate the payment proof before creating the booking. This
+      // avoids reserving a slot when the client-side payment step itself fails.
+      let preparedScreenshotUrl = null;
+      try {
+        const uploadResponse = await filesAPI.uploadFile(paymentScreenshot);
+        preparedScreenshotUrl = uploadResponse?.Data?.PublicUrl;
+      } catch (uploadError) {
+        console.error("Payment proof upload failed:", uploadError);
+      }
+
+      if (!preparedScreenshotUrl) {
+        toast.error(t("auto.failedToUploadTransferScreenshot"));
+        return;
+      }
+
       const response = await patientAPI.createBooking(bookingRequest);
       if (response.IsSuccess) {
-        const bookingId = response?.Data?.BookingId;
-        if (bookingId) {
-          const submitted = await submitManualPaymentForBooking(bookingId);
-          if (!submitted) {
-            return;
+        const bookingId =
+          response?.Data?.BookingId ??
+          response?.Data?.Id ??
+          response?.Data?.bookingId ??
+          response?.Data?.id;
+        createdBookingId = bookingId ?? null;
+
+        // A booking must never be left "pending review" without a payment proof
+        // actually submitted. Missing id is treated as a failed reservation.
+        if (!bookingId) {
+          toast.error(t("errors.bookingFailed"));
+          await fetchDoctorSlots(selectedDoctor.Id, selectedDate);
+          await fetchBookingsForSlots();
+          return;
+        }
+
+        const submitted = await submitManualPaymentForBooking(
+          bookingId,
+          preparedScreenshotUrl,
+        ).catch((submitError) => {
+          console.error("Payment submission threw unexpectedly:", submitError);
+          return false;
+        });
+
+        if (!submitted) {
+          // A booking created only to attach payment proof must not keep the
+          // slot when that proof/payment step fails.
+          try {
+            await patientAPI.cancelBooking(
+              bookingId,
+              "Payment submission failed before reservation confirmation",
+            );
+          } catch (releaseError) {
+            console.error("Failed to release unpaid booking:", releaseError);
           }
+          await fetchDoctorSlots(selectedDoctor.Id, selectedDate);
+          await fetchBookingsForSlots();
+          return;
         }
 
         setBookingPendingReview(true);
@@ -1270,7 +1349,24 @@ export default function ReserveAppointment() {
       console.error("Booking error:", error);
       const errorMsg =
         error.response?.data?.Message || t("errors.bookingFailed");
-      if (
+
+      // The booking was created before this exception fired (e.g. an
+      // unexpected failure between createBooking and the normal cancellation
+      // branch) — release the slot instead of leaving it reserved silently.
+      if (createdBookingId) {
+        try {
+          await patientAPI.cancelBooking(
+            createdBookingId,
+            "Booking flow failed after reservation",
+          );
+        } catch (releaseError) {
+          console.error("Failed to release unpaid booking:", releaseError);
+        }
+        setBookedSlot(null);
+        fetchDoctorSlots(selectedDoctor.Id, selectedDate);
+        fetchBookingsForSlots();
+        toast.error(errorMsg);
+      } else if (
         String(errorMsg).toLowerCase().includes("not available") ||
         String(errorMsg).toLowerCase().includes("cancel")
       ) {
@@ -1355,8 +1451,10 @@ export default function ReserveAppointment() {
   // Unique specialties across the current tab's doctor list
   const allSpecialties = useMemo(() => {
     const src = mainTab === "available" ? availableDoctors : doctors;
-    return [...new Set(src.flatMap((d) => d.Specialist || []))].sort();
-  }, [doctors, availableDoctors, mainTab]);
+    return [...new Set(src.flatMap(getDoctorSpecialties))].sort((a, b) =>
+      a.localeCompare(b, language === "ar" ? "ar" : "en"),
+    );
+  }, [doctors, availableDoctors, language, mainTab]);
 
   // Client-side filtered + sorted doctor list
   const processedDoctors = useMemo(() => {
@@ -1368,19 +1466,30 @@ export default function ReserveAppointment() {
 
     if (doctorSearch.trim()) {
       const q = doctorSearch.toLowerCase();
-      src = src.filter((d) => d.Name?.toLowerCase().includes(q));
+      src = src.filter((d) =>
+        [d?.Name, d?.FullName, d?.name]
+          .filter(Boolean)
+          .some((name) => String(name).toLowerCase().includes(q)),
+      );
     }
 
     if (filterSpecialties.length > 0) {
       src = src.filter((d) =>
-        filterSpecialties.some((s) => (d.Specialist || []).includes(s)),
+        filterSpecialties.some((selected) =>
+          getDoctorSpecialties(d).some(
+            (specialty) => specialty.toLocaleLowerCase() === selected.toLocaleLowerCase(),
+          ),
+        ),
       );
     }
 
     if (filterGender !== null) {
       src = src.filter((d) => {
-        const gender = Number(d.Gender ?? d.gender);
-        return filterGender === 2 ? gender === 2 || gender === 0 : gender === filterGender;
+        const rawGender = d?.Gender ?? d?.gender;
+        const normalizedGender = String(rawGender ?? "").toLowerCase();
+        if (normalizedGender === "male") return filterGender === 1;
+        if (normalizedGender === "female") return filterGender === 2;
+        return Number(rawGender) === filterGender;
       });
     }
 
@@ -1476,6 +1585,11 @@ export default function ReserveAppointment() {
     const map = {};
     bookingsForSlots.forEach((booking) => {
       if (String(booking?.DoctorId) !== String(selectedDoctor.Id)) return;
+      // A cancelled booking (e.g. released after a failed/invalid payment) must
+      // not keep showing the slot as "taken" for this patient — the slot is
+      // free again and should render as available, same as for other patients.
+      const statusKey = getAppointmentStatusKey(booking?.Status, booking);
+      if (statusKey === "cancelled" || statusKey === "noShow") return;
       const key = buildSlotKeyFromDateTime(booking?.SessionStartTime);
       if (!key) return;
       map[key] = booking;

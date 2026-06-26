@@ -79,7 +79,7 @@ export const Hero = () => {
               {isAr ? "احجز جلسة الآن" : "Book a Session"}
             </Button>
             <Button
-              onClick={() => navigate("/auth/login")}
+              onClick={() => navigate("/auth/role-selection")}
               variant="outline"
               className={landingBtnLg}
             >

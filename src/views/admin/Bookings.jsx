@@ -160,7 +160,6 @@ export default function AdminBookings() {
 
   useSignalR({
     enabled: true,
-    disconnectOnUnmount: true,
     handlers: {
       PaymentStatusUpdated: handlePaymentStatusEvent,
       BookingPaymentStatusUpdated: handlePaymentStatusEvent,

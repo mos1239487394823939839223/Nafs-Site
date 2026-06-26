@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Headphones, Loader2, MessageSquare, Search, Stethoscope, UserRoundPlus, Users } from "lucide-react";
 import { chatAPI, extractErrorMessage, userAPI } from "../../lib/api";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { Roles, useAuth } from "../../contexts/AuthContext";
 import { useToast } from "../ui/Toast";
 import Button from "../ui/Button";
 import { UserAvatar } from "../ui/Avatar";
@@ -24,6 +25,7 @@ const getUserId = (user) =>
 
 export default function StartDirectMessageDialog({ open, onOpenChange, onStarted }) {
   const { t, isRTL } = useLanguage();
+  const { role } = useAuth();
   const toast = useToast();
   const [targetRole, setTargetRole] = useState("patients");
   const [query, setQuery] = useState("");
@@ -31,10 +33,22 @@ export default function StartDirectMessageDialog({ open, onOpenChange, onStarted
   const [loading, setLoading] = useState(false);
   const [startingId, setStartingId] = useState("");
 
-  const selectedRole = useMemo(
-    () => TARGET_ROLES.find((item) => item.key === targetRole) || TARGET_ROLES[0],
-    [targetRole],
+  const availableTargetRoles = useMemo(
+    () => role === Roles.STAFF
+      ? TARGET_ROLES.filter((item) => item.key === "patients" || item.key === "doctors")
+      : TARGET_ROLES,
+    [role],
   );
+  const selectedRole = useMemo(
+    () => availableTargetRoles.find((item) => item.key === targetRole) || availableTargetRoles[0],
+    [availableTargetRoles, targetRole],
+  );
+
+  useEffect(() => {
+    if (!availableTargetRoles.some((item) => item.key === targetRole)) {
+      setTargetRole(availableTargetRoles[0]?.key || "patients");
+    }
+  }, [availableTargetRoles, targetRole]);
 
   useEffect(() => {
     if (!open) return;
@@ -105,8 +119,12 @@ export default function StartDirectMessageDialog({ open, onOpenChange, onStarted
         </DialogHeader>
 
         <div className="space-y-4 p-5">
-          <div className="grid grid-cols-3 gap-2 rounded-2xl border border-border bg-background-subtle p-1">
-            {TARGET_ROLES.map((item) => {
+          <div
+            className={`grid gap-2 rounded-2xl border border-border bg-background-subtle p-1 ${
+              availableTargetRoles.length === 2 ? "grid-cols-2" : "grid-cols-3"
+            }`}
+          >
+            {availableTargetRoles.map((item) => {
               const Icon = item.icon;
               const active = item.key === targetRole;
               return (

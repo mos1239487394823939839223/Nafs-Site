@@ -1,6 +1,5 @@
 import { useMemo, useState } from "react";
 import { Bell, CheckCheck, Loader2, Mail, MailOpen } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button";
 import NotificationItem from "../../components/notifications/NotificationItem";
 import { useNotifications } from "../../contexts/NotificationContext";
@@ -9,7 +8,6 @@ import { NOTIFICATION_CATEGORIES } from "../../lib/notificationUtils";
 
 export default function NotificationsPage() {
   const { t, isRTL } = useLanguage();
-  const navigate = useNavigate();
   const { notifications, unreadCount, loading, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
   const [category, setCategory] = useState("all");
   const [readState, setReadState] = useState("all");
@@ -34,7 +32,6 @@ export default function NotificationsPage() {
 
   const openNotification = async (item) => {
     await markAsRead(item.id);
-    if (item.actionUrl) navigate(item.actionUrl);
   };
 
   return (

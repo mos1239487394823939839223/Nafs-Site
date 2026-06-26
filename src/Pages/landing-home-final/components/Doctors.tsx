@@ -61,7 +61,7 @@ export const Doctors = () => {
   return (
     <section id="doctors" dir={isAr ? "rtl" : "ltr"} className="container mx-auto px-4 py-12 md:py-16">
       <div className="mx-auto mb-4 flex max-w-6xl items-end justify-between gap-4">
-        <a href="/auth/login" className="text-xs font-bold text-[#397b62] hover:underline md:text-[13px]">
+        <a href="/auth/role-selection" className="text-xs font-bold text-[#397b62] hover:underline md:text-[13px]">
           {isAr ? "عرض جميع الدكاترة" : "View all doctors"}
         </a>
         <h2 className="text-center text-2xl font-bold text-[#234c3f] md:text-[26px]">
@@ -101,7 +101,7 @@ export const Doctors = () => {
                     {doc.SessionPrice || 350} {isAr ? "جنيه للجلسة" : "EGP per session"}
                   </p>
                   <Button
-                    onClick={() => navigate("/auth/login")}
+                    onClick={() => navigate("/auth/role-selection")}
                     variant="outline"
                     className={`mt-3 !h-9 !rounded-lg !px-4 !text-xs ${landingBtnBlock} border-[#8fb1a3] text-[#315548]`}
                   >

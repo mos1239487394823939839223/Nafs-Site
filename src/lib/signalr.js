@@ -22,6 +22,9 @@ function getAuthToken() {
 
 // ─── Singleton connection instance ────────────────────────────────────────────
 let _connection = null;
+let _startPromise = null;
+// Single-slot reference to the chat-UI ReceiveMessage handler (see below).
+let _chatMessageHandler = null;
 
 /**
  * Returns a SignalR HubConnection.
@@ -55,13 +58,49 @@ export function getChatConnection() {
 export async function startChatConnection() {
   const conn = getChatConnection();
 
-  if (
-    conn.state === signalR.HubConnectionState.Disconnected
-  ) {
-    await conn.start();
+  if (conn.state === signalR.HubConnectionState.Connected) return conn;
+
+  if (conn.state === signalR.HubConnectionState.Disconnected) {
+    if (!_startPromise) {
+      _startPromise = conn.start().finally(() => {
+        _startPromise = null;
+      });
+    }
+    await _startPromise;
+  } else if (_startPromise) {
+    await _startPromise;
   }
 
   return conn;
+}
+
+/**
+ * Subscribe the chat UI to incoming messages with a SINGLE-SLOT guarantee:
+ * registering a new handler always removes the previously registered chat
+ * handler first. This makes the chat listener immune to duplicate registration
+ * from React StrictMode, repeated mounts, or Vite HMR/Fast-Refresh leaving stale
+ * handlers on the long-lived singleton connection — without disturbing other
+ * `ReceiveMessage` subscribers (e.g. the notification context).
+ *
+ * @param {(msg: any) => void} handler
+ * @returns {() => void} unsubscribe
+ */
+export function subscribeToChatMessages(handler) {
+  const conn = getChatConnection();
+  if (_chatMessageHandler) {
+    conn.off('ReceiveMessage', _chatMessageHandler);
+  }
+  _chatMessageHandler = handler;
+  // The SignalR JS client matches method names case-insensitively (stored
+  // lowercased), so 'ReceiveMessage' also handles a backend 'receivemessage'.
+  conn.on('ReceiveMessage', handler);
+
+  return () => {
+    if (_chatMessageHandler === handler) {
+      conn.off('ReceiveMessage', handler);
+      _chatMessageHandler = null;
+    }
+  };
 }
 
 /**
@@ -69,12 +108,24 @@ export async function startChatConnection() {
  * getChatConnection() creates a fresh instance (use on logout).
  */
 export async function stopChatConnection() {
+  _chatMessageHandler = null;
   if (_connection) {
+    const connectionToStop = _connection;
     try {
-      await _connection.stop();
+      if (_startPromise) await _startPromise.catch(() => {});
+      await connectionToStop.stop();
     } catch {
       // ignore
     }
-    _connection = null;
+    if (_connection === connectionToStop) _connection = null;
+    _startPromise = null;
   }
+}
+
+// Dev-only safety: when this module is hot-replaced, tear down the singleton so
+// stale event listeners can't accumulate on a long-lived connection across HMR.
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    stopChatConnection();
+  });
 }

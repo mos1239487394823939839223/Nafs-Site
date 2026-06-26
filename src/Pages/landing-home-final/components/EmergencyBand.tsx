@@ -71,7 +71,7 @@ export const EmergencyBand = () => {
                   {desc}
                 </p>
                 <Button
-                  onClick={() => navigate("/auth/login")}
+                  onClick={() => navigate("/auth/role-selection")}
                   variant="outline"
                   className={`mt-3 !h-9 min-w-[128px] !rounded-lg !px-5 !text-xs ${
                     primary

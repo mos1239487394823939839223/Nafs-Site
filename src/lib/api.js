@@ -1170,6 +1170,14 @@ export const customerSupportAPI = {
     });
     return response.data;
   },
+
+  rejectRefund: async (id, notes = null) => {
+    const response = await api.put(`/CustomerSupport/Refunds/${id}/Reject`, {
+      Notes: notes || null,
+      RejectionReason: notes || null,
+    });
+    return response.data;
+  },
 };
 
 // ─── Utility/Misc API Functions ──────────────────────────────────────────────

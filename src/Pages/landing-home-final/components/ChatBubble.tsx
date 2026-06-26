@@ -8,7 +8,7 @@ export const ChatBubble = () => {
   return (
   <button
     aria-label={t("landing.chat.start")}
-    onClick={() => navigate("/auth/login")}
+    onClick={() => navigate("/auth/role-selection")}
     className="fixed bottom-6 right-6 z-50 grid h-14 w-14 place-items-center rounded-full bg-brand text-brand-foreground shadow-[var(--shadow-soft)] transition hover:scale-105 hover:bg-brand/90"
   >
     <MessageCircle className="h-6 w-6" />

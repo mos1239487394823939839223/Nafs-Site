@@ -60,7 +60,7 @@ export const Services = () => {
         </div>
         <div className="mt-7 text-center">
           <Button
-            onClick={() => navigate("/auth/login")}
+            onClick={() => navigate("/auth/role-selection")}
             variant="outline"
             className={`${landingBtnMd} border-[#c8d8d1] text-[#315548]`}
           >

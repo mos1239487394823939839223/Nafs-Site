@@ -90,7 +90,6 @@ export default function PatientQueue() {
 
   useSignalR({
     enabled: true,
-    disconnectOnUnmount: true,
     handlers: {
       BookingStatusUpdated: fetchBookings,
       ManualPaymentStatusUpdated: fetchBookings,
