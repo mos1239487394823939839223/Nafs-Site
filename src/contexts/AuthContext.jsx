@@ -57,7 +57,11 @@ export const AuthProvider = ({ children }) => {
             try {
               const response = await userAPI.getCurrentUser();
               if (response?.IsSuccess !== false && response?.Data) {
-                const refreshedUser = response.Data;
+                const serverUser = response.Data;
+                // Merge: keep any locally-persisted fields (e.g. support availability)
+                // that the profile endpoint may not echo back, but let the server be
+                // authoritative for the fields it does return.
+                const refreshedUser = { ...user, ...serverUser };
                 setUser(refreshedUser);
                 localStorage.setItem(
                   "auth",

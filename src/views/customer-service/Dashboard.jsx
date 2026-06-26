@@ -9,6 +9,7 @@ import Card, {
 import Button from "../../components/ui/Button";
 import Badge from "../../components/ui/Badge";
 import Modal from "../../components/ui/Modal";
+import Switch from "../../components/ui/Switch";
 import { useToast } from "../../components/ui/Toast";
 import {
   Search,
@@ -27,8 +28,8 @@ import {
   ArrowUpRight,
   UserPlus,
 } from "lucide-react";
-import { customerSupportAPI, chatAPI } from "../../lib/api";
-import { useAuth } from "../../contexts/AuthContext";
+import { customerSupportAPI, chatAPI, extractErrorMessage } from "../../lib/api";
+import { Roles, useAuth } from "../../contexts/AuthContext";
 import { canStaffViewSupportRoom, isSensitiveSupportRoom } from "../../lib/supportAccess";
 import { useLanguage } from "../../contexts/LanguageContext";
 import {
@@ -40,6 +41,7 @@ import { getRoomCaseTypeMeta, getSupportRoomTimestamp, readLocalRoomCaseTypes, s
 import SupportCaseTag from "../../components/support/SupportCaseTag";
 import SupportPriorityTag, { getSupportPriority } from "../../components/support/SupportPriorityTag";
 import { getAppointmentStatusKey } from "../../lib/appointmentStatus";
+import { readCustomerSupportAvailability } from "../../lib/customerSupportAvailability";
 
 export default function CustomerServiceDashboard() {
   const { t, isRTL } = useLanguage();
@@ -74,11 +76,20 @@ export default function CustomerServiceDashboard() {
   const [chatRoomsSearch, setChatRoomsSearch] = useState("");
   const [chatRoomsTypeFilter, setChatRoomsTypeFilter] = useState("all");
   const [priorityUpdatingRoomId, setPriorityUpdatingRoomId] = useState(null);
+  const [isSupportAvailable, setIsSupportAvailable] = useState(() => readCustomerSupportAvailability(user) ?? false);
+  const [availabilityUpdating, setAvailabilityUpdating] = useState(false);
 
   const tx = (key, fallback) => {
     const value = t(key);
     return value && value !== key ? value : fallback;
   };
+
+  useEffect(() => {
+    const currentAvailability = readCustomerSupportAvailability(user);
+    if (currentAvailability !== null) {
+      setIsSupportAvailable(currentAvailability);
+    }
+  }, [user]);
 
   const statusFilterOptions = [
     { value: "all", label: t("common.allStatuses") },
@@ -541,6 +552,39 @@ export default function CustomerServiceDashboard() {
       toast.error(tx("support.priorityUpdateFailed", "Could not update priority"));
     } finally {
       setPriorityUpdatingRoomId(null);
+    }
+  };
+
+  const handleAvailabilityChange = async (nextAvailability) => {
+    if (availabilityUpdating || role !== Roles.STAFF) return;
+
+    const previousAvailability = isSupportAvailable;
+    setIsSupportAvailable(nextAvailability);
+    setAvailabilityUpdating(true);
+
+    try {
+      const response = await customerSupportAPI.updateAvailability(nextAvailability);
+      if (response?.IsSuccess === false) {
+        throw new Error(response?.Message || response?.message);
+      }
+
+      const confirmedAvailability = nextAvailability;
+      setIsSupportAvailable(confirmedAvailability);
+      toast.success(
+        confirmedAvailability
+          ? tx("support.nowActive", "You are now Active")
+          : tx("support.nowInactive", "You are now Inactive"),
+      );
+    } catch (error) {
+      setIsSupportAvailable(previousAvailability);
+      toast.error(
+        extractErrorMessage(
+          error,
+          tx("support.availabilityUpdateFailed", "Could not update your availability. Please try again."),
+        ),
+      );
+    } finally {
+      setAvailabilityUpdating(false);
     }
   };
 
@@ -1173,18 +1217,32 @@ export default function CustomerServiceDashboard() {
               <CardTitle className="text-xl">{t("auto.chatRooms")}</CardTitle>
               <p className="mt-1 text-xs text-text-muted">{t("auto.patientConversations")}</p>
             </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={fetchChatRooms}
-              disabled={chatRoomsLoading}
-              className="gap-2"
-            >
-              <Loader2
-                className={`w-4 h-4 ${chatRoomsLoading ? "animate-spin" : "hidden"}`}
-              />
-              {t("auto.refresh")}
-            </Button>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              {role === Roles.STAFF && (
+                <Switch
+                  checked={isSupportAvailable}
+                  loading={availabilityUpdating}
+                  disabled={availabilityUpdating}
+                  onCheckedChange={handleAvailabilityChange}
+                  checkedLabel={tx("support.available", "Available")}
+                  uncheckedLabel={tx("support.unavailable", "Unavailable")}
+                  ariaLabel={tx("support.availabilityStatus", "Support availability status")}
+                  className="justify-center sm:justify-start"
+                />
+              )}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={fetchChatRooms}
+                disabled={chatRoomsLoading}
+                className="gap-2"
+              >
+                <Loader2
+                  className={`w-4 h-4 ${chatRoomsLoading ? "animate-spin" : "hidden"}`}
+                />
+                {t("auto.refresh")}
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="pt-4">
             <div className="mb-5 grid gap-3 lg:grid-cols-[1fr_auto]">

@@ -47,6 +47,7 @@
     "recharts": "^2.15.0",
     "stylis": "^4.3.6",
     "stylis-plugin-rtl": "^2.1.1",
+    "swiper": "^14.0.0",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7"
   },

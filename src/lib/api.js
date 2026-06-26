@@ -448,7 +448,22 @@ export const patientAPI = {
   },
 };
 
-// ─── Doctor API Functions ────────────────────────────────────────────────────
+// Homepage API Functions
+export const homeAPI = {
+  // Get doctors displayed on the public home page with pagination
+  getDoctors: async ({ pageIndex = 1, pageSize = 20, hasSlotsOnly = undefined } = {}) => {
+    const response = await api.get("/Home/Doctors", {
+      params: {
+        PageIndex: pageIndex,
+        PageSize: pageSize,
+        ...(hasSlotsOnly !== undefined && { HasSlotsOnly: hasSlotsOnly }),
+      },
+    });
+    return response.data;
+  },
+};
+
+// Doctor API Functions
 // Direct Meeting API Functions
 export const meetingAPI = {
   startBookingMeeting: async (bookingId) => {
@@ -790,11 +805,28 @@ export const chatAPI = {
   },
 
   startDirectChat: async ({ targetUserId, targetRole = null }) => {
-    const response = await api.post("/CustomerSupport/DirectChat", {
-      TargetUserId: targetUserId,
-      RecipientUserId: targetUserId,
-      ParticipantUserId: targetUserId,
-      TargetRole: targetRole,
+    const numericRole = Number(targetRole);
+    // Keep the id as a string. These are 19-digit snowflake ids that exceed
+    // Number.MAX_SAFE_INTEGER — coercing to Number corrupts the trailing digits
+    // (e.g. ...494208 → ...494200), so the backend receives a non-existent id and
+    // the entity save fails. JSON strings bind fine to long/Guid server-side.
+    const targetIdValue = String(targetUserId ?? "").trim();
+
+    const payload =
+      numericRole === 2
+        ? {
+            DoctorId: targetIdValue,
+            doctorId: targetIdValue,
+            TargetUserId: targetIdValue,
+            TargetRole: numericRole,
+          }
+        : {
+            PatientId: targetIdValue,
+            patientId: targetIdValue,
+          };
+
+    const response = await api.post("/CustomerSupport/Chat", {
+      ...payload,
       CreatedAt: new Date().toISOString(),
     });
     return response.data;
@@ -1115,6 +1147,13 @@ export const paymentAPI = {
 
 // ─── Customer Support API Functions ─────────────────────────────────────────
 export const customerSupportAPI = {
+  updateAvailability: async (isAvailable) => {
+    const response = await api.put("/CustomerSupport/Availability", {
+      IsAvailable: Boolean(isAvailable),
+    });
+    return response.data;
+  },
+
   getManualPayments: async (pageIndex = 1, pageSize = 20, status = null) => {
     const params = {
       pageIndex,

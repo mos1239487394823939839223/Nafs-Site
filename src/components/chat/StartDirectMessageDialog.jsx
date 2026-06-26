@@ -88,10 +88,27 @@ export default function StartDirectMessageDialog({ open, onOpenChange, onStarted
         targetUserId,
         targetRole: selectedRole.role,
       });
-      if (response?.IsSuccess === false || response?.isSuccess === false) {
-        throw new Error(response?.Message || response?.message || "Failed to start chat");
+      const data = response?.Data ?? response?.data ?? response;
+      const resolvedRoomId =
+        data?.RoomId || data?.roomId || data?.Id || data?.id || data?.ChatRoomId || data?.chatRoomId;
+      const explicitFailure = response?.IsSuccess === false || response?.isSuccess === false;
+      // Some backends return HTTP 200 with an error body (Message/Details) and no
+      // room id instead of a proper failure flag — treat that as a failure too.
+      const errorShaped =
+        !resolvedRoomId && (response?.Message || response?.message || response?.Details || response?.details);
+      if (explicitFailure || errorShaped) {
+        throw new Error(
+          response?.Message ||
+            response?.message ||
+            response?.Details ||
+            response?.details ||
+            "Failed to start chat",
+        );
       }
-      onStarted?.(response, targetUser);
+      onStarted?.(response, {
+        ...targetUser,
+        _directParticipantRole: selectedRole.role === 2 ? "doctor" : selectedRole.role === 3 ? "patient" : "support",
+      });
       onOpenChange?.(false);
     } catch (error) {
       console.error("Failed to start direct chat:", error);

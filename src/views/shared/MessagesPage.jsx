@@ -2,10 +2,11 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { useAuth, Roles } from '../../contexts/AuthContext'
-import { chatAPI, filesAPI, MessageType, userAPI } from '../../lib/api'
+import { chatAPI, customerSupportAPI, extractErrorMessage, filesAPI, MessageType, userAPI } from '../../lib/api'
 import ChatWindow from '../../components/chat/ChatWindow'
 import StartDirectMessageDialog from '../../components/chat/StartDirectMessageDialog'
 import SelectDropdown from '../../components/ui/SelectDropdown'
+import Switch from '../../components/ui/Switch'
 import { Search, MessageSquare, Loader2, RefreshCw, Stethoscope, Headphones, FileEdit as EditNoteIcon, Wrench, HeartPulse, AlertTriangle, CreditCard, CalendarClock, UserCog, CircleHelp, ShieldAlert, FileText, LockKeyhole, Paperclip, X } from 'lucide-react'
 const SupportAgent = Headphones
 import { useToast } from '../../components/ui/Toast'
@@ -17,6 +18,7 @@ import { getRoomCaseTypeMeta, sortSupportRooms } from '../../lib/supportCaseType
 import { applySupportLifecycleToRooms, getSupportConversationStatus, readSupportArchiveMeta } from '../../lib/supportChatLifecycle'
 import SupportCaseTag from '../../components/support/SupportCaseTag'
 import SupportPriorityTag from '../../components/support/SupportPriorityTag'
+import { readCustomerSupportAvailability } from '../../lib/customerSupportAvailability'
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -306,7 +308,7 @@ const resolveParticipant = (room, currentUserId) => {
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function MessagesPage() {
-  const { user, role } = useAuth()
+  const { user, role, updateProfile } = useAuth()
   const { t, isRTL } = useLanguage()
   const toast = useToast()
   const navigate = useNavigate()
@@ -334,9 +336,10 @@ export default function MessagesPage() {
   const [messagesError, setMessagesError] = useState('')
   const [messageSending, setMessageSending] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [roomTypeFilter, setRoomTypeFilter] = useState('all')
   const [sidebarFilter, setSidebarFilter] = useState('all')
   const [showDetailsPanel, setShowDetailsPanel] = useState(false)
+  const [isSupportAvailable, setIsSupportAvailable] = useState(() => readCustomerSupportAvailability(user) ?? false)
+  const [availabilityUpdating, setAvailabilityUpdating] = useState(false)
   const [contactType, setContactType] = useState(() => {
     if (shouldAutoOpenSupport || initialType === 'support') return 'support'
     return 'doctors'
@@ -430,6 +433,54 @@ export default function MessagesPage() {
 
   const isPatient = role === Roles.PATIENT
   const isSupportOperator = role === Roles.STAFF
+
+  useEffect(() => {
+    const currentAvailability = readCustomerSupportAvailability(user)
+    if (currentAvailability !== null) {
+      setIsSupportAvailable(currentAvailability)
+    }
+  }, [user])
+
+  const handleAvailabilityChange = useCallback(async (nextAvailability) => {
+    if (availabilityUpdating || !isSupportOperator) return
+
+    const previousAvailability = isSupportAvailable
+    setIsSupportAvailable(nextAvailability)
+    setAvailabilityUpdating(true)
+
+    try {
+      const response = await customerSupportAPI.updateAvailability(nextAvailability)
+      if (response?.IsSuccess === false) {
+        throw new Error(response?.Message || response?.message)
+      }
+
+      const confirmedAvailability = nextAvailability
+      setIsSupportAvailable(confirmedAvailability)
+      // Persist into the stored user so the toggle survives a page refresh even if
+      // getCurrentUser() does not echo the availability field back.
+      updateProfile?.({
+        IsAvailable: confirmedAvailability,
+        isAvailable: confirmedAvailability,
+        IsSupportAvailable: confirmedAvailability,
+        isSupportAvailable: confirmedAvailability,
+      })
+      toast.success(
+        confirmedAvailability
+          ? t('support.nowActive', 'You are now Active')
+          : t('support.nowInactive', 'You are now Inactive'),
+      )
+    } catch (error) {
+      setIsSupportAvailable(previousAvailability)
+      toast.error(
+        extractErrorMessage(
+          error,
+          t('support.availabilityUpdateFailed', 'Could not update your availability. Please try again.'),
+        ),
+      )
+    } finally {
+      setAvailabilityUpdating(false)
+    }
+  }, [availabilityUpdating, isSupportAvailable, isSupportOperator, t, toast, updateProfile])
 
   const isSupportRoom = useCallback((room) => {
     const roomId = String(room?.Id || room?.id || '')
@@ -1047,6 +1098,19 @@ export default function MessagesPage() {
     })
   }, [navigate, t, toast])
 
+  const getParticipantKind = useCallback((room) => {
+    const participant = resolveParticipant(room, currentUserId)
+    const participantRole = String(
+      participant.role || room?.OtherParticipantRole || room?.otherParticipantRole || '',
+    ).toLowerCase()
+
+    if (['doctor', 'therapist', '2'].includes(participantRole)) return 'doctor'
+    if (['patient', 'user', '3'].includes(participantRole)) return 'patient'
+    if (participant.name && (room?.DoctorName || room?.doctorName) && participant.name === (room.DoctorName || room.doctorName)) return 'doctor'
+    if (participant.name && (room?.PatientName || room?.patientName) && participant.name === (room.PatientName || room.patientName)) return 'patient'
+    return isSupportRoom(room) ? 'support' : 'patient'
+  }, [currentUserId, isSupportRoom])
+
   const filteredByContactType = isPatient
     ? rooms.filter((room) => {
       if (contactType === 'support') return isSupportRoom(room)
@@ -1054,9 +1118,8 @@ export default function MessagesPage() {
     })
     : isSupportOperator
       ? rooms.filter((room) => {
-          const participant = resolveParticipant(room, currentUserId)
-          const participantRole = String(participant.role || '').toLowerCase()
-          return ['patient', 'doctor', '1', '2', '3'].includes(participantRole)
+          const participantKind = getParticipantKind(room)
+          return contactType === 'doctors' ? participantKind === 'doctor' : participantKind === 'patient'
         })
       : rooms
 
@@ -1064,10 +1127,13 @@ export default function MessagesPage() {
     filteredByContactType.filter((room) => {
       const participant = resolveParticipant(room, currentUserId)
       const caseMeta = getRoomCaseTypeMeta(room, isRTL, localRoomCaseTypes)
+      const hasUnread = Number(room.UnreadCount || room.unreadCount || 0) > 0
       const matchesSearch =
         participant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         String(room.LastMessage || room.lastMessage || '').toLowerCase().includes(searchQuery.toLowerCase())
-      const matchesType = roomTypeFilter === 'all' || caseMeta.key === roomTypeFilter
+      const matchesType =
+        sidebarFilter === 'all' ||
+        (sidebarFilter === 'unread' ? hasUnread : caseMeta.key === sidebarFilter)
       return matchesSearch && matchesType
     }),
     localRoomCaseTypes,
@@ -1083,8 +1149,12 @@ export default function MessagesPage() {
   }, [initialCaseType, supportCaseType])
 
   const unreadTotal = rooms.reduce((acc, r) => acc + (r.UnreadCount || 0), 0)
-  const supportRoomsCount = rooms.filter((room) => isSupportRoom(room)).length
-  const therapistRoomsCount = rooms.length - supportRoomsCount
+  const therapistRoomsCount = isSupportOperator
+    ? rooms.filter((room) => getParticipantKind(room) === 'doctor').length
+    : rooms.filter((room) => !isSupportRoom(room)).length
+  const supportRoomsCount = isSupportOperator
+    ? rooms.filter((room) => getParticipantKind(room) === 'patient').length
+    : rooms.filter((room) => isSupportRoom(room)).length
 
   const handleSelectRoom = (room) => {
     if (isPatient && isSupportRoom(room)) {
@@ -1117,7 +1187,14 @@ export default function MessagesPage() {
       targetUser?.Email ||
       t('chat.newConversation', 'New conversation')
 
-    setMessageSending(true)
+    // Surface the freshly-opened conversation in the relevant sidebar tab so the
+    // selected room is also visible in the list (staff: doctors vs patients tab).
+    const targetRole = String(targetUser?._directParticipantRole || '').toLowerCase()
+    if (isSupportOperator && (targetRole === 'doctor' || targetRole === 'patient')) {
+      setContactType(targetRole === 'doctor' ? 'doctors' : 'support')
+    }
+
+    setLoading(true)
     try {
       const roomsResponse = await chatAPI.getRooms()
       const roomList = Array.isArray(roomsResponse?.Data)
@@ -1136,6 +1213,8 @@ export default function MessagesPage() {
       }
     } catch (error) {
       console.error('Failed to refresh rooms after starting direct chat:', error)
+    } finally {
+      setLoading(false)
     }
 
     if (roomId) {
@@ -1143,15 +1222,20 @@ export default function MessagesPage() {
         Id: roomId,
         OtherParticipantName: targetName,
         OtherParticipantImage: targetUser?.Image || targetUser?.image || null,
-        OtherParticipantRole: targetUser?.RoleName || targetUser?.roleName || 'user',
+        OtherParticipantRole: targetUser?._directParticipantRole || targetUser?.RoleName || targetUser?.roleName || 'user',
         LastMessage: '',
         LastMessageAt: new Date().toISOString(),
         UnreadCount: 0,
       }
       setRooms((prev) => [syntheticRoom, ...prev.filter((room) => String(room?.Id || room?.id || '') !== roomId)])
       setActiveRoom(syntheticRoom)
+      return
     }
-  }, [enrichRoomsWithSupportMeta, t])
+
+    // Could not resolve a room id from the response — let the user know instead of
+    // silently doing nothing after the modal closed.
+    toast.error(t('chat.failedToStartDirectMessage', 'Could not start this conversation.'))
+  }, [enrichRoomsWithSupportMeta, isSupportOperator, t, toast])
 
   const openSupportChat = useCallback(async (requestedCaseType) => {
     if (!currentUserId) {
@@ -1340,13 +1424,25 @@ export default function MessagesPage() {
 
             <div className="flex items-center gap-1">
               {isSupportOperator && (
-                <button
-                  onClick={() => setDirectMessageOpen(true)}
-                  className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark"
-                >
-                  <MessageSquare className="w-3.5 h-3.5" />
-                  {t('chat.startMessage', 'Start Message')}
-                </button>
+                <>
+                  <Switch
+                    checked={isSupportAvailable}
+                    loading={availabilityUpdating}
+                    disabled={availabilityUpdating}
+                    onCheckedChange={handleAvailabilityChange}
+                    checkedLabel={isRTL ? 'متاح' : 'Available'}
+                    uncheckedLabel={isRTL ? 'غير متاح' : 'Unavailable'}
+                    ariaLabel={t('support.availabilityStatus', 'Support availability status')}
+                    className="h-9 px-2.5"
+                  />
+                  <button
+                    onClick={() => setDirectMessageOpen(true)}
+                    className="inline-flex items-center gap-1.5 rounded-xl bg-primary px-3 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    {t('chat.startMessage', 'Start Message')}
+                  </button>
+                </>
               )}
               <button
                 onClick={fetchRooms}
@@ -1373,7 +1469,9 @@ export default function MessagesPage() {
             >
               <span className="flex items-center justify-center gap-1.5">
                 <Stethoscope className="w-3.5 h-3.5" />
-                {t('chat.talkToDoctors', 'Talk to therapists')}
+                {isSupportOperator
+                  ? (isRTL ? 'تحدث مع المعالجين' : 'Talk to therapists')
+                  : t('chat.talkToDoctors', 'Talk to therapists')}
                 <span className="rounded-full px-1.5 py-0.5 text-[9px] bg-primary/10 text-primary">{therapistRoomsCount}</span>
               </span>
             </button>
@@ -1390,12 +1488,16 @@ export default function MessagesPage() {
               }`}
             >
               <span className="flex items-center justify-center gap-1.5">
-                {supportRoomLoading ? (
+                {supportRoomLoading && !isSupportOperator ? (
                   <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                ) : isSupportOperator ? (
+                  <UserCog className="w-3.5 h-3.5" />
                 ) : (
                   <SupportAgent className="w-3.5 h-3.5" />
                 )}
-                {t('chat.talkToSupport', 'Talk to support')}
+                {isSupportOperator
+                  ? (isRTL ? 'التحدث مع المرضى' : 'Talk to patients')
+                  : t('chat.talkToSupport', 'Talk to support')}
                 <span className="rounded-full px-1.5 py-0.5 text-[9px] bg-primary/10 text-primary">{supportRoomsCount}</span>
               </span>
             </button>
@@ -1490,13 +1592,17 @@ export default function MessagesPage() {
           ) : filteredRooms.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
               <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-                {contactType === 'support' ? <Headphones className="w-7 h-7 text-primary" /> : <Stethoscope className="w-7 h-7 text-primary" />}
+                {contactType === 'support'
+                  ? (isSupportOperator ? <UserCog className="w-7 h-7 text-primary" /> : <Headphones className="w-7 h-7 text-primary" />)
+                  : <Stethoscope className="w-7 h-7 text-primary" />}
               </div>
               <p className="text-sm font-bold text-text-heading">
                 {searchQuery ? t('chat.noResults', 'No results found') : t('chat.noConversations', 'No conversations yet')}
               </p>
               <p className="mt-2 max-w-xs text-xs leading-5 text-text-muted">
-                {contactType === 'support'
+                {isSupportOperator && contactType === 'support'
+                  ? (isRTL ? 'تظهر هنا محادثات المرضى.' : 'Patient conversations will appear here.')
+                  : contactType === 'support'
                   ? t('chat.noSupportCasesDesc', 'Choose a conversation type above, then start chatting with support.')
                   : t('chat.noTherapistChatsDesc', 'Your therapist conversations will appear here after they become available.')}
               </p>

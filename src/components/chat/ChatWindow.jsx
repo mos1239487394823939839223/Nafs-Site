@@ -20,6 +20,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
   const prevConversationIdRef = useRef(null)
   const fileInputRef = useRef(null)
   const emojiPickerRef = useRef(null)
+  const messageInputRef = useRef(null)
 
   const isNearBottom = () => {
     const el = scrollContainerRef.current
@@ -66,6 +67,18 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
     document.addEventListener('mousedown', handleClickOutside)
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [])
+
+  // Focus the message input whenever a conversation is opened so the user can
+  // start typing immediately (e.g. right after "Start Message" opens a chat).
+  useEffect(() => {
+    const conversationId = conversation?.id ?? conversation?.Id ?? null
+    if (!conversationId || composerDisabled) return
+    // Defer to the next frame so the textarea is mounted and visible first.
+    const frame = requestAnimationFrame(() => {
+      messageInputRef.current?.focus()
+    })
+    return () => cancelAnimationFrame(frame)
+  }, [conversation?.id, conversation?.Id, composerDisabled])
 
   const onEmojiClick = (emojiData) => {
     setMessageInput(prev => prev + emojiData.emoji)
@@ -348,6 +361,7 @@ export default function ChatWindow({ conversation, onSendMessage, onBack, isTypi
           {/* Text Input */}
           <div className="flex-1 relative">
             <textarea
+              ref={messageInputRef}
               value={messageInput}
               onChange={(e) => { setMessageInput(e.target.value); handleTyping() }}
               onKeyPress={handleKeyPress}
