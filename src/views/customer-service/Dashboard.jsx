@@ -1,19 +1,12 @@
 import { useEffect, useMemo, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import Card, {
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
-import Badge from "../../components/ui/Badge";
 import Modal from "../../components/ui/Modal";
 import Switch from "../../components/ui/Switch";
 import { useToast } from "../../components/ui/Toast";
 import {
   Search,
-  Filter,
   Loader2,
   CheckCircle,
   X,
@@ -27,7 +20,20 @@ import {
   AlertTriangle,
   ArrowUpRight,
   UserPlus,
+  LayoutGrid,
+  Timer,
+  RotateCw,
+  Sun,
+  Sunrise,
+  Moon,
 } from "lucide-react";
+import {
+  DashboardCard,
+  KPIWidget,
+  FilterBar,
+  QuickModule,
+  RequestCard,
+} from "../../components/dashboard";
 import { customerSupportAPI, chatAPI, extractErrorMessage } from "../../lib/api";
 import { Roles, useAuth } from "../../contexts/AuthContext";
 import { canStaffViewSupportRoom, isSensitiveSupportRoom } from "../../lib/supportAccess";
@@ -396,9 +402,6 @@ export default function CustomerServiceDashboard() {
     },
   ];
 
-  const activeModuleMeta =
-    moduleTabs.find((item) => item.id === activeModule) || moduleTabs[0];
-
   const supportOverview = useMemo(() => {
     const localMap = readLocalRoomCaseTypes();
     return {
@@ -408,21 +411,6 @@ export default function CustomerServiceDashboard() {
       resolved: chatRooms.filter((room) => room.IsActive === false).length,
     };
   }, [chatRooms]);
-
-  const supportTypeOverview = useMemo(() => {
-    const localMap = readLocalRoomCaseTypes();
-    const order = ["technical", "medical", "billing", "emergency", "blackmail_abuse"];
-    return order.map((key) => {
-      const sampleRoom = { SupportCaseType: key };
-      const meta = getRoomCaseTypeMeta(sampleRoom, isRTL, localMap);
-      return {
-        key,
-        label: meta.label,
-        className: meta.className,
-        count: chatRooms.filter((room) => getRoomCaseTypeMeta(room, false, localMap).key === key).length,
-      };
-    });
-  }, [chatRooms, isRTL]);
 
   const handleConfirmPayment = async (paymentItem) => {
     if (hasCancellationLock(paymentItem)) {
@@ -614,234 +602,157 @@ export default function CustomerServiceDashboard() {
     });
   }, [refunds, refundSearch]);
 
+  // ── Greeting + date (derived locally, no extra requests) ────────────────────
+  const now = new Date();
+  const hour = now.getHours();
+  const greeting =
+    hour < 12
+      ? { text: tx("dashboard.goodMorning", isRTL ? "صباح الخير" : "Good morning"), icon: Sunrise }
+      : hour < 18
+        ? { text: tx("dashboard.goodAfternoon", isRTL ? "مساء الخير" : "Good afternoon"), icon: Sun }
+        : { text: tx("dashboard.goodEvening", isRTL ? "مساء الخير" : "Good evening"), icon: Moon };
+  const agentName =
+    user?.Name || user?.name || user?.UserName || user?.userName || "";
+  const todayLabel = now.toLocaleDateString(isRTL ? "ar-EG" : undefined, {
+    weekday: "long",
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  });
+
+  // ── Unified KPI row (combines metrics already computed above) ────────────────
+  const kpis = [
+    { icon: LayoutGrid, label: tx("support.totalCases", "Total cases"), value: supportOverview.total, tone: "neutral" },
+    { icon: MessageSquare, label: t("staff.inProgress"), value: chatRooms.filter((r) => r.IsActive !== false).length, tone: "info" },
+    { icon: PendingActions, label: tx("support.waitingReply", "Waiting reply"), value: supportOverview.unread, tone: "warning" },
+    { icon: Verified, label: tx("staff.resolved", "Resolved"), value: supportOverview.resolved, tone: "success" },
+    { icon: ReceiptLong, label: tx("staff.failedPayments", isRTL ? "مدفوعات فاشلة" : "Failed payments"), value: manualSummary.failed, tone: "danger" },
+    { icon: AccountBalanceWallet, label: t("auto.refundRequests"), value: refundsSummary.pending, tone: "info" },
+    { icon: AlertTriangle, label: tx("support.emergencyCases", "Emergency"), value: supportOverview.urgent, tone: "danger" },
+    { icon: Timer, label: tx("support.avgResponseTime", isRTL ? "متوسط وقت الرد" : "Avg. response"), value: "—", tone: "neutral" },
+  ];
+
+  const refreshActiveModule = () => {
+    if (activeModule === "manual-payments") fetchManualPayments(manualPaymentsPage, selectedStatusFilter);
+    else if (activeModule === "refunds") fetchRefunds(refundsPage, refundsStatusFilter);
+    else fetchChatRooms();
+  };
+
   return (
-    <div dir={isRTL ? "rtl" : "ltr"} className="space-y-6 max-w-7xl mx-auto">
-      <motion.div
-        initial={{ opacity: 0, y: 12 }}
+    <div dir={isRTL ? "rtl" : "ltr"} className="mx-auto max-w-7xl space-y-6">
+      {/* ── Header ──────────────────────────────────────────────────────────── */}
+      <motion.header
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/20 via-secondary/10 to-background-paper p-4 sm:p-6 md:p-8"
+        className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
       >
-        <div className="absolute -top-16 -end-16 h-52 w-52 rounded-full bg-primary/20 blur-3xl" />
-        <div className="absolute -bottom-20 -start-14 h-52 w-52 rounded-full bg-secondary/20 blur-3xl" />
-
-        <div className="relative grid lg:grid-cols-3 gap-4 sm:gap-5 items-center">
-          <div className="lg:col-span-2 space-y-2">
-            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-bold text-text-heading">
-              {activeModuleMeta.title}
-            </h1>
-            <p className="text-text-muted max-w-2xl">
-              {activeModule === "manual-payments"
-                ? t("staff.manualPaymentDesc")
-                : t(
-                    "auto.trackRefundRequestsCreatedFromPaidCancellationsThenApproveOrRejectEachRequestWithClearNotes",
-                  )}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 gap-3">
-            {activeModule === "manual-payments" ? (
-              <>
-                <SummaryChip
-                  icon={ReceiptLong}
-                  label={t("common.total")}
-                  value={manualSummary.total}
-                  tone="text-primary"
-                />
-                <SummaryChip
-                  icon={PendingActions}
-                  label={t("auto.pending")}
-                  value={manualSummary.pending}
-                  tone="text-amber-300"
-                />
-                <SummaryChip
-                  icon={Verified}
-                  label={t("auto.completed")}
-                  value={manualSummary.completed}
-                  tone="text-emerald-300"
-                />
-                <SummaryChip
-                  icon={X}
-                  label={t("auto.failed")}
-                  value={manualSummary.failed}
-                  tone="text-red-300"
-                />
-                <SummaryChip
-                  icon={AccountBalanceWallet}
-                  label={t("auto.refunded")}
-                  value={manualSummary.refunded}
-                  tone="text-sky-300"
-                />
-              </>
-            ) : (
-              <>
-                <SummaryChip
-                  icon={AccountBalanceWallet}
-                  label={t("common.total")}
-                  value={refundsSummary.total}
-                  tone="text-primary"
-                />
-                <SummaryChip
-                  icon={PendingActions}
-                  label={t("auto.pendingReview")}
-                  value={refundsSummary.pending}
-                  tone="text-amber-300"
-                />
-                <SummaryChip
-                  icon={CheckCircle}
-                  label={t("auto.approved")}
-                  value={refundsSummary.approved}
-                  tone="text-emerald-300"
-                />
-                <SummaryChip
-                  icon={X}
-                  label={t("auto.rejected")}
-                  value={refundsSummary.rejected}
-                  tone="text-red-300"
-                />
-              </>
-            )}
-          </div>
+        <div className="min-w-0 space-y-1">
+          <p className="flex items-center gap-2 text-sm font-medium text-text-muted">
+            <greeting.icon className="h-4 w-4 text-primary" />
+            <span>
+              {greeting.text}
+              {agentName ? `${isRTL ? "، " : ", "}${agentName}` : ""}
+            </span>
+          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-text-heading sm:text-3xl">
+            {tx("support.supportDashboard", isRTL ? "لوحة خدمة العملاء" : "Support Dashboard")}
+          </h1>
+          <p className="text-xs text-text-muted">{todayLabel}</p>
         </div>
-      </motion.div>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {[
-          [MessageSquare, tx("support.totalCases", "Total cases"), supportOverview.total, "bg-blue-50 text-blue-700"],
-          [AlertTriangle, tx("support.emergencyCases", "Emergency cases"), supportOverview.urgent, "bg-red-50 text-red-700"],
-          [PendingActions, tx("support.waitingReply", "Waiting reply"), supportOverview.unread, "bg-amber-50 text-amber-700"],
-          [Verified, tx("staff.resolved", "Resolved"), supportOverview.resolved, "bg-emerald-50 text-emerald-700"],
-        ].map(([Icon, label, value, tone]) => (
-          <div key={label} className="rounded-[20px] border border-border bg-background-paper p-4 shadow-[var(--ds-shadow-card)]">
-            <div className="flex items-start justify-between gap-3">
-              <div><p className="text-2xl font-black text-text-heading">{value}</p><p className="mt-1 text-xs font-bold text-text-muted">{label}</p></div>
-              <span className={`grid h-11 w-11 place-items-center rounded-2xl ${tone}`}><Icon className="h-5 w-5" /></span>
-            </div>
-          </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {role === Roles.STAFF && (
+            <Switch
+              checked={isSupportAvailable}
+              loading={availabilityUpdating}
+              disabled={availabilityUpdating}
+              onCheckedChange={handleAvailabilityChange}
+              checkedLabel={tx("support.available", "Available")}
+              uncheckedLabel={tx("support.unavailable", "Unavailable")}
+              ariaLabel={tx("support.availabilityStatus", "Support availability status")}
+            />
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/dashboard/staff/messages")}
+            className="gap-1.5"
+          >
+            <MessageSquare className="h-4 w-4" />
+            {t("nav.messages", "Messages")}
+          </Button>
+          <Button variant="primary" size="sm" onClick={refreshActiveModule} className="gap-1.5">
+            <RotateCw className="h-4 w-4" />
+            {t("common.refresh")}
+          </Button>
+        </div>
+      </motion.header>
+
+      {/* ── KPI row ─────────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4">
+        {kpis.map((kpi) => (
+          <KPIWidget
+            key={kpi.label}
+            icon={kpi.icon}
+            label={kpi.label}
+            value={kpi.value}
+            tone={kpi.tone}
+            loading={chatRoomsLoading && kpi.value === 0}
+          />
         ))}
       </div>
 
-      <div className="flex gap-2 overflow-x-auto rounded-2xl border border-border bg-background-paper p-3 shadow-sm">
-        {supportTypeOverview.map((item) => (
-          <span key={item.key} className={`inline-flex shrink-0 items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-bold ${item.className}`}>
-            {item.label}
-            <span className="rounded-full bg-white/70 px-2 py-0.5 text-[10px]">{item.count}</span>
-          </span>
+      {/* ── Quick modules ───────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {moduleTabs.map((tab) => (
+          <QuickModule
+            key={tab.id}
+            icon={tab.icon}
+            title={tab.title}
+            description={tab.subtitle}
+            count={tab.count}
+            active={activeModule === tab.id}
+            onClick={() => setActiveModule(tab.id)}
+          />
         ))}
       </div>
-
-      <Card className="border border-border/80 shadow-sm">
-        <CardContent className="p-3 md:p-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            {moduleTabs.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeModule === tab.id;
-              return (
-                <button
-                  key={tab.id}
-                  type="button"
-                  onClick={() => setActiveModule(tab.id)}
-                  className={`w-full rounded-2xl border p-4 text-start transition-all ${
-                    isActive
-                      ? "border-primary bg-primary/10 shadow-sm"
-                      : "border-border bg-background hover:border-primary/40"
-                  }`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center ${
-                          isActive
-                            ? "bg-primary text-white"
-                            : "bg-background-subtle text-primary"
-                        }`}
-                      >
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="font-semibold text-text-heading">
-                          {tab.title}
-                        </p>
-                        <p className="text-xs text-text-muted">
-                          {tab.subtitle}
-                        </p>
-                      </div>
-                    </div>
-                    <span
-                      className={`text-xs px-2.5 py-1 rounded-full border ${
-                        tab.count > 0
-                          ? "bg-amber-50 text-amber-700 border-amber-200"
-                          : "bg-background-subtle text-text-muted border-border"
-                      }`}
-                    >
-                      {tab.count} {t("auto.pending")}
-                    </span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </CardContent>
-      </Card>
 
       {activeModule === "manual-payments" && (
-        <Card className="border border-border/80 shadow-sm">
-          <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-border pb-4">
-            <CardTitle className="text-xl">{t("staff.requestsList")}</CardTitle>
-
-            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-              <div className="relative flex-1">
-                <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-text-light" />
-                <input
-                  value={manualPaymentsSearch}
-                  onChange={(e) => setManualPaymentsSearch(e.target.value)}
-                  placeholder={t("staff.searchManualPayment")}
-                  className="ps-9 pe-4 py-2 bg-background border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 text-text w-full"
-                />
-              </div>
-
-              <select
-                value={selectedStatusFilter}
-                onChange={(e) => setSelectedStatusFilter(e.target.value)}
-                className="px-3 py-2 bg-background border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 text-text"
-              >
-                {statusFilterOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() =>
-                  fetchManualPayments(manualPaymentsPage, selectedStatusFilter)
-                }
-              >
-                <Filter className="w-4 h-4" />
-                {t("common.refresh")}
-              </Button>
+        <DashboardCard>
+          <div className="flex flex-col gap-4 border-b border-border p-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-text-heading">{t("staff.requestsList")}</h2>
+              <p className="mt-0.5 text-xs text-text-muted">{t("staff.manualPaymentDesc")}</p>
             </div>
-          </CardHeader>
+            <div className="relative w-full md:w-72">
+              <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+              <input
+                value={manualPaymentsSearch}
+                onChange={(e) => setManualPaymentsSearch(e.target.value)}
+                placeholder={t("staff.searchManualPayment")}
+                className="w-full rounded-xl border border-border bg-background py-2.5 pe-4 ps-10 text-sm text-text outline-none transition-all focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+          </div>
 
-          <CardContent className="p-4 md:p-5 space-y-4">
+          <div className="border-b border-border px-5 py-3">
+            <FilterBar
+              options={statusFilterOptions}
+              value={selectedStatusFilter}
+              onChange={setSelectedStatusFilter}
+            />
+          </div>
+
+          <div className="space-y-4 p-5">
             {manualPaymentsLoading ? (
-              <div className="text-center py-16 text-text-muted">
-                <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin" />
-                {t("staff.loadingManualPayments")}
-              </div>
+              <RequestListSkeleton />
             ) : filteredManualPayments.length === 0 ? (
-              <div className="text-center py-16 text-text-muted">
-                <ReceiptLong className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                {t("staff.noManualPayments")}
-              </div>
+              <EmptyState icon={ReceiptLong} message={t("staff.noManualPayments")} />
             ) : (
-              <div className="grid lg:grid-cols-2 gap-4">
+              <div className="grid gap-4 lg:grid-cols-2">
                 {filteredManualPayments.map((item, index) => {
                   const { patientName, doctorName } = getManualPaymentParticipants(item);
-                  const statusMeta = getPaymentStatusMeta(item?.Status, {
-                    isRTL,
-                  });
+                  const statusMeta = getPaymentStatusMeta(item?.Status, { isRTL });
                   const createdAtText = item?.CreatedAt
                     ? new Date(item.CreatedAt).toLocaleString()
                     : "-";
@@ -853,220 +764,143 @@ export default function CustomerServiceDashboard() {
                   const cancellationLocked = hasCancellationLock(item);
 
                   return (
-                    <motion.div
+                    <RequestCard
                       key={item.Id}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.03 }}
-                      className="rounded-2xl border border-border bg-background-paper p-4 sm:p-5 hover:border-primary/30 hover:shadow-md transition-all duration-200"
-                    >
-                      <div className="flex items-start justify-between gap-3 mb-4">
-                        <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-text-heading truncate text-sm sm:text-base">
-                            {patientName}
+                      index={index}
+                      title={patientName}
+                      subtitle={`${t("common.doctor", "Doctor")}: ${doctorName}`}
+                      badges={[{ label: statusMeta.label, className: statusMeta.chipClass }]}
+                      details={[
+                        { label: t("staff.provider"), value: getProviderLabel(item.Provider) },
+                        { label: t("staff.referenceNumber"), value: item.ReferenceNumber || "-", dir: "ltr" },
+                        { label: t("staff.sessionTime"), value: sessionTimeText, dir: "ltr" },
+                        { label: t("staff.submittedAt"), value: createdAtText, dir: "ltr" },
+                      ]}
+                      note={
+                        item.RejectionReason ? (
+                          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 p-2 text-xs text-red-600 dark:border-red-800 dark:bg-red-900/20">
+                            <span className="font-semibold">{t("staff.rejectionReason")}:</span>{" "}
+                            {item.RejectionReason}
                           </p>
-                          <p className="text-xs text-text-muted mt-0.5 truncate">
-                            {t("common.doctor", "Doctor")}: {doctorName} · {t("common.patient", "Patient")}: {patientName}
-                          </p>
-                        </div>
-                        <span
-                          className={`text-[10px] sm:text-[11px] px-2.5 py-1 rounded-full border font-medium whitespace-nowrap shrink-0 ${statusMeta.chipClass}`}
-                        >
-                          {statusMeta.label}
-                        </span>
-                      </div>
-
-                      <div className="space-y-2 text-sm text-text-muted mb-4">
-                        <p className="flex items-center gap-2 min-w-0">
-                          <AccountBalanceWallet className="w-4 h-4 text-primary shrink-0" />
-                          <span className="truncate">{getProviderLabel(item.Provider)}</span>
-                        </p>
-                        <p className="flex items-center gap-2 min-w-0">
-                          <span className="text-xs text-text-muted shrink-0">{t("staff.referenceNumber")}:</span>
-                          <span className="truncate text-text-heading font-medium" dir="ltr">{item.ReferenceNumber || "-"}</span>
-                        </p>
-                        <p className="text-xs">
-                          <span className="text-text-muted">{t("staff.sessionTime")}: </span>
-                          <span dir="ltr" className="text-text-heading">{sessionTimeText}</span>
-                        </p>
-                        <p className="text-xs">
-                          <span className="text-text-muted">{t("staff.submittedAt")}: </span>
-                          <span dir="ltr" className="text-text-heading">{createdAtText}</span>
-                        </p>
-                        {item.RejectionReason && (
-                          <p className="text-xs text-red-500 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-2 mt-2">
-                            <span className="font-medium">{t("staff.rejectionReason")}:</span> {item.RejectionReason}
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2 pt-3 border-t border-border/60">
-                        {item.ScreenshotUrl ? (
-                          <a
-                            href={item.ScreenshotUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex shrink-0"
-                          >
-                            <Button variant="outline" size="sm" className="whitespace-nowrap gap-1.5">
-                              <OpenInNew className="w-4 h-4" />
-                              {t("common.view")}
-                            </Button>
-                          </a>
-                        ) : (
-                          <span className="text-xs text-text-muted inline-flex items-center gap-1.5 shrink-0">
-                            <Person className="w-3.5 h-3.5" />
-                            {t("staff.noScreenshot")}
-                          </span>
-                        )}
-
-                        {isPendingPayment && !cancellationLocked ? (
-                          <div className="flex flex-wrap items-center gap-2 ms-auto">
-                            <Button
-                              size="sm"
-                              variant="primary"
-                              disabled={isBusy}
-                              onClick={() => handleConfirmPayment(item)}
-                              className="whitespace-nowrap gap-1.5"
+                        ) : null
+                      }
+                      actions={
+                        <>
+                          {item.ScreenshotUrl ? (
+                            <a
+                              href={item.ScreenshotUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex shrink-0"
                             >
-                              {isBusy ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <CheckCircle className="w-4 h-4" />
-                              )}
-                              {t("auto.markCompleted")}
-                            </Button>
+                              <Button variant="outline" size="sm" className="gap-1.5 whitespace-nowrap">
+                                <OpenInNew className="h-4 w-4" />
+                                {t("common.view")}
+                              </Button>
+                            </a>
+                          ) : (
+                            <span className="inline-flex shrink-0 items-center gap-1.5 text-xs text-text-muted">
+                              <Person className="h-3.5 w-3.5" />
+                              {t("staff.noScreenshot")}
+                            </span>
+                          )}
 
-                            <Button
-                              size="sm"
-                              variant="danger"
-                              disabled={isBusy}
-                              onClick={() => openRejectModal(item)}
-                              className="whitespace-nowrap gap-1.5"
-                            >
-                              <X className="w-4 h-4" />
-                              {t("auto.markFailed")}
-                            </Button>
-                          </div>
-                        ) : cancellationLocked ? (
-                          <span className="text-xs font-semibold text-amber-700 ms-auto">
-                            {t("auto.cancellationPending", "Cancellation pending review")}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-text-muted ms-auto">
-                            {t("auto.alreadyProcessed")}
-                          </span>
-                        )}
-                      </div>
-                    </motion.div>
+                          {isPendingPayment && !cancellationLocked ? (
+                            <div className="ms-auto flex flex-wrap items-center gap-2">
+                              <Button
+                                size="sm"
+                                variant="primary"
+                                disabled={isBusy}
+                                onClick={() => handleConfirmPayment(item)}
+                                className="gap-1.5 whitespace-nowrap"
+                              >
+                                {isBusy ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <CheckCircle className="h-4 w-4" />
+                                )}
+                                {t("auto.markCompleted")}
+                              </Button>
+
+                              <Button
+                                size="sm"
+                                variant="danger"
+                                disabled={isBusy}
+                                onClick={() => openRejectModal(item)}
+                                className="gap-1.5 whitespace-nowrap"
+                              >
+                                <X className="h-4 w-4" />
+                                {t("auto.markFailed")}
+                              </Button>
+                            </div>
+                          ) : cancellationLocked ? (
+                            <span className="ms-auto text-xs font-semibold text-amber-600">
+                              {t("auto.cancellationPending", "Cancellation pending review")}
+                            </span>
+                          ) : (
+                            <span className="ms-auto text-xs text-text-muted">
+                              {t("auto.alreadyProcessed")}
+                            </span>
+                          )}
+                        </>
+                      }
+                    />
                   );
                 })}
               </div>
             )}
 
             {manualPaymentsPagesCount > 1 && (
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-sm text-text-muted">
-                  {t("common.page")} {manualPaymentsPage} {t("common.of")}{" "}
-                  {manualPaymentsPagesCount}
-                </span>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={manualPaymentsPage <= 1 || manualPaymentsLoading}
-                    onClick={() =>
-                      fetchManualPayments(
-                        manualPaymentsPage - 1,
-                        selectedStatusFilter,
-                      )
-                    }
-                  >
-                    {t("common.previous")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={
-                      manualPaymentsPage >= manualPaymentsPagesCount ||
-                      manualPaymentsLoading
-                    }
-                    onClick={() =>
-                      fetchManualPayments(
-                        manualPaymentsPage + 1,
-                        selectedStatusFilter,
-                      )
-                    }
-                  >
-                    {t("common.next")}
-                  </Button>
-                </div>
-              </div>
+              <Pagination
+                page={manualPaymentsPage}
+                pagesCount={manualPaymentsPagesCount}
+                loading={manualPaymentsLoading}
+                onPrev={() => fetchManualPayments(manualPaymentsPage - 1, selectedStatusFilter)}
+                onNext={() => fetchManualPayments(manualPaymentsPage + 1, selectedStatusFilter)}
+                t={t}
+              />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </DashboardCard>
       )}
 
       {activeModule === "refunds" && (
-        <Card className="border border-border/80 shadow-sm">
-          <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-border pb-4">
-            <CardTitle className="text-xl">
-              {t("auto.refundRequests")}
-            </CardTitle>
-
-            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-              <div className="relative flex-1">
-                <Search className="w-4 h-4 absolute start-3 top-1/2 -translate-y-1/2 text-text-light" />
-                <input
-                  value={refundSearch}
-                  onChange={(e) => setRefundSearch(e.target.value)}
-                  placeholder={t("auto.searchByPatientOrBooking")}
-                  className="ps-9 pe-4 py-2 bg-background border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 text-text w-full"
-                />
-              </div>
-
-              <select
-                value={refundsStatusFilter}
-                onChange={(e) => setRefundsStatusFilter(e.target.value)}
-                className="px-3 py-2 bg-background border border-border rounded-lg text-sm outline-none focus:ring-2 focus:ring-primary/20 text-text"
-              >
-                {refundStatusOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => fetchRefunds(refundsPage, refundsStatusFilter)}
-              >
-                <Filter className="w-4 h-4" />
-                {t("common.refresh")}
-              </Button>
+        <DashboardCard>
+          <div className="flex flex-col gap-4 border-b border-border p-5 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h2 className="text-lg font-bold text-text-heading">{t("auto.refundRequests")}</h2>
+              <p className="mt-0.5 text-xs text-text-muted">{t("auto.approveOrRejectRefunds")}</p>
             </div>
-          </CardHeader>
+            <div className="relative w-full md:w-72">
+              <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+              <input
+                value={refundSearch}
+                onChange={(e) => setRefundSearch(e.target.value)}
+                placeholder={t("auto.searchByPatientOrBooking")}
+                className="w-full rounded-xl border border-border bg-background py-2.5 pe-4 ps-10 text-sm text-text outline-none transition-all focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+          </div>
 
-          <CardContent className="p-4 md:p-5 space-y-4">
+          <div className="border-b border-border px-5 py-3">
+            <FilterBar
+              options={refundStatusOptions}
+              value={refundsStatusFilter}
+              onChange={setRefundsStatusFilter}
+            />
+          </div>
+
+          <div className="space-y-4 p-5">
             {refundsLoading ? (
-              <div className="text-center py-16 text-text-muted">
-                <Loader2 className="w-8 h-8 mx-auto mb-2 animate-spin" />
-                {t("auto.loadingRefundRequests")}
-              </div>
+              <RequestListSkeleton />
             ) : filteredRefunds.length === 0 ? (
-              <div className="text-center py-16 text-text-muted">
-                <AccountBalanceWallet className="w-10 h-10 mx-auto mb-2 opacity-40" />
-                {t("auto.noRefundRequestsFound")}
-              </div>
+              <EmptyState icon={AccountBalanceWallet} message={t("auto.noRefundRequestsFound")} />
             ) : (
-              <div className="grid lg:grid-cols-2 gap-4">
+              <div className="grid gap-4 lg:grid-cols-2">
                 {filteredRefunds.map((item, index) => {
                   const itemId = item?.Id ?? item?.id;
                   const bookingId = item?.BookingId ?? item?.bookingId;
-                  const statusMeta = getRefundStatusMeta(
-                    item?.Status ?? item?.status,
-                  );
+                  const statusMeta = getRefundStatusMeta(item?.Status ?? item?.status);
                   const isPending = statusMeta.value === 1;
                   const isBusy = processingRefundId === itemId;
                   const createdAt =
@@ -1081,70 +915,38 @@ export default function CustomerServiceDashboard() {
                     item?.Amount ?? item?.RefundAmount ?? item?.amount ?? 0,
                   );
                   const reason =
-                    item?.Reason ||
-                    item?.CancellationReason ||
-                    item?.Notes ||
-                    "-";
+                    item?.Reason || item?.CancellationReason || item?.Notes || "-";
 
                   return (
-                    <motion.div
+                    <RequestCard
                       key={String(itemId || index)}
-                      initial={{ opacity: 0, y: 8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.03 }}
-                      className="rounded-2xl border border-border bg-background-paper p-4 sm:p-5 hover:border-primary/30 hover:shadow-md transition-all duration-200"
-                    >
-                      <div className="flex items-start justify-between gap-3 mb-4">
-                        <div className="min-w-0 flex-1">
-                          <p className="font-semibold text-text-heading truncate text-sm sm:text-base">
-                            {item?.PatientName ||
-                              item?.patientName ||
-                              t("common.unknownPatient")}
-                          </p>
-                          <p className="text-xs text-text-muted mt-0.5 truncate">
-                            #{itemId || "-"} · {t("auto.booking")} #{bookingId || "-"}
-                          </p>
-                        </div>
-                        <span
-                          className={`text-[10px] sm:text-[11px] px-2.5 py-1 rounded-full border font-medium whitespace-nowrap shrink-0 ${statusMeta.chipClass}`}
-                        >
-                          {statusMeta.label}
-                        </span>
-                      </div>
-
-                      <div className="space-y-2 text-sm mb-4">
-                        <p className="flex items-center justify-between gap-2">
-                          <span className="text-text-muted text-xs">{t("auto.amount")}</span>
-                          <span className="font-semibold text-text-heading" dir="ltr">
-                            {Number.isFinite(amount) && amount > 0 ? `${amount} EGP` : "-"}
-                          </span>
-                        </p>
-                        <p className="text-xs">
-                          <span className="text-text-muted">{t("auto.cancellationReason")}: </span>
-                          <span className="text-text-heading break-words">{reason}</span>
-                        </p>
-                        <p className="text-xs">
-                          <span className="text-text-muted">{t("auto.requestedAt")}: </span>
-                          <span dir="ltr" className="text-text-heading">{createdAtText}</span>
-                        </p>
-                      </div>
-
-                      <div className="flex flex-wrap items-center justify-end gap-2 pt-3 border-t border-border/60">
-                        {isPending ? (
-                          <>
+                      index={index}
+                      title={item?.PatientName || item?.patientName || t("common.unknownPatient")}
+                      subtitle={`#${itemId || "-"} · ${t("auto.booking")} #${bookingId || "-"}`}
+                      badges={[{ label: statusMeta.label, className: statusMeta.chipClass }]}
+                      details={[
+                        {
+                          label: t("auto.amount"),
+                          value: Number.isFinite(amount) && amount > 0 ? `${amount} EGP` : "-",
+                          dir: "ltr",
+                        },
+                        { label: t("auto.requestedAt"), value: createdAtText, dir: "ltr" },
+                        { label: t("auto.cancellationReason"), value: reason, full: true },
+                      ]}
+                      actions={
+                        isPending ? (
+                          <div className="ms-auto flex flex-wrap items-center gap-2">
                             <Button
                               size="sm"
                               variant="primary"
                               disabled={isBusy}
-                              onClick={() =>
-                                openRefundProcessModal(item, "approve")
-                              }
-                              className="whitespace-nowrap gap-1.5"
+                              onClick={() => openRefundProcessModal(item, "approve")}
+                              className="gap-1.5 whitespace-nowrap"
                             >
                               {isBusy ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
+                                <Loader2 className="h-4 w-4 animate-spin" />
                               ) : (
-                                <CheckCircle className="w-4 h-4" />
+                                <CheckCircle className="h-4 w-4" />
                               )}
                               {t("auto.approve")}
                             </Button>
@@ -1153,140 +955,77 @@ export default function CustomerServiceDashboard() {
                               size="sm"
                               variant="danger"
                               disabled={isBusy}
-                              onClick={() =>
-                                openRefundProcessModal(item, "reject")
-                              }
-                              className="whitespace-nowrap gap-1.5"
+                              onClick={() => openRefundProcessModal(item, "reject")}
+                              className="gap-1.5 whitespace-nowrap"
                             >
-                              <X className="w-4 h-4" />
+                              <X className="h-4 w-4" />
                               {t("auto.reject")}
                             </Button>
-                          </>
+                          </div>
                         ) : (
-                          <span className="text-xs text-text-muted">
+                          <span className="ms-auto text-xs text-text-muted">
                             {t("auto.alreadyProcessed")}
                           </span>
-                        )}
-                      </div>
-                    </motion.div>
+                        )
+                      }
+                    />
                   );
                 })}
               </div>
             )}
 
             {refundsPagesCount > 1 && (
-              <div className="flex items-center justify-between pt-2">
-                <span className="text-sm text-text-muted">
-                  {t("common.page")} {refundsPage} {t("common.of")}{" "}
-                  {refundsPagesCount}
-                </span>
-                <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={refundsPage <= 1 || refundsLoading}
-                    onClick={() =>
-                      fetchRefunds(refundsPage - 1, refundsStatusFilter)
-                    }
-                  >
-                    {t("common.previous")}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    disabled={
-                      refundsPage >= refundsPagesCount || refundsLoading
-                    }
-                    onClick={() =>
-                      fetchRefunds(refundsPage + 1, refundsStatusFilter)
-                    }
-                  >
-                    {t("common.next")}
-                  </Button>
-                </div>
-              </div>
+              <Pagination
+                page={refundsPage}
+                pagesCount={refundsPagesCount}
+                loading={refundsLoading}
+                onPrev={() => fetchRefunds(refundsPage - 1, refundsStatusFilter)}
+                onNext={() => fetchRefunds(refundsPage + 1, refundsStatusFilter)}
+                t={t}
+              />
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </DashboardCard>
       )}
 
       {activeModule === "chat-rooms" && (
-        <Card className="border border-border/80 shadow-sm">
-          <CardHeader className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 border-b border-border pb-4">
+        <DashboardCard>
+          <div className="flex flex-col gap-4 border-b border-border p-5 md:flex-row md:items-center md:justify-between">
             <div>
-              <CardTitle className="text-xl">{t("auto.chatRooms")}</CardTitle>
-              <p className="mt-1 text-xs text-text-muted">{t("auto.patientConversations")}</p>
+              <h2 className="text-lg font-bold text-text-heading">{t("auto.chatRooms")}</h2>
+              <p className="mt-0.5 text-xs text-text-muted">{t("auto.patientConversations")}</p>
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              {role === Roles.STAFF && (
-                <Switch
-                  checked={isSupportAvailable}
-                  loading={availabilityUpdating}
-                  disabled={availabilityUpdating}
-                  onCheckedChange={handleAvailabilityChange}
-                  checkedLabel={tx("support.available", "Available")}
-                  uncheckedLabel={tx("support.unavailable", "Unavailable")}
-                  ariaLabel={tx("support.availabilityStatus", "Support availability status")}
-                  className="justify-center sm:justify-start"
-                />
-              )}
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={fetchChatRooms}
-                disabled={chatRoomsLoading}
-                className="gap-2"
-              >
-                <Loader2
-                  className={`w-4 h-4 ${chatRoomsLoading ? "animate-spin" : "hidden"}`}
-                />
-                {t("auto.refresh")}
-              </Button>
+            <div className="relative w-full md:w-72">
+              <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+              <input
+                value={chatRoomsSearch}
+                onChange={(event) => setChatRoomsSearch(event.target.value)}
+                placeholder={t("chat.searchConversations", "Search conversations...")}
+                className="w-full rounded-xl border border-border bg-background py-2.5 pe-4 ps-10 text-sm text-text outline-none transition-all focus:border-primary/50 focus:ring-2 focus:ring-primary/20"
+              />
             </div>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="mb-5 grid gap-3 lg:grid-cols-[1fr_auto]">
-              <div className="relative">
-                <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
-                <input
-                  value={chatRoomsSearch}
-                  onChange={(event) => setChatRoomsSearch(event.target.value)}
-                  placeholder={t("chat.searchConversations", "Search conversations...")}
-                  className="h-12 w-full rounded-xl border border-border bg-background ps-10 pe-4 text-sm text-text outline-none focus:border-primary focus:ring-4 focus:ring-primary/10"
-                />
-              </div>
-              <div className="flex gap-2 overflow-x-auto no-scrollbar">
-                {[
-                  ["all", t("common.all", "All")],
-                  ["emergency", t("support.emergency", "Emergency")],
-                  ["technical", t("staff.technical")],
-                  ["medical", t("support.medicalInquiry", "Medical")],
-                  ["billing", t("staff.payment")],
-                  ["appointment", t("staff.appointment")],
-                ].map(([value, label]) => (
-                  <button
-                    key={value}
-                    onClick={() => setChatRoomsTypeFilter(value)}
-                    className={`h-11 whitespace-nowrap rounded-xl border px-3 text-xs font-bold ${
-                      chatRoomsTypeFilter === value
-                        ? "border-primary bg-primary text-white"
-                        : "border-border bg-background-paper text-text-muted"
-                    }`}
-                  >
-                    {label}
-                  </button>
-                ))}
-              </div>
-            </div>
+          </div>
+
+          <div className="border-b border-border px-5 py-3">
+            <FilterBar
+              options={[
+                { value: "all", label: t("common.all", "All") },
+                { value: "emergency", label: t("support.emergency", "Emergency") },
+                { value: "technical", label: t("staff.technical") },
+                { value: "medical", label: t("support.medicalInquiry", "Medical") },
+                { value: "billing", label: t("staff.payment") },
+                { value: "appointment", label: t("staff.appointment") },
+              ]}
+              value={chatRoomsTypeFilter}
+              onChange={setChatRoomsTypeFilter}
+            />
+          </div>
+
+          <div className="p-5">
             {chatRoomsLoading ? (
-              <div className="flex justify-center py-12">
-                <Loader2 className="w-8 h-8 text-primary animate-spin" />
-              </div>
+              <RequestListSkeleton rows={4} columns={1} />
             ) : visibleChatRooms.length === 0 ? (
-              <div className="text-center py-12 text-text-muted">
-                <MessageSquare className="w-12 h-12 mx-auto mb-3 opacity-30" />
-                <p>{t("auto.noChatRoomsYet")}</p>
-              </div>
+              <EmptyState icon={MessageSquare} message={t("auto.noChatRoomsYet")} />
             ) : (
               <div className="space-y-3">
                 {visibleChatRooms.map((room) => {
@@ -1394,8 +1133,8 @@ export default function CustomerServiceDashboard() {
                 })}
               </div>
             )}
-          </CardContent>
-        </Card>
+          </div>
+        </DashboardCard>
       )}
 
       <Modal
@@ -1512,14 +1251,62 @@ export default function CustomerServiceDashboard() {
   );
 }
 
-function SummaryChip({ icon: Icon, label, value, tone }) {
+// ── Local presentational helpers ──────────────────────────────────────────────
+
+function EmptyState({ icon: Icon, message }) {
   return (
-    <div className="rounded-xl border border-border/70 bg-background-paper/70 p-3">
-      <div className="flex items-center justify-between gap-2">
-        <p className="text-xs text-text-muted">{label}</p>
-        <Icon className={`w-4 h-4 ${tone}`} />
+    <div className="flex flex-col items-center justify-center py-16 text-center">
+      <div className="mb-3 grid h-14 w-14 place-items-center rounded-2xl bg-background-subtle">
+        <Icon className="h-7 w-7 text-text-muted" />
       </div>
-      <p className="text-xl font-bold text-text-heading mt-1">{value}</p>
+      <p className="text-sm font-medium text-text-muted">{message}</p>
+    </div>
+  );
+}
+
+function RequestListSkeleton({ rows = 4, columns = 2 }) {
+  return (
+    <div className={`grid gap-4 ${columns === 1 ? "" : "lg:grid-cols-2"}`}>
+      {Array.from({ length: rows }).map((_, i) => (
+        <div
+          key={i}
+          className="rounded-2xl border border-border bg-background-paper p-5"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="h-4 w-32 animate-pulse rounded bg-background-subtle" />
+            <div className="h-5 w-16 animate-pulse rounded-full bg-background-subtle" />
+          </div>
+          <div className="mt-4 grid grid-cols-2 gap-3">
+            {Array.from({ length: 4 }).map((__, j) => (
+              <div key={j} className="space-y-1.5">
+                <div className="h-2.5 w-14 animate-pulse rounded bg-background-subtle" />
+                <div className="h-3.5 w-20 animate-pulse rounded bg-background-subtle" />
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 border-t border-border/60 pt-4">
+            <div className="h-8 w-28 animate-pulse rounded-lg bg-background-subtle" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Pagination({ page, pagesCount, loading, onPrev, onNext, t }) {
+  return (
+    <div className="flex items-center justify-between pt-2">
+      <span className="text-sm text-text-muted">
+        {t("common.page")} {page} {t("common.of")} {pagesCount}
+      </span>
+      <div className="flex items-center gap-2">
+        <Button variant="outline" size="sm" disabled={page <= 1 || loading} onClick={onPrev}>
+          {t("common.previous")}
+        </Button>
+        <Button variant="outline" size="sm" disabled={page >= pagesCount || loading} onClick={onNext}>
+          {t("common.next")}
+        </Button>
+      </div>
     </div>
   );
 }

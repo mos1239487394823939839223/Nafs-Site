@@ -1,11 +1,9 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import Card, { CardContent } from '../../components/ui/Card'
 import Button from '../../components/ui/Button'
 import Input, { Textarea } from '../../components/ui/Input'
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table'
 import Badge from '../../components/ui/Badge'
-import { Tabs, TabsList, TabsTrigger, TabsContent } from '../../components/ui/Tabs'
+import Switch from '../../components/ui/Switch'
 import {
     Dialog,
     DialogContent,
@@ -14,12 +12,20 @@ import {
     DialogDescription,
     DialogFooter,
 } from '../../components/ui/Dialog'
-import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../../components/ui/Tooltip'
-import { UserAvatar } from '../../components/ui/Avatar'
-import Spinner from '../../components/ui/Spinner'
+import { TooltipProvider } from '../../components/ui/Tooltip'
 import Pagination from '../../components/ui/Pagination'
 import { useToast } from '../../components/ui/Toast'
-import { Users, UserPlus, Search, Mail, Stethoscope, User, RefreshCw, Phone, Lock, FileText, ToggleLeft, ToggleRight, ShieldCheck, ShieldAlert, Shield, Activity, X, Camera, Eye, EyeOff, Headphones, CheckCircle } from 'lucide-react'
+import {
+    DashboardCard,
+    KPIWidget,
+    FilterBar,
+    StatusBadge,
+    ActionMenu,
+    UserTable,
+    UserCard,
+    TableSkeleton,
+} from '../../components/dashboard'
+import { Users, UserPlus, Search, Mail, Stethoscope, User, RefreshCw, Phone, Lock, FileText, ToggleLeft, ToggleRight, ShieldCheck, ShieldAlert, Shield, X, Camera, Eye, EyeOff, Headphones, CheckCircle, Wallet, Pencil, RotateCcw, Filter, MinusCircle } from 'lucide-react'
 import { adminAPI, userAPI, documentsAPI, authAPI, extractErrorMessage } from '../../lib/api'
 import { getConfiguredBlackmailSupportUserId, setConfiguredBlackmailSupportUserId } from '../../lib/supportRouting'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -397,7 +403,7 @@ export default function UserManagement() {
     const [submitting, setSubmitting] = useState(false)
     const [detailsUser, setDetailsUser] = useState(null)
     const [editUser, setEditUser] = useState(null)
-    const [editForm, setEditForm] = useState({ name: '', email: '', phoneNumber: '', specialist: '', isActive: true })
+    const [editForm, setEditForm] = useState({ name: '', email: '', phoneNumber: '', specialist: '', isActive: true, isBullyingSpecialist: false })
     const [editSubmitting, setEditSubmitting] = useState(false)
     const [resetModalOpen, setResetModalOpen] = useState(false)
     const [resetTarget, setResetTarget] = useState(null)
@@ -478,9 +484,11 @@ export default function UserManagement() {
             const staffItems = staffRes?.Data?.Items || (Array.isArray(staffRes) ? staffRes : [])
             setSupportStaff(staffItems)
             setSupportTotalPages(1)
+            return staffItems
         } catch (error) {
             console.error('Failed to fetch support staff:', error)
             toast.error(t('errors.somethingWentWrong'))
+            return []
         } finally {
             setLoading(false)
         }
@@ -650,6 +658,7 @@ export default function UserManagement() {
         return Array.isArray(specialist) ? specialist.join(', ') : String(specialist || '')
     }
     const getActiveFlag = (item) => item?.IsActive ?? item?.isActive ?? true
+    const getBullyingSpecialistFlag = (item) => Boolean(item?.IsBullyingSpecialist ?? item?.isBullyingSpecialist)
 
     const openDetailsModal = (userItem) => {
         setDetailsUser(userItem)
@@ -663,6 +672,7 @@ export default function UserManagement() {
             phoneNumber: userItem?.PhoneNumber || userItem?.phoneNumber || '',
             specialist: getUserSpecialistText(userItem),
             isActive: getActiveFlag(userItem) !== false,
+            isBullyingSpecialist: Boolean(userItem?.IsBullyingSpecialist ?? userItem?.isBullyingSpecialist),
         })
     }
 
@@ -674,12 +684,26 @@ export default function UserManagement() {
         }
 
         setEditSubmitting(true)
+        // Carry forward existing values so the full-field EditUser endpoint
+        // never overwrites untouched data (Description, Gender, DateOfBirth)
+        // with null.
         const payload = {
             name: editForm.name.trim(),
             email: editForm.email.trim(),
             phoneNumber: editForm.phoneNumber.trim() || null,
-            specialist: editForm.specialist.trim() ? editForm.specialist.split(',').map((item) => item.trim()).filter(Boolean) : null,
+            specialist: editForm.specialist.trim()
+                ? editForm.specialist.split(',').map((item) => item.trim()).filter(Boolean)
+                : (editUser?.Specialist ?? editUser?.specialist ?? null),
+            description: editUser?.Description ?? editUser?.description ?? null,
+            gender: editUser?.Gender ?? editUser?.gender ?? null,
+            dateOfBirth: editUser?.DateOfBirth ?? editUser?.dateOfBirth ?? null,
             isActive: editForm.isActive,
+        }
+
+        if (activeTab === 'support') {
+            payload.isBullyingSpecialist = editForm.isBullyingSpecialist
+        } else {
+            payload.isBullyingSpecialist = editUser?.IsBullyingSpecialist ?? editUser?.isBullyingSpecialist ?? false
         }
 
         try {
@@ -693,7 +717,19 @@ export default function UserManagement() {
             setEditUser(null)
             if (activeTab === 'doctors') await fetchDoctors()
             else if (activeTab === 'patients') await fetchPatients()
-            else await fetchSupportStaff()
+            else {
+                // Refetch the list and confirm the backend actually persisted /
+                // returns the flag. If the saved value and the GET value differ,
+                // the backend is dropping IsBullyingSpecialist — not the frontend.
+                const refreshed = await fetchSupportStaff()
+                const updated = refreshed.find((u) => String(getUserId(u)) === String(userId))
+                const savedValue = payload.isBullyingSpecialist
+                const returnedValue = updated ? getBullyingSpecialistFlag(updated) : undefined
+                console.log('[EditUser] IsBullyingSpecialist — sent:', savedValue, '| returned by GET /user/get:', returnedValue)
+                if (updated && returnedValue !== savedValue) {
+                    console.warn('[EditUser] Backend did not return the saved IsBullyingSpecialist value. The PUT succeeded but the field is not persisted/returned by the backend.')
+                }
+            }
         } catch (error) {
             console.error('Failed to update user:', error)
             toast.error(extractErrorMessage(error, t('errors.somethingWentWrong')))
@@ -761,458 +797,335 @@ export default function UserManagement() {
         return { active }
     }, [patients])
 
+    // ── Derived: filters, current dataset, helpers for the redesigned table ──────
+    const handleRefresh = () =>
+        activeTab === 'doctors' ? fetchDoctors() : activeTab === 'patients' ? fetchPatients() : fetchSupportStaff()
+
+    const resetFilters = () => {
+        setSearchTerm('')
+        setStatusFilter('all')
+        setSortBy('name')
+    }
+    const filtersActive = searchTerm !== '' || statusFilter !== 'all' || sortBy !== 'name'
+
+    const statusFilterOptions = [
+        { value: 'all', label: t('common.allStatuses', 'All statuses') },
+        { value: 'active', label: t('common.active') },
+        { value: 'inactive', label: t('common.inactive') },
+    ]
+
+    const sortOptions = [
+        { value: 'name', label: t('common.name') },
+        { value: 'status', label: t('common.status') },
+        ...(activeTab === 'doctors' ? [{ value: 'patients', label: t('admin.patientCount', 'Patients count') }] : []),
+        ...(activeTab === 'patients' ? [{ value: 'sessions', label: t('admin.sessionsCount', 'Sessions count') }] : []),
+        ...(activeTab === 'support' ? [{ value: 'openCases', label: t('admin.openCases', 'Open cases') }] : []),
+    ]
+
+    const tabs = [
+        { value: 'doctors', label: t('admin.doctors'), icon: Stethoscope, count: doctors.length },
+        { value: 'support', label: t('admin.customerSupport', 'Customer Support'), icon: Headphones, count: supportStaff.length },
+        { value: 'patients', label: t('admin.patients', 'Patients'), icon: Users, count: patients.length },
+    ]
+
+    const isAdminStaff = (item) => item?.RoleID === 1 || item?.RoleName?.toUpperCase() === 'ADMIN'
+
+    const getUserFields = (item) => ({
+        name: item?.Name || item?.name,
+        email: item?.Email || item?.email,
+        avatar: item?.Image || item?.image,
+    })
+
+    const renderStatusBadge = (item) => (
+        <StatusBadge status={getActiveFlag(item) !== false ? 'active' : 'inactive'}>
+            {getActiveFlag(item) !== false ? t('common.active') : t('common.inactive')}
+        </StatusBadge>
+    )
+
+    const renderBullyingSpecialistBadge = (item) => {
+        const isSpecialist = getBullyingSpecialistFlag(item)
+        return (
+            <StatusBadge status={isSpecialist ? 'active' : 'neutral'} icon={isSpecialist ? ShieldCheck : MinusCircle}>
+                {isSpecialist ? t('admin.bullyingSpecialistYes', 'Specialist') : t('admin.bullyingSpecialistNo', 'Not Specialist')}
+            </StatusBadge>
+        )
+    }
+
+    // Builds the compact View / Edit / More action group for a user row.
+    const buildActions = (item, { onView, onEdit, onFinance, onToggle, onReset }) => {
+        const primary = [
+            { key: 'view', label: t('common.view'), icon: FileText, onClick: () => onView(item) },
+            { key: 'edit', label: t('common.edit', 'Edit'), icon: Pencil, onClick: () => onEdit(item) },
+        ]
+        const more = []
+        if (onFinance) more.push({ key: 'finance', label: t('admin.finance', 'Finance'), icon: Wallet, onClick: () => onFinance(item) })
+        if (onReset) more.push({ key: 'reset', label: t('auth.resetPassword'), icon: RotateCcw, onClick: () => onReset(item) })
+        if (onToggle) {
+            more.push({
+                key: 'toggle',
+                label: getActiveFlag(item) !== false ? t('common.inactive') : t('common.active'),
+                icon: getActiveFlag(item) !== false ? ToggleLeft : ToggleRight,
+                onClick: () => onToggle(getUserId(item)),
+                divider: more.length > 0,
+            })
+        }
+        return <ActionMenu primary={primary} more={more} labels={{ more: t('common.more', 'More') }} />
+    }
+
     return (
         <TooltipProvider>
-            <div className="space-y-6" >
-                {/* Hero */}
-                <div className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/10 via-secondary/10 to-background-paper p-6">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                        <div>
-                            <h2 className="text-2xl md:text-3xl font-bold text-text-heading flex items-center gap-2">
-                                <Users className="w-8 h-8 text-primary" />
-                                {t('admin.userManagement')}
-                            </h2>
-                            <p className="text-text-muted mt-2">{t('admin.manageDoctorsPatients')}</p>
-                        </div>
-                        <div className={`flex flex-wrap gap-2 ${isRTL ? 'justify-start lg:justify-end' : ''}`}>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={activeTab === 'doctors' ? fetchDoctors : activeTab === 'patients' ? fetchPatients : fetchSupportStaff}
-                                disabled={loading}
-                                className="gap-2"
-                            >
-                                <RefreshCw className={`w-4 h-4 ${loading ? 'animate-spin' : ''}`} />
-                                {t('common.refresh')}
-                            </Button>
-                            <Button size="sm" onClick={() => setModalOpen(true)} className="gap-2 shadow-lg shadow-primary/20">
-                                <UserPlus className="w-4 h-4" />
-                                {t('admin.addDoctor')}
-                            </Button>
-                            <Button size="sm" variant="secondary" onClick={() => setStaffModalOpen(true)} className="gap-2">
-                                <Headphones className="w-4 h-4" />
-                                {t('admin.addStaff')}
-                            </Button>
-                        </div>
+            <div className="space-y-6">
+                {/* ── Page header ─────────────────────────────────────────────── */}
+                <header className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="min-w-0">
+                        <h1 className="text-2xl font-bold tracking-tight text-text-heading sm:text-3xl">
+                            {t('admin.userManagement')}
+                        </h1>
+                        <p className="mt-1 text-sm text-text-muted">{t('admin.manageDoctorsPatients')}</p>
                     </div>
+                    <div className={`flex flex-wrap items-center gap-2 ${isRTL ? 'justify-start lg:justify-end' : ''}`}>
+                        <Button size="sm" onClick={() => setModalOpen(true)} className="gap-1.5">
+                            <UserPlus className="h-4 w-4" />
+                            {t('admin.addDoctor')}
+                        </Button>
+                        <Button size="sm" variant="secondary" onClick={() => setStaffModalOpen(true)} className="gap-1.5">
+                            <Headphones className="h-4 w-4" />
+                            {t('admin.addStaff')}
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleRefresh} disabled={loading} className="gap-1.5">
+                            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+                            {t('common.refresh')}
+                        </Button>
+                    </div>
+                </header>
+
+                {/* ── KPI row ─────────────────────────────────────────────────── */}
+                <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                    <KPIWidget icon={Users} label={t('common.total', 'Total Users')} value={doctors.length + supportStaff.length + patients.length} tone="neutral" />
+                    <KPIWidget icon={Stethoscope} label={t('admin.doctors', 'Therapists')} value={doctors.length} tone="success" />
+                    <KPIWidget icon={Users} label={t('admin.patients', 'Patients')} value={patients.length} tone="info" />
+                    <KPIWidget icon={Headphones} label={t('admin.customerSupport', 'Customer Support')} value={supportStaff.length} tone="info" />
                 </div>
 
-                {/* KPI Cards */}
-                <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4">
-                    <div className="rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-white p-5 shadow-sm">
-                        <p className="text-sm text-white/80">{t('admin.doctors', 'Therapists')}</p>
-                        <p className="text-3xl font-bold mt-1">{doctors.length}</p>
-                    </div>
-                    <div className="rounded-2xl bg-gradient-to-br from-secondary to-secondary-dark text-white p-5 shadow-sm">
-                        <p className="text-sm text-white/80">{t('admin.customerSupport', 'Customer Support')}</p>
-                        <p className="text-3xl font-bold mt-1">{supportStaff.length}</p>
-                    </div>
-                    <div className="rounded-2xl bg-gradient-to-br from-accent to-accent-dark text-white p-5 shadow-sm">
-                        <p className="text-sm text-white/80">{t('admin.patients', 'Patients')}</p>
-                        <p className="text-3xl font-bold mt-1">{patients.length}</p>
-                    </div>
-                    <div className="rounded-2xl bg-gradient-to-br from-primary-dark to-secondary text-white p-5 shadow-sm">
-                        <p className="text-sm text-white/80">{t('common.total', 'Total')}</p>
-                        <p className="text-3xl font-bold mt-1">{doctors.length + supportStaff.length + patients.length}</p>
-                    </div>
-                </div>
-
-                {/* Tabs */}
-                <Card className="border border-border shadow-sm">
-                    <CardContent className="space-y-5">
-                        <Tabs value={activeTab} onValueChange={(v) => { setActiveTab(v); setSearchTerm(''); setSortBy('name'); setStatusFilter('all') }}>
-                            <TabsList className="w-full sm:w-auto bg-background-subtle rounded-xl p-1">
-                        <TabsTrigger value="doctors">
-                            <Stethoscope className="w-4 h-4" />
-                            {t('admin.doctors')}
-                            <span className="ms-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
-                                {doctors.length}
-                            </span>
-                        </TabsTrigger>
-                        <TabsTrigger value="support">
-                            <Headphones className="w-4 h-4" />
-                            {t('admin.customerSupport', 'Customer Support')}
-                            <span className="ms-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
-                                {supportStaff.length}
-                            </span>
-                        </TabsTrigger>
-                        <TabsTrigger value="patients">
-                            <Users className="w-4 h-4" />
-                            {t('admin.patients', 'Patients')}
-                            <span className="ms-1 inline-flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
-                                {patients.length}
-                            </span>
-                        </TabsTrigger>
-                            </TabsList>
-
-                            {/* Search Bar */}
-                            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_220px]">
-                                <div className="relative">
-                                    <Search className={`absolute start-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-light`} />
-                                    <input
-                                        type="text"
-                                        placeholder={`${t('common.search')} ${
-                                            activeTab === 'doctors'
-                                                ? t('admin.doctors')
-                                                : activeTab === 'support'
-                                                    ? t('admin.customerSupport', 'Customer Support')
-                                                    : t('admin.patients', 'Patients')
-                                        }...`}
-                                        value={searchTerm}
-                                        onChange={(e) => setSearchTerm(e.target.value)}
-                                        className={`w-full h-10 ${t("auto.ps10Pe10")} rounded-xl border border-border-light bg-background-subtle/50 text-sm text-text placeholder:text-text-light/50 hover:bg-background-subtle hover:border-border-dark focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary focus:bg-background transition-all`}
-                                    />
-                                    {searchTerm && (
-                                        <button
-                                            onClick={() => setSearchTerm('')}
-                                            className={`absolute end-3 top-1/2 -translate-y-1/2 text-text-light hover:text-text transition-colors`}
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
+                {/* ── Tabs + filter toolbar + table ───────────────────────────── */}
+                <DashboardCard className="overflow-visible">
+                    {/* Tabs */}
+                    <div className="flex items-center gap-1 overflow-x-auto border-b border-border px-3">
+                        {tabs.map((tab) => {
+                            const Icon = tab.icon
+                            const active = activeTab === tab.value
+                            return (
+                                <button
+                                    key={tab.value}
+                                    type="button"
+                                    role="tab"
+                                    aria-selected={active}
+                                    onClick={() => { setActiveTab(tab.value); resetFilters() }}
+                                    className={`relative inline-flex items-center gap-2 whitespace-nowrap px-4 py-3.5 text-sm font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 ${
+                                        active ? 'text-primary' : 'text-text-muted hover:text-text-heading'
+                                    }`}
+                                >
+                                    <Icon className="h-4 w-4" />
+                                    {tab.label}
+                                    <span className={`inline-flex h-5 min-w-[20px] items-center justify-center rounded-full px-1.5 text-[10px] font-bold ${
+                                        active ? 'bg-primary/10 text-primary' : 'bg-background-subtle text-text-muted'
+                                    }`}>
+                                        {tab.count}
+                                    </span>
+                                    {active && (
+                                        <motion.span
+                                            layoutId="userTabIndicator"
+                                            className="absolute inset-x-3 -bottom-px h-0.5 rounded-full bg-primary"
+                                        />
                                     )}
-                                </div>
-                                <select
-                                    value={statusFilter}
-                                    onChange={(event) => setStatusFilter(event.target.value)}
-                                    className="h-10 rounded-xl border border-border-light bg-background-subtle/50 px-3 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                                >
-                                    <option value="all">{t('common.allStatuses', 'All statuses')}</option>
-                                    <option value="active">{t('common.active')}</option>
-                                    <option value="inactive">{t('common.inactive')}</option>
-                                </select>
-                                <select
-                                    value={sortBy}
-                                    onChange={(event) => setSortBy(event.target.value)}
-                                    className="h-10 rounded-xl border border-border-light bg-background-subtle/50 px-3 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
-                                >
-                                    <option value="name">{t('common.name')}</option>
-                                    <option value="status">{t('common.status')}</option>
-                                    {activeTab === 'doctors' && <option value="patients">{t('admin.patientCount', 'Patients count')}</option>}
-                                    {activeTab === 'patients' && <option value="sessions">{t('admin.sessionsCount', 'Sessions count')}</option>}
-                                    {activeTab === 'support' && <option value="openCases">{t('admin.openCases', 'Open cases')}</option>}
-                                </select>
-                            </div>
+                                </button>
+                            )
+                        })}
+                    </div>
 
+                    {/* Filter toolbar */}
+                    <div className="flex flex-col gap-3 border-b border-border p-4 lg:flex-row lg:items-center">
+                        <div className="relative flex-1">
+                            <Search className="absolute start-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-muted" />
+                            <input
+                                type="text"
+                                placeholder={`${t('common.search')}...`}
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="h-10 w-full rounded-xl border border-border bg-background-subtle/50 ps-10 pe-9 text-sm text-text outline-none transition-all placeholder:text-text-muted/60 focus:border-primary focus:bg-background focus:ring-2 focus:ring-primary/20"
+                            />
+                            {searchTerm && (
+                                <button onClick={() => setSearchTerm('')} className="absolute end-3 top-1/2 -translate-y-1/2 text-text-muted transition-colors hover:text-text-heading">
+                                    <X className="h-4 w-4" />
+                                </button>
+                            )}
+                        </div>
+                        <select
+                            value={statusFilter}
+                            onChange={(event) => setStatusFilter(event.target.value)}
+                            className="h-10 rounded-xl border border-border bg-background-subtle/50 px-3 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        >
+                            {statusFilterOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select>
+                        <select
+                            value={sortBy}
+                            onChange={(event) => setSortBy(event.target.value)}
+                            className="h-10 rounded-xl border border-border bg-background-subtle/50 px-3 text-sm text-text outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+                        >
+                            {sortOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                        </select>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={resetFilters}
+                            disabled={!filtersActive}
+                            className="gap-1.5"
+                        >
+                            <Filter className="h-4 w-4" />
+                            {t('common.reset', 'Reset')}
+                        </Button>
+                    </div>
+
+                    <div className="p-4">
                     {/* Doctors Tab */}
-                    <TabsContent value="doctors">
-                        {loading ? (
-                            <div className="flex justify-center py-16">
-                                <Spinner label={t('common.loading')} />
-                            </div>
+                    {activeTab === 'doctors' && (
+                        loading ? (
+                            <TableSkeleton cols={8} />
                         ) : (
                             <>
-                                {/* ── Mobile cards (hidden on md+) ── */}
+                                {/* ── Mobile cards ── */}
                                 <div className="flex flex-col gap-3 md:hidden">
                                     {filteredDoctors.length === 0 ? (
-                                        <div className="flex flex-col items-center gap-3 py-12 text-center">
-                                            <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
-                                                <Stethoscope className="w-7 h-7 text-text-muted" />
-                                            </div>
-                                            <p className="text-text-muted font-medium">{t('admin.noDoctorsFound')}</p>
-                                        </div>
+                                        <EmptyState icon={Stethoscope} message={t('admin.noDoctorsFound')} />
                                     ) : filteredDoctors.map((doctor) => (
-                                        <div key={doctor.Id || doctor.id || doctor.Email}
-                                            className="bg-background-paper border border-border rounded-2xl p-4 flex flex-col gap-3 shadow-sm">
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <UserAvatar name={doctor.Name || doctor.name} src={doctor.Image || doctor.image} size="md" />
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="font-semibold text-text-heading truncate">{doctor.Name || doctor.name}</p>
-                                                    <p className="text-xs text-text-muted truncate">{doctor.Email || doctor.email}</p>
-                                                </div>
-                                                <Badge variant={doctor.IsActive !== false ? 'success' : 'default'} className="shrink-0">
-                                                    {doctor.IsActive !== false ? t('common.active') : t('common.inactive')}
-                                                </Badge>
-                                            </div>
-                                            {(doctor.Specialist || doctor.specialist || []).length > 0 && (
-                                                <div className="flex flex-wrap gap-1">
-                                                    {(doctor.Specialist || doctor.specialist).map((s, i) => (
-                                                        <Badge key={i} variant="secondary">{s}</Badge>
-                                                    ))}
-                                                </div>
-                                            )}
-                                            <div className="flex items-center gap-2 pt-1 border-t border-border">
-                                                <button onClick={() => openDoctorFinancePage(doctor)}
-                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
-                                                    <Eye className="w-4 h-4 text-secondary" />
-                                                    {t('admin.finance', 'Finance')}
-                                                </button>
-                                                <button onClick={() => openDetailsModal(doctor)}
-                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
-                                                    <FileText className="w-4 h-4 text-primary" />
-                                                    {t('common.view')}
-                                                </button>
-                                                <button onClick={() => openEditModal(doctor)}
-                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
-                                                    <User className="w-4 h-4 text-primary" />
-                                                    {t('common.edit', 'Edit')}
-                                                </button>
-                                                <button onClick={() => handleToggleDoctor(doctor.Id || doctor.id)}
-                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
-                                                    {doctor.IsActive !== false
-                                                        ? <><ToggleRight className="w-4 h-4 text-emerald-500" />{t('common.inactive')}</>
-                                                        : <><ToggleLeft className="w-4 h-4 text-text-muted" />{t('common.active')}</>}
-                                                </button>
-                                                <button onClick={() => openResetPasswordModal(doctor)}
-                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
-                                                    <Lock className="w-4 h-4 text-primary" />
-                                                    {t('auth.resetPassword')}
-                                                </button>
-                                            </div>
-                                        </div>
+                                        <UserCard
+                                            key={getUserId(doctor) || doctor.Email}
+                                            {...getUserFields(doctor)}
+                                            badges={renderStatusBadge(doctor)}
+                                            meta={[
+                                                { label: t('common.specialty'), value: getUserSpecialistText(doctor) || '—' },
+                                                { label: t('admin.patientCount', 'Patients'), value: getPatientsCount(doctor) },
+                                                { label: t('common.phone'), value: doctor.PhoneNumber || doctor.phoneNumber || '—' },
+                                            ]}
+                                            actions={buildActions(doctor, {
+                                                onView: openDetailsModal,
+                                                onEdit: openEditModal,
+                                                onFinance: openDoctorFinancePage,
+                                                onToggle: handleToggleDoctor,
+                                                onReset: openResetPasswordModal,
+                                            })}
+                                        />
                                     ))}
                                 </div>
 
-                                {/* ── Desktop table (hidden on mobile) ── */}
-                                <div className="hidden md:block">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow hover={false}>
-                                                <TableHead>{t('common.name')}</TableHead>
-                                                <TableHead>{t('common.specialty')}</TableHead>
-                                                <TableHead>{t('common.email')}</TableHead>
-                                                <TableHead>{t('common.phone')}</TableHead>
-                                                <TableHead>{t('admin.patientCount', 'Patients')}</TableHead>
-                                                <TableHead>{t('common.status')}</TableHead>
-                                                <TableHead>{t('admin.accountStatus', 'Account')}</TableHead>
-                                                <TableHead className="text-center">{t('common.actions')}</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {filteredDoctors.length > 0 ? (
-                                                filteredDoctors.map((doctor) => (
-                                                    <TableRow key={doctor.Id || doctor.id || doctor.Email}>
-                                                        <TableCell>
-                                                            <div className="flex items-center gap-3 min-w-0">
-                                                                <UserAvatar name={doctor.Name || doctor.name} src={doctor.Image || doctor.image} size="sm" />
-                                                                <span className="font-semibold text-text-heading truncate">{doctor.Name || doctor.name}</span>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <div className="flex flex-wrap gap-1">
-                                                                {(doctor.Specialist || doctor.specialist || []).length > 0
-                                                                    ? (doctor.Specialist || doctor.specialist).map((s, i) => <Badge key={i} variant="secondary">{s}</Badge>)
-                                                                    : <span className="text-text-muted">—</span>}
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="text-text-muted max-w-[180px] truncate">{doctor.Email || doctor.email}</TableCell>
-                                                        <TableCell className="text-text-muted whitespace-nowrap">{doctor.PhoneNumber || doctor.phoneNumber || '—'}</TableCell>
-                                                        <TableCell className="font-semibold text-text-heading">{getPatientsCount(doctor)}</TableCell>
-                                                        <TableCell>
-                                                            <Badge variant={doctor.IsActive !== false ? 'success' : 'default'}>
-                                                                <Activity className="w-3 h-3" />
-                                                                {doctor.IsActive !== false ? t('common.active') : t('common.inactive')}
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Badge variant={doctor.AccountStatus === 'Suspended' ? 'danger' : 'secondary'}>
-                                                                {doctor.AccountStatus || doctor.accountStatus || (doctor.IsActive !== false ? t('common.active') : t('common.inactive'))}
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell className="text-center">
-                                                            <div className="flex items-center justify-center gap-1">
-                                                                <Tooltip><TooltipTrigger asChild>
-                                                                    <button onClick={() => openDoctorFinancePage(doctor)}
-                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
-                                                                        <Eye className="w-4 h-4 text-secondary" />
-                                                                    </button>
-                                                                </TooltipTrigger><TooltipContent>{t('admin.finance', 'Finance')}</TooltipContent></Tooltip>
-                                                                <Tooltip><TooltipTrigger asChild>
-                                                                    <button onClick={() => openDetailsModal(doctor)}
-                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
-                                                                        <FileText className="w-4 h-4 text-primary" />
-                                                                    </button>
-                                                                </TooltipTrigger><TooltipContent>{t('common.view')}</TooltipContent></Tooltip>
-                                                                <Tooltip><TooltipTrigger asChild>
-                                                                    <button onClick={() => openEditModal(doctor)}
-                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
-                                                                        <User className="w-4 h-4 text-primary" />
-                                                                    </button>
-                                                                </TooltipTrigger><TooltipContent>{t('common.edit', 'Edit')}</TooltipContent></Tooltip>
-                                                                <Tooltip><TooltipTrigger asChild>
-                                                                    <button onClick={() => handleToggleDoctor(doctor.Id || doctor.id)}
-                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
-                                                                        {doctor.IsActive !== false
-                                                                            ? <ToggleRight className="w-5 h-5 text-emerald-500" />
-                                                                            : <ToggleLeft className="w-5 h-5 text-text-muted" />}
-                                                                    </button>
-                                                                </TooltipTrigger><TooltipContent>{doctor.IsActive !== false ? t('common.inactive') : t('common.active')}</TooltipContent></Tooltip>
-                                                                <Tooltip><TooltipTrigger asChild>
-                                                                    <button onClick={() => openResetPasswordModal(doctor)}
-                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
-                                                                        <Lock className="w-4 h-4 text-primary" />
-                                                                    </button>
-                                                                </TooltipTrigger><TooltipContent>{t('auth.resetPassword')}</TooltipContent></Tooltip>
-                                                            </div>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))
-                                            ) : (
-                                                <TableRow hover={false}>
-                                                    <TableCell colSpan={8} className="text-center py-12">
-                                                        <div className="flex flex-col items-center gap-3">
-                                                            <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
-                                                                <Stethoscope className="w-7 h-7 text-text-muted" />
-                                                            </div>
-                                                            <p className="text-text-muted font-medium">{t('admin.noDoctorsFound')}</p>
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </div>
+                                {/* ── Desktop table ── */}
+                                <UserTable
+                                    rows={filteredDoctors}
+                                    rowKey={(d) => getUserId(d) || d.Email}
+                                    getUser={getUserFields}
+                                    emptyState={<EmptyState icon={Stethoscope} message={t('admin.noDoctorsFound')} />}
+                                    columns={[
+                                        { key: 'user', header: t('common.name') },
+                                        {
+                                            key: 'specialty', header: t('common.specialty'),
+                                            render: (d) => {
+                                                const list = d.Specialist || d.specialist || []
+                                                return list.length > 0
+                                                    ? <div className="flex flex-wrap gap-1">{list.map((s, i) => <Badge key={i} variant="secondary">{s}</Badge>)}</div>
+                                                    : '—'
+                                            },
+                                        },
+                                        { key: 'email', header: t('common.email'), cellClassName: 'text-text-muted max-w-[200px] truncate', render: (d) => d.Email || d.email },
+                                        { key: 'phone', header: t('common.phone'), cellClassName: 'text-text-muted whitespace-nowrap', render: (d) => d.PhoneNumber || d.phoneNumber || '—' },
+                                        { key: 'patients', header: t('admin.patientCount', 'Patients'), cellClassName: 'font-semibold text-text-heading', render: (d) => getPatientsCount(d) },
+                                        { key: 'status', header: t('common.status'), render: renderStatusBadge },
+                                        {
+                                            key: 'account', header: t('admin.accountStatus', 'Account'),
+                                            render: (d) => (
+                                                <StatusBadge status={d.AccountStatus === 'Suspended' ? 'suspended' : 'neutral'}>
+                                                    {d.AccountStatus || d.accountStatus || (getActiveFlag(d) !== false ? t('common.active') : t('common.inactive'))}
+                                                </StatusBadge>
+                                            ),
+                                        },
+                                        {
+                                            key: 'actions', header: t('common.actions'), align: 'end',
+                                            render: (d) => buildActions(d, {
+                                                onView: openDetailsModal, onEdit: openEditModal, onFinance: openDoctorFinancePage,
+                                                onToggle: handleToggleDoctor, onReset: openResetPasswordModal,
+                                            }),
+                                        },
+                                    ]}
+                                />
 
-                                {/* Pagination */}
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mt-4">
+                                <div className="mt-4 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
                                     <span className="text-sm text-text-muted">{filteredDoctors.length} {t('admin.doctors')}</span>
                                     <Pagination page={doctorsPage} total={doctorsTotalPages} onChange={setDoctorsPage} />
                                 </div>
                             </>
-                        )}
-                    </TabsContent>
+                        )
+                    )}
 
                     {/* Patients Tab */}
-                    <TabsContent value="patients">
-                        {loading ? (
-                            <div className="flex justify-center py-16">
-                                <Spinner label={t('common.loading')} />
-                            </div>
+                    {activeTab === 'patients' && (
+                        loading ? (
+                            <TableSkeleton cols={7} />
                         ) : (
                             <>
                                 {/* ── Mobile cards ── */}
                                 <div className="flex flex-col gap-3 md:hidden">
                                     {filteredPatients.length === 0 ? (
-                                        <div className="flex flex-col items-center gap-3 py-12 text-center">
-                                            <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
-                                                <Users className="w-7 h-7 text-text-muted" />
-                                            </div>
-                                            <p className="text-text-muted font-medium">{t('admin.noUsersFound')}</p>
-                                        </div>
+                                        <EmptyState icon={Users} message={t('admin.noUsersFound')} />
                                     ) : filteredPatients.map((patient) => (
-                                        <div key={patient.Id || patient.id || patient.Email}
-                                            className="bg-background-paper border border-border rounded-2xl p-4 flex flex-col gap-3 shadow-sm">
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <UserAvatar name={patient.Name || patient.name} src={patient.Image || patient.image} size="md" className="ring-secondary/30" />
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="font-semibold text-text-heading truncate">{patient.Name || patient.name}</p>
-                                                    <p className="text-xs text-text-muted truncate">{patient.Email || patient.email}</p>
-                                                </div>
-                                                <Badge variant={patient.IsActive !== false ? 'success' : 'default'} className="shrink-0">
-                                                    {patient.IsActive !== false ? t('common.active') : t('common.inactive')}
-                                                </Badge>
-                                            </div>
-                                            <div className="flex items-center gap-2 pt-1 border-t border-border">
-                                                <button onClick={() => openDetailsModal(patient)}
-                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
-                                                    <FileText className="w-4 h-4 text-primary" />
-                                                    {t('common.view')}
-                                                </button>
-                                                <button onClick={() => openEditModal(patient)}
-                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
-                                                    <User className="w-4 h-4 text-primary" />
-                                                    {t('common.edit', 'Edit')}
-                                                </button>
-                                                <button onClick={() => openResetPasswordModal(patient)}
-                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
-                                                    <Lock className="w-4 h-4 text-primary" />
-                                                    {t('auth.resetPassword')}
-                                                </button>
-                                            </div>
-                                        </div>
+                                        <UserCard
+                                            key={getUserId(patient) || patient.Email}
+                                            {...getUserFields(patient)}
+                                            badges={renderStatusBadge(patient)}
+                                            meta={[
+                                                { label: t('admin.sessionsCount', 'Sessions'), value: getSessionsCount(patient) },
+                                                { label: t('patientHome.treatmentProgram.label', 'Treatment Program'), value: getTreatmentProgram(patient) },
+                                                { label: t('common.phone'), value: patient.PhoneNumber || patient.phoneNumber || '—' },
+                                            ]}
+                                            actions={buildActions(patient, {
+                                                onView: openDetailsModal, onEdit: openEditModal, onReset: openResetPasswordModal,
+                                            })}
+                                        />
                                     ))}
                                 </div>
 
                                 {/* ── Desktop table ── */}
-                                <div className="hidden md:block">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow hover={false}>
-                                                <TableHead>{t('common.name')}</TableHead>
-                                                <TableHead>{t('common.email')}</TableHead>
-                                                <TableHead>{t('common.phone')}</TableHead>
-                                                <TableHead>{t('admin.sessionsCount', 'Sessions')}</TableHead>
-                                                <TableHead>{t('patientHome.treatmentProgram.label', 'Treatment Program')}</TableHead>
-                                                <TableHead>{t('common.status')}</TableHead>
-                                                <TableHead className="text-center">{t('common.actions')}</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {filteredPatients.length > 0 ? (
-                                                filteredPatients.map((patient) => (
-                                                    <TableRow key={patient.Id || patient.id || patient.Email}>
-                                                        <TableCell>
-                                                            <div className="flex items-center gap-3 min-w-0">
-                                                                <UserAvatar name={patient.Name || patient.name} src={patient.Image || patient.image} size="sm" className="ring-secondary/30" />
-                                                                <span className="font-semibold text-text-heading truncate">{patient.Name || patient.name}</span>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="text-text-muted max-w-[180px] truncate">{patient.Email || patient.email}</TableCell>
-                                                        <TableCell className="text-text-muted whitespace-nowrap">{patient.PhoneNumber || patient.phoneNumber || '—'}</TableCell>
-                                                        <TableCell className="font-semibold text-text-heading">{getSessionsCount(patient)}</TableCell>
-                                                        <TableCell className="max-w-[180px] truncate text-text-muted">{getTreatmentProgram(patient)}</TableCell>
-                                                        <TableCell>
-                                                            <Badge variant={patient.IsActive !== false ? 'success' : 'default'}>
-                                                                {patient.IsActive !== false ? t('common.active') : t('common.inactive')}
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell className="text-center">
-                                                            <div className="flex items-center justify-center gap-1">
-                                                                <Tooltip><TooltipTrigger asChild>
-                                                                    <button onClick={() => openDetailsModal(patient)}
-                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
-                                                                        <FileText className="w-4 h-4 text-primary" />
-                                                                    </button>
-                                                                </TooltipTrigger><TooltipContent>{t('common.view')}</TooltipContent></Tooltip>
-                                                                <Tooltip><TooltipTrigger asChild>
-                                                                    <button onClick={() => openEditModal(patient)}
-                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
-                                                                        <User className="w-4 h-4 text-primary" />
-                                                                    </button>
-                                                                </TooltipTrigger><TooltipContent>{t('common.edit', 'Edit')}</TooltipContent></Tooltip>
-                                                                <Tooltip><TooltipTrigger asChild>
-                                                                    <button onClick={() => openResetPasswordModal(patient)}
-                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
-                                                                        <Lock className="w-4 h-4 text-primary" />
-                                                                    </button>
-                                                                </TooltipTrigger><TooltipContent>{t('auth.resetPassword')}</TooltipContent></Tooltip>
-                                                            </div>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))
-                                            ) : (
-                                                <TableRow hover={false}>
-                                                    <TableCell colSpan={6} className="text-center py-12">
-                                                        <div className="flex flex-col items-center gap-3">
-                                                            <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
-                                                                <Users className="w-7 h-7 text-text-muted" />
-                                                            </div>
-                                                            <p className="text-text-muted font-medium">{t('admin.noUsersFound')}</p>
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </div>
+                                <UserTable
+                                    rows={filteredPatients}
+                                    rowKey={(p) => getUserId(p) || p.Email}
+                                    getUser={getUserFields}
+                                    emptyState={<EmptyState icon={Users} message={t('admin.noUsersFound')} />}
+                                    columns={[
+                                        { key: 'user', header: t('common.name') },
+                                        { key: 'phone', header: t('common.phone'), cellClassName: 'text-text-muted whitespace-nowrap', render: (p) => p.PhoneNumber || p.phoneNumber || '—' },
+                                        { key: 'sessions', header: t('admin.sessionsCount', 'Sessions'), cellClassName: 'font-semibold text-text-heading', render: (p) => getSessionsCount(p) },
+                                        { key: 'program', header: t('patientHome.treatmentProgram.label', 'Treatment Program'), cellClassName: 'max-w-[180px] truncate text-text-muted', render: (p) => getTreatmentProgram(p) },
+                                        { key: 'status', header: t('common.status'), render: renderStatusBadge },
+                                        {
+                                            key: 'actions', header: t('common.actions'), align: 'end',
+                                            render: (p) => buildActions(p, { onView: openDetailsModal, onEdit: openEditModal, onReset: openResetPasswordModal }),
+                                        },
+                                    ]}
+                                />
 
-                                {/* Pagination */}
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mt-4">
+                                <div className="mt-4 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
                                     <span className="text-sm text-text-muted">{filteredPatients.length} {t('admin.users')}</span>
                                     <Pagination page={patientsPage} total={patientsTotalPages} onChange={setPatientsPage} />
                                 </div>
                             </>
-                        )}
-                    </TabsContent>
+                        )
+                    )}
 
                     {/* Customer Support Tab */}
-                    <TabsContent value="support">
-                        {loading ? (
-                            <div className="flex justify-center py-16">
-                                <Spinner label={t('common.loading')} />
-                            </div>
+                    {activeTab === 'support' && (
+                        loading ? (
+                            <TableSkeleton cols={7} />
                         ) : (
                             <>
-                                {/* ── Mobile cards ── */}
+                                {/* Blackmail / abuse routing config */}
                                 <div className="mb-4 rounded-2xl border border-rose-200 bg-rose-50/70 p-4">
                                     <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                                         <div className="flex items-start gap-3">
@@ -1254,149 +1167,68 @@ export default function UserManagement() {
 
                                 <div className="flex flex-col gap-3 md:hidden">
                                     {filteredSupportStaff.length === 0 ? (
-                                        <div className="flex flex-col items-center gap-3 py-12 text-center">
-                                            <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
-                                                <Headphones className="w-7 h-7 text-text-muted" />
-                                            </div>
-                                            <p className="text-text-muted font-medium">{t('admin.noSupportStaffFound', 'No support staff found')}</p>
-                                        </div>
+                                        <EmptyState icon={Headphones} message={t('admin.noSupportStaffFound', 'No support staff found')} />
                                     ) : filteredSupportStaff.map((staff) => (
-                                        <div key={staff.Id || staff.id || staff.Email}
-                                            className="bg-background-paper border border-border rounded-2xl p-4 flex flex-col gap-3 shadow-sm">
-                                            <div className="flex items-center gap-3 min-w-0">
-                                                <UserAvatar name={staff.Name || staff.name} src={staff.Image || staff.image} size="md" />
-                                                <div className="min-w-0 flex-1">
-                                                    <p className="font-semibold text-text-heading truncate">{staff.Name || staff.name}</p>
-                                                    <p className="text-xs text-text-muted truncate">{staff.Email || staff.email}</p>
-                                                </div>
-                                                <Badge variant={staff.IsActive !== false ? 'success' : 'default'} className="shrink-0">
-                                                    {staff.IsActive !== false ? t('common.active') : t('common.inactive')}
-                                                </Badge>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                {(staff.RoleID === 1 || staff.RoleName?.toUpperCase() === 'ADMIN') ? (
-                                                    <Badge variant="primary"><ShieldCheck className="w-3 h-3" />{t('admin.adminRole', 'Admin')}</Badge>
-                                                ) : (
-                                                    <Badge variant="secondary"><Headphones className="w-3 h-3" />{t('admin.customerSupport', 'Customer Support')}</Badge>
-                                                )}
-                                            </div>
-                                            <div className="flex items-center gap-2 pt-1 border-t border-border">
-                                                <button onClick={() => openDetailsModal(staff)}
-                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
-                                                    <FileText className="w-4 h-4 text-primary" />
-                                                    {t('common.view')}
-                                                </button>
-                                                <button onClick={() => openEditModal(staff)}
-                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
-                                                    <User className="w-4 h-4 text-primary" />
-                                                    {t('common.edit', 'Edit')}
-                                                </button>
-                                                <button onClick={() => openResetPasswordModal(staff)}
-                                                    className="flex-1 inline-flex items-center justify-center gap-1.5 px-3 py-2 text-xs font-medium rounded-xl border border-border hover:bg-background-subtle transition-colors">
-                                                    <Lock className="w-4 h-4 text-primary" />
-                                                    {t('auth.resetPassword')}
-                                                </button>
-                                            </div>
-                                        </div>
+                                        <UserCard
+                                            key={getUserId(staff) || staff.Email}
+                                            {...getUserFields(staff)}
+                                            badges={renderStatusBadge(staff)}
+                                            meta={[
+                                                { label: t('common.role'), value: isAdminStaff(staff) ? t('admin.adminRole', 'Admin') : t('admin.customerSupport', 'Customer Support') },
+                                                ...(isAdminStaff(staff) ? [] : [{ label: t('admin.bullyingSpecialistColumn', 'Bullying Specialist'), value: renderBullyingSpecialistBadge(staff) }]),
+                                                { label: t('admin.openCases', 'Open cases'), value: getOpenCasesCount(staff) },
+                                                { label: t('admin.closedCases', 'Closed cases'), value: getClosedCasesCount(staff) },
+                                            ]}
+                                            actions={buildActions(staff, {
+                                                onView: openDetailsModal, onEdit: openEditModal, onReset: openResetPasswordModal,
+                                            })}
+                                        />
                                     ))}
                                 </div>
 
                                 {/* ── Desktop table ── */}
-                                <div className="hidden md:block">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow hover={false}>
-                                                <TableHead>{t('common.name')}</TableHead>
-                                                <TableHead>{t('common.email')}</TableHead>
-                                                <TableHead>{t('common.phone')}</TableHead>
-                                                <TableHead>{t('common.role')}</TableHead>
-                                                <TableHead>{t('admin.openCases', 'Open cases')}</TableHead>
-                                                <TableHead>{t('admin.closedCases', 'Closed cases')}</TableHead>
-                                                <TableHead>{t('common.status')}</TableHead>
-                                                <TableHead className="text-center">{t('common.actions')}</TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {filteredSupportStaff.length > 0 ? (
-                                                filteredSupportStaff.map((staff) => (
-                                                    <TableRow key={staff.Id || staff.id || staff.Email}>
-                                                        <TableCell>
-                                                            <div className="flex items-center gap-3 min-w-0">
-                                                                <UserAvatar name={staff.Name || staff.name} src={staff.Image || staff.image} size="sm" />
-                                                                <span className="font-semibold text-text-heading truncate">{staff.Name || staff.name}</span>
-                                                            </div>
-                                                        </TableCell>
-                                                        <TableCell className="text-text-muted max-w-[180px] truncate">{staff.Email || staff.email}</TableCell>
-                                                        <TableCell className="text-text-muted whitespace-nowrap">{staff.PhoneNumber || staff.phoneNumber || '—'}</TableCell>
-                                                        <TableCell>
-                                                            {(staff.RoleID === 1 || staff.RoleName?.toUpperCase() === 'ADMIN') ? (
-                                                                <Badge variant="primary"><ShieldCheck className="w-3 h-3" />{t('admin.adminRole', 'Admin')}</Badge>
-                                                            ) : (
-                                                                <Badge variant="secondary"><Headphones className="w-3 h-3" />{t('admin.customerSupport', 'Customer Support')}</Badge>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell className="font-semibold text-text-heading">{getOpenCasesCount(staff)}</TableCell>
-                                                        <TableCell className="font-semibold text-text-heading">{getClosedCasesCount(staff)}</TableCell>
-                                                        <TableCell>
-                                                            <Badge variant={staff.IsActive !== false ? 'success' : 'default'}>
-                                                                {staff.IsActive !== false ? t('common.active') : t('common.inactive')}
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell className="text-center">
-                                                            <div className="flex items-center justify-center gap-1">
-                                                                <Tooltip><TooltipTrigger asChild>
-                                                                    <button onClick={() => openDetailsModal(staff)}
-                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
-                                                                        <FileText className="w-4 h-4 text-primary" />
-                                                                    </button>
-                                                                </TooltipTrigger><TooltipContent>{t('common.view')}</TooltipContent></Tooltip>
-                                                                <Tooltip><TooltipTrigger asChild>
-                                                                    <button onClick={() => openEditModal(staff)}
-                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
-                                                                        <User className="w-4 h-4 text-primary" />
-                                                                    </button>
-                                                                </TooltipTrigger><TooltipContent>{t('common.edit', 'Edit')}</TooltipContent></Tooltip>
-                                                                <Tooltip><TooltipTrigger asChild>
-                                                                    <button onClick={() => openResetPasswordModal(staff)}
-                                                                        className="inline-flex items-center justify-center w-9 h-9 rounded-lg hover:bg-background-subtle transition-colors">
-                                                                        <Lock className="w-4 h-4 text-primary" />
-                                                                    </button>
-                                                                </TooltipTrigger><TooltipContent>{t('auth.resetPassword')}</TooltipContent></Tooltip>
-                                                            </div>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))
-                                            ) : (
-                                                <TableRow hover={false}>
-                                                    <TableCell colSpan={8} className="text-center py-12">
-                                                        <div className="flex flex-col items-center gap-3">
-                                                            <div className="w-14 h-14 rounded-2xl bg-background-subtle flex items-center justify-center">
-                                                                <Headphones className="w-7 h-7 text-text-muted" />
-                                                            </div>
-                                                            <p className="text-text-muted font-medium">{t('admin.noSupportStaffFound', 'No support staff found')}</p>
-                                                        </div>
-                                                    </TableCell>
-                                                </TableRow>
-                                            )}
-                                        </TableBody>
-                                    </Table>
-                                </div>
+                                <UserTable
+                                    rows={filteredSupportStaff}
+                                    rowKey={(s) => getUserId(s) || s.Email}
+                                    getUser={getUserFields}
+                                    emptyState={<EmptyState icon={Headphones} message={t('admin.noSupportStaffFound', 'No support staff found')} />}
+                                    columns={[
+                                        { key: 'user', header: t('common.name') },
+                                        { key: 'phone', header: t('common.phone'), cellClassName: 'text-text-muted whitespace-nowrap', render: (s) => s.PhoneNumber || s.phoneNumber || '—' },
+                                        {
+                                            key: 'role', header: t('common.role'),
+                                            render: (s) => isAdminStaff(s)
+                                                ? <StatusBadge status="admin" icon={ShieldCheck}>{t('admin.adminRole', 'Admin')}</StatusBadge>
+                                                : <StatusBadge status="support" icon={Headphones}>{t('admin.customerSupport', 'Customer Support')}</StatusBadge>,
+                                        },
+                                        {
+                                            key: 'bullyingSpecialist',
+                                            header: t('admin.bullyingSpecialistColumn', 'Bullying Specialist'),
+                                            render: (s) => isAdminStaff(s) ? '—' : renderBullyingSpecialistBadge(s),
+                                        },
+                                        { key: 'open', header: t('admin.openCases', 'Open cases'), cellClassName: 'font-semibold text-text-heading', render: (s) => getOpenCasesCount(s) },
+                                        { key: 'closed', header: t('admin.closedCases', 'Closed cases'), cellClassName: 'font-semibold text-text-heading', render: (s) => getClosedCasesCount(s) },
+                                        { key: 'status', header: t('common.status'), render: renderStatusBadge },
+                                        {
+                                            key: 'actions', header: t('common.actions'), align: 'end',
+                                            render: (s) => buildActions(s, { onView: openDetailsModal, onEdit: openEditModal, onReset: openResetPasswordModal }),
+                                        },
+                                    ]}
+                                />
 
-                                {/* Pagination */}
-                                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mt-4">
+                                <div className="mt-4 flex flex-col items-start justify-between gap-2 sm:flex-row sm:items-center">
                                     <span className="text-sm text-text-muted">
-                                        {filteredSupportStaff.filter(s => s.RoleID !== 1 && s.RoleName?.toUpperCase() !== 'ADMIN').length} {t('admin.customerSupport', 'Customer Support')}
+                                        {filteredSupportStaff.filter(s => !isAdminStaff(s)).length} {t('admin.customerSupport', 'Customer Support')}
                                         {' · '}
-                                        {filteredSupportStaff.filter(s => s.RoleID === 1 || s.RoleName?.toUpperCase() === 'ADMIN').length} {t('admin.adminRole', 'Admin')}
+                                        {filteredSupportStaff.filter(s => isAdminStaff(s)).length} {t('admin.adminRole', 'Admin')}
                                     </span>
                                     <Pagination page={supportPage} total={supportTotalPages} onChange={setSupportPage} />
                                 </div>
                             </>
-                        )}
-                    </TabsContent>
-                        </Tabs>
-                    </CardContent>
-                </Card>
+                        )
+                    )}
+                    </div>
+                </DashboardCard>
 
                 {/* Add Doctor Dialog */}
                 <Dialog open={modalOpen} onOpenChange={setModalOpen}>
@@ -1637,6 +1469,27 @@ export default function UserManagement() {
                                     icon={Stethoscope}
                                 />
                             )}
+                            {activeTab === 'support' && !isAdminStaff(editUser) && (
+                                <div
+                                    className={`flex items-center gap-3 rounded-xl border-2 px-4 py-4 transition-colors duration-200 ${editForm.isBullyingSpecialist ? 'border-primary/40 bg-primary/5' : 'border-border bg-background-subtle hover:border-primary/30'}`}
+                                >
+                                    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors duration-200 ${editForm.isBullyingSpecialist ? 'bg-primary/10' : 'bg-background-paper'}`}>
+                                        <ShieldAlert className={`h-5 w-5 transition-colors duration-200 ${editForm.isBullyingSpecialist ? 'text-primary' : 'text-text-muted'}`} />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                        <span className="block text-sm font-semibold text-text-heading">{t('admin.bullyingSpecialist')}</span>
+                                        <p className="mt-0.5 text-xs leading-relaxed text-text-muted">{t('admin.bullyingSpecialistDesc')}</p>
+                                    </div>
+                                    <Switch
+                                        bare
+                                        checked={editForm.isBullyingSpecialist}
+                                        disabled={editSubmitting}
+                                        onCheckedChange={(next) => setEditForm((prev) => ({ ...prev, isBullyingSpecialist: next }))}
+                                        ariaLabel={t('admin.bullyingSpecialist')}
+                                        className="ms-1"
+                                    />
+                                </div>
+                            )}
                             <label className="flex items-center justify-between rounded-xl border border-border bg-background-subtle px-4 py-3 text-sm font-semibold text-text-heading">
                                 {t('common.active')}
                                 <input
@@ -1699,5 +1552,17 @@ export default function UserManagement() {
                 t={t}
             />
         </TooltipProvider>
+    )
+}
+
+// Shared empty-state placeholder for the user lists.
+function EmptyState({ icon: Icon, message }) {
+    return (
+        <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+            <div className="grid h-14 w-14 place-items-center rounded-2xl bg-background-subtle">
+                <Icon className="h-7 w-7 text-text-muted" />
+            </div>
+            <p className="font-medium text-text-muted">{message}</p>
+        </div>
     )
 }

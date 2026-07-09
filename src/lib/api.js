@@ -698,6 +698,27 @@ export const adminAPI = {
     });
     return response.data;
   },
+
+  // Update any user via PUT /Admin/EditUser/{id}.
+  // Sends the full field set the endpoint expects; the caller is responsible
+  // for passing the user's existing values so nothing is overwritten with null.
+  updateUser: async (id, userData = {}) => {
+    const body = {
+      Name: userData.name ?? userData.Name ?? null,
+      Email: userData.email ?? userData.Email ?? null,
+      PhoneNumber: userData.phoneNumber ?? userData.PhoneNumber ?? null,
+      Description: userData.description ?? userData.Description ?? null,
+      Specialist: userData.specialist ?? userData.Specialist ?? null,
+      Gender: userData.gender ?? userData.Gender ?? null,
+      DateOfBirth: userData.dateOfBirth ?? userData.DateOfBirth ?? null,
+      IsBullyingSpecialist: Boolean(
+        userData.isBullyingSpecialist ?? userData.IsBullyingSpecialist ?? false
+      ),
+    };
+    console.log(`[adminAPI.updateUser] PUT /Admin/EditUser/${id} payload:`, body);
+    const response = await api.put(`/Admin/EditUser/${id}`, body);
+    return response.data;
+  },
 };
 
 // ─── Chat API Constants ──────────────────────────────────────────────────────
@@ -864,39 +885,6 @@ export const chatAPI = {
   markAsRead: async (roomId) => {
     const response = await api.post(`/Chat/Room/${roomId}/MarkAsRead`);
     return response.data;
-  },
-
-  updateUser: async (id, userData = {}) => {
-    const payload = {
-      Id: id,
-      UserId: id,
-      Name: userData.name || userData.Name || null,
-      Email: userData.email || userData.Email || null,
-      PhoneNumber: userData.phoneNumber || userData.PhoneNumber || null,
-      Description: userData.description || userData.Description || null,
-      Specialist: userData.specialist || userData.Specialist || null,
-      IsActive:
-        userData.isActive === undefined && userData.IsActive === undefined
-          ? undefined
-          : Boolean(userData.isActive ?? userData.IsActive),
-    };
-    const endpoints = [
-      { method: "put", url: `/Admin/User/${id}` },
-      { method: "put", url: "/Admin/UpdateUser" },
-      { method: "put", url: `/user/${id}` },
-    ];
-
-    let lastError;
-    for (const endpoint of endpoints) {
-      try {
-        const response = await api[endpoint.method](endpoint.url, payload);
-        return response.data;
-      } catch (error) {
-        lastError = error;
-        if (![404, 405].includes(Number(error?.response?.status))) break;
-      }
-    }
-    throw lastError;
   },
 
   updateSupportPriority: async (roomId, priority) => {
