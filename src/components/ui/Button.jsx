@@ -25,14 +25,35 @@ const Button = React.forwardRef(
   ({ className, variant = 'primary', size = 'md', asChild = false, isLoading, disabled, children, onClick, onPress, style, sx, ...props }, ref) => {
     const mapped = variantMap[variant] || variantMap.primary
     const muiSize = sizeMap[size] || 'medium'
+    const [asyncClickPending, setAsyncClickPending] = React.useState(false)
+    const mountedRef = React.useRef(true)
+
+    React.useEffect(() => () => {
+      mountedRef.current = false
+    }, [])
+
+    const clickHandler = onPress || onClick
+    const handleClick = React.useCallback((event) => {
+      if (!clickHandler || asyncClickPending) return
+
+      const result = clickHandler(event)
+      if (result && typeof result.finally === 'function') {
+        setAsyncClickPending(true)
+        result.finally(() => {
+          if (mountedRef.current) setAsyncClickPending(false)
+        })
+      }
+    }, [asyncClickPending, clickHandler])
+
+    const isDisabled = disabled || isLoading || asyncClickPending
 
     // Handle icon-only button
     if (size === 'icon') {
       return (
         <IconButton
           ref={ref}
-          disabled={disabled || isLoading}
-          onClick={onPress || onClick}
+          disabled={isDisabled}
+          onClick={handleClick}
           color={mapped.color}
           className={className}
           sx={{
@@ -81,8 +102,8 @@ const Button = React.forwardRef(
         variant={mapped.variant}
         color={mapped.color}
         size={muiSize}
-        disabled={disabled || isLoading}
-        onClick={onPress || onClick}
+        disabled={isDisabled}
+        onClick={handleClick}
         className={className}
         startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
         sx={{

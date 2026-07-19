@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useMultiStepForm } from "../../../hooks/useMultiStepForm";
@@ -163,7 +163,30 @@ export default function PatientRegistration() {
 
   const [otpSent, setOtpSent] = useState(false);
   const [otpTimer, setOtpTimer] = useState(0);
+  const otpInFlightRef = useRef(false);
+  const registerInFlightRef = useRef(false);
+  const verifyInFlightRef = useRef(false);
+  const otpIntervalRef = useRef(null);
   const passwordChecks = validatePassword(formData.password);
+
+  const startOtpTimer = () => {
+    if (otpIntervalRef.current) clearInterval(otpIntervalRef.current);
+    setOtpTimer(60);
+    otpIntervalRef.current = setInterval(() => {
+      setOtpTimer((prev) => {
+        if (prev <= 1) {
+          clearInterval(otpIntervalRef.current);
+          otpIntervalRef.current = null;
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+  };
+
+  useEffect(() => () => {
+    if (otpIntervalRef.current) clearInterval(otpIntervalRef.current);
+  }, []);
 
   // Step 1 Validation
   const validateStep1 = () => {
@@ -210,6 +233,8 @@ export default function PatientRegistration() {
 
   // Step 3 - Send OTP
   const handleSendOTP = async () => {
+    if (otpInFlightRef.current || otpTimer > 0) return false;
+    otpInFlightRef.current = true;
     setLoading(true);
     console.group("🚀 Sending OTP Debug Info");
     console.log("Attempting to send OTP to:", formData.email);
@@ -227,19 +252,8 @@ export default function PatientRegistration() {
       if (response.IsSuccess) {
         console.log("✅ OTP sent successfully according to server");
         setOtpSent(true);
-        setOtpTimer(60);
+        startOtpTimer();
         toast.success(response.Data?.Message || t("success.otpSent"));
-
-        // Countdown timer
-        const interval = setInterval(() => {
-          setOtpTimer((prev) => {
-            if (prev <= 1) {
-              clearInterval(interval);
-              return 0;
-            }
-            return prev - 1;
-          });
-        }, 1000);
 
         console.groupEnd();
         return true;
@@ -279,6 +293,7 @@ export default function PatientRegistration() {
       console.groupEnd();
       return false;
     } finally {
+      otpInFlightRef.current = false;
       setLoading(false);
     }
   };
@@ -294,6 +309,8 @@ export default function PatientRegistration() {
 
   // Register user first (Step 1 completion)
   const handleRegisterUser = async () => {
+    if (registerInFlightRef.current) return;
+    registerInFlightRef.current = true;
     console.group("📝 Registration Process Started");
     console.log("Starting registration process...");
     setLoading(true);
@@ -380,6 +397,7 @@ export default function PatientRegistration() {
       const errorMessage = extractErrorMessage(error, t("errors.somethingWentWrong"));
       toast.error(errorMessage);
     } finally {
+      registerInFlightRef.current = false;
       setLoading(false);
       console.groupEnd();
     }
@@ -413,6 +431,8 @@ export default function PatientRegistration() {
   };
 
   const handleSubmit = async () => {
+    if (verifyInFlightRef.current) return;
+    verifyInFlightRef.current = true;
     setLoading(true);
 
     try {
@@ -434,6 +454,8 @@ export default function PatientRegistration() {
       console.error("OTP verification failed:", error);
       setLoading(false);
       toast.error(extractErrorMessage(error, t("errors.failedVerifyOtp")));
+    } finally {
+      verifyInFlightRef.current = false;
     }
   };
 

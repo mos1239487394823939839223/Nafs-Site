@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Modal from "../ui/Modal";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
@@ -24,6 +24,7 @@ export default function BookingModal({ isOpen, onClose }) {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [slotsLoading, setSlotsLoading] = useState(false);
+  const bookingInFlightRef = useRef(false);
 
   // Fetch doctors when modal opens
   useEffect(() => {
@@ -81,11 +82,14 @@ export default function BookingModal({ isOpen, onClose }) {
   };
 
   const handleBooking = async () => {
+    if (bookingInFlightRef.current) return;
+
     if (!selectedDoctor || !selectedDate || !selectedTime) {
       toast.error("Please select all booking details");
       return;
     }
 
+    bookingInFlightRef.current = true;
     setBookingLoading(true);
     try {
       const doctorId = selectedDoctor?.Id || selectedDoctor?.id;
@@ -116,6 +120,7 @@ export default function BookingModal({ isOpen, onClose }) {
       console.error("Booking error:", error);
       toast.error(extractErrorMessage(error, "Failed to book appointment"));
     } finally {
+      bookingInFlightRef.current = false;
       setBookingLoading(false);
     }
   };

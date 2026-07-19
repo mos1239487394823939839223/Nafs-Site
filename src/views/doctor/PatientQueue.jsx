@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -37,6 +37,7 @@ export default function PatientQueue() {
     type: null,
     bookingId: null,
   });
+  const mutationInFlightRef = useRef(new Set());
   const [pageIndex, setPageIndex] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [cancelConfirmPatient, setCancelConfirmPatient] = useState(null);
@@ -219,6 +220,9 @@ export default function PatientQueue() {
   };
 
   const handleCancel = async (patient) => {
+    const actionKey = `cancel:${patient?.bookingId || ""}`;
+    if (mutationInFlightRef.current.has(actionKey)) return;
+    mutationInFlightRef.current.add(actionKey);
     setActionLoading({ type: "cancel", bookingId: patient.bookingId });
     try {
       const response = await doctorAPI.cancelBooking(
@@ -250,6 +254,7 @@ export default function PatientQueue() {
         error?.response?.data?.Message || t("errors.failedCancelAppointment"),
       );
     } finally {
+      mutationInFlightRef.current.delete(actionKey);
       setActionLoading({ type: null, bookingId: null });
     }
   };
@@ -413,6 +418,9 @@ export default function PatientQueue() {
       return;
     }
 
+    const actionKey = `add-test:${addTestPatient.patientId}:${addTestForm.testTypeId}`;
+    if (mutationInFlightRef.current.has(actionKey)) return;
+    mutationInFlightRef.current.add(actionKey);
     setActionLoading({ type: "addTest", bookingId: addTestPatient.bookingId });
     try {
       const selectedType = testTypes.find((type) => {
@@ -444,6 +452,7 @@ export default function PatientQueue() {
     } catch (error) {
       toast.error(error?.response?.data?.Message || t("auto.failedToAddTest"));
     } finally {
+      mutationInFlightRef.current.delete(actionKey);
       setActionLoading({ type: null, bookingId: null });
     }
   };

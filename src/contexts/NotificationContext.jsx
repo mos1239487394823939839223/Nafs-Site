@@ -136,7 +136,7 @@ export function NotificationProvider({ children }) {
     [handleRealtime],
   );
 
-  useFirebaseMessaging(Boolean(user), addNotification, fetchNotifications);
+  useFirebaseMessaging(Boolean(user), addNotification);
   useSignalR({
     enabled: Boolean(user),
     handlers: signalRHandlers,

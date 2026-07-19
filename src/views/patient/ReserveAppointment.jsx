@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback } from "react";
+import { useMemo, useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Card, {
   CardHeader,
@@ -135,6 +135,11 @@ export default function ReserveAppointment() {
   ] = useState(null);
   const [bookingPendingReview, setBookingPendingReview] = useState(false);
   const [startingMeetingId, setStartingMeetingId] = useState(null);
+  const bookingFlowInFlightRef = useRef(false);
+  const paymentSubmitInFlightRef = useRef(false);
+  const manualPaymentInFlightRef = useRef(new Set());
+  const cancelInFlightRef = useRef(new Set());
+  const meetingInFlightRef = useRef(new Set());
 
   const getNumericFee = (doctor) => {
     const rawFee =
@@ -930,6 +935,9 @@ export default function ReserveAppointment() {
   };
 
   const handleCancelReservation = async (bookingId) => {
+    const cancelKey = String(bookingId || "");
+    if (!cancelKey || cancelInFlightRef.current.has(cancelKey)) return;
+
     const targetBooking = patientBookings.find(
       (booking) => String(booking?.Id) === String(bookingId),
     );
@@ -948,6 +956,7 @@ export default function ReserveAppointment() {
       return;
     }
 
+    cancelInFlightRef.current.add(cancelKey);
     setCancellingId(bookingId);
     try {
       const response = await patientAPI.cancelBooking(
@@ -965,6 +974,7 @@ export default function ReserveAppointment() {
     } catch (error) {
       toast.error(error.response?.data?.Message || t("errors.cancelFailed"));
     } finally {
+      cancelInFlightRef.current.delete(cancelKey);
       setCancellingId(null);
     }
   };
@@ -1005,6 +1015,9 @@ export default function ReserveAppointment() {
 
   const submitManualPaymentForBooking = async (bookingId, preparedScreenshotUrl = null) => {
     if (!bookingId) return false;
+    const paymentKey = String(bookingId);
+    if (manualPaymentInFlightRef.current.has(paymentKey)) return false;
+
     const hasSelectedProvider =
       selectedPaymentProvider !== null &&
       selectedPaymentProvider !== undefined &&
@@ -1024,6 +1037,7 @@ export default function ReserveAppointment() {
       return false;
     }
 
+    manualPaymentInFlightRef.current.add(paymentKey);
     setPaymentLoading(true);
     try {
       let screenshotUrl = preparedScreenshotUrl;
@@ -1064,6 +1078,7 @@ export default function ReserveAppointment() {
       );
       return false;
     } finally {
+      manualPaymentInFlightRef.current.delete(paymentKey);
       setPaymentLoading(false);
     }
   };
@@ -1081,6 +1096,8 @@ export default function ReserveAppointment() {
   };
 
   const handlePaymentSubmit = async () => {
+    if (paymentSubmitInFlightRef.current) return;
+
     if (
       selectedPaymentProvider === null ||
       selectedPaymentProvider === undefined ||
@@ -1099,15 +1116,20 @@ export default function ReserveAppointment() {
       return;
     }
 
-    if (pendingManualPaymentBookingId) {
-      setIsPaymentModalOpen(false);
-      await submitManualPaymentForBooking(pendingManualPaymentBookingId);
-      setPendingManualPaymentBookingId(null);
-      return;
-    }
+    paymentSubmitInFlightRef.current = true;
+    try {
+      if (pendingManualPaymentBookingId) {
+        setIsPaymentModalOpen(false);
+        await submitManualPaymentForBooking(pendingManualPaymentBookingId);
+        setPendingManualPaymentBookingId(null);
+        return;
+      }
 
-    setIsPaymentModalOpen(false);
-    await confirmBooking();
+      setIsPaymentModalOpen(false);
+      await confirmBooking();
+    } finally {
+      paymentSubmitInFlightRef.current = false;
+    }
   };
 
   useSignalR({
@@ -1177,7 +1199,9 @@ export default function ReserveAppointment() {
 
   const confirmBooking = async () => {
     if (!selectedDoctor || !bookedSlot) return;
+    if (bookingFlowInFlightRef.current) return;
 
+    bookingFlowInFlightRef.current = true;
     setLoading(true);
     // Tracked outside the inner try blocks so the outer catch can release the
     // slot for ANY failure after creation — not only the one path that already
@@ -1380,14 +1404,22 @@ export default function ReserveAppointment() {
         toast.error(errorMsg);
       }
     } finally {
+      bookingFlowInFlightRef.current = false;
       setLoading(false);
     }
   };
 
   const handleStartMeeting = async (booking) => {
     const bookingId = booking?.BookingId || booking?.Id;
-    if (!bookingId || startingMeetingId || !canStartPatientSession(booking)) return;
+    const meetingKey = String(bookingId || "");
+    if (
+      !meetingKey ||
+      startingMeetingId ||
+      meetingInFlightRef.current.has(meetingKey) ||
+      !canStartPatientSession(booking)
+    ) return;
 
+    meetingInFlightRef.current.add(meetingKey);
     setStartingMeetingId(bookingId);
     try {
       const response = await meetingAPI.startBookingMeeting(bookingId);
@@ -1417,6 +1449,7 @@ export default function ReserveAppointment() {
         ),
       );
     } finally {
+      meetingInFlightRef.current.delete(meetingKey);
       setStartingMeetingId(null);
     }
   };

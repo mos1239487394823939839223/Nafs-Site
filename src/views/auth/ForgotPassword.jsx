@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import Button from '../../components/ui/Button'
@@ -25,14 +25,37 @@ export default function ForgotPassword() {
   const [showPassword, setShowPassword] = useState(false)
   const [errors, setErrors] = useState({})
   const [otpTimer, setOtpTimer] = useState(0)
+  const actionInFlightRef = useRef(false)
+  const otpIntervalRef = useRef(null)
+
+  const startOtpTimer = () => {
+    if (otpIntervalRef.current) clearInterval(otpIntervalRef.current)
+    setOtpTimer(60)
+    otpIntervalRef.current = setInterval(() => {
+      setOtpTimer(prev => {
+        if (prev <= 1) {
+          clearInterval(otpIntervalRef.current)
+          otpIntervalRef.current = null
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+  }
+
+  useEffect(() => () => {
+    if (otpIntervalRef.current) clearInterval(otpIntervalRef.current)
+  }, [])
 
   // Step 1: Send forgot password OTP
   const handleSendOTP = async () => {
+    if (actionInFlightRef.current) return
     if (!validateEmail(email)) {
       setErrors({ email: t('errors.invalidEmail') })
       return
     }
     setErrors({})
+    actionInFlightRef.current = true
     setLoading(true)
 
     try {
@@ -40,33 +63,27 @@ export default function ForgotPassword() {
       if (response?.IsSuccess === true) {
         toast.success(t('success.otpSent'))
         setStep(2)
-        setOtpTimer(60)
-        const interval = setInterval(() => {
-          setOtpTimer(prev => {
-            if (prev <= 1) {
-              clearInterval(interval)
-              return 0
-            }
-            return prev - 1
-          })
-        }, 1000)
+        startOtpTimer()
       } else {
         toast.error(toUserFacingError(response?.Message, t('errors.failedSendOtp')))
       }
     } catch (error) {
       toast.error(extractErrorMessage(error, t('errors.failedSendOtp')))
     } finally {
+      actionInFlightRef.current = false
       setLoading(false)
     }
   }
 
   // Step 2: Confirm OTP
   const handleConfirmOTP = async () => {
+    if (actionInFlightRef.current) return
     if (!otp || otp.length !== 6) {
       setErrors({ otp: t('errors.otpInvalid') })
       return
     }
     setErrors({})
+    actionInFlightRef.current = true
     setLoading(true)
 
     try {
@@ -83,12 +100,14 @@ export default function ForgotPassword() {
     } catch (error) {
       toast.error(extractErrorMessage(error, t('errors.failedVerifyOtp')))
     } finally {
+      actionInFlightRef.current = false
       setLoading(false)
     }
   }
 
   // Step 3: Set new password
   const handleResetPassword = async () => {
+    if (actionInFlightRef.current) return
     const newErrors = {}
     if (!newPassword || newPassword.length < 6) {
       newErrors.newPassword = t('errors.passwordTooShort')
@@ -101,6 +120,7 @@ export default function ForgotPassword() {
       return
     }
     setErrors({})
+    actionInFlightRef.current = true
     setLoading(true)
 
     try {
@@ -114,33 +134,28 @@ export default function ForgotPassword() {
     } catch (error) {
       toast.error(extractErrorMessage(error, t('errors.failedResetPassword')))
     } finally {
+      actionInFlightRef.current = false
       setLoading(false)
     }
   }
 
   // Resend OTP
   const handleResendOTP = async () => {
+    if (actionInFlightRef.current || otpTimer > 0) return
+    actionInFlightRef.current = true
     setLoading(true)
     try {
       const response = await authAPI.forgotPassword(email)
       if (response?.IsSuccess === true) {
         toast.success(t('success.otpResent'))
-        setOtpTimer(60)
-        const interval = setInterval(() => {
-          setOtpTimer(prev => {
-            if (prev <= 1) {
-              clearInterval(interval)
-              return 0
-            }
-            return prev - 1
-          })
-        }, 1000)
+        startOtpTimer()
       } else {
         toast.error(toUserFacingError(response?.Message, t('errors.failedSendOtp')))
       }
     } catch (error) {
       toast.error(extractErrorMessage(error, t('errors.failedSendOtp')))
     } finally {
+      actionInFlightRef.current = false
       setLoading(false)
     }
   }

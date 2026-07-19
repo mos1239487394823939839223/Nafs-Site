@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useMultiStepForm } from '../../../hooks/useMultiStepForm'
@@ -42,6 +42,7 @@ export default function DoctorRegistration() {
   const toast = useToast()
   const { t, language, toggleLanguage } = useLanguage()
   const [loading, setLoading] = useState(false)
+  const submitInFlightRef = useRef(false)
   const [uploadedFiles, setUploadedFiles] = useState({
     license: null,
     certificates: [],
@@ -230,6 +231,8 @@ export default function DoctorRegistration() {
   // ── Submit ──────────────────────────────────────────────────────────────────
 
   const handleSubmit = async () => {
+    if (submitInFlightRef.current) return
+    submitInFlightRef.current = true
     setLoading(true)
     try {
       const cleanPhone = formData.phone.replace(/[\s+]/g, '')
@@ -269,6 +272,7 @@ export default function DoctorRegistration() {
       console.error('Doctor registration error:', error)
       toast.error(extractErrorMessage(error, t('errors.somethingWentWrong')))
     } finally {
+      submitInFlightRef.current = false
       setLoading(false)
     }
   }

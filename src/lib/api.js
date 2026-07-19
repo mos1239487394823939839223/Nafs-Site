@@ -12,6 +12,27 @@ export const api = axios.create({
   },
 });
 
+const inFlightGetRequests = new Map();
+const rawGet = api.get.bind(api);
+
+const getRequestKey = (url, config = {}) => {
+  const { signal, cancelToken, onDownloadProgress, onUploadProgress, ...keyConfig } =
+    config || {};
+  return api.getUri({ ...keyConfig, url });
+};
+
+api.get = (url, config = {}) => {
+  const key = getRequestKey(url, config);
+  const existingRequest = inFlightGetRequests.get(key);
+  if (existingRequest) return existingRequest;
+
+  const request = rawGet(url, config).finally(() => {
+    inFlightGetRequests.delete(key);
+  });
+  inFlightGetRequests.set(key, request);
+  return request;
+};
+
 // Helper: Get clean token from localStorage (strips "Bearer " if present)
 const getAuthToken = () => {
   try {

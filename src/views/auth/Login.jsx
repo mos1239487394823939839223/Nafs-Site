@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
@@ -22,6 +22,7 @@ export default function Login() {
 
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const loginInFlightRef = useRef(false);
 
   const [formData, setFormData] = useState({
     email: "",
@@ -56,22 +57,19 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    console.log("Login attempt with:", formData.email);
+    if (loginInFlightRef.current) return;
 
     if (!validateForm()) {
-      console.log("Validation failed", errors);
       toast.error(t("errors.fixFormErrors"));
       return;
     }
 
-    console.log("Validation passed, calling API...");
+    loginInFlightRef.current = true;
     setLoading(true);
 
     try {
       // Call login API
       const response = await authAPI.login(formData.email, formData.password);
-      console.log("API Response raw:", response);
 
       if (response.IsSuccess) {
         // Extract user data from response
@@ -113,7 +111,6 @@ export default function Login() {
           userData.AccessToken ||
           null;
 
-        // Debug: log what we got so we can verify
         console.log(
           "Token extraction — Available keys:",
           Object.keys(userData),
@@ -175,6 +172,8 @@ export default function Login() {
 
       toast.error(errorMessage);
       setLoading(false);
+    } finally {
+      loginInFlightRef.current = false;
     }
   };
 

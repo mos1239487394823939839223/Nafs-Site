@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, useCallback } from "react";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import Button from "../../components/ui/Button";
@@ -82,6 +82,8 @@ export default function CustomerServiceDashboard() {
   const [chatRoomsSearch, setChatRoomsSearch] = useState("");
   const [chatRoomsTypeFilter, setChatRoomsTypeFilter] = useState("all");
   const [priorityUpdatingRoomId, setPriorityUpdatingRoomId] = useState(null);
+  const mutationInFlightRef = useRef(new Set());
+  const availabilityInFlightRef = useRef(false);
   const [isSupportAvailable, setIsSupportAvailable] = useState(() => readCustomerSupportAvailability(user) ?? false);
   const [availabilityUpdating, setAvailabilityUpdating] = useState(false);
 
@@ -413,12 +415,16 @@ export default function CustomerServiceDashboard() {
   }, [chatRooms]);
 
   const handleConfirmPayment = async (paymentItem) => {
+    const actionKey = `confirm-payment:${paymentItem?.Id || ""}`;
+    if (mutationInFlightRef.current.has(actionKey)) return;
+
     if (hasCancellationLock(paymentItem)) {
       toast.error(
         t("staff.cancelledBookingCannotBeApproved", "A cancelled or cancellation-pending session cannot be approved."),
       );
       return;
     }
+    mutationInFlightRef.current.add(actionKey);
     setActionLoadingId(paymentItem.Id);
     try {
       const response = await customerSupportAPI.confirmManualPayment(
@@ -434,6 +440,7 @@ export default function CustomerServiceDashboard() {
       console.error("Failed to confirm manual payment:", error);
       toast.error(t("errors.somethingWentWrong"));
     } finally {
+      mutationInFlightRef.current.delete(actionKey);
       setActionLoadingId(null);
     }
   };
@@ -445,7 +452,10 @@ export default function CustomerServiceDashboard() {
 
   const handleRejectPayment = async () => {
     if (!rejectingPayment) return;
+    const actionKey = `reject-payment:${rejectingPayment.Id}`;
+    if (mutationInFlightRef.current.has(actionKey)) return;
 
+    mutationInFlightRef.current.add(actionKey);
     setActionLoadingId(rejectingPayment.Id);
     try {
       const response = await customerSupportAPI.rejectManualPayment(
@@ -464,6 +474,7 @@ export default function CustomerServiceDashboard() {
       console.error("Failed to reject manual payment:", error);
       toast.error(t("errors.somethingWentWrong"));
     } finally {
+      mutationInFlightRef.current.delete(actionKey);
       setActionLoadingId(null);
     }
   };
@@ -476,6 +487,8 @@ export default function CustomerServiceDashboard() {
 
   const handleProcessRefund = async () => {
     if (!processingRefundItem || !refundProcessMode) return;
+    const actionKey = `${refundProcessMode}-refund:${processingRefundItem?.Id}`;
+    if (mutationInFlightRef.current.has(actionKey)) return;
 
     const notesPrefix =
       refundProcessMode === "approve"
@@ -484,6 +497,7 @@ export default function CustomerServiceDashboard() {
     const notesValue = String(refundProcessNotes || "").trim();
     const notes = notesValue ? `${notesPrefix}: ${notesValue}` : notesPrefix;
 
+    mutationInFlightRef.current.add(actionKey);
     setProcessingRefundId(processingRefundItem?.Id);
     try {
       const response = refundProcessMode === "approve"
@@ -506,6 +520,7 @@ export default function CustomerServiceDashboard() {
       console.error("Failed to process refund:", error);
       toast.error(t("errors.somethingWentWrong"));
     } finally {
+      mutationInFlightRef.current.delete(actionKey);
       setProcessingRefundId(null);
     }
   };
@@ -513,6 +528,8 @@ export default function CustomerServiceDashboard() {
   const handlePriorityChange = async (room, priority) => {
     const roomId = room?.Id || room?.id;
     if (!roomId) return;
+    const actionKey = `priority:${roomId}`;
+    if (mutationInFlightRef.current.has(actionKey)) return;
 
     const previousRooms = chatRooms;
     const patchRoom = (item) => {
@@ -526,6 +543,7 @@ export default function CustomerServiceDashboard() {
       };
     };
 
+    mutationInFlightRef.current.add(actionKey);
     setPriorityUpdatingRoomId(roomId);
     setChatRooms((items) => items.map(patchRoom));
     try {
@@ -539,15 +557,17 @@ export default function CustomerServiceDashboard() {
       setChatRooms(previousRooms);
       toast.error(tx("support.priorityUpdateFailed", "Could not update priority"));
     } finally {
+      mutationInFlightRef.current.delete(actionKey);
       setPriorityUpdatingRoomId(null);
     }
   };
 
   const handleAvailabilityChange = async (nextAvailability) => {
-    if (availabilityUpdating || role !== Roles.STAFF) return;
+    if (availabilityInFlightRef.current || availabilityUpdating || role !== Roles.STAFF) return;
 
     const previousAvailability = isSupportAvailable;
     setIsSupportAvailable(nextAvailability);
+    availabilityInFlightRef.current = true;
     setAvailabilityUpdating(true);
 
     try {
@@ -572,6 +592,7 @@ export default function CustomerServiceDashboard() {
         ),
       );
     } finally {
+      availabilityInFlightRef.current = false;
       setAvailabilityUpdating(false);
     }
   };

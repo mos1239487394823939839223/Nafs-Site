@@ -367,6 +367,9 @@ export default function MessagesPage() {
   const lastMessagesFetchAtRef = useRef(new Map())
   const debouncedFetchRoomsTimerRef = useRef(null)
   const selectedRoomFetchRef = useRef('')
+  const messageSendingRef = useRef(false)
+  const availabilityUpdatingRef = useRef(false)
+  const supportRoomLoadingRef = useRef(false)
 
   const saveRoomCaseType = useCallback((roomId, caseType) => {
     if (!roomId) return
@@ -442,10 +445,11 @@ export default function MessagesPage() {
   }, [user])
 
   const handleAvailabilityChange = useCallback(async (nextAvailability) => {
-    if (availabilityUpdating || !isSupportOperator) return
+    if (availabilityUpdatingRef.current || availabilityUpdating || !isSupportOperator) return
 
     const previousAvailability = isSupportAvailable
     setIsSupportAvailable(nextAvailability)
+    availabilityUpdatingRef.current = true
     setAvailabilityUpdating(true)
 
     try {
@@ -478,6 +482,7 @@ export default function MessagesPage() {
         ),
       )
     } finally {
+      availabilityUpdatingRef.current = false
       setAvailabilityUpdating(false)
     }
   }, [availabilityUpdating, isSupportAvailable, isSupportOperator, t, toast, updateProfile])
@@ -956,9 +961,13 @@ export default function MessagesPage() {
   // ── Send ────────────────────────────────────────────────────────────────────
   const handleSendMessage = async (msgData) => {
     const roomId = activeRoom?.Id || activeRoom?.id
-    if (!roomId || messageSending) return
+    if (!roomId || messageSendingRef.current) return
+    messageSendingRef.current = true
+    setMessageSending(true)
     const savedCaseType = localRoomCaseTypes[String(roomId)]
     if (isPatient && isSupportRoom(activeRoom) && !supportCaseType && !savedCaseType) {
+      messageSendingRef.current = false
+      setMessageSending(false)
       toast.warning(t('chat.caseTypeRequired', 'Select a support case type before sending your first message.'))
       return
     }
@@ -1012,6 +1021,7 @@ export default function MessagesPage() {
       const fallback = t("auto.failedToSendMessage")
       toast.error(String(error?.message || fallback))
         } finally {
+          messageSendingRef.current = false
           setMessageSending(false)
         }
       }
@@ -1238,6 +1248,7 @@ export default function MessagesPage() {
   }, [enrichRoomsWithSupportMeta, isSupportOperator, t, toast])
 
   const openSupportChat = useCallback(async (requestedCaseType) => {
+    if (supportRoomLoadingRef.current) return
     if (!currentUserId) {
       toast.error(t("auto.unableToResolvePatientId"))
       return
@@ -1251,6 +1262,7 @@ export default function MessagesPage() {
     setContactType('support')
     if (caseType !== supportCaseType) setSupportCaseType(caseType)
 
+    supportRoomLoadingRef.current = true
     setSupportRoomLoading(true)
     try {
       logSupportDebug('openSupportChat:start')
@@ -1374,6 +1386,7 @@ export default function MessagesPage() {
       )
       console.error('Failed to open support chat room:', error)
     } finally {
+      supportRoomLoadingRef.current = false
       setSupportRoomLoading(false)
     }
   }, [currentUserId, enrichRoomsWithSupportMeta, isPatient, isRTL, saveRoomCaseType, supportCaseType, t, toast])
