@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
-import heroDoctor from "../assets/hero-doctor.jpg";
+import heroDoctor from "../assets/doctor-dashboard-home.png";
 import { useLanguage } from "../../../contexts/LanguageContext";
 import { doctorScheduleAddSlotUrl } from "../../../lib/doctorPatientRoutes";
 
@@ -18,7 +18,7 @@ export const HeroCard = ({ doctorName }: HeroCardProps) => {
       <div className="absolute inset-y-0 left-[38%] w-[26%] bg-[linear-gradient(90deg,rgba(249,242,217,0)_0%,rgba(255,255,255,0.54)_46%,rgba(255,255,255,0)_100%)] blur-2xl" />
 
       <div className="relative grid min-h-[230px] items-stretch md:grid-cols-[55%_45%] md:min-h-[250px] lg:grid-cols-2">
-        <div className="relative z-[3] flex min-h-[190px] flex-col justify-center px-6 py-7 text-start md:min-h-[250px] md:px-10 lg:px-10">
+        <div className="relative z-[3] flex min-h-[190px] min-w-0 flex-col justify-center px-6 py-7 text-start md:min-h-[250px] md:px-10 lg:px-10">
           {doctorName && (
             <p className="mb-1 text-sm font-medium text-primary">
               {t("doctor.dashboardHome.hero.greeting")},{" "}
@@ -43,13 +43,13 @@ export const HeroCard = ({ doctorName }: HeroCardProps) => {
           </button>
         </div>
 
-        <div className="relative flex min-h-[190px] items-center justify-center overflow-hidden md:min-h-[250px]">
+        <div className="relative flex min-h-[190px] min-w-0 items-center justify-center overflow-hidden md:min-h-[250px]">
           <img
             src={heroDoctor}
             alt={t("doctor.dashboardHome.hero.imageAlt")}
-            width={768}
-            height={640}
-            className="relative z-[1] h-[195px] w-[118%] max-w-none object-contain object-right-bottom md:h-[260px] md:w-[124%]"
+            width={1536}
+            height={1024}
+            className="relative z-[1] block h-[195px] w-[118%] max-w-none object-contain object-right-bottom md:h-[260px] md:w-[124%]"
           />
         </div>
       </div>

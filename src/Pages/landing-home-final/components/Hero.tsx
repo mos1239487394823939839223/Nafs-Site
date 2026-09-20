@@ -38,24 +38,24 @@ export const Hero = () => {
       */}
       <div
         dir="ltr"
-        className="relative mx-auto grid max-w-screen-xl grid-cols-1 min-h-[580px] items-center lg:grid-cols-2 lg:min-h-[640px]"
+        className="relative mx-auto grid max-w-screen-xl grid-cols-1 min-h-[460px] items-center lg:grid-cols-2 lg:min-h-[640px]"
       >
         {/* ── TEXT COLUMN – left side ── */}
         <div
           dir={isAr ? "rtl" : "ltr"}
-          className="flex flex-col justify-center px-8 py-16 lg:px-14 xl:px-20"
+          className="flex flex-col justify-center px-6 py-12 sm:px-8 sm:py-16 lg:px-14 xl:px-20"
         >
-          <h1 className="text-[40px] font-black leading-[1.22] text-primary lg:text-[56px]">
+          <h1 className="text-[clamp(2rem,8vw,3.25rem)] font-black leading-[1.05] text-primary lg:text-[56px] lg:leading-[1.22]">
             {isAr ? (
               <>
                 خُذ نفس،
-                <br />
+                <br className="hidden lg:block" />
                 ونحن معك.
               </>
             ) : (
               <>
                 Take a breath,
-                <br />
+                <br className="hidden lg:block" />
                 we're with you.
               </>
             )}

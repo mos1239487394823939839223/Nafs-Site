@@ -42,20 +42,20 @@ export const Journey = () => {
       dir={isAr ? "rtl" : "ltr"}
       className="relative z-10 -mt-[52px] px-4 sm:px-6 lg:px-8"
     >
-      <div className="mx-auto w-full max-w-6xl rounded-tl-md rounded-tr-[3rem] rounded-b-[20px] bg-background-paper px-10 py-7 sm:px-12 sm:py-8">
-        <div className="grid grid-cols-2 gap-y-4 divide-x divide-x-reverse divide-border sm:grid-cols-4">
+      <div className="mx-auto w-full max-w-6xl rounded-tl-md rounded-tr-[3rem] rounded-b-[20px] bg-background-paper px-5 py-6 sm:px-12 sm:py-8">
+        <div className="grid grid-cols-1 gap-y-4 divide-y divide-border sm:grid-cols-4 sm:divide-y-0 sm:divide-x sm:divide-x-reverse">
           {FEATURES.map(({ icon: Icon, titleAr, descAr, titleEn, descEn }, i) => (
             <div
               key={titleAr}
-              className={`flex items-center justify-center gap-4 ${
+              className={`flex items-center justify-start gap-4 sm:justify-center ${
                 i !== 0 ? "sm:border-s sm:border-border" : ""
-              } px-4 py-2 sm:px-6`}
+              } px-1 py-3 sm:px-6 sm:py-2`}
             >
               <Icon
                 className="h-7 w-7 shrink-0 text-[#78a794] sm:h-8 sm:w-8"
                 strokeWidth={1.75}
               />
-              <div>
+              <div className="min-w-0 flex-1">
                 <p className="text-[15px] font-bold leading-snug text-primary sm:text-base">
                   {isAr ? titleAr : titleEn}
                 </p>

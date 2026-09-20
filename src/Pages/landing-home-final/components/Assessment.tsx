@@ -17,17 +17,16 @@ export const Assessment = () => {
           className="grid items-center gap-8 md:grid-cols-2 md:gap-10 lg:gap-14"
         >
           {/* Illustration — physical left */}
-          <div className="flex items-center justify-center overflow-hidden rounded-s-lg bg-background-subtle">
+          <div className="flex h-[260px] min-w-0 items-center justify-center overflow-hidden rounded-s-lg bg-background-subtle sm:h-[300px] lg:h-[360px]">
             <img
               src={assessmentSkill}
               alt={isAr ? "استبيان تقييم نفسي" : "Mental health assessment clipboard"}
-              className="h-full w-full object-cover"
-              style={{ minHeight: "260px", maxHeight: "360px" }}
+              className="block h-full w-full object-cover"
             />
           </div>
 
           {/* Copy — physical right */}
-          <div dir={isAr ? "rtl" : "ltr"} className="px-8 py-10 text-start lg:px-10 lg:py-12">
+          <div dir={isAr ? "rtl" : "ltr"} className="min-w-0 px-8 py-10 text-start lg:px-10 lg:py-12">
             <h2 className="text-2xl font-black leading-tight text-text-heading md:text-[2rem] lg:text-4xl">
               {isAr ? "اعرف حالتك النفسية في دقائق" : "Understand your mental state in minutes"}
             </h2>
