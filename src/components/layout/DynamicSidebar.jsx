@@ -148,30 +148,21 @@ export default function DynamicSidebar({ isOpen, onClose }) {
         >
           <div className="flex h-full flex-col overflow-hidden">
             <div className="flex items-center justify-between px-6 py-6">
-              {isRTL ? (
-                <>
-                  <div className="flex items-center gap-2">
-                    <span className="text-3xl font-black tracking-tight text-white">nafas</span>
-                    <span className="grid h-9 w-9 place-items-center rounded-xl" style={{ backgroundColor: "#2c6947" }}>
-                      <HeartHandshake className="h-5 w-5 text-white" />
-                    </span>
-                  </div>
-                </>
-              ) : (
-                <>
               <div className="flex items-center gap-2">
-                <span className="text-3xl font-black tracking-tight text-white">nafas</span>
+                <span className="text-3xl font-black tracking-tight text-white">{isRTL ? "نفس" : "Nafas"}</span>
                 <span className="grid h-9 w-9 place-items-center rounded-xl" style={{ backgroundColor: "#2c6947" }}>
                   <HeartHandshake className="h-5 w-5 text-white" />
                 </span>
               </div>
-                </>
-              )}
             </div>
 
             <nav className="no-scrollbar flex-1 overflow-y-auto px-4 pb-6">
               <ul className="space-y-1">{mainItems.map(renderPatientLink)}</ul>
-              <div className="my-4 h-px bg-white/16" />
+              <div className="my-5 flex items-center gap-3 px-2" aria-hidden="true">
+                <div className="h-px flex-1 bg-white/15" />
+                <div className="h-1 w-1 rounded-full bg-white/25" />
+                <div className="h-px flex-1 bg-white/15" />
+              </div>
               <ul className="space-y-1">
                 {supportItems.map(renderPatientLink)}
                 <li>
@@ -263,7 +254,7 @@ export default function DynamicSidebar({ isOpen, onClose }) {
                   <HeartHandshake className="h-6 w-6 text-white" />
                 </span>
                 <div>
-                  <p className="text-2xl font-black leading-none tracking-tight text-white">nafas</p>
+                  <p className="text-2xl font-black leading-none tracking-tight text-white">{isRTL ? "نفس" : "Nafas"}</p>
                   <p className="mt-1 text-[10px] font-semibold tracking-[0.18em] text-[#bfd9d4]/70">
                     CARE PLATFORM
                   </p>

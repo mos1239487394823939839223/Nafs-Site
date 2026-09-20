@@ -152,6 +152,7 @@ export default function PatientRegistration() {
       lastName: "",
       email: "",
       password: "",
+      confirmPassword: "",
       phone: "",
       dateOfBirth: "",
       gender: "",
@@ -209,6 +210,14 @@ export default function PatientRegistration() {
 
     if (!passwordChecks.isValid) {
       setFieldError("password", t("auth.passwordRequirements"));
+      isValid = false;
+    }
+
+    if (!validateRequired(formData.confirmPassword)) {
+      setFieldError("confirmPassword", t("auth.confirmPasswordRequired", "Please confirm your password"));
+      isValid = false;
+    } else if (formData.password !== formData.confirmPassword) {
+      setFieldError("confirmPassword", t("auth.passwordsDoNotMatch", "Passwords do not match"));
       isValid = false;
     }
 
@@ -701,6 +710,16 @@ export default function PatientRegistration() {
                             handleFieldChange("password", e.target.value)
                           }
                           error={errors.password}
+                          placeholder="••••••••"
+                        />
+                        <Input
+                          label={t("auth.confirmPassword", "Confirm Password")}
+                          type="password"
+                          value={formData.confirmPassword}
+                          onChange={(e) =>
+                            handleFieldChange("confirmPassword", e.target.value)
+                          }
+                          error={errors.confirmPassword}
                           placeholder="••••••••"
                         />
                       </div>

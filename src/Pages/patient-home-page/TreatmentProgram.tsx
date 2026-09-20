@@ -1,4 +1,4 @@
-import { Leaf, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useLanguage } from "../../contexts/LanguageContext";
 
@@ -30,11 +30,7 @@ export const TreatmentProgram = ({
   const percent = total ? Math.min(100, Math.round((current / total) * 100)) : 0;
 
   return (
-    <section className="bg-card rounded-2xl p-6 shadow-card relative overflow-hidden" dir="ltr">
-      <Leaf
-        className="absolute bottom-2 w-32 h-32 text-primary opacity-10 -rotate-12 pointer-events-none -start-2"
-      />
-
+    <section className="bg-card/95 rounded-2xl p-6 shadow-card relative overflow-hidden ring-1 ring-primary/5" dir="ltr">
       <div className="relative">
         <p className="text-xs text-muted-foreground text-center mb-1">
           {t("patientHome.treatmentProgram.label")}

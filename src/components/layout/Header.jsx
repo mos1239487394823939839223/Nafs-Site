@@ -162,7 +162,7 @@ export default function Header({ onMenuClick }) {
     )
 
     return (
-      <header className="bg-background px-4 py-5">
+      <header className="bg-background px-3 py-5 sm:px-4">
         <div className="mx-auto flex w-full max-w-[1240px] items-center justify-between gap-4">
           {isRTL ? (
             <>

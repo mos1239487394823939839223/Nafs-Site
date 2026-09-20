@@ -1648,10 +1648,10 @@ export default function ReserveAppointment() {
       </div>
 
       {/* Tabs */}
-      <div className="grid w-full grid-cols-3 gap-1 overflow-x-auto rounded-2xl border border-border bg-background-paper p-1.5 shadow-sm no-scrollbar scroll-smooth mb-6 sm:mb-8">
+      <div className="grid w-full grid-cols-3 gap-1 overflow-x-auto rounded-xl border border-border bg-background-paper p-1 shadow-sm no-scrollbar scroll-smooth mb-4 sm:mb-6">
         <button
           onClick={() => { setMainTab("all"); setStep(1); setSelectedDoctor(null); setSearchParams({}); }}
-          className={`min-w-max px-3 sm:px-5 md:px-8 py-3 text-[11px] sm:text-sm md:text-base font-semibold transition-all duration-300 relative whitespace-nowrap rounded-xl ${
+          className={`min-w-max px-2.5 sm:px-4 md:px-6 py-2 text-[11px] sm:text-sm font-semibold transition-all duration-300 relative whitespace-nowrap rounded-lg ${
             mainTab === "all"
               ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
               : "text-text-muted hover:text-text-heading hover:bg-background-paper"
@@ -1662,7 +1662,7 @@ export default function ReserveAppointment() {
         </button>
         <button
           onClick={() => { setMainTab("available"); setStep(1); setSelectedDoctor(null); setSearchParams({ tab: "available" }); }}
-          className={`min-w-max px-3 sm:px-5 md:px-8 py-3 text-[11px] sm:text-sm md:text-base font-semibold transition-all duration-300 relative whitespace-nowrap rounded-xl ${
+          className={`min-w-max px-2.5 sm:px-4 md:px-6 py-2 text-[11px] sm:text-sm font-semibold transition-all duration-300 relative whitespace-nowrap rounded-lg ${
             mainTab === "available"
               ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
               : "text-text-muted hover:text-text-heading hover:bg-background-paper"
@@ -1673,7 +1673,7 @@ export default function ReserveAppointment() {
         </button>
         <button
           onClick={() => { setMainTab("status"); setSearchParams({ tab: "status" }); }}
-          className={`min-w-max px-3 sm:px-5 md:px-8 py-3 text-[11px] sm:text-sm md:text-base font-semibold transition-all duration-300 relative whitespace-nowrap rounded-xl ${
+          className={`min-w-max px-2.5 sm:px-4 md:px-6 py-2 text-[11px] sm:text-sm font-semibold transition-all duration-300 relative whitespace-nowrap rounded-lg ${
             mainTab === "status"
               ? "bg-primary text-white shadow-md shadow-primary/30 ring-1 ring-primary/40"
               : "text-text-muted hover:text-text-heading hover:bg-background-paper"
@@ -3745,7 +3745,7 @@ export default function ReserveAppointment() {
                     {t("patient.noReservationsDesc")}
                   </p>
                   <Button
-                    className="mt-6"
+                    className="mt-8"
                     variant="outline"
                     onClick={() => setMainTab("reserve")}
                   >

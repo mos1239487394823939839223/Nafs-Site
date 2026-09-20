@@ -114,9 +114,11 @@ export default function TreatmentProgramDetails() {
                 "After the first session, your therapist will select the most suitable treatment program based on your assessment.",
               )}
             </p>
-            <Button className="mt-6" onClick={() => navigate("/dashboard/patient/reserve")}>
-              {t("patientHome.treatmentProgram.bookSession", "Book a session")}
-            </Button>
+            <div className="mt-14">
+              <Button onClick={() => navigate("/dashboard/patient/reserve")}>
+                {t("patientHome.treatmentProgram.bookSession", "Book a session")}
+              </Button>
+            </div>
           </CardContent>
         </Card>
       )}

@@ -15,7 +15,7 @@ interface DoctorDto {
 }
 
 const AVATAR_SIZE = 64;
-const CARD_HEIGHT = 260;
+const CARD_HEIGHT = 280;
 
 export const SuggestedDoctors = () => {
   const navigate = useNavigate();
@@ -144,25 +144,25 @@ export const SuggestedDoctors = () => {
                       )}
                     </div>
 
-                    <div className="flex min-h-0 flex-1 flex-col items-center pt-5">
+                    <div className="flex min-h-0 flex-1 flex-col items-center gap-1 pt-5">
                       <h4
-                        className="w-full truncate text-center text-base font-bold leading-6 text-text-heading"
+                        className="w-full shrink-0 truncate text-center text-base font-bold leading-tight text-text-heading"
                         dir="auto"
                       >
                         {doctor.Name}
                       </h4>
                       {doctor.Specialist && doctor.Specialist.length > 0 && (
-                        <p className="w-full truncate text-center text-xs leading-4 text-text-light" dir="auto">
+                        <p className="w-full shrink-0 truncate text-center text-xs leading-tight text-text-light/80" dir="auto">
                           {doctor.Specialist[0]}
                         </p>
                       )}
 
-                      <div className="mt-2 flex items-center justify-center gap-1 text-sm leading-5">
+                      <div className="mt-1 flex shrink-0 items-center justify-center gap-1 text-sm leading-5">
                         <Star className="h-3 w-3 fill-[var(--token-warning)] text-[var(--token-warning)]" />
                         <span className="font-medium text-text">{Number(doctor.Rate || 0).toFixed(1)}</span>
                       </div>
 
-                      <p className="pb-4 pt-2 text-xs font-bold leading-4 text-text">
+                      <p className="shrink-0 pb-4 pt-2 text-xs font-bold leading-4 text-text">
                         {doctor.SessionPrice && doctor.SessionPrice > 0
                           ? `${doctor.SessionPrice} ${t("patientHome.suggestedDoctors.perSession")}`
                           : `300 ${t("patientHome.suggestedDoctors.perSession")}`}
@@ -170,7 +170,7 @@ export const SuggestedDoctors = () => {
 
                       <button
                         onClick={() => navigate(`/dashboard/patient/reserve?doctorId=${doctor.Id}`)}
-                        className="mt-auto h-10 w-full rounded-xl border border-border text-sm font-medium leading-5 text-text transition-colors hover:border-secondary hover:bg-background-subtle hover:text-secondary"
+                        className="mt-auto h-10 w-full shrink-0 rounded-xl bg-primary text-sm font-semibold leading-5 text-white shadow-sm transition-colors hover:bg-primary/90"
                       >
                         {t("patientHome.suggestedDoctors.bookNow")}
                       </button>

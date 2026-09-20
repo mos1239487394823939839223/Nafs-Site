@@ -68,7 +68,7 @@ export const MoodGauge = ({
   const offset = circumference - (value / 100) * circumference;
 
   return (
-    <section className="bg-card rounded-2xl p-6 shadow-card flex flex-col" dir="ltr">
+    <section className="bg-card/95 rounded-2xl p-6 shadow-card ring-1 ring-primary/5 flex flex-col" dir="ltr">
       <h3 className="text-center font-bold mb-2">{t("patientHome.moodGauge.title")}</h3>
 
       {loading ? (

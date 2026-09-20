@@ -160,6 +160,8 @@ export default {
     passwordLowercase: "حرف صغير واحد (a-z)",
     passwordNumber: "رقم واحد على الأقل",
     passwordSpecial: "رمز خاص واحد على الأقل",
+    confirmPasswordRequired: "يرجى تأكيد كلمة المرور",
+    passwordsDoNotMatch: "كلمتا المرور غير متطابقتين",
     doctor: "معالج",
     admin: "مسؤول",
     staff: "خدمة العملاء",

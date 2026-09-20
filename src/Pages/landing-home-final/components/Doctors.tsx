@@ -141,7 +141,7 @@ const DoctorCard = ({ doctor, copy, isAr, locale, onBook }: DoctorCardProps) => 
         <Button
           onClick={onBook}
           variant="outline"
-          className={`mt-auto !h-9 !rounded-lg !px-4 !text-xs ${landingBtnBlock} border-[#8fb1a3] text-[#315548]`}
+          className={`mt-auto !h-9 !rounded-lg !px-4 !text-xs ${landingBtnBlock}`}
         >
           {copy.bookNow}
         </Button>

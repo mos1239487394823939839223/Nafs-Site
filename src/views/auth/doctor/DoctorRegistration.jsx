@@ -73,6 +73,7 @@ export default function DoctorRegistration() {
       lastName: '',
       email: '',
       password: '',
+      confirmPassword: '',
       phone: '',
       dateOfBirth: '',
       gender: '',
@@ -140,6 +141,13 @@ export default function DoctorRegistration() {
     }
     if (!passwordChecks.isValid) {
       setFieldError('password', t('auth.passwordRequirements'))
+      ok = false
+    }
+    if (!validateRequired(formData.confirmPassword)) {
+      setFieldError('confirmPassword', t('auth.confirmPasswordRequired', 'Please confirm your password'))
+      ok = false
+    } else if (formData.password !== formData.confirmPassword) {
+      setFieldError('confirmPassword', t('auth.passwordsDoNotMatch', 'Passwords do not match'))
       ok = false
     }
     if (formData.phone.trim() && !validatePhone(formData.phone)) {
@@ -439,6 +447,18 @@ export default function DoctorRegistration() {
                     value={formData.password}
                     onChange={(e) => handleFieldChange('password', e.target.value)}
                     error={errors.password}
+                    placeholder="••••••••"
+                  />
+                </div>
+
+                {/* Confirm Password row */}
+                <div className="grid md:grid-cols-2 gap-6">
+                  <Input
+                    label={t('auth.confirmPassword', 'Confirm Password')}
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => handleFieldChange('confirmPassword', e.target.value)}
+                    error={errors.confirmPassword}
                     placeholder="••••••••"
                   />
                 </div>

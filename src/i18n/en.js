@@ -161,6 +161,8 @@ export default {
     passwordLowercase: "One lowercase letter (a-z)",
     passwordNumber: "At least one number",
     passwordSpecial: "At least one special character",
+    confirmPasswordRequired: "Please confirm your password",
+    passwordsDoNotMatch: "Passwords do not match",
     doctor: "Therapist",
     admin: "Admin",
     staff: "Customer Service",
@@ -205,7 +207,7 @@ export default {
       "Confidential specialist support for violence and blackmail cases",
     adminAccessNote:
       "For Customer Service or Admin access, please contact your system administrator",
-    platformName: "Nafs",
+    platformName: "Nafas",
     platformTagline: "Telemedicine Platform",
     whatHappensNext: "What happens next?",
     applicationReceived: "Application Received",

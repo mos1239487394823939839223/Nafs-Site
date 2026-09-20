@@ -10,6 +10,7 @@ import { Stats } from "./components/Stats";
 import { Testimonials } from "./components/Testimonials";
 import { Footer } from "./components/Footer";
 import { ChatBubble } from "./components/ChatBubble";
+import { SectionDivider } from "./components/SectionDivider";
 import { useLanguage } from "../../contexts/LanguageContext";
 
 const LandingPage = () => {
@@ -22,12 +23,19 @@ const LandingPage = () => {
       <Hero />
       <main className="bg-background-paper">
         <Journey />
+        <SectionDivider />
         <JourneyStepsSection />
+        <SectionDivider />
         <EmergencyBand />
+        <SectionDivider />
         <Services />
+        <SectionDivider />
         <Doctors />
+        <SectionDivider />
         <Assessment />
+        <SectionDivider />
         <Stats />
+        <SectionDivider />
         <Testimonials />
       </main>
       <Footer />
