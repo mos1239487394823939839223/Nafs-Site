@@ -44,6 +44,7 @@ import AdminBookings from "./views/admin/Bookings";
 import AdminDashboard from "./views/admin/Dashboard";
 import AdminBlogs from "./views/admin/Blogs";
 import BlogDetail from "./views/admin/BlogDetail";
+import AdminCustomerReviews from "./views/admin/CustomerReviews";
 import AdminTests from "./views/admin/Tests";
 import AdminPaymentDetails from "./views/admin/PaymentDetails";
 import DoctorFinance from "./views/admin/DoctorFinance";
@@ -412,6 +413,16 @@ function AppRoutes() {
             >
               <Layout>
                 <BlogDetail />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/customer-reviews"
+          element={
+            <ProtectedRoute allowedRoles={[Roles.ADMIN]}>
+              <Layout>
+                <AdminCustomerReviews />
               </Layout>
             </ProtectedRoute>
           }

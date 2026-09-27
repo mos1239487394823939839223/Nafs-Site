@@ -216,11 +216,13 @@ export default function DynamicSidebar({ isOpen, onClose }) {
       { name: t("nav.bookings"), path: "/admin/bookings", icon: Calendar },
       { name: t("nav.paymentDetails"), path: "/admin/payment-details", icon: DollarSign },
       { name: t("nav.blogs"), path: "/admin/blogs", icon: FileText },
+      { name: t("nav.customerReviews", "Customer Reviews"), path: "/admin/customer-reviews", icon: MessageSquare },
       { name: t("admin.tests") || "Tests", path: "/admin/tests", icon: TestTube },
       { name: t("nav.messages"), path: "/admin/messages", icon: MessageSquare, badge: unreadByCategory.messages || 0 },
       { name: t("common.notifications", "Notifications"), path: "/notifications", icon: Bell, badge: unreadCount },
       { name: t("nav.profile"), path: "/admin/profile", icon: Settings },
     ],
+
     [Roles.STAFF]: [
       { name: t("nav.dashboard"), path: "/dashboard/staff", icon: Home },
       { name: t("nav.blogs"), path: "/dashboard/staff/blogs", icon: FileText },

@@ -1319,4 +1319,62 @@ export const linksAPI = {
   }
 };
 
+// ─── Customer Reviews API Functions ──────────────────────────────────────────
+export const customerReviewsAPI = {
+  // Public: get published reviews (no auth required)
+  getPublicReviews: async (pageIndex = 1, pageSize = 10) => {
+    const response = await api.get("/CustomerReviews", {
+      params: { pageIndex, pageSize },
+    });
+    return response.data;
+  },
+
+  // Admin: get all reviews with filters
+  getAdminReviews: async ({ pageIndex = 1, pageSize = 10, search, isPublished } = {}) => {
+    const params = { pageIndex, pageSize };
+    if (search && String(search).trim()) params.search = String(search).trim();
+    // Only include isPublished if it is explicitly true or false (not null/undefined)
+    if (isPublished === true) params.isPublished = true;
+    if (isPublished === false) params.isPublished = false;
+    const response = await api.get("/Admin/CustomerReviews", { params });
+    return response.data;
+  },
+
+  // Admin: create a new review
+  createReview: async (payload) => {
+    const response = await api.post("/Admin/CustomerReviews", {
+      customerName: payload.customerName,
+      customerTitle: payload.customerTitle || null,
+      feedback: payload.feedback,
+      rate: Number(payload.rate),
+      imageUrl: payload.imageUrl || null,
+      isPublished: Boolean(payload.isPublished),
+      displayOrder: Number(payload.displayOrder ?? 0),
+    });
+    return response.data;
+  },
+
+  // Admin: update existing review — FULL replacement required by backend
+  updateReview: async (id, payload) => {
+    // id must stay as a string to preserve 64-bit Snowflake precision
+    const response = await api.put(`/Admin/CustomerReviews/${String(id)}`, {
+      customerName: payload.customerName,
+      customerTitle: payload.customerTitle || null,
+      feedback: payload.feedback,
+      rate: Number(payload.rate),
+      imageUrl: payload.imageUrl || null,
+      isPublished: Boolean(payload.isPublished),
+      displayOrder: Number(payload.displayOrder ?? 0),
+    });
+    return response.data;
+  },
+
+  // Admin: delete a review (soft delete)
+  deleteReview: async (id) => {
+    const response = await api.delete(`/Admin/CustomerReviews/${String(id)}`);
+    return response.data;
+  },
+};
+
 export default api;
+
